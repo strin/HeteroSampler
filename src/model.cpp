@@ -10,7 +10,9 @@ using namespace std;
 
 Model::Model(const Corpus& corpus)
 :corpus(corpus), param(new map<string, double>()),
-  G2(new map<string, double>()) {
+  G2(new map<string, double>()) ,
+  T(1), B(0), numThreads(4), Q(10), 
+  testFrequency(0.3), eta(0.5) {
   rngs.resize(numThreads);
 }
 

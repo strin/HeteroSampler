@@ -10,8 +10,8 @@ using namespace std;
 using namespace boost;
 
 // implement Token.
-Token::Token() {}
-Token::Token(const string& line) {
+Token::Token() : is_doc_start(false) {}
+Token::Token(const string& line) : is_doc_start(false) {
   this->parseline(line);
 }
 

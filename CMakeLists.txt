@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT (Venture)
+PROJECT (POSTag)
 
 include_directories("inc")
 add_subdirectory("src")
@@ -7,6 +7,7 @@ add_subdirectory("src")
 
 IF("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
 set(CMAKE_PREFIX_PATH /opt/local ${CMAKE_PREFIX_PATH})
+
 ENDIF()
 
 
@@ -35,7 +36,7 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 #  IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
 #    MESSAGE(FATAL_ERROR "g++ version 4.8 is required!")
 #  ENDIF()
-  ADD_DEFINITIONS("-std=c++11" "-Wall" "-g" "-O0" "-fPIC")
+  ADD_DEFINITIONS("-std=c++0x" "-Wall" "-g" "-O0" "-fPIC")
 ELSE("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	message("Found clang++ version" ${CMAKE_CXX_COMPILER_VERSION})
 	ADD_DEFINITIONS("-std=c++11" "-Wall" "-g" "-O3" "-fPIC" "-Wno-deprecated-register" "-Wno-overloaded-virtual")

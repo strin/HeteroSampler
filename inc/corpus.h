@@ -11,7 +11,7 @@ public:
   std::string word,  // word. use lower case, B-S means beginning of sentence. 
 	      pos, pos2, 
 	      ner;   // name entity.
-  bool is_doc_start = false;
+  bool is_doc_start;
   Token();
   Token(const std::string& line);
   void parseline(const std::string& line);

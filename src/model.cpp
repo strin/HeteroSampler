@@ -26,7 +26,8 @@ ParamPointer Model::gradientGibbs(const Sentence& seq) {
   }
   mapDivide<double>(*gradient, -(double)(T-B));
   mapUpdate<double, int>(*gradient, *feat);
-  cout << "[Example] " << tag.str() << endl;
+  log.begin("truth"); log << seq.str() << XMLlog::endl; log.end();
+  log.begin("tag"); log << tag.str() << XMLlog::endl; log.end();
   return gradient;
 }
 
@@ -35,18 +36,28 @@ void Model::run(const Corpus& testCorpus) {
   retagged.retag(this->corpus); // use training taggs. 
   int testLag = corpus.seqs.size()*testFrequency;
   int numObservation = 0;
-  cout << "[run] corpus size = " << corpus.seqs.size() 
-      << "\t Q = " << Q << endl;
+  log.begin("param");
+  log.begin("Q"); log << Q << XMLlog::endl; log.end();
+  log.begin("T"); log << T << XMLlog::endl; log.end();
+  log.begin("B"); log << B << XMLlog::endl; log.end();
+  log.begin("eta"); log << eta << XMLlog::endl; log.end();
+  log.begin("num_train"); log << corpus.size() << XMLlog::endl; log.end();
+  log.begin("num_test"); log << testCorpus.size() << XMLlog::endl; log.end();
+  log.begin("test_lag"); log << testLag << XMLlog::endl; log.end();
+  log.end();
   for(int q = 0; q < Q; q++) {
-    cout << "iteration " << q << endl;
+    log.begin("pass "+to_string(q));
     for(const Sentence& seq : corpus.seqs) {
-      cout << "pass " << numObservation/(double)corpus.seqs.size() << endl;
+      log.begin("example_"+to_string(numObservation));
       ParamPointer gradient = gradientGibbs(seq);
       this->adagrad(gradient);
+      log.end();
       numObservation++;
       if(numObservation % testLag == 0) {
+	log.begin("test");
 	double f1 = test(retagged);
-	cout << "test F1 score = " << f1*100 << " %" << endl;
+	log << "test F1 score = " << f1*100 << " %" << XMLlog::endl;
+	log.end();
       }
     }
   }
@@ -56,6 +67,7 @@ double Model::test(const Corpus& corpus) {
   map<int, int> tagcounts;
   map<int, int> taghits;
   int testcount = 0;
+  log.begin("examples");
   for(const Sentence& seq : corpus.seqs) {
     Tag tag(&seq, corpus, &rngs[0], param);
     for(int t = 0; t < T; t++) {
@@ -63,8 +75,8 @@ double Model::test(const Corpus& corpus) {
 	tag.proposeGibbs(i);
       }
     }
-    cout << "[Test Example] " << seq.str() << endl;
-    cout << "[Test Answer]  " << tag.str() << endl;
+    log.begin("truth"); log << seq.str() << XMLlog::endl; log.end();
+    log.begin("tag"); log << tag.str() << XMLlog::endl; log.end();
     for(int i = 0; i < seq.tag.size(); i++) {
       if(tag.tag[i] == seq.tag[i]) {
 	if(taghits.find(tag.tag[i]) == taghits.end())
@@ -77,6 +89,7 @@ double Model::test(const Corpus& corpus) {
     }
     testcount++;
   }
+  log.end();
   double f1 = 0.0;
   for(const pair<string, int>& p : corpus.tags) {
     double accuracy = 0;
@@ -85,7 +98,7 @@ double Model::test(const Corpus& corpus) {
     double recall = 0;
     if((double)corpus.tagcounts.find(p.first)->second != 0)
       recall = taghits[p.second]/(double)corpus.tagcounts.find(p.first)->second;
-    cout << "<tag: " << p.first << "\taccuracy: " << accuracy << "\trecall: " << recall << endl;
+    log << "<tag: " << p.first << "\taccuracy: " << accuracy << "\trecall: " << recall << XMLlog::endl;
     if(accuracy != 0 && recall != 0)
       f1 += 2*accuracy*recall/(accuracy+recall);
   }

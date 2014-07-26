@@ -91,7 +91,7 @@ string Tag::str() {
   stringstream ss;
   int seqlen = seq->seq.size();
   for(int i = 0; i < seqlen; i++) {
-    ss << seq->seq[i].word << "/" << tag[i] << "/" << corpus.invtags.find(tag[i])->second << "\t";
+    ss << seq->seq[i].word << "/" << corpus.invtags.find(tag[i])->second << "\t";
   }
   return ss.str();
 }

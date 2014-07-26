@@ -37,6 +37,7 @@ public:
   Corpus(const std::string& filename);
   void read(const std::string& filename);
   void retag(const Corpus& corpus); // retag using corpus' tag.
+  int size() const {return seqs.size(); }
 };
 
 #endif

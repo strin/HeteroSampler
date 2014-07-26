@@ -4,6 +4,8 @@
 #include "tag.h"
 #include "corpus.h"
 #include "objcokus.h"
+#include "log.h"
+
 #include <vector>
 
 struct Model {
@@ -16,6 +18,7 @@ public:
   void adagrad(ParamPointer gradient);
 
   const Corpus& corpus;
+  XMLlog log;
   ParamPointer param, G2;
 
   /* parameters */

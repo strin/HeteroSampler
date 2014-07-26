@@ -49,9 +49,21 @@ ENDIF()
 
 add_executable(pos main.cpp
 src/corpus.cpp
+src/log.cpp
 src/tag.cpp
 src/model.cpp
 src/objcokus.cpp
+)
+
+add_executable(testlog src/log.cpp
+testlog.cpp
+)
+
+
+target_link_libraries(testlog
+  ${LIBS}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
 )
 
 target_link_libraries(pos

@@ -25,6 +25,7 @@ public:
   Sentence(const std::vector<std::string>& lines);
   void parselines(const std::vector<std::string>& lines);
   std::string str() const;
+  int size() const {return this->seq.size(); }
 };
 
 struct Corpus {
@@ -35,6 +36,7 @@ public:
   Corpus();
   Corpus(const std::string& filename);
   void read(const std::string& filename);
+  void retag(const Corpus& corpus); // retag using corpus' tag.
 };
 
 #endif

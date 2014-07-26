@@ -26,6 +26,9 @@ public:
   FeaturePointer features; 
   ParamPointer param;
 
+  /* corpus should be training corpus, as its tag mapping would be used.
+   * DO NOT use the test corpus, as it would confuse the tagging.
+   */
   Tag(const Sentence* seq, const Corpus& corpus, 
      objcokus* rng, ParamPointer param);
   size_t size() const {return this->tag.size(); }

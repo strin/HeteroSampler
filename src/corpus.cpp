@@ -95,3 +95,13 @@ void Corpus::read(const string& filename) {
     }
   }
 }
+
+void Corpus::retag(const Corpus& corpus) {
+  this->tags = corpus.tags;
+  this->invtags = corpus.invtags;
+  for(Sentence& sen : seqs) {
+    for(int i = 0; i < sen.size(); i++) {
+      sen.tag[i] = this->tags[sen.seq[i].pos];
+    }
+  }
+}

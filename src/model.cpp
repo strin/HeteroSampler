@@ -1,5 +1,6 @@
 #include "model.h"
 #include "utils.h"
+#include "log.h"
 #include <iostream>
 #include <string>
 #include <map>
@@ -30,6 +31,8 @@ ParamPointer Model::gradientGibbs(const Sentence& seq) {
 }
 
 void Model::run(const Corpus& testCorpus) {
+  Corpus retagged(testCorpus);
+  retagged.retag(this->corpus); // use training taggs. 
   int testLag = corpus.seqs.size()*testFrequency;
   int numObservation = 0;
   cout << "[run] corpus size = " << corpus.seqs.size() 
@@ -42,7 +45,7 @@ void Model::run(const Corpus& testCorpus) {
       this->adagrad(gradient);
       numObservation++;
       if(numObservation % testLag == 0) {
-	double f1 = test(testCorpus);
+	double f1 = test(retagged);
 	cout << "test F1 score = " << f1*100 << " %" << endl;
       }
     }
@@ -60,6 +63,8 @@ double Model::test(const Corpus& corpus) {
 	tag.proposeGibbs(i);
       }
     }
+    cout << "[Test Example] " << seq.str() << endl;
+    cout << "[Test Answer]  " << tag.str() << endl;
     for(int i = 0; i < seq.tag.size(); i++) {
       if(tag.tag[i] == seq.tag[i]) {
 	if(taghits.find(tag.tag[i]) == taghits.end())

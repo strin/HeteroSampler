@@ -19,7 +19,7 @@ public:
   ParamPointer param, G2;
 
   /* parameters */
-  int T = 2, B = 0, numThreads = 4, Q = 10;
+  int T = 1, B = 0, numThreads = 4, Q = 10;
   double testFrequency = 0.1;
   double eta = 0.5;
   std::vector<objcokus> rngs;

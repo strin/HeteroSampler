@@ -39,7 +39,7 @@ void Model::run(const Corpus& testCorpus) {
     for(const Sentence& seq : corpus.seqs) {
       cout << "pass " << numObservation/(double)corpus.seqs.size() << endl;
       ParamPointer gradient = gradientGibbs(seq);
-      mapUpdate<double, double>(*param, *gradient);
+      this->adagrad(gradient);
       numObservation++;
       if(numObservation % testLag == 0) {
 	double f1 = test(testCorpus);

@@ -56,7 +56,6 @@ void Model::run(const Corpus& testCorpus) {
       if(numObservation % testLag == 0) {
 	log.begin("test");
 	double f1 = test(retagged);
-	log.begin("score"); log << "test F1 score = " << f1*100 << " %" << endl; log.end();
 	log.end();
       }
     }
@@ -66,7 +65,7 @@ void Model::run(const Corpus& testCorpus) {
 double Model::test(const Corpus& corpus) {
   map<int, int> tagcounts;
   map<int, int> taghits;
-  int testcount = 0;
+  int testcount = 0, alltaghits = 0;
   log.begin("examples");
   for(const Sentence& seq : corpus.seqs) {
     Tag tag(&seq, corpus, &rngs[0], param);
@@ -82,14 +81,17 @@ double Model::test(const Corpus& corpus) {
 	if(taghits.find(tag.tag[i]) == taghits.end())
 	  taghits[tag.tag[i]] = 0;
 	taghits[tag.tag[i]]++;
+	alltaghits++;
       }
       if(tagcounts.find(tag.tag[i]) == tagcounts.end())
 	tagcounts[tag.tag[i]] = 0;
       tagcounts[tag.tag[i]]++;
+      testcount++;
     }
-    testcount++;
   }
   log.end();
+
+  log.begin("score"); 
   double f1 = 0.0;
   for(const pair<string, int>& p : corpus.tags) {
     double accuracy = 0;
@@ -98,10 +100,14 @@ double Model::test(const Corpus& corpus) {
     double recall = 0;
     if((double)corpus.tagcounts.find(p.first)->second != 0)
       recall = taghits[p.second]/(double)corpus.tagcounts.find(p.first)->second;
-    log << "<tag: " << p.first << "\taccuracy: " << accuracy << "\trecall: " << recall << endl;
-    if(accuracy != 0 && recall != 0)
-      f1 += 2*accuracy*recall/(accuracy+recall);
+    log << "<tag: " << p.first << "\taccuracy: " << accuracy << "\trecall: " << recall << "\tF1: " <<
+    2*accuracy*recall/(accuracy+recall) << endl;
+    // if(accuracy != 0 && recall != 0)
+    //  f1 += 2*accuracy*recall/(accuracy+recall);
   }
+  double accuracy = (double)alltaghits/testcount;
+  log << "test accuracy = " << accuracy*100 << " %" << endl; 
+  log.end();
   return f1/corpus.tags.size();
 }
 

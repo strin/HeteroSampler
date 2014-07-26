@@ -26,8 +26,8 @@ ParamPointer Model::gradientGibbs(const Sentence& seq) {
   }
   mapDivide<double>(*gradient, -(double)(T-B));
   mapUpdate<double, int>(*gradient, *feat);
-  log.begin("truth"); log << seq.str() << XMLlog::endl; log.end();
-  log.begin("tag"); log << tag.str() << XMLlog::endl; log.end();
+  log.begin("truth"); log << seq.str() << endl; log.end();
+  log.begin("tag"); log << tag.str() << endl; log.end();
   return gradient;
 }
 
@@ -37,13 +37,13 @@ void Model::run(const Corpus& testCorpus) {
   int testLag = corpus.seqs.size()*testFrequency;
   int numObservation = 0;
   log.begin("param");
-  log.begin("Q"); log << Q << XMLlog::endl; log.end();
-  log.begin("T"); log << T << XMLlog::endl; log.end();
-  log.begin("B"); log << B << XMLlog::endl; log.end();
-  log.begin("eta"); log << eta << XMLlog::endl; log.end();
-  log.begin("num_train"); log << corpus.size() << XMLlog::endl; log.end();
-  log.begin("num_test"); log << testCorpus.size() << XMLlog::endl; log.end();
-  log.begin("test_lag"); log << testLag << XMLlog::endl; log.end();
+  log.begin("Q"); log << Q << endl; log.end();
+  log.begin("T"); log << T << endl; log.end();
+  log.begin("B"); log << B << endl; log.end();
+  log.begin("eta"); log << eta << endl; log.end();
+  log.begin("num_train"); log << corpus.size() << endl; log.end();
+  log.begin("num_test"); log << testCorpus.size() << endl; log.end();
+  log.begin("test_lag"); log << testLag << endl; log.end();
   log.end();
   for(int q = 0; q < Q; q++) {
     log.begin("pass "+to_string(q));
@@ -56,7 +56,7 @@ void Model::run(const Corpus& testCorpus) {
       if(numObservation % testLag == 0) {
 	log.begin("test");
 	double f1 = test(retagged);
-	log << "test F1 score = " << f1*100 << " %" << XMLlog::endl;
+	log.begin("score"); log << "test F1 score = " << f1*100 << " %" << endl; log.end();
 	log.end();
       }
     }
@@ -75,8 +75,8 @@ double Model::test(const Corpus& corpus) {
 	tag.proposeGibbs(i);
       }
     }
-    log.begin("truth"); log << seq.str() << XMLlog::endl; log.end();
-    log.begin("tag"); log << tag.str() << XMLlog::endl; log.end();
+    log.begin("truth"); log << seq.str() << endl; log.end();
+    log.begin("tag"); log << tag.str() << endl; log.end();
     for(int i = 0; i < seq.tag.size(); i++) {
       if(tag.tag[i] == seq.tag[i]) {
 	if(taghits.find(tag.tag[i]) == taghits.end())
@@ -98,7 +98,7 @@ double Model::test(const Corpus& corpus) {
     double recall = 0;
     if((double)corpus.tagcounts.find(p.first)->second != 0)
       recall = taghits[p.second]/(double)corpus.tagcounts.find(p.first)->second;
-    log << "<tag: " << p.first << "\taccuracy: " << accuracy << "\trecall: " << recall << XMLlog::endl;
+    log << "<tag: " << p.first << "\taccuracy: " << accuracy << "\trecall: " << recall << endl;
     if(accuracy != 0 && recall != 0)
       f1 += 2*accuracy*recall/(accuracy+recall);
   }

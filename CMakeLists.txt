@@ -17,7 +17,7 @@ list(APPEND LIBS ${GSL_LIBRARIES} ${GSLCBLAS_LIBRARIES})
 ADD_DEFINITIONS(-DBoost_USE_STATIC_LIBS=ON)
 set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost COMPONENTS filesystem system date_time python thread REQUIRED)
+find_package(Boost COMPONENTS REQUIRED)
 message("Include dirs of boost: " ${Boost_INCLUDE_DIRS} )
 message("Libs of boost: " ${Boost_LIBRARIES} )
 

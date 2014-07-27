@@ -125,33 +125,40 @@ void Model::adagrad(ParamPointer gradient) {
 }
 
 ModelTreeUA::ModelTreeUA(const Corpus& corpus) 
-:Model(corpus), eps(0), eps_split(0) {
+:Model(corpus), eps(0), eps_split(0.1) {
 }
 
 ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
   this->eps = 1.0/(T-B);
   MarkovTree tree;
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  std::function<void(int, shared_ptr<MarkovTreeNode>, Tag)> 
-    core = [&](int id, shared_ptr<MarkovTreeNode> node, Tag tag) {
-      objcokus cokus; // cokus is not re-entrant.
-      cokus.seedMT(id);
+  std::function<void(int, shared_ptr<MarkovTreeNode>, Tag, objcokus)> 
+    core = [&](int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
       while(true) {
-	node->gradient = tag.proposeGibbs(cokus.randomMT() % tag.size(), true);
+	node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
 	// xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
 	if(node->depth < B) node->log_weight = -DBL_MAX;
 	else node->log_weight = this->score(tag); 
 
-	if(node == tree.root || cokus.random01() < this->eps_split) { // split.
+	if(node == tree.root) { // multithread split.
 	  vector<shared_ptr<thread> > th(K);
+	  vector<objcokus> cokus(K);
 	  for(int k = 0; k < K; k++) {
+	    int newid = getFingerPrint((k+5)*3, id);
+	    cokus[k].seedMT(newid);
 	    node->children.push_back(makeMarkovTreeNode(node));
-	    th[k] = shared_ptr<thread>(new thread(core, getFingerPrint((k+5)*3, id), 
-			node->children.back(), tag)); 
+	    th[k] = shared_ptr<thread>(new thread(core, newid,
+			node->children.back(), tag, cokus[k])); 
 	  }
 	  for(int k = 0; k < K; k++) th[k]->join();
-	  break;
-	}else if(log(cokus.random01()) < log(this->eps)) { // stop.
+	  return;
+	}else if(log(rng.random01()) < log(this->eps_split)) {
+	  for(int k = 0; k < K; k++) {
+	    node->children.push_back(makeMarkovTreeNode(node));
+	    core(id, node->children.back(), tag, rng);
+	  }
+	  return;
+	}else if(log(rng.random01()) < log(this->eps)) { // stop.
 	  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
 	  break;
 	}else{                             // proceed as chain.
@@ -161,7 +168,9 @@ ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
       }
   };
   Tag tag(&seq, corpus, &rngs[0], param);
-  core(0, tree.root, tag);
+  objcokus cokus; // cokus is not re-entrant.
+  cokus.seedMT(0);
+  core(0, tree.root, tag, cokus);
   return tree.expectedGradient();
 }
 

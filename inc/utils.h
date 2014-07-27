@@ -3,14 +3,33 @@
 
 #include <cmath>
 #include <map>
+#include <string>
+#include <iostream>
 #include "float.h"
+#include <functional>
+
+static long getFingerPrint(long iterations, long startSeed) { // random hash function taken from 6.816.
+  const long m = (long) 0xFFFFFFFFFFFFL;
+  const long a = 25214903917L;
+  const long c = 11L;
+  long seed = startSeed;
+  for(long i = 0; i < iterations; i++) {
+    seed = (seed*a + c) & m;
+  }
+  return ( seed >> 12 );
+}
+
+static double logAdd(double a, double b) { // add in log space.
+  if(a == -DBL_MAX) return b;
+  if(b == -DBL_MAX) return a;
+  if(a < b) return b+log(1+exp(a-b)); // may overflow, ignore for now.
+  if(b <= a) return a+log(1+exp(b-a));
+}
 
 static void logNormalize(double* logprob, int len) {
   double lse = -DBL_MAX;
   for(int i = 0; i < len; i++) {
-    if(lse == -DBL_MAX) lse = logprob[i];
-    else if(lse < logprob[i]) lse = logprob[i]+log(1+exp(lse-logprob[i]));
-    else lse = lse+log(1+exp(logprob[i]-lse));
+    lse = logAdd(lse, logprob[i]); 
   }
   for(int i = 0; i < len; i++) {
     logprob[i] -= lse;

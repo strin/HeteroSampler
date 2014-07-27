@@ -11,6 +11,12 @@
 
 typedef std::shared_ptr<std::map<std::string, int> > FeaturePointer;
 typedef std::shared_ptr<std::map<std::string, double> > ParamPointer;
+static ParamPointer makeParamPointer() {
+  return ParamPointer(new std::map<std::string, double>());
+}
+static FeaturePointer makeFeaturePointer() {
+  return FeaturePointer(new std::map<std::string, int>());
+}
 
 static std::string str(FeaturePointer features);
 

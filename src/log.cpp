@@ -36,9 +36,7 @@ const char ARR_ASCII_MAP[256][8]
  * so the file remains a legit xml */
 void sighandler(int s) {
   for(XMLlog* log : GLOBAL_XML_LOGS) {
-    while(log->depth() > 0) {
-      log->end();
-    }
+    delete log;
   }
   exit(1);
 }
@@ -62,6 +60,9 @@ XMLlog::XMLlog(string filename)
 }
 
 XMLlog::~XMLlog() {
+  while(this->depth() > 0) {
+    this->end();
+  }
   if(lets_close) 
     delete stream;
 }

@@ -132,7 +132,6 @@ ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
   this->eps = 1.0/(T-B);
   MarkovTree tree;
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  Tag tag(&seq, corpus, &rngs[0], param);
   std::function<void(int, shared_ptr<MarkovTreeNode>, Tag)> 
     core = [&](int id, shared_ptr<MarkovTreeNode> node, Tag tag) {
       objcokus cokus; // cokus is not re-entrant.
@@ -144,7 +143,6 @@ ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
 	else node->log_weight = this->score(tag); 
 
 	if(node == tree.root || cokus.random01() < this->eps_split) { // split.
-	  cout << "split " << endl;
 	  vector<shared_ptr<thread> > th(K);
 	  for(int k = 0; k < K; k++) {
 	    node->children.push_back(makeMarkovTreeNode(node));
@@ -162,6 +160,7 @@ ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
 	}
       }
   };
+  Tag tag(&seq, corpus, &rngs[0], param);
   core(0, tree.root, tag);
   return tree.expectedGradient();
 }

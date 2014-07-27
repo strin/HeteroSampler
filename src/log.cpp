@@ -36,7 +36,8 @@ const char ARR_ASCII_MAP[256][8]
  * so the file remains a legit xml */
 void sighandler(int s) {
   for(XMLlog* log : GLOBAL_XML_LOGS) {
-    delete log;
+    while(log->depth() > 0) 
+      log->end();
   }
   exit(1);
 }

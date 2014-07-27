@@ -146,7 +146,7 @@ ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
 	  vector<shared_ptr<thread> > th(K);
 	  for(int k = 0; k < K; k++) {
 	    node->children.push_back(makeMarkovTreeNode(node));
-	    th[k] = shared_ptr<thread>(new thread(core, getFingerPrint(k*3, id), 
+	    th[k] = shared_ptr<thread>(new thread(core, getFingerPrint((k+5)*3, id), 
 			node->children.back(), tag)); 
 	  }
 	  for(int k = 0; k < K; k++) th[k]->join();

@@ -18,6 +18,7 @@ int main(int argc, char* argv[]) {
       ("T", po::value<int>(), "number of transitions")
       ("B", po::value<int>(), "number of burnin steps")
       ("Q", po::value<int>(), "number of passes")
+      ("eps_split", po::value<int>(), "prob of split in MarkovTree")
   ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -45,26 +46,29 @@ int main(int argc, char* argv[]) {
   corpus.read("data/eng_ner/train");
   Corpus testCorpus;
   testCorpus.read("data/eng_ner/test");
-  shared_ptr<Model> model;
   auto set_param = [&] (shared_ptr<Model> model) {
     model->T = T;
     model->Q = Q;
     model->B = B;
   };
   if(inference == "Gibbs") {
-    model = shared_ptr<Model>(new Model(corpus));
+    shared_ptr<Model> model = shared_ptr<Model>(new Model(corpus));
     set_param(model);
     model->run(testCorpus);
   }else if(inference == "TreeUA") {
-    model = shared_ptr<Model>(new ModelTreeUA(corpus));
+    shared_ptr<ModelTreeUA> model = shared_ptr<ModelTreeUA>(new ModelTreeUA(corpus));
+    if(vm.count("eps_split")) {
+      model->eps_split = vm["eps_split"].as<int>();
+    }
     set_param(model);
+    model->runSimple(testCorpus);
     model->run(testCorpus);
   }else if(inference == "GibbsIncr") { 
-    model = shared_ptr<Model>(new ModelIncrGibbs(corpus));
+    shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(corpus));
     set_param(model);
     model->run(testCorpus);
   }else if(inference == "Simple") {
-    model = shared_ptr<Model>(new Model(corpus));
+    shared_ptr<Model> model = shared_ptr<Model>(new Model(corpus));
     set_param(model);
     model->runSimple(testCorpus);
   }

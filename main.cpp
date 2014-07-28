@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
       model->eps_split = vm["eps_split"].as<int>();
     }
     set_param(model);
-    // model->runSimple(testCorpus);
+    model->runSimple(testCorpus);
     model->run(testCorpus);
   }else if(inference == "GibbsIncr") { 
     shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(corpus));

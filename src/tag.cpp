@@ -62,24 +62,26 @@ string str(FeaturePointer features) {
 
 ParamPointer Tag::proposeSimple(int pos, bool withgrad) {
   const vector<Token>& sen = seq->seq;
+  size_t seqlen = sen.size();
   if(pos > size())
     throw "Simple model proposal out of boundary";
+  size_t taglen = corpus.tags.size();
   vector<FeaturePointer> featvec;
-  double sc[size()];
-  for(size_t t = 0; t < size(); t++) {
+  double sc[taglen];
+  for(size_t t = 0; t < taglen; t++) {
     tag[pos] = t;
     FeaturePointer features = this->extractSimpleFeatures(this->tag, pos);
     featvec.push_back(features);
     sc[t] = this->score(features);
   }
-  logNormalize(sc, size());
-  int val = rng->sampleCategorical(sc, size());
+  logNormalize(sc, taglen);
+  int val = rng->sampleCategorical(sc, taglen);
   tag[pos] = val;
   this->features = this->extractSimpleFeatures(this->tag, pos);
   ParamPointer gradient = makeParamPointer();
   mapUpdate<double, int>(*gradient, *this->features);
   if(withgrad) {
-    for(size_t t = 0; t < size(); t++) {
+    for(size_t t = 0; t < taglen; t++) {
       mapUpdate<double, int>(*gradient, *featvec[t], -exp(sc[t]));
     }
   }

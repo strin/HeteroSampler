@@ -5,8 +5,12 @@
 #include "corpus.h"
 #include "objcokus.h"
 #include "log.h"
+#include "MarkovTree.h"
 
 #include <vector>
+#include <list>
+#include <thread>
+#include <condition_variable>
 
 struct Model {
 public:
@@ -28,11 +32,15 @@ public:
   ParamPointer param, G2;
 
   /* parameters */
-  int T, B, K, Q, Q0;
+  int T, B, Q, Q0;
   double testFrequency;
   double eta;
   std::vector<objcokus> rngs;
+protected:
+  /* parameters */
+  int K;
 };
+
 
 struct ModelTreeUA : public Model {
 public:
@@ -42,6 +50,17 @@ public:
 
   /* parameters */
   double eps, eps_split;
+
+  /* parallel environment */
+  void workerThreads(int id, std::shared_ptr<MarkovTreeNode>, Tag tag, objcokus cokus);
+  std::vector<std::shared_ptr<std::thread> > th;
+  std::list<std::tuple<int, std::shared_ptr<MarkovTreeNode>, Tag, objcokus> > th_work;
+  size_t active_work;
+  std::mutex th_mutex;
+  std::condition_variable th_cv, th_finished;
+
+private:
+  void initThreads(size_t numThreads);
 };
 
 struct ModelIncrGibbs : public Model {

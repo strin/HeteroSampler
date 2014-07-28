@@ -7,6 +7,7 @@
 #include <map>
 #include <cmath>
 #include <thread>
+#include <chrono>
 
 using namespace std;
 
@@ -163,54 +164,89 @@ void Model::adagrad(ParamPointer gradient) {
 
 ModelTreeUA::ModelTreeUA(const Corpus& corpus) 
 :Model(corpus), eps(0), eps_split(0) {
+  this->initThreads(K);
+}
+
+void ModelTreeUA::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
+    while(true) {
+      node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
+      xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+      if(node->depth < B) node->log_weight = -DBL_MAX;
+      else node->log_weight = this->score(tag); 
+
+      if(node->depth == 0) { // multithread split.
+	unique_lock<mutex> lock(th_mutex);
+	active_work--;
+	vector<objcokus> cokus(K);
+	for(int k = 0; k < K; k++) {
+	  int newid = getFingerPrint((k+5)*3, id);
+	  cokus[k].seedMT(newid);
+	  node->children.push_back(makeMarkovTreeNode(node));
+	  th_work.push_back(make_tuple(newid, node->children.back(), tag, cokus[k]));
+	}
+	th_cv.notify_all();
+	lock.unlock();
+	return;
+      }else if(log(rng.random01()) < log(this->eps_split)) {
+	for(int k = 0; k < K; k++) {
+	  node->children.push_back(makeMarkovTreeNode(node));
+	  workerThreads(id, node->children.back(), tag, rng);
+	}
+	return;
+      }else if(node->depth >= B && log(rng.random01()) < log(this->eps)) { // stop.
+	unique_lock<mutex> lock(th_mutex);
+	xmllog.begin("tag"); 
+	xmllog << tag.str() << endl; 
+	xmllog << "weight " << node->log_weight << endl;
+	xmllog.end();
+	active_work--;
+	lock.unlock();
+	return;
+      }else{                             // proceed as chain.
+	node->children.push_back(makeMarkovTreeNode(node));
+	node = node->children.back();
+      }
+    }
+}
+
+void ModelTreeUA::initThreads(size_t numThreads) {
+  th.resize(numThreads);
+  active_work = 0;
+  for(size_t ni = 0; ni < numThreads; ni++) {
+    this->th[ni] = shared_ptr<thread>(new thread([&] (int id) {
+      unique_lock<mutex> lock(th_mutex);
+      while(true) {
+	if(th_work.size() > 0) {
+	  tuple<int, shared_ptr<MarkovTreeNode>, Tag, objcokus> work = th_work.front();
+	  th_work.pop_front();
+	  active_work++;
+	  lock.unlock();
+	  workerThreads(get<0>(work), get<1>(work), get<2>(work), get<3>(work));
+	  th_finished.notify_all();
+	  lock.lock();
+	}else{
+	  th_cv.wait(lock);	
+	}
+      }
+    }, ni));
+  }
 }
 
 ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
   this->eps = 1.0/(T-B);
   MarkovTree tree;
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  std::function<void(int, shared_ptr<MarkovTreeNode>, Tag, objcokus)> 
-    core = [&](int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
-      while(true) {
-	node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
-	// xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
-	if(node->depth < B) node->log_weight = -DBL_MAX;
-	else node->log_weight = this->score(tag); 
-
-	if(node == tree.root) { // multithread split.
-	  vector<shared_ptr<thread> > th(K);
-	  vector<objcokus> cokus(K);
-	  for(int k = 0; k < K; k++) {
-	    int newid = getFingerPrint((k+5)*3, id);
-	    cokus[k].seedMT(newid);
-	    node->children.push_back(makeMarkovTreeNode(node));
-	    th[k] = shared_ptr<thread>(new thread(core, newid,
-			node->children.back(), tag, cokus[k])); 
-	  }
-	  for(int k = 0; k < K; k++) th[k]->join();
-	  return;
-	}else if(log(rng.random01()) < log(this->eps_split)) {
-	  for(int k = 0; k < K; k++) {
-	    node->children.push_back(makeMarkovTreeNode(node));
-	    core(id, node->children.back(), tag, rng);
-	  }
-	  return;
-	}else if(node->depth >= B && log(rng.random01()) < log(this->eps)) { // stop.
-	  xmllog.begin("tag"); 
-	  xmllog << tag.str() << endl; 
-	  xmllog << "weight " << node->log_weight << endl;
-	  xmllog.end();
-	  break;
-	}else{                             // proceed as chain.
-	  node->children.push_back(makeMarkovTreeNode(node));
-	  node = node->children.back();
-	}
-      }
-  };
+  // xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
   Tag tag(&seq, corpus, &rngs[0], param);
   objcokus cokus; // cokus is not re-entrant.
   cokus.seedMT(0);
-  core(0, tree.root, tag, cokus);
+  unique_lock<mutex> lock(th_mutex);
+  th_work.push_back(make_tuple(0, tree.root, tag, cokus));
+  th_cv.notify_one();
+  while(true) {
+    th_finished.wait(lock);
+    if(active_work + th_work.size() == 0) break;
+  }
+  lock.unlock();
   return tree.expectedGradient();
 }
 

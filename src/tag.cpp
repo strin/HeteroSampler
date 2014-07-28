@@ -66,7 +66,7 @@ ParamPointer Tag::proposeSimple(int pos, bool withgrad) {
     throw "Simple model proposal out of boundary";
   vector<FeaturePointer> featvec;
   double sc[size()];
-  for(int t = 0; t < size(); t++) {
+  for(size_t t = 0; t < size(); t++) {
     tag[pos] = t;
     FeaturePointer features = this->extractSimpleFeatures(this->tag, pos);
     featvec.push_back(features);
@@ -79,7 +79,7 @@ ParamPointer Tag::proposeSimple(int pos, bool withgrad) {
   ParamPointer gradient = makeParamPointer();
   mapUpdate<double, int>(*gradient, *this->features);
   if(withgrad) {
-    for(int t = 0; t < size(); t++) {
+    for(size_t t = 0; t < size(); t++) {
       mapUpdate<double, int>(*gradient, *featvec[t], -exp(sc[t]));
     }
   }

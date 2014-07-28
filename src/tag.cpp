@@ -125,8 +125,9 @@ double Tag::score(FeaturePointer features) {
 
 string Tag::str() {
   stringstream ss;
-  int seqlen = seq->seq.size();
-  for(int i = 0; i < seqlen; i++) {
+  size_t seqlen = seq->seq.size();
+  ss << "[len " << seqlen << "]" << endl;
+  for(size_t i = 0; i < seqlen; i++) {
     ss << seq->seq[i].word << "/" << corpus.invtags.find(tag[i])->second << "\t";
   }
   return ss.str();

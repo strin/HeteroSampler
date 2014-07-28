@@ -18,6 +18,7 @@ int main(int argc, char* argv[]) {
       ("T", po::value<int>(), "number of transitions")
       ("B", po::value<int>(), "number of burnin steps")
       ("Q", po::value<int>(), "number of passes")
+      ("K", po::value<int>(), "number of threads/particles")
       ("eps_split", po::value<int>(), "prob of split in MarkovTree")
   ;
   po::variables_map vm;
@@ -40,6 +41,9 @@ int main(int argc, char* argv[]) {
   int Q = 10;
   if(vm.count("Q"))
     Q = vm["Q"].as<int>();
+  int K = 5;
+  if(vm.count("K"))
+    K = vm["K"].as<int>();
 
   // run.
   Corpus corpus;
@@ -56,7 +60,7 @@ int main(int argc, char* argv[]) {
     set_param(model);
     model->run(testCorpus);
   }else if(inference == "TreeUA") {
-    shared_ptr<ModelTreeUA> model = shared_ptr<ModelTreeUA>(new ModelTreeUA(corpus));
+    shared_ptr<ModelTreeUA> model = shared_ptr<ModelTreeUA>(new ModelTreeUA(corpus, K));
     if(vm.count("eps_split")) {
       model->eps_split = vm["eps_split"].as<int>();
     }

@@ -162,8 +162,9 @@ void Model::adagrad(ParamPointer gradient) {
   }
 }
 
-ModelTreeUA::ModelTreeUA(const Corpus& corpus) 
+ModelTreeUA::ModelTreeUA(const Corpus& corpus, int K) 
 :Model(corpus), eps(0), eps_split(0) {
+  Model::K = K;
   this->initThreads(K);
 }
 

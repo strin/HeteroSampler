@@ -44,7 +44,7 @@ protected:
 
 struct ModelTreeUA : public Model {
 public:
-  ModelTreeUA(const Corpus& corpus);
+  ModelTreeUA(const Corpus& corpus, int K);
   ParamPointer gradient(const Sentence& seq);
   double score(const Tag& tag);
 

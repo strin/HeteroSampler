@@ -41,8 +41,7 @@ ParamPointer Model::gradientSimple(const Sentence& seq) {
   Tag oldtag(tag);
   ParamPointer gradient(new map<string, double>());
   for(size_t i = 0; i < tag.size(); i++) {
-    ParamPointer g = tag.proposeSimple(i, true);
-    mapUpdate<double, double>(*gradient, *g);
+    mapUpdate<double, double>(*gradient, *tag.proposeSimple(i, true));
     mapUpdate<double, int>(*gradient, *tag.extractSimpleFeatures(tag.tag, i), -1.0);
     mapUpdate<double, int>(*gradient, *tag.extractSimpleFeatures(seq.tag, i));
   }

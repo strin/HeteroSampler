@@ -17,6 +17,16 @@ static ParamPointer makeParamPointer() {
 static FeaturePointer makeFeaturePointer() {
   return FeaturePointer(new std::map<std::string, int>());
 }
+static void copyParamFeatures(ParamPointer param, std::string prefix_from,
+	      std::string prefix_to) {
+  for(const std::pair<std::string, double>& pair : *param) {
+    std::string key = pair.first;
+    size_t pos = key.find(prefix_from);
+    if(pos == std::string::npos) 
+      continue;
+    (*param)[prefix_to + key.substr(pos + prefix_from.length())] = pair.second;
+  }
+}
 
 static std::string str(FeaturePointer features);
 
@@ -37,9 +47,11 @@ public:
    */
   Tag(const Sentence* seq, const Corpus& corpus, 
      objcokus* rng, ParamPointer param);
-  size_t size() const {return this->tag.size(); }
+  inline size_t size() const {return this->tag.size(); }
   void randomInit();
+  ParamPointer proposeSimple(int pos, bool withgrad = false);
   ParamPointer proposeGibbs(int pos, bool withgrad = false);
+  FeaturePointer extractSimpleFeatures(const std::vector<int>& tag, int pos);
   FeaturePointer extractFeatures(const std::vector<int>& tag);
   double score(FeaturePointer features); // return un-normalized log-score.
   std::string str(); 

@@ -13,7 +13,7 @@ using namespace std;
 Model::Model(const Corpus& corpus)
 :corpus(corpus), param(new map<string, double>()),
   G2(new map<string, double>()) ,
-  T(1), B(0), K(5), Q(10), 
+  T(1), B(0), K(5), Q(10), Q0(1),  
   testFrequency(0.3), eta(0.5) {
   rngs.resize(K);
 }
@@ -35,8 +35,44 @@ ParamPointer Model::gradientGibbs(const Sentence& seq) {
   return gradient;
 }
 
+ParamPointer Model::gradientSimple(const Sentence& seq) {
+  Tag tag(&seq, corpus, &rngs[0], param);
+  Tag oldtag(tag);
+  ParamPointer gradient(new map<string, double>());
+  for(size_t i = 0; i < tag.size(); i++) {
+    ParamPointer g = tag.proposeSimple(i, true);
+    mapUpdate<double, double>(*gradient, *g);
+    mapUpdate<double, int>(*gradient, *tag.extractSimpleFeatures(tag.tag, i), -1.0);
+    mapUpdate<double, int>(*gradient, *tag.extractSimpleFeatures(seq.tag, i));
+  }
+  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+  return gradient;
+}
+
 ParamPointer Model::gradient(const Sentence& seq) {
   return gradientGibbs(seq);  
+}
+
+void Model::runSimple(const Corpus& testCorpus) {
+  Corpus retagged(testCorpus);
+  retagged.retag(this->corpus); // use training taggs. 
+  xmllog.begin("train_simple");
+  int numObservation = 0;
+  for(int q = 0; q < Q0; q++) {
+    for(const Sentence& seq : corpus.seqs) {
+      xmllog.begin("example_"+to_string(numObservation));
+      ParamPointer gradient = this->gradientSimple(seq);
+      this->adagrad(gradient);
+      xmllog.end();
+      numObservation++;
+    }
+  }
+  copyParamFeatures(param, "simple-", "");
+  xmllog.end();
+  xmllog.begin("test");
+  test(retagged);
+  xmllog.end();
 }
 
 void Model::run(const Corpus& testCorpus) {

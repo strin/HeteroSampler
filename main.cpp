@@ -46,14 +46,26 @@ int main(int argc, char* argv[]) {
   Corpus testCorpus;
   testCorpus.read("data/eng_ner/test");
   shared_ptr<Model> model;
-  if(inference == "Gibbs") 
+  auto set_param = [&] (shared_ptr<Model> model) {
+    model->T = T;
+    model->Q = Q;
+    model->B = B;
+  };
+  if(inference == "Gibbs") {
     model = shared_ptr<Model>(new Model(corpus));
-  else if(inference == "TreeUA")
+    set_param(model);
+    model->run(testCorpus);
+  }else if(inference == "TreeUA") {
     model = shared_ptr<Model>(new ModelTreeUA(corpus));
-  else if(inference == "GibbsIncr") 
+    set_param(model);
+    model->run(testCorpus);
+  }else if(inference == "GibbsIncr") { 
     model = shared_ptr<Model>(new ModelIncrGibbs(corpus));
-  model->T = T;
-  model->Q = Q;
-  model->B = B;
-  model->run(testCorpus);
+    set_param(model);
+    model->run(testCorpus);
+  }else if(inference == "Simple") {
+    model = shared_ptr<Model>(new Model(corpus));
+    set_param(model);
+    model->runSimple(testCorpus);
+  }
 }

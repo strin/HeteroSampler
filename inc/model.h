@@ -11,6 +11,7 @@
 struct Model {
 public:
   Model(const Corpus& corpus);
+  void runSimple(const Corpus& testCorpus);
   void run(const Corpus& testCorpus);
   double test(const Corpus& corpus);
 
@@ -20,13 +21,14 @@ public:
 
   /* default implementation */
   ParamPointer gradientGibbs(const Sentence& seq);
+  ParamPointer gradientSimple(const Sentence& seq);
 
   const Corpus& corpus;
   XMLlog xmllog;
   ParamPointer param, G2;
 
   /* parameters */
-  int T, B, K, Q;
+  int T, B, K, Q, Q0;
   double testFrequency;
   double eta;
   std::vector<objcokus> rngs;

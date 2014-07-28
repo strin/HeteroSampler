@@ -171,7 +171,7 @@ ModelTreeUA::ModelTreeUA(const Corpus& corpus, int K)
 void ModelTreeUA::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
     while(true) {
       node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
-      xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+      // xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
       if(node->depth < B) node->log_weight = -DBL_MAX;
       else node->log_weight = this->score(tag); 
 
@@ -236,7 +236,7 @@ void ModelTreeUA::initThreads(size_t numThreads) {
 ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
   this->eps = 1.0/(T-B);
   MarkovTree tree;
-  // xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
   Tag tag(&seq, corpus, &rngs[0], param);
   objcokus cokus; // cokus is not re-entrant.
   cokus.seedMT(0);

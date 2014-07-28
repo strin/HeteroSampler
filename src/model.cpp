@@ -27,13 +27,60 @@ ParamPointer Model::gradientGibbs(const Sentence& seq) {
     for(int i = 0; i < seq.tag.size(); i++) 
       tag.proposeGibbs(i);
     if(t < B) continue;
-    mapUpdate<double, int>(*gradient, *tag.extractFeatures(tag.tag));
+    mapUpdate<double, double>(*gradient, *tag.extractFeatures(tag.tag));
   }
   mapDivide<double>(*gradient, -(double)(T-B));
-  mapUpdate<double, int>(*gradient, *feat);
+  mapUpdate<double, double>(*gradient, *feat);
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
   xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
   return gradient;
+}
+
+FeaturePointer Model::tagEntropySimple() {
+  FeaturePointer feat = makeFeaturePointer();
+  const size_t taglen = corpus.tags.size();
+  double logweights[taglen];
+  for(const pair<string, int>& p : corpus.dic) {
+    for(size_t t = 0; t < taglen; t++) {
+      string feat = "simple-"+p.first+"-"+to_string(t);
+      logweights[t] = (*param)[feat];
+    }
+    logNormalize(logweights, taglen);
+    double entropy = 0.0;
+    for(size_t t = 0; t < taglen; t++) {
+      entropy -= logweights[t] * exp(logweights[t]);
+    }
+    (*feat)[p.first] = entropy;
+  }
+  return feat;
+}
+
+FeaturePointer Model::wordFrequencies() {
+  FeaturePointer feat = makeFeaturePointer();
+  for(const pair<string, int>& p : corpus.dic_counts) {
+    (*feat)[p.first] = log(corpus.total_words)-log(p.second);
+  }
+  return feat;
+}
+
+Vector2d Model::tagBigram() {
+  size_t taglen = corpus.tags.size();
+  Vector2d mat = makeVector2d(taglen, taglen, 1.0);
+  for(const Sentence& seq : corpus.seqs) {
+    for(size_t t = 1; t < seq.size(); t++) {
+      mat[seq.tag[t-1]][seq.tag[t]]++; 
+    }
+  }
+  for(size_t i = 0; i < taglen; i++) {
+    double sum_i = 0.0;
+    for(size_t j = 0; j < taglen; j++) {
+      sum_i += mat[i][j];
+    }
+    for(size_t j = 0; j < taglen; j++) {
+      mat[i][j] = log(mat[i][j])-log(sum_i);
+    }
+  }
+  return mat;
 }
 
 ParamPointer Model::gradientSimple(const Sentence& seq) {
@@ -41,9 +88,10 @@ ParamPointer Model::gradientSimple(const Sentence& seq) {
   Tag oldtag(tag);
   ParamPointer gradient(new map<string, double>());
   for(size_t i = 0; i < tag.size(); i++) {
-    mapUpdate<double, double>(*gradient, *tag.proposeSimple(i, true));
-    mapUpdate<double, int>(*gradient, *tag.extractSimpleFeatures(tag.tag, i), -1.0);
-    mapUpdate<double, int>(*gradient, *tag.extractSimpleFeatures(seq.tag, i));
+    ParamPointer g = tag.proposeSimple(i, true);
+    mapUpdate<double, double>(*gradient, *g);
+    mapUpdate<double, double>(*gradient, *tag.extractSimpleFeatures(tag.tag, i), -1.0);
+    mapUpdate<double, double>(*gradient, *tag.extractSimpleFeatures(seq.tag, i));
   }
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
   xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
@@ -272,10 +320,10 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq) {
   for(int i = 0; i < seq.tag.size(); i++) {
     ParamPointer g = tag.proposeGibbs(i, true);
     mapUpdate<double, double>(*gradient, *g);
-    mapUpdate<double, int>(*gradient, *tag.extractFeatures(tag.tag), -1);
+    mapUpdate<double, double>(*gradient, *tag.extractFeatures(tag.tag), -1);
     mytag.tag[i] = tag.tag[i];
     tag.tag[i] = seq.tag[i];
-    mapUpdate<double, int>(*gradient, *tag.extractFeatures(tag.tag)); 
+    mapUpdate<double, double>(*gradient, *tag.extractFeatures(tag.tag)); 
   }
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
   xmllog.begin("tag"); xmllog << mytag.str() << endl; xmllog.end();

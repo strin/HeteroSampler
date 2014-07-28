@@ -9,15 +9,25 @@
 #include <memory>
 #include <boost/random/uniform_int.hpp>
 
-typedef std::shared_ptr<std::map<std::string, int> > FeaturePointer;
+typedef std::pair<std::string, double> ParamItem;
+typedef ParamItem FeatureItem;
 typedef std::shared_ptr<std::map<std::string, double> > ParamPointer;
-static ParamPointer makeParamPointer() {
+typedef ParamPointer FeaturePointer;
+typedef std::vector<std::vector<double> > Vector2d;
+
+inline static ParamPointer makeParamPointer() {
   return ParamPointer(new std::map<std::string, double>());
 }
-static FeaturePointer makeFeaturePointer() {
-  return FeaturePointer(new std::map<std::string, int>());
+inline static FeaturePointer makeFeaturePointer() {
+  return makeParamPointer();
 }
-static void copyParamFeatures(ParamPointer param, std::string prefix_from,
+inline static Vector2d makeVector2d(size_t m, size_t n, double c = 0.0) {
+  Vector2d vec(m);
+  for(size_t mi = 0; mi < m; mi++) vec[mi].resize(n, c);
+  return vec;
+}
+
+inline static void copyParamFeatures(ParamPointer param, std::string prefix_from,
 	      std::string prefix_to) {
   for(const std::pair<std::string, double>& pair : *param) {
     std::string key = pair.first;
@@ -28,7 +38,7 @@ static void copyParamFeatures(ParamPointer param, std::string prefix_from,
   }
 }
 
-static std::string str(FeaturePointer features);
+inline static std::string str(FeaturePointer features);
 
 struct Tag {
 public:

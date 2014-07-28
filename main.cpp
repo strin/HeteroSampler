@@ -75,5 +75,25 @@ int main(int argc, char* argv[]) {
     shared_ptr<Model> model = shared_ptr<Model>(new Model(corpus));
     set_param(model);
     model->runSimple(testCorpus);
+  }else if(inference == "TagEntropySimple") {
+    shared_ptr<Model> model = shared_ptr<Model>(new Model(corpus));
+    set_param(model);
+    model->runSimple(testCorpus);
+    FeaturePointer feat = model->tagEntropySimple();
+    XMLlog log_entropy("tag_entropy.xml"); 
+    log_entropy << *feat;
+    feat = model->wordFrequencies();
+    XMLlog log_freq("word_freq.xml");
+    log_freq << *feat;
+    XMLlog log_tagbigram("tag_bigram.xml");
+    Vector2d mat = model->tagBigram();
+    log_tagbigram.begin("matrix");
+    for(size_t i = 0; i < corpus.tags.size(); i++) {
+      for(size_t j = 0; j < corpus.tags.size(); j++) {
+	log_tagbigram << mat[i][j] << " ";
+      }
+      log_tagbigram << endl;
+    }
+    log_tagbigram.end();
   }
 }

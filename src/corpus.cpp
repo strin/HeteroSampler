@@ -65,6 +65,7 @@ void Corpus::read(const string& filename) {
   string line;
   vector<string> lines;
   int tagid = 0;
+  total_words = 0;
   this->seqs.clear();
   this->tags.clear();
   while(!file.eof()) {
@@ -79,8 +80,13 @@ void Corpus::read(const string& filename) {
 	if(tags.find(token.pos) == tags.end()) {
 	  tags[token.pos] =  tagid++;
 	  tagcounts[token.pos] = 0;
-	}else
-	  tagcounts[token.pos]++;
+	}
+	tagcounts[token.pos]++;
+	dic[token.word] = true;
+	if(dic_counts.find(token.word) == dic_counts.end()) 
+	  dic_counts[token.word] = 0;
+	dic_counts[token.word]++;
+	total_words++;
       }
       continue;
     }else

@@ -22,7 +22,7 @@ void Tag::randomInit() {
 }
 
 FeaturePointer Tag::extractSimpleFeatures(const vector<int>& tag, int pos) {
-  FeaturePointer features(new map<string, int>());
+  FeaturePointer features = makeFeaturePointer();
   const vector<Token>& sen = seq->seq;
   // extract word features only.
   stringstream ss;
@@ -32,7 +32,7 @@ FeaturePointer Tag::extractSimpleFeatures(const vector<int>& tag, int pos) {
 }
 
 FeaturePointer Tag::extractFeatures(const vector<int>& tag) {
-  FeaturePointer features(new map<string, int>());
+  FeaturePointer features = makeFeaturePointer();
   const vector<Token>& sen = seq->seq;
   int seqlen = sen.size();
   // extract word features. 
@@ -53,7 +53,7 @@ FeaturePointer Tag::extractFeatures(const vector<int>& tag) {
 string str(FeaturePointer features) {
   stringstream ss;
   ss << "[";
-  for(const pair<string, int>& p : *features) {
+  for(const pair<string, double>& p : *features) {
     ss << p.first << "\t";
   }
   ss << "]";
@@ -79,10 +79,10 @@ ParamPointer Tag::proposeSimple(int pos, bool withgrad) {
   tag[pos] = val;
   this->features = this->extractSimpleFeatures(this->tag, pos);
   ParamPointer gradient = makeParamPointer();
-  mapUpdate<double, int>(*gradient, *this->features);
+  mapUpdate<double, double>(*gradient, *this->features);
   if(withgrad) {
     for(size_t t = 0; t < taglen; t++) {
-      mapUpdate<double, int>(*gradient, *featvec[t], -exp(sc[t]));
+      mapUpdate<double, double>(*gradient, *featvec[t], -exp(sc[t]));
     }
   }
   return gradient;
@@ -107,10 +107,10 @@ ParamPointer Tag::proposeGibbs(int pos, bool withgrad) {
   tag[pos] = val;
   this->features = this->extractFeatures(this->tag);
   ParamPointer gradient(new map<string, double>());
-  mapUpdate<double, int>(*gradient, *this->features);
+  mapUpdate<double, double>(*gradient, *this->features);
   if(withgrad) {
     for(int t = 0; t < taglen; t++) {
-      mapUpdate<double, int>(*gradient, *featvec[t], -exp(sc[t]));
+      mapUpdate<double, double>(*gradient, *featvec[t], -exp(sc[t]));
     }
   }
   return gradient;
@@ -118,7 +118,7 @@ ParamPointer Tag::proposeGibbs(int pos, bool withgrad) {
 
 double Tag::score(FeaturePointer features) {
   double score = 0;
-  for(const pair<string, int>& feat : *features) {
+  for(const pair<string, double>& feat : *features) {
     if(this->param->find(feat.first) != this->param->end()) 
       score += feat.second * (*this->param)[feat.first];
   }

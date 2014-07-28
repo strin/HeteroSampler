@@ -25,13 +25,15 @@ public:
   Sentence(const std::vector<std::string>& lines);
   void parselines(const std::vector<std::string>& lines);
   std::string str() const;
-  int size() const {return this->seq.size(); }
+  size_t size() const {return this->seq.size(); }
 };
 
 struct Corpus {
 public:
   std::vector<Sentence> seqs;
   std::map<std::string, int> tags, tagcounts;
+  std::map<std::string, int> dic, dic_counts;
+  size_t total_words;
   std::map<int, std::string> invtags;
   Corpus();
   Corpus(const std::string& filename);

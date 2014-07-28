@@ -31,6 +31,11 @@ public:
   XMLlog xmllog;
   ParamPointer param, G2;
 
+  /* statistics */
+  FeaturePointer tagEntropySimple();
+  FeaturePointer wordFrequencies();
+  Vector2d tagBigram();
+
   /* parameters */
   int T, B, Q, Q0;
   double testFrequency;

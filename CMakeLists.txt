@@ -12,6 +12,7 @@ set(CMAKE_PREFIX_PATH /opt/local ${CMAKE_PREFIX_PATH})
 
 ENDIF()
 
+find_package (Threads)
 
 ADD_DEFINITIONS(-DBoost_USE_STATIC_LIBS=ON)
 set(Boost_USE_STATIC_LIBS   ON)
@@ -56,6 +57,7 @@ src/objcokus.cpp
 
 target_link_libraries(pos
   scilog
+  ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}
   ${Boost_LIBRARIES}
   ${PYTHON_LIBRARIES}

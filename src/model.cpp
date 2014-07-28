@@ -67,6 +67,7 @@ void Model::run(const Corpus& testCorpus) {
 	xmllog.end();
       }
     }
+    xmllog.end();
   }
 }
 
@@ -125,7 +126,7 @@ void Model::adagrad(ParamPointer gradient) {
 }
 
 ModelTreeUA::ModelTreeUA(const Corpus& corpus) 
-:Model(corpus), eps(0), eps_split(0.1) {
+:Model(corpus), eps(0), eps_split(0) {
 }
 
 ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
@@ -158,8 +159,11 @@ ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
 	    core(id, node->children.back(), tag, rng);
 	  }
 	  return;
-	}else if(log(rng.random01()) < log(this->eps)) { // stop.
-	  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+	}else if(node->depth >= B && log(rng.random01()) < log(this->eps)) { // stop.
+	  xmllog.begin("tag"); 
+	  xmllog << tag.str() << endl; 
+	  xmllog << "weight " << node->log_weight << endl;
+	  xmllog.end();
 	  break;
 	}else{                             // proceed as chain.
 	  node->children.push_back(makeMarkovTreeNode(node));
@@ -182,3 +186,27 @@ double ModelTreeUA::score(const Tag& tag) {
   }
   return score;
 }
+
+ModelIncrGibbs::ModelIncrGibbs(const Corpus& corpus) 
+:Model(corpus){
+  
+}
+
+ParamPointer ModelIncrGibbs::gradient(const Sentence& seq) {
+  Tag tag(&seq, corpus, &rngs[0], param);
+  Tag mytag(tag);
+  FeaturePointer feat = tag.extractFeatures(seq.tag);
+  ParamPointer gradient(new map<string, double>());
+  for(int i = 0; i < seq.tag.size(); i++) {
+    ParamPointer g = tag.proposeGibbs(i, true);
+    mapUpdate<double, double>(*gradient, *g);
+    mapUpdate<double, int>(*gradient, *tag.extractFeatures(tag.tag), -1);
+    mytag.tag[i] = tag.tag[i];
+    tag.tag[i] = seq.tag[i];
+    mapUpdate<double, int>(*gradient, *tag.extractFeatures(tag.tag)); 
+  }
+  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+  xmllog.begin("tag"); xmllog << mytag.str() << endl; xmllog.end();
+  return gradient;
+}
+

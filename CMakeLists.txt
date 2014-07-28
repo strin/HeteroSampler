@@ -2,6 +2,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT (POSTag)
 
 include_directories("inc")
+include_directories("scilog/inc")
+link_directories("scilog")
 add_subdirectory("src")
 
 
@@ -46,25 +48,14 @@ ENDIF()
 
 add_executable(pos main.cpp
 src/corpus.cpp
-src/log.cpp
 src/tag.cpp
 src/MarkovTree.cpp
 src/model.cpp
 src/objcokus.cpp
 )
 
-add_executable(testlog src/log.cpp
-testlog.cpp
-)
-
-
-target_link_libraries(testlog
-  ${LIBS}
-  ${Boost_LIBRARIES}
-  ${PYTHON_LIBRARIES}
-)
-
 target_link_libraries(pos
+  scilog
   ${LIBS}
   ${Boost_LIBRARIES}
   ${PYTHON_LIBRARIES}

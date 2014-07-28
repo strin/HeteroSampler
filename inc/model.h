@@ -41,4 +41,10 @@ public:
   /* parameters */
   double eps, eps_split;
 };
+
+struct ModelIncrGibbs : public Model {
+public:
+  ModelIncrGibbs(const Corpus& corpus);
+  ParamPointer gradient(const Sentence& seq);
+};
 #endif

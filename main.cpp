@@ -30,7 +30,6 @@ int main(int argc, char* argv[]) {
   if(vm.count("inference")) {
     inference = vm["inference"].as<string>();
   }
-  cout << "inference: " << inference << endl;
   int T = 1;
   if(vm.count("T")) 
     T = vm["T"].as<int>();
@@ -51,6 +50,8 @@ int main(int argc, char* argv[]) {
     model = shared_ptr<Model>(new Model(corpus));
   else if(inference == "TreeUA")
     model = shared_ptr<Model>(new ModelTreeUA(corpus));
+  else if(inference == "GibbsIncr") 
+    model = shared_ptr<Model>(new ModelIncrGibbs(corpus));
   model->T = T;
   model->Q = Q;
   model->B = B;

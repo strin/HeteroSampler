@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
     }else if(inference == "TagEntropySimple") {
       shared_ptr<Model> model = shared_ptr<Model>(new Model(corpus));
       set_param(model);
-      model->runSimple(testCorpus);
+      model->runSimple(testCorpus, false);
       FeaturePointer feat = model->tagEntropySimple();
       XMLlog log_entropy("tag_entropy.xml"); 
       log_entropy << *feat;

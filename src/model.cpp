@@ -66,7 +66,7 @@ FeaturePointer Model::wordFrequencies() {
 pair<Vector2d, vector<double> > Model::tagBigram() {
   size_t taglen = corpus.tags.size();
   Vector2d mat = makeVector2d(taglen, taglen, 1.0);
-  vector<double> vec(taglen, 0.0);
+  vector<double> vec(taglen, 1.0);
   for(const Sentence& seq : corpus.seqs) {
     vec[seq.tag[0]]++;
     for(size_t t = 1; t < seq.size(); t++) {
@@ -74,7 +74,7 @@ pair<Vector2d, vector<double> > Model::tagBigram() {
     }
   }
   for(size_t i = 0; i < taglen; i++) {
-    vec[i] = log(vec[i])-log(corpus.seqs.size());
+    vec[i] = log(vec[i])-log(taglen+corpus.seqs.size());
     double sum_i = 0.0;
     for(size_t j = 0; j < taglen; j++) {
       sum_i += mat[i][j];
@@ -392,7 +392,10 @@ void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag ta
 	xmllog.begin("weight"); xmllog << node->log_weight << endl; xmllog.end();
 	xmllog.begin("time"); xmllog << node->depth << endl; xmllog.end();
 	xmllog.begin("feat");
-	xmllog << *feat;
+	for(const pair<string, double>& p : *feat) {
+	  xmllog << p.first << " : " << p.second 
+		 << " , param : " << (*param)[p.first] << endl;
+	}
 	xmllog.end();
 	active_work--;
 	lock.unlock();
@@ -460,11 +463,11 @@ ModelAdaTree::logisticStop(shared_ptr<MarkovTreeNode> node, const Sentence& seq,
     }
     th_mutex.unlock();
   }
-  /*if(prob < 1e-3) prob = 1e-3;   // truncation, avoid too long transitions.
-  else{*/
+  if(prob < 1e-3) prob = 1e-3;   // truncation, avoid too long transitions.
+  else{
     mapUpdate<double, double>(*posgrad, *feat, (1-prob));
     mapUpdate<double, double>(*neggrad, *feat, -prob);
-  //}
+  }
   return make_tuple(prob, posgrad, neggrad, feat);
 }
 

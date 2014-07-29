@@ -92,7 +92,7 @@ ParamPointer Tag::proposeGibbs(int pos, bool withgrad) {
   const vector<Token>& sen = seq->seq;
   int seqlen = sen.size();
   if(pos >= seqlen) 
-    throw "Gibbs sampling proposal out of boundary.";
+    throw "Gibbs sampling proposal out of bound.";
   int taglen = corpus.tags.size();
   double sc[taglen];
   vector<FeaturePointer> featvec;
@@ -104,6 +104,7 @@ ParamPointer Tag::proposeGibbs(int pos, bool withgrad) {
   }
   logNormalize(sc, taglen);
   int val = rng->sampleCategorical(sc, taglen);
+  if(val == taglen) throw "Gibbs sample out of bound.";
   tag[pos] = val;
   this->features = this->extractFeatures(this->tag);
   ParamPointer gradient(new map<string, double>());

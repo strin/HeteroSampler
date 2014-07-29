@@ -217,6 +217,7 @@ ModelTreeUA::ModelTreeUA(const Corpus& corpus, int K)
 
 void ModelTreeUA::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
     while(true) {
+      tag.rng = &rng; // unsafe, rng may be deleted.
       node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
      // xmllog.begin("tag"); xmllog << "[" << node->depth << "] " 
       //			<< tag.str() << endl; xmllog.end();
@@ -244,10 +245,9 @@ void ModelTreeUA::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag
 	return;
       }else if(node->depth >= B && log(rng.random01()) < log(this->eps)) { // stop.
 	unique_lock<mutex> lock(th_mutex);
-	xmllog.begin("tag"); 
-	xmllog << tag.str() << endl; 
-	xmllog << "weight " << node->log_weight << endl;
-	xmllog.end();
+	xmllog.begin("tag");  xmllog << tag.str() << endl; xmllog.end();
+	xmllog.begin("weight"); xmllog << node->log_weight << endl; xmllog.end();
+	xmllog.begin("time"); xmllog << node->depth << endl; xmllog.end();
 	active_work--;
 	lock.unlock();
 	return;
@@ -341,6 +341,7 @@ ModelAdaTree::ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar)
 
 void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) { 
     while(true) {
+      tag.rng = &rng; // unsafe, rng may be deleted. 
       node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
       node->tag = shared_ptr<Tag>(new Tag(tag));
       auto predT = this->logisticStop(node, *tag.seq, tag); 
@@ -375,10 +376,9 @@ void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag ta
 	return;
       }else if(node->depth >= B && log(rng.random01()) < log(prob)) { // stop.
 	unique_lock<mutex> lock(th_mutex);
-	xmllog.begin("final_tag"); 
-	xmllog << tag.str() << endl; 
-	xmllog << "weight " << node->log_weight << endl;
-	xmllog.end();
+	xmllog.begin("final-tag");  xmllog << tag.str() << endl; xmllog.end();
+	xmllog.begin("weight"); xmllog << node->log_weight << endl; xmllog.end();
+	xmllog.begin("time"); xmllog << node->depth << endl; xmllog.end();
 	active_work--;
 	lock.unlock();
 	return;
@@ -402,7 +402,7 @@ FeaturePointer ModelAdaTree::extractStopFeatures(shared_ptr<MarkovTreeNode> node
   for(size_t t = 0; t < seqlen; t++) {
     string word = seq.seq[t].word;
     if(wordent->find(word) == wordent->end())
-      (*feat)["ent"+word] = log(taglen); // no word, use maxent.
+      (*feat)["ent-"+word] = log(taglen); // no word, use maxent.
     else
       (*feat)["ent-"+word] = (*wordent)[word];
     if(wordfreq->find(word) == wordfreq->end())
@@ -449,6 +449,6 @@ double ModelAdaTree::score(shared_ptr<MarkovTreeNode> node, const Tag& tag) {
   for(int i = 0; i < tag.size(); i++) {
     score -= (tag.tag[i] != seq->tag[i]);
   }
-  score -= 2 * m_c * max(0.0, node->depth-m_Tstar);
+  score -= m_c * max(0.0, node->depth-m_Tstar);
   return score;
 }

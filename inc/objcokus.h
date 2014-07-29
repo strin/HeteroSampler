@@ -139,6 +139,7 @@ public:
 	    cumulative_prob += exp(logprob[i]);
 	    if(cumulative_prob >= coin) break;
 	  }
+	  if(i == len) std::cout << "cumulative " << cumulative_prob << ", prob " << coin << std::endl;
 	  return i;
 	}
 };

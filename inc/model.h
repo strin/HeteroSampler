@@ -21,6 +21,7 @@ public:
 
   /* gradient interface */
   virtual ParamPointer gradient(const Sentence& seq); 
+  void configStepsize(ParamPointer gradient, double new_eta);
   void adagrad(ParamPointer gradient);
 
   /* default implementation */
@@ -29,7 +30,7 @@ public:
 
   const Corpus& corpus;
   XMLlog xmllog;
-  ParamPointer param, G2;
+  ParamPointer param, G2, stepsize;
 
   /* statistics */
   FeaturePointer tagEntropySimple();
@@ -89,8 +90,10 @@ public:
   FeaturePointer extractStopFeatures
     (std::shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag);
 
-  
   double score(std::shared_ptr<MarkovTreeNode> node, const Tag& tag);
+
+  /* parameters */
+  double etaT;
 private:
   FeaturePointer wordent, wordfreq;
   Vector2d tag_bigram;

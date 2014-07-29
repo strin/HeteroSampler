@@ -13,7 +13,7 @@ using namespace std;
 
 Model::Model(const Corpus& corpus)
 :corpus(corpus), param(new map<string, double>()),
-  G2(new map<string, double>()) ,
+  G2(new map<string, double>()) , stepsize(makeParamPointer()), 
   T(1), B(0), K(5), Q(10), Q0(1),  
   testFrequency(0.3), eta(0.5) {
   rngs.resize(K);
@@ -33,7 +33,13 @@ ParamPointer Model::gradientGibbs(const Sentence& seq) {
   mapUpdate<double, double>(*gradient, *feat);
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
   xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+  this->configStepsize(gradient, this->eta);
   return gradient;
+}
+
+void Model::configStepsize(ParamPointer gradient, double new_eta) {
+  for(const pair<string, double>& p : *gradient) 
+    (*stepsize)[p.first] = new_eta;
 }
 
 FeaturePointer Model::tagEntropySimple() {
@@ -114,6 +120,7 @@ void Model::runSimple(const Corpus& testCorpus, bool lets_test) {
     for(const Sentence& seq : corpus.seqs) {
       xmllog.begin("example_"+to_string(numObservation));
       ParamPointer gradient = this->gradientSimple(seq);
+      this->configStepsize(gradient, this->eta);
       this->adagrad(gradient);
       xmllog.end();
       numObservation++;
@@ -208,9 +215,14 @@ double Model::test(const Corpus& corpus) {
 }
 
 void Model::adagrad(ParamPointer gradient) {
+
   for(const pair<string, double>& p : *gradient) {
     mapUpdate(*G2, p.first, p.second * p.second);
-    mapUpdate(*param, p.first, eta * p.second / sqrt(1e-4 + (*G2)[p.first]));
+    double this_eta = eta;
+    if(stepsize->find(p.first) != stepsize->end()) {
+      this_eta = (*stepsize)[p.first];
+    }
+    mapUpdate(*param, p.first, this_eta * p.second/sqrt(1e-4 + (*G2)[p.first]));
   }
 }
 
@@ -226,6 +238,7 @@ void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> no
       node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
      // xmllog.begin("tag"); xmllog << "[" << node->depth << "] " 
       //			<< tag.str() << endl; xmllog.end();
+      this->configStepsize(node->gradient, this->eta);
       if(node->depth < B) node->log_weight = -DBL_MAX;
       else node->log_weight = this->score(tag); 
 
@@ -353,6 +366,7 @@ ModelAdaTree::ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar)
   auto tag_bigram_unigram = tagBigram();
   tag_bigram = tag_bigram_unigram.first;
   tag_unigram_start = tag_bigram_unigram.second;
+  this->etaT = this->eta;
 }
 
 void ModelAdaTree::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) { 
@@ -366,6 +380,10 @@ void ModelAdaTree::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> n
       node->posgrad = get<1>(predT);
       node->neggrad = get<2>(predT);
       ParamPointer feat = get<3>(predT); 
+      th_mutex.lock();
+      this->configStepsize(node->gradient, this->eta);
+      this->configStepsize(feat, this->etaT);
+      th_mutex.unlock();
 
       lg.begin("tag"); 
       lg << "[seed: " << seed << "] " 
@@ -466,6 +484,13 @@ ModelAdaTree::logisticStop(shared_ptr<MarkovTreeNode> node, const Sentence& seq,
 		neggrad = makeParamPointer();
   FeaturePointer feat = this->extractStopFeatures(node, seq, tag);
   double prob = logisticFunc(log(eps)-log(1-eps)+tag.score(feat)); 
+  if(isnan(prob)) {
+    th_mutex.lock();
+    for(const pair<string, double>& p : *feat) {
+      xmllog << p.first << " : " << (*param)[p.first] << endl;
+    }
+    th_mutex.unlock();
+  }
   if(prob < 1e-3) prob = 1e-3;   // truncation, avoid too long transitions.
   else{
     mapUpdate<double, double>(*posgrad, *feat, (1-prob));

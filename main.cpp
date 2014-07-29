@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
       ("help", "produce help message")
       ("inference", po::value<string>(), "inference method (Gibbs, TreeUA)")
       ("eta", po::value<double>(), "step size")
+      ("etaT", po::value<double>(), "step size for time adaptation")
       ("T", po::value<int>(), "number of transitions")
       ("B", po::value<int>(), "number of burnin steps")
       ("Q", po::value<int>(), "number of passes")
@@ -79,12 +80,15 @@ int main(int argc, char* argv[]) {
       double m_c = 1.0;
       if(vm.count("c")) m_c = vm["c"].as<double>();
       double Tstar = T;
-      shared_ptr<ModelTreeUA> model = shared_ptr<ModelAdaTree>(new ModelAdaTree(corpus, K, m_c, Tstar));
+      shared_ptr<ModelAdaTree> model = shared_ptr<ModelAdaTree>(new ModelAdaTree(corpus, K, m_c, Tstar));
       set_param(model);
       if(vm.count("eps_split")) {
 	model->eps_split = vm["eps_split"].as<int>();
       }
-      model->runSimple(testCorpus, false);
+      if(vm.count("etaT")) {
+	model->etaT = vm["etaT"].as<double>();
+      }
+      // model->runSimple(testCorpus, true);
       model->run(testCorpus);
     }else if(inference == "GibbsIncr") { 
       shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(corpus));

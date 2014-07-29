@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
       if(vm.count("eps_split")) {
 	model->eps_split = vm["eps_split"].as<int>();
       }
-      // model->runSimple(testCorpus);
+      model->runSimple(testCorpus);
       model->run(testCorpus);
     }else if(inference == "GibbsIncr") { 
       shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(corpus));

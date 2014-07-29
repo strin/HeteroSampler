@@ -454,9 +454,8 @@ FeaturePointer ModelAdaTree::extractStopFeatures(shared_ptr<MarkovTreeNode> node
   (*feat)["len-sample-path"] = dist;
   // log probability of current sample in terms of marginal training stats.
   double logprob = tag_unigram_start[tag.tag[0]];
-  for(size_t t = 1; t < seqlen; t++) {
-    logprob = logAdd(logprob, tag_bigram[tag.tag[t-1]][tag.tag[t]]);
-  }
+  for(size_t t = 1; t < seqlen; t++) 
+    logprob += tag_bigram[tag.tag[t-1]][tag.tag[t]];
   (*feat)["log-prob-tag-bigram"] = logprob;
   return feat;
 }

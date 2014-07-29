@@ -220,7 +220,7 @@ ModelTreeUA::ModelTreeUA(const Corpus& corpus, int K)
   this->initThreads(K);
 }
 
-void ModelTreeUA::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
+void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
     while(true) {
       tag.rng = &rng; // unsafe, rng may be deleted.
       node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
@@ -234,10 +234,10 @@ void ModelTreeUA::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag
 	active_work--;
 	vector<objcokus> cokus(K);
 	for(int k = 0; k < K; k++) {
-	  int newid = getFingerPrint((k+5)*3, id);
-	  cokus[k].seedMT(newid);
+	  int new_seed = getFingerPrint((k+5)*3, seed);
+	  cokus[k].seedMT(new_seed);
 	  node->children.push_back(makeMarkovTreeNode(node));
-	  th_work.push_back(make_tuple(newid, node->children.back(), tag, cokus[k]));
+	  th_work.push_back(make_tuple(new_seed, node->children.back(), tag, cokus[k]));
 	}
 	th_cv.notify_all();
 	lock.unlock();
@@ -245,7 +245,7 @@ void ModelTreeUA::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag
       }else if(log(rng.random01()) < log(this->eps_split)) {
 	for(int k = 0; k < K; k++) {
 	  node->children.push_back(makeMarkovTreeNode(node));
-	  workerThreads(id, node->children.back(), tag, rng);
+	  workerThreads(tid, seed, node->children.back(), tag, rng);
 	}
 	return;
       }else if(node->depth >= B && log(rng.random01()) < log(this->eps)) { // stop.
@@ -267,7 +267,9 @@ void ModelTreeUA::initThreads(size_t numThreads) {
   th.resize(numThreads);
   active_work = 0;
   for(size_t ni = 0; ni < numThreads; ni++) {
-    this->th[ni] = shared_ptr<thread>(new thread([&] (int id) {
+    this->th_stream.push_back(shared_ptr<stringstream>(new stringstream()));
+    this->th_log.push_back(shared_ptr<XMLlog>(new XMLlog(*th_stream.back())));
+    this->th[ni] = shared_ptr<thread>(new thread([&] (int tid) {
       unique_lock<mutex> lock(th_mutex);
       while(true) {
 	if(th_work.size() > 0) {
@@ -275,7 +277,8 @@ void ModelTreeUA::initThreads(size_t numThreads) {
 	  th_work.pop_front();
 	  active_work++;
 	  lock.unlock();
-	  workerThreads(get<0>(work), get<1>(work), get<2>(work), get<3>(work));
+	  th_stream[tid]->str("");
+	  workerThreads(tid, get<0>(work), get<1>(work), get<2>(work), get<3>(work));
 	  th_finished.notify_all();
 	  lock.lock();
 	}else{
@@ -301,6 +304,12 @@ ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
     if(active_work + th_work.size() == 0) break;
   }
   lock.unlock();
+  for(int k = 0; k < K; k++) {
+    xmllog.begin("thread_"+to_string(k));
+    xmllog.logRaw(th_stream[k]->str());
+    xmllog << endl;
+    xmllog.end();
+  }
   return tree.expectedGradient();
 }
 
@@ -346,7 +355,8 @@ ModelAdaTree::ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar)
   tag_unigram_start = tag_bigram_unigram.second;
 }
 
-void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) { 
+void ModelAdaTree::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) { 
+    XMLlog& lg = *th_log[tid];
     while(true) {
       tag.rng = &rng; // unsafe, rng may be deleted. 
       node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
@@ -357,12 +367,13 @@ void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag ta
       node->neggrad = get<2>(predT);
       ParamPointer feat = get<3>(predT); 
 
-      th_mutex.lock();
-      xmllog.begin("tag"); xmllog << "[seed: " << id << "]" 
-				  << "[depth: " << node->depth << "] " 
-				  << tag.str() << endl; xmllog.end();
-      xmllog << "prob " << prob << endl;
-      th_mutex.unlock();
+      lg.begin("tag"); 
+      lg << "[seed: " << seed << "] " 
+	  << "[thread: " << tid << "] "
+	  << "[depth: " << node->depth << "] " 
+	  << "[prob: " << prob << "] "
+	  << tag.str() << endl;
+      lg.end();
       
       if(node->depth < B) node->log_weight = -DBL_MAX;
       else node->log_weight = this->score(node, tag)+log(prob); 
@@ -372,10 +383,10 @@ void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag ta
 	active_work--;
 	vector<objcokus> cokus(K);
 	for(int k = 0; k < K; k++) {
-	  int newid = getFingerPrint((k+5)*3, id);
-	  cokus[k].seedMT(newid);
+	  int new_seed = getFingerPrint((k+5)*3, seed);
+	  cokus[k].seedMT(new_seed);
 	  node->children.push_back(makeMarkovTreeNode(node));
-	  th_work.push_back(make_tuple(newid, node->children.back(), tag, cokus[k]));
+	  th_work.push_back(make_tuple(new_seed, node->children.back(), tag, cokus[k]));
 	}
 	th_cv.notify_all();
 	lock.unlock();
@@ -383,20 +394,20 @@ void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag ta
       }else if(log(rng.random01()) < log(this->eps_split)) {
 	for(int k = 0; k < K; k++) {
 	  node->children.push_back(makeMarkovTreeNode(node));
-	  workerThreads(id, node->children.back(), tag, rng);
+	  workerThreads(tid, seed, node->children.back(), tag, rng);
 	}
 	return;
       }else if(node->depth >= B && log(rng.random01()) < log(prob)) { // stop.
 	unique_lock<mutex> lock(th_mutex);
-	xmllog.begin("final-tag");  xmllog << tag.str() << endl; xmllog.end();
-	xmllog.begin("weight"); xmllog << node->log_weight << endl; xmllog.end();
-	xmllog.begin("time"); xmllog << node->depth << endl; xmllog.end();
-	xmllog.begin("feat");
+	lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
+	lg.begin("weight"); lg << node->log_weight << endl; lg.end();
+	lg.begin("time"); lg << node->depth << endl; lg.end();
+	lg.begin("feat");
 	for(const pair<string, double>& p : *feat) {
-	  xmllog << p.first << " : " << p.second 
+	  lg << p.first << " : " << p.second 
 		 << " , param : " << (*param)[p.first] << endl;
 	}
-	xmllog.end();
+	lg.end();
 	active_work--;
 	lock.unlock();
 	return;

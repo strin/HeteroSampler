@@ -57,12 +57,14 @@ public:
   double eps, eps_split;
 
   /* parallel environment */
-  virtual void workerThreads(int id, std::shared_ptr<MarkovTreeNode>, Tag tag, objcokus rng);
+  virtual void workerThreads(int tid, int seed, std::shared_ptr<MarkovTreeNode>, Tag tag, objcokus rng);
   std::vector<std::shared_ptr<std::thread> > th;
   std::list<std::tuple<int, std::shared_ptr<MarkovTreeNode>, Tag, objcokus> > th_work;
   size_t active_work;
   std::mutex th_mutex;
   std::condition_variable th_cv, th_finished;
+  std::vector<std::shared_ptr<std::stringstream> > th_stream;
+  std::vector<std::shared_ptr<XMLlog> > th_log;
 
 private:
   void initThreads(size_t numThreads);
@@ -78,7 +80,7 @@ struct ModelAdaTree : public ModelTreeUA {
 public:
   ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar);
   /* implement components necessary */  
-  void workerThreads(int id, std::shared_ptr<MarkovTreeNode> node, 
+  void workerThreads(int tid, int seed, std::shared_ptr<MarkovTreeNode> node, 
 			Tag tag, objcokus rng);
   /* extract posgrad and neggrad for stop-or-not logistic regression */
   std::tuple<double, ParamPointer, ParamPointer, ParamPointer> logisticStop

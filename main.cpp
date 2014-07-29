@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
       if(vm.count("etaT")) {
 	model->etaT = vm["etaT"].as<double>();
       }
-      // model->runSimple(testCorpus, true);
+      model->runSimple(testCorpus, true);
       model->run(testCorpus);
     }else if(inference == "GibbsIncr") { 
       shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(corpus));

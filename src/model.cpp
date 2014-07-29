@@ -63,15 +63,18 @@ FeaturePointer Model::wordFrequencies() {
   return feat;
 }
 
-Vector2d Model::tagBigram() {
+pair<Vector2d, vector<double> > Model::tagBigram() {
   size_t taglen = corpus.tags.size();
   Vector2d mat = makeVector2d(taglen, taglen, 1.0);
+  vector<double> vec(taglen, 0.0);
   for(const Sentence& seq : corpus.seqs) {
+    vec[seq.tag[0]]++;
     for(size_t t = 1; t < seq.size(); t++) {
       mat[seq.tag[t-1]][seq.tag[t]]++; 
     }
   }
   for(size_t i = 0; i < taglen; i++) {
+    vec[i] = log(vec[i])-log(corpus.seqs.size());
     double sum_i = 0.0;
     for(size_t j = 0; j < taglen; j++) {
       sum_i += mat[i][j];
@@ -80,7 +83,7 @@ Vector2d Model::tagBigram() {
       mat[i][j] = log(mat[i][j])-log(sum_i);
     }
   }
-  return mat;
+  return make_pair(mat, vec);
 }
 
 ParamPointer Model::gradientSimple(const Sentence& seq) {
@@ -102,7 +105,7 @@ ParamPointer Model::gradient(const Sentence& seq) {
   return gradientGibbs(seq);  
 }
 
-void Model::runSimple(const Corpus& testCorpus) {
+void Model::runSimple(const Corpus& testCorpus, bool lets_test) {
   Corpus retagged(testCorpus);
   retagged.retag(this->corpus); // use training taggs. 
   xmllog.begin("train_simple");
@@ -118,9 +121,11 @@ void Model::runSimple(const Corpus& testCorpus) {
   }
   copyParamFeatures(param, "simple-", "");
   xmllog.end();
-  xmllog.begin("test");
-  test(retagged);
-  xmllog.end();
+  if(lets_test) {
+    xmllog.begin("test");
+    test(retagged);
+    xmllog.end();
+  }
 }
 
 void Model::run(const Corpus& testCorpus) {
@@ -336,7 +341,9 @@ ModelAdaTree::ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar)
   // aggregate stats. 
   wordent = tagEntropySimple();
   wordfreq = wordFrequencies();
-  tag_bigram = tagBigram();
+  auto tag_bigram_unigram = tagBigram();
+  tag_bigram = tag_bigram_unigram.first;
+  tag_unigram_start = tag_bigram_unigram.second;
 }
 
 void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) { 
@@ -348,12 +355,17 @@ void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag ta
       double prob = get<0>(predT);
       node->posgrad = get<1>(predT);
       node->neggrad = get<2>(predT);
-      
-      // xmllog.begin("tag"); xmllog << "[" << node->depth << "] " 
-      // 				<< tag.str() << endl; xmllog.end();
+      ParamPointer feat = get<3>(predT); 
+
+      th_mutex.lock();
+      xmllog.begin("tag"); xmllog << "[seed: " << id << "]" 
+				  << "[depth: " << node->depth << "] " 
+				  << tag.str() << endl; xmllog.end();
+      xmllog << "prob " << prob << endl;
+      th_mutex.unlock();
       
       if(node->depth < B) node->log_weight = -DBL_MAX;
-      else node->log_weight = this->score(node, tag); 
+      else node->log_weight = this->score(node, tag)+log(prob); 
 
       if(node->depth == 0) { // multithread split.
 	unique_lock<mutex> lock(th_mutex);
@@ -379,6 +391,9 @@ void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag ta
 	xmllog.begin("final-tag");  xmllog << tag.str() << endl; xmllog.end();
 	xmllog.begin("weight"); xmllog << node->log_weight << endl; xmllog.end();
 	xmllog.begin("time"); xmllog << node->depth << endl; xmllog.end();
+	xmllog.begin("feat");
+	xmllog << *feat;
+	xmllog.end();
 	active_work--;
 	lock.unlock();
 	return;
@@ -418,13 +433,13 @@ FeaturePointer ModelAdaTree::extractStopFeatures(shared_ptr<MarkovTreeNode> node
     auto pf = p->parent.lock();
     if(pf == nullptr) throw "MarkovTreeNode father is expired.";
     dist += p->tag->distance(*pf->tag);
-    l++;
+    l++; L--;
     p = pf;
   }
   if(l > 0) dist /= l;
   (*feat)["len-sample-path"] = dist;
   // log probability of current sample in terms of marginal training stats.
-  double logprob = -DBL_MAX;
+  double logprob = tag_unigram_start[tag.tag[0]];
   for(size_t t = 1; t < seqlen; t++) {
     logprob = logAdd(logprob, tag_bigram[tag.tag[t-1]][tag.tag[t]]);
   }
@@ -432,15 +447,25 @@ FeaturePointer ModelAdaTree::extractStopFeatures(shared_ptr<MarkovTreeNode> node
   return feat;
 }
 
-tuple<double, ParamPointer, ParamPointer> 
+tuple<double, ParamPointer, ParamPointer, ParamPointer> 
 ModelAdaTree::logisticStop(shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag) {
   ParamPointer posgrad = makeParamPointer(), 
 		neggrad = makeParamPointer();
   FeaturePointer feat = this->extractStopFeatures(node, seq, tag);
   double prob = logisticFunc(log(eps)-log(1-eps)+tag.score(feat)); 
-  mapUpdate<double, double>(*posgrad, *feat, (1-prob));
-  mapUpdate<double, double>(*neggrad, *feat, prob);
-  return make_tuple(prob, posgrad, neggrad);
+  if(isnan(prob)) {
+    th_mutex.lock();
+    for(const pair<string, double>& p : *feat) {
+      xmllog << p.first << " : " << (*param)[p.first] << endl;
+    }
+    th_mutex.unlock();
+  }
+  /*if(prob < 1e-3) prob = 1e-3;   // truncation, avoid too long transitions.
+  else{*/
+    mapUpdate<double, double>(*posgrad, *feat, (1-prob));
+    mapUpdate<double, double>(*neggrad, *feat, -prob);
+  //}
+  return make_tuple(prob, posgrad, neggrad, feat);
 }
 
 double ModelAdaTree::score(shared_ptr<MarkovTreeNode> node, const Tag& tag) {

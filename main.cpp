@@ -15,6 +15,7 @@ int main(int argc, char* argv[]) {
   desc.add_options()
       ("help", "produce help message")
       ("inference", po::value<string>(), "inference method (Gibbs, TreeUA)")
+      ("eta", po::value<double>(), "step size")
       ("T", po::value<int>(), "number of transitions")
       ("B", po::value<int>(), "number of burnin steps")
       ("Q", po::value<int>(), "number of passes")
@@ -46,6 +47,9 @@ int main(int argc, char* argv[]) {
   int K = 5;
   if(vm.count("K"))
     K = vm["K"].as<int>();
+  double eta = 0.4;
+  if(vm.count("eta"))
+    eta = vm["eta"].as<double>();
 
   // run.
   Corpus corpus;
@@ -56,6 +60,7 @@ int main(int argc, char* argv[]) {
     model->T = T;
     model->Q = Q;
     model->B = B;
+    model->eta = eta;
   };
   try{
     if(inference == "Gibbs") {
@@ -68,7 +73,7 @@ int main(int argc, char* argv[]) {
 	model->eps_split = vm["eps_split"].as<int>();
       }
       set_param(model);
-      model->runSimple(testCorpus);
+      model->runSimple(testCorpus, false);
       model->run(testCorpus);
     }else if(inference == "AdaTree") {
       double m_c = 1.0;
@@ -79,7 +84,7 @@ int main(int argc, char* argv[]) {
       if(vm.count("eps_split")) {
 	model->eps_split = vm["eps_split"].as<int>();
       }
-      model->runSimple(testCorpus);
+      model->runSimple(testCorpus, false);
       model->run(testCorpus);
     }else if(inference == "GibbsIncr") { 
       shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(corpus));
@@ -100,7 +105,14 @@ int main(int argc, char* argv[]) {
       XMLlog log_freq("word_freq.xml");
       log_freq << *feat;
       XMLlog log_tagbigram("tag_bigram.xml");
-      Vector2d mat = model->tagBigram();
+      auto mat_vec = model->tagBigram();
+      Vector2d mat = mat_vec.first;
+      vector<double> vec = mat_vec.second;
+      log_tagbigram.begin("vector");
+      for(size_t i = 0; i < corpus.tags.size(); i++) 
+	log_tagbigram << vec[i] << " ";
+      log_tagbigram << endl;
+      log_tagbigram.end();
       log_tagbigram.begin("matrix");
       for(size_t i = 0; i < corpus.tags.size(); i++) {
 	for(size_t j = 0; j < corpus.tags.size(); j++) {

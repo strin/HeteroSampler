@@ -15,7 +15,7 @@
 struct Model {
 public:
   Model(const Corpus& corpus);
-  void runSimple(const Corpus& testCorpus);
+  void runSimple(const Corpus& testCorpus, bool lets_test = true);
   void run(const Corpus& testCorpus);
   double test(const Corpus& corpus);
 
@@ -34,7 +34,7 @@ public:
   /* statistics */
   FeaturePointer tagEntropySimple();
   FeaturePointer wordFrequencies();
-  Vector2d tagBigram();
+  std::pair<Vector2d, std::vector<double> > tagBigram();
 
   /* parameters */
   int T, B, Q, Q0;
@@ -81,7 +81,7 @@ public:
   void workerThreads(int id, std::shared_ptr<MarkovTreeNode> node, 
 			Tag tag, objcokus rng);
   /* extract posgrad and neggrad for stop-or-not logistic regression */
-  std::tuple<double, ParamPointer, ParamPointer> logisticStop
+  std::tuple<double, ParamPointer, ParamPointer, ParamPointer> logisticStop
     (std::shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag); 
 
   FeaturePointer extractStopFeatures
@@ -92,6 +92,7 @@ public:
 private:
   FeaturePointer wordent, wordfreq;
   Vector2d tag_bigram;
+  std::vector<double> tag_unigram_start;
   double m_c, m_Tstar;
 };
 #endif

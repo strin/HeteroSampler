@@ -7,6 +7,11 @@
 #include <iostream>
 #include "float.h"
 #include <functional>
+#include <algorithm>
+
+inline static double logisticFunc(double z) {
+  return 1./(1+exp(0-z));
+}
 
 static long getFingerPrint(long iterations, long startSeed) { // random hash function taken from 6.816.
   const long m = (long) 0xFFFFFFFFFFFFL;

@@ -63,7 +63,7 @@ string str(FeaturePointer features) {
 ParamPointer Tag::proposeSimple(int pos, bool withgrad) {
   const vector<Token>& sen = seq->seq;
   size_t seqlen = sen.size();
-  if(pos > size())
+  if(pos > seqlen)
     throw "Simple model proposal out of boundary";
   size_t taglen = corpus.tags.size();
   vector<FeaturePointer> featvec;
@@ -116,7 +116,17 @@ ParamPointer Tag::proposeGibbs(int pos, bool withgrad) {
   return gradient;
 }
 
-double Tag::score(FeaturePointer features) {
+double Tag::distance(const Tag& tag) {
+  if(this->size() != tag.size())
+    throw "should not compare tags with different length.";
+  double dist = 0;
+  for(size_t t = 0; t < this->size(); t++) {
+    dist += (this->tag[t] != tag.tag[t]);
+  }
+  return dist;
+}
+
+double Tag::score(FeaturePointer features) const {
   double score = 0;
   for(const pair<string, double>& feat : *features) {
     if(this->param->find(feat.first) != this->param->end()) 
@@ -128,7 +138,6 @@ double Tag::score(FeaturePointer features) {
 string Tag::str() {
   stringstream ss;
   size_t seqlen = seq->seq.size();
-  ss << "[len " << seqlen << "]" << endl;
   for(size_t i = 0; i < seqlen; i++) {
     ss << seq->seq[i].word << "/" << corpus.invtags.find(tag[i])->second << "\t";
   }

@@ -57,7 +57,7 @@ public:
   double eps, eps_split;
 
   /* parallel environment */
-  void workerThreads(int id, std::shared_ptr<MarkovTreeNode>, Tag tag, objcokus cokus);
+  virtual void workerThreads(int id, std::shared_ptr<MarkovTreeNode>, Tag tag, objcokus rng);
   std::vector<std::shared_ptr<std::thread> > th;
   std::list<std::tuple<int, std::shared_ptr<MarkovTreeNode>, Tag, objcokus> > th_work;
   size_t active_work;
@@ -72,5 +72,26 @@ struct ModelIncrGibbs : public Model {
 public:
   ModelIncrGibbs(const Corpus& corpus);
   ParamPointer gradient(const Sentence& seq);
+};
+
+struct ModelAdaTree : public ModelTreeUA {
+public:
+  ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar);
+  /* implement components necessary */  
+  void workerThreads(int id, std::shared_ptr<MarkovTreeNode> node, 
+			Tag tag, objcokus rng);
+  /* extract posgrad and neggrad for stop-or-not logistic regression */
+  std::tuple<double, ParamPointer, ParamPointer> logisticStop
+    (std::shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag); 
+
+  FeaturePointer extractStopFeatures
+    (std::shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag);
+
+  
+  double score(std::shared_ptr<MarkovTreeNode> node, const Tag& tag);
+private:
+  FeaturePointer wordent, wordfreq;
+  Vector2d tag_bigram;
+  double m_c, m_Tstar;
 };
 #endif

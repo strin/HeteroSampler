@@ -4,10 +4,16 @@
 #include "tag.h"
 #include "utils.h"
 
+/* represent A Markov Transition. */
 struct MarkovTreeNode {
 public:
   MarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent);
-  ParamPointer gradient;
+  /* weighting convention 
+     gradient: sum of weights of node and descendants. 
+     posgrad : weight of node. 
+     neggrad : sum weights of descendants */
+  ParamPointer gradient, posgrad, neggrad;
+  std::shared_ptr<Tag> tag; // tag after the transition.
   double log_weight;
   int depth;
   std::weak_ptr<MarkovTreeNode> parent; // weak_ptr: avoid cycle in reference count.

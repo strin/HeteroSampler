@@ -218,7 +218,8 @@ ModelTreeUA::ModelTreeUA(const Corpus& corpus, int K)
 void ModelTreeUA::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
     while(true) {
       node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
-      // xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+     // xmllog.begin("tag"); xmllog << "[" << node->depth << "] " 
+      //			<< tag.str() << endl; xmllog.end();
       if(node->depth < B) node->log_weight = -DBL_MAX;
       else node->log_weight = this->score(tag); 
 
@@ -330,3 +331,124 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq) {
   return gradient;
 }
 
+ModelAdaTree::ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar)
+:ModelTreeUA(corpus, K), m_c(c), m_Tstar(Tstar) {
+  // aggregate stats. 
+  wordent = tagEntropySimple();
+  wordfreq = wordFrequencies();
+  tag_bigram = tagBigram();
+}
+
+void ModelAdaTree::workerThreads(int id, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) { 
+    while(true) {
+      node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
+      node->tag = shared_ptr<Tag>(new Tag(tag));
+      auto predT = this->logisticStop(node, *tag.seq, tag); 
+      double prob = get<0>(predT);
+      node->posgrad = get<1>(predT);
+      node->neggrad = get<2>(predT);
+      
+      // xmllog.begin("tag"); xmllog << "[" << node->depth << "] " 
+      // 				<< tag.str() << endl; xmllog.end();
+      
+      if(node->depth < B) node->log_weight = -DBL_MAX;
+      else node->log_weight = this->score(node, tag); 
+
+      if(node->depth == 0) { // multithread split.
+	unique_lock<mutex> lock(th_mutex);
+	active_work--;
+	vector<objcokus> cokus(K);
+	for(int k = 0; k < K; k++) {
+	  int newid = getFingerPrint((k+5)*3, id);
+	  cokus[k].seedMT(newid);
+	  node->children.push_back(makeMarkovTreeNode(node));
+	  th_work.push_back(make_tuple(newid, node->children.back(), tag, cokus[k]));
+	}
+	th_cv.notify_all();
+	lock.unlock();
+	return;
+      }else if(log(rng.random01()) < log(this->eps_split)) {
+	for(int k = 0; k < K; k++) {
+	  node->children.push_back(makeMarkovTreeNode(node));
+	  workerThreads(id, node->children.back(), tag, rng);
+	}
+	return;
+      }else if(node->depth >= B && log(rng.random01()) < log(prob)) { // stop.
+	unique_lock<mutex> lock(th_mutex);
+	xmllog.begin("final_tag"); 
+	xmllog << tag.str() << endl; 
+	xmllog << "weight " << node->log_weight << endl;
+	xmllog.end();
+	active_work--;
+	lock.unlock();
+	return;
+      }else{                             // proceed as chain.
+	node->children.push_back(makeMarkovTreeNode(node));
+	node = node->children.back();
+      }
+    }
+}
+
+FeaturePointer ModelAdaTree::extractStopFeatures(shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag) {
+  FeaturePointer feat = makeFeaturePointer();
+  size_t seqlen = tag.size();
+  size_t taglen = corpus.tags.size();
+  // feat: bias.
+  (*feat)["bias-stopornot"] = 1.0;
+  // feat: word len.
+  (*feat)["len-stopornot"] = (double)seqlen; 
+  (*feat)["len-inv-stopornot"] = 1/(double)seqlen;
+  // feat: entropy and frequency.
+  for(size_t t = 0; t < seqlen; t++) {
+    string word = seq.seq[t].word;
+    if(wordent->find(word) == wordent->end())
+      (*feat)["ent"+word] = log(taglen); // no word, use maxent.
+    else
+      (*feat)["ent-"+word] = (*wordent)[word];
+    if(wordfreq->find(word) == wordfreq->end())
+      (*feat)["freq-"+word] = log(corpus.total_words);
+    else
+      (*feat)["freq-"+word] = (*wordfreq)[word];
+  }
+  // feat: avg sample path length.
+  int L = 3, l = 0;
+  double dist = 0.0;
+  shared_ptr<MarkovTreeNode> p = node;
+  while(p->depth >= 1 && L >= 0) {
+    auto pf = p->parent.lock();
+    if(pf == nullptr) throw "MarkovTreeNode father is expired.";
+    dist += p->tag->distance(*pf->tag);
+    l++;
+    p = pf;
+  }
+  if(l > 0) dist /= l;
+  (*feat)["len-sample-path"] = dist;
+  // log probability of current sample in terms of marginal training stats.
+  double logprob = -DBL_MAX;
+  for(size_t t = 1; t < seqlen; t++) {
+    logprob = logAdd(logprob, tag_bigram[tag.tag[t-1]][tag.tag[t]]);
+  }
+  (*feat)["log-prob-tag-bigram"] = logprob;
+  return feat;
+}
+
+tuple<double, ParamPointer, ParamPointer> 
+ModelAdaTree::logisticStop(shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag) {
+  ParamPointer posgrad = makeParamPointer(), 
+		neggrad = makeParamPointer();
+  FeaturePointer feat = this->extractStopFeatures(node, seq, tag);
+  double prob = logisticFunc(log(eps)-log(1-eps)+tag.score(feat)); 
+  mapUpdate<double, double>(*posgrad, *feat, (1-prob));
+  mapUpdate<double, double>(*neggrad, *feat, prob);
+  return make_tuple(prob, posgrad, neggrad);
+}
+
+double ModelAdaTree::score(shared_ptr<MarkovTreeNode> node, const Tag& tag) {
+  const Sentence* seq = tag.seq;
+  double score = 0.0;
+  for(int i = 0; i < tag.size(); i++) {
+    score -= (tag.tag[i] != seq->tag[i]);
+  }
+  score -= 2 * m_c * max(0.0, node->depth-m_Tstar);
+  return score;
+}

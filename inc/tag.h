@@ -63,7 +63,8 @@ public:
   ParamPointer proposeGibbs(int pos, bool withgrad = false);
   FeaturePointer extractSimpleFeatures(const std::vector<int>& tag, int pos);
   FeaturePointer extractFeatures(const std::vector<int>& tag);
-  double score(FeaturePointer features); // return un-normalized log-score.
+  double score(FeaturePointer features) const; // return un-normalized log-score.
+  double distance(const Tag& tag); // warning: both tags should have same anchor dict.  
   std::string str(); 
 };
 

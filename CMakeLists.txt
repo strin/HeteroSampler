@@ -52,6 +52,7 @@ src/corpus.cpp
 src/tag.cpp
 src/MarkovTree.cpp
 src/model.cpp
+src/baseline.cpp
 src/objcokus.cpp
 )
 

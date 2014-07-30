@@ -65,7 +65,11 @@ int main(int argc, char* argv[]) {
   };
   try{
     if(inference == "Gibbs") {
-      shared_ptr<Model> model = shared_ptr<Model>(new Model(corpus));
+      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus));
+      set_param(model);
+      model->run(testCorpus);
+    }else if(inference == "Simple") {
+      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(corpus));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "TreeUA") {
@@ -74,7 +78,6 @@ int main(int argc, char* argv[]) {
 	model->eps_split = vm["eps_split"].as<int>();
       }
       set_param(model);
-      model->runSimple(testCorpus, false);
       model->run(testCorpus);
     }else if(inference == "AdaTree") {
       double m_c = 1.0;
@@ -88,20 +91,15 @@ int main(int argc, char* argv[]) {
       if(vm.count("etaT")) {
 	model->etaT = vm["etaT"].as<double>();
       }
-      model->runSimple(testCorpus, true);
       model->run(testCorpus);
     }else if(inference == "GibbsIncr") { 
       shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(corpus));
       set_param(model);
       model->run(testCorpus);
-    }else if(inference == "Simple") {
-      shared_ptr<Model> model = shared_ptr<Model>(new Model(corpus));
-      set_param(model);
-      model->runSimple(testCorpus);
     }else if(inference == "TagEntropySimple") {
-      shared_ptr<Model> model = shared_ptr<Model>(new Model(corpus));
+      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(corpus));
       set_param(model);
-      model->runSimple(testCorpus, false);
+      model->run(testCorpus);
       FeaturePointer feat = model->tagEntropySimple();
       XMLlog log_entropy("tag_entropy.xml"); 
       log_entropy << *feat;

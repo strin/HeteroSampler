@@ -14,44 +14,71 @@
 
 struct Model {
 public:
-  Model(const Corpus& corpus);
-  void runSimple(const Corpus& testCorpus, bool lets_test = true);
-  void run(const Corpus& testCorpus);
+  Model(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  virtual void run(const Corpus& testCorpus);
   double test(const Corpus& corpus);
 
   /* gradient interface */
-  virtual ParamPointer gradient(const Sentence& seq); 
-  void configStepsize(ParamPointer gradient, double new_eta);
-  void adagrad(ParamPointer gradient);
+  virtual ParamPointer gradient(const Sentence& seq) = 0; 
+  virtual TagVector sample(const Sentence& seq) = 0;
 
-  /* default implementation */
-  ParamPointer gradientGibbs(const Sentence& seq);
-  ParamPointer gradientSimple(const Sentence& seq);
-
-  const Corpus& corpus;
-  XMLlog xmllog;
-  ParamPointer param, G2, stepsize;
-
-  /* statistics */
-  FeaturePointer tagEntropySimple();
-  FeaturePointer wordFrequencies();
-  std::pair<Vector2d, std::vector<double> > tagBigram();
+  /* stats utils */
+  FeaturePointer tagEntropySimple() const;
+  FeaturePointer wordFrequencies() const;
+  std::pair<Vector2d, std::vector<double> > tagBigram() const;
 
   /* parameters */
   int T, B, Q, Q0;
   double testFrequency;
   double eta;
   std::vector<objcokus> rngs;
+  const Corpus& corpus;
+  ParamPointer param, G2, stepsize;   // model.
+
 protected:
-  /* parameters */
-  int K;
+  void adagrad(ParamPointer gradient);
+  void configStepsize(ParamPointer gradient, double new_eta);
+
+  int K;          // num of particle. 
+
+  XMLlog xmllog;
 };
 
+struct ModelSimple : public Model {
+public:
+  using Model::Model;
+  void run(const Corpus& testCorpus, bool lets_test);
+  ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
+  ParamPointer gradient(const Sentence& seq);
+  TagVector sample(const Sentence& seq); 
+};
+
+struct ModelCRFGibbs : public Model {
+public:
+  using Model::Model;
+  ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
+  ParamPointer gradient(const Sentence& seq);
+  TagVector sample(const Sentence& seq);
+};
+
+struct ModelIncrGibbs : public Model {
+public:
+  using Model::Model;
+  ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
+  ParamPointer gradient(const Sentence& seq);
+  TagVector sample(const Sentence& seq);
+};
 
 struct ModelTreeUA : public Model {
 public:
   ModelTreeUA(const Corpus& corpus, int K);
+
+  void run(const Corpus& testCorpus);
+
+  std::shared_ptr<MarkovTree> explore(const Sentence& seq);
   ParamPointer gradient(const Sentence& seq);
+  TagVector sample(const Sentence& seq);
+
   double score(const Tag& tag);
 
   /* parameters */
@@ -71,11 +98,6 @@ private:
   void initThreads(size_t numThreads);
 };
 
-struct ModelIncrGibbs : public Model {
-public:
-  ModelIncrGibbs(const Corpus& corpus);
-  ParamPointer gradient(const Sentence& seq);
-};
 
 struct ModelAdaTree : public ModelTreeUA {
 public:

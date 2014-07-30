@@ -35,6 +35,9 @@ public:
   std::pair<ParamPointer,double> aggregateGradient(std::shared_ptr<MarkovTreeNode> node, double normalize);
   // return expected gradient.
   ParamPointer expectedGradient();
+  // return all samples.
+  TagVector getSamples();
+  TagVector getSamples(std::shared_ptr<MarkovTreeNode> node);
 };
 
 #endif

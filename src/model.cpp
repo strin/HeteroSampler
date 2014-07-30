@@ -11,30 +11,12 @@
 
 using namespace std;
 
-Model::Model(const Corpus& corpus)
+Model::Model(const Corpus& corpus, int T, int B, int Q, double eta)
 :corpus(corpus), param(new map<string, double>()),
   G2(new map<string, double>()) , stepsize(makeParamPointer()), 
-  T(1), B(0), K(5), Q(10), Q0(1),  
-  testFrequency(0.3), eta(0.5) {
+  T(T), B(B), K(5), Q(Q), Q0(1),  
+  testFrequency(0.3), eta(eta) {
   rngs.resize(K);
-}
-
-ParamPointer Model::gradientGibbs(const Sentence& seq) {
-  Tag tag(&seq, corpus, &rngs[0], param);
-  FeaturePointer feat = tag.extractFeatures(seq.tag);
-  ParamPointer gradient(new map<string, double>());
-  for(int t = 0; t < T; t++) {
-    for(int i = 0; i < seq.tag.size(); i++) 
-      tag.proposeGibbs(i);
-    if(t < B) continue;
-    mapUpdate<double, double>(*gradient, *tag.extractFeatures(tag.tag));
-  }
-  mapDivide<double>(*gradient, -(double)(T-B));
-  mapUpdate<double, double>(*gradient, *feat);
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
-  this->configStepsize(gradient, this->eta);
-  return gradient;
 }
 
 void Model::configStepsize(ParamPointer gradient, double new_eta) {
@@ -42,7 +24,7 @@ void Model::configStepsize(ParamPointer gradient, double new_eta) {
     (*stepsize)[p.first] = new_eta;
 }
 
-FeaturePointer Model::tagEntropySimple() {
+FeaturePointer Model::tagEntropySimple() const {
   FeaturePointer feat = makeFeaturePointer();
   const size_t taglen = corpus.tags.size();
   double logweights[taglen];
@@ -61,7 +43,7 @@ FeaturePointer Model::tagEntropySimple() {
   return feat;
 }
 
-FeaturePointer Model::wordFrequencies() {
+FeaturePointer Model::wordFrequencies() const {
   FeaturePointer feat = makeFeaturePointer();
   for(const pair<string, int>& p : corpus.dic_counts) {
     (*feat)[p.first] = log(corpus.total_words)-log(p.second);
@@ -69,7 +51,7 @@ FeaturePointer Model::wordFrequencies() {
   return feat;
 }
 
-pair<Vector2d, vector<double> > Model::tagBigram() {
+pair<Vector2d, vector<double> > Model::tagBigram() const {
   size_t taglen = corpus.tags.size();
   Vector2d mat = makeVector2d(taglen, taglen, 1.0);
   vector<double> vec(taglen, 1.0);
@@ -90,49 +72,6 @@ pair<Vector2d, vector<double> > Model::tagBigram() {
     }
   }
   return make_pair(mat, vec);
-}
-
-ParamPointer Model::gradientSimple(const Sentence& seq) {
-  Tag tag(&seq, corpus, &rngs[0], param);
-  Tag oldtag(tag);
-  ParamPointer gradient(new map<string, double>());
-  for(size_t i = 0; i < tag.size(); i++) {
-    ParamPointer g = tag.proposeSimple(i, true);
-    mapUpdate<double, double>(*gradient, *g);
-    mapUpdate<double, double>(*gradient, *tag.extractSimpleFeatures(tag.tag, i), -1.0);
-    mapUpdate<double, double>(*gradient, *tag.extractSimpleFeatures(seq.tag, i));
-  }
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
-  return gradient;
-}
-
-ParamPointer Model::gradient(const Sentence& seq) {
-  return gradientGibbs(seq);  
-}
-
-void Model::runSimple(const Corpus& testCorpus, bool lets_test) {
-  Corpus retagged(testCorpus);
-  retagged.retag(this->corpus); // use training taggs. 
-  xmllog.begin("train_simple");
-  int numObservation = 0;
-  for(int q = 0; q < Q0; q++) {
-    for(const Sentence& seq : corpus.seqs) {
-      xmllog.begin("example_"+to_string(numObservation));
-      ParamPointer gradient = this->gradientSimple(seq);
-      this->configStepsize(gradient, this->eta);
-      this->adagrad(gradient);
-      xmllog.end();
-      numObservation++;
-    }
-  }
-  copyParamFeatures(param, "simple-", "");
-  xmllog.end();
-  if(lets_test) {
-    xmllog.begin("test");
-    test(retagged);
-    xmllog.end();
-  }
 }
 
 void Model::run(const Corpus& testCorpus) {
@@ -215,7 +154,6 @@ double Model::test(const Corpus& corpus) {
 }
 
 void Model::adagrad(ParamPointer gradient) {
-
   for(const pair<string, double>& p : *gradient) {
     mapUpdate(*G2, p.first, p.second * p.second);
     double this_eta = eta;
@@ -231,6 +169,14 @@ ModelTreeUA::ModelTreeUA(const Corpus& corpus, int K)
   Model::K = K;
   this->initThreads(K);
 }
+
+void ModelTreeUA::run(const Corpus& testCorpus) {   
+  ModelSimple simple_model(this->corpus, T, B, Q, eta);
+  simple_model.run(testCorpus, true);
+  copyParamFeatures(simple_model.param, "simple-", this->param, "");
+  Model::run(testCorpus); 
+}
+
 
 void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
     while(true) {
@@ -302,15 +248,15 @@ void ModelTreeUA::initThreads(size_t numThreads) {
   }
 }
 
-ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
+shared_ptr<MarkovTree> ModelTreeUA::explore(const Sentence& seq) {
   this->eps = 1.0/(T-B);
-  MarkovTree tree;
+  shared_ptr<MarkovTree> tree = shared_ptr<MarkovTree>(new MarkovTree());
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
   Tag tag(&seq, corpus, &rngs[0], param);
   objcokus cokus; // cokus is not re-entrant.
   cokus.seedMT(0);
   unique_lock<mutex> lock(th_mutex);
-  th_work.push_back(make_tuple(0, tree.root, tag, cokus));
+  th_work.push_back(make_tuple(0, tree->root, tag, cokus));
   th_cv.notify_one();
   while(true) {
     th_finished.wait(lock);
@@ -323,9 +269,16 @@ ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
     xmllog << endl;
     xmllog.end();
   }
-  return tree.expectedGradient();
+  return tree;
 }
 
+ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
+  return explore(seq)->expectedGradient();
+}
+
+TagVector ModelTreeUA::sample(const Sentence& seq) {
+  return explore(seq)->getSamples();
+}
 double ModelTreeUA::score(const Tag& tag) {
   const Sentence* seq = tag.seq;
   double score = 0.0;
@@ -335,28 +288,6 @@ double ModelTreeUA::score(const Tag& tag) {
   return score;
 }
 
-ModelIncrGibbs::ModelIncrGibbs(const Corpus& corpus) 
-:Model(corpus){
-  
-}
-
-ParamPointer ModelIncrGibbs::gradient(const Sentence& seq) {
-  Tag tag(&seq, corpus, &rngs[0], param);
-  Tag mytag(tag);
-  FeaturePointer feat = tag.extractFeatures(seq.tag);
-  ParamPointer gradient(new map<string, double>());
-  for(int i = 0; i < seq.tag.size(); i++) {
-    ParamPointer g = tag.proposeGibbs(i, true);
-    mapUpdate<double, double>(*gradient, *g);
-    mapUpdate<double, double>(*gradient, *tag.extractFeatures(tag.tag), -1);
-    mytag.tag[i] = tag.tag[i];
-    tag.tag[i] = seq.tag[i];
-    mapUpdate<double, double>(*gradient, *tag.extractFeatures(tag.tag)); 
-  }
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << mytag.str() << endl; xmllog.end();
-  return gradient;
-}
 
 ModelAdaTree::ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar)
 :ModelTreeUA(corpus, K), m_c(c), m_Tstar(Tstar) {

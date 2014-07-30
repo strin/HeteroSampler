@@ -27,14 +27,14 @@ inline static Vector2d makeVector2d(size_t m, size_t n, double c = 0.0) {
   return vec;
 }
 
-inline static void copyParamFeatures(ParamPointer param, std::string prefix_from,
-	      std::string prefix_to) {
-  for(const std::pair<std::string, double>& pair : *param) {
+inline static void copyParamFeatures(ParamPointer param_from, std::string prefix_from,
+				ParamPointer param_to, std::string prefix_to) {
+  for(const std::pair<std::string, double>& pair : *param_from) {
     std::string key = pair.first;
     size_t pos = key.find(prefix_from);
     if(pos == std::string::npos) 
       continue;
-    (*param)[prefix_to + key.substr(pos + prefix_from.length())] = pair.second;
+    (*param_to)[prefix_to + key.substr(pos + prefix_from.length())] = pair.second;
   }
 }
 
@@ -59,13 +59,15 @@ public:
      objcokus* rng, ParamPointer param);
   inline size_t size() const {return this->tag.size(); }
   void randomInit();
-  ParamPointer proposeSimple(int pos, bool withgrad = false);
-  ParamPointer proposeGibbs(int pos, bool withgrad = false);
+  ParamPointer proposeSimple(int pos, bool grad_expect = false, bool grad_sample = true);
+  ParamPointer proposeGibbs(int pos, bool grad_expect = false, bool grad_sample = true);
   FeaturePointer extractSimpleFeatures(const std::vector<int>& tag, int pos);
   FeaturePointer extractFeatures(const std::vector<int>& tag);
   double score(FeaturePointer features) const; // return un-normalized log-score.
   double distance(const Tag& tag); // warning: both tags should have same anchor dict.  
   std::string str(); 
 };
+
+typedef std::vector<std::shared_ptr<Tag> > TagVector;
 
 #endif

@@ -40,3 +40,21 @@ pair<ParamPointer, double> MarkovTree::aggregateGradient(shared_ptr<MarkovTreeNo
 ParamPointer MarkovTree::expectedGradient() {
   return aggregateGradient(root, logSumWeights(root)).first;
 }
+
+TagVector MarkovTree::getSamples(shared_ptr<MarkovTreeNode> node) { 
+  if(node->children.size() > 0) {
+    TagVector vec;
+    for(auto child : node->children) {
+      TagVector res = getSamples(child); 
+      vec.insert(vec.begin(), res.begin(), res.end()); 
+    }
+    return vec;
+  }
+  TagVector vec;
+  vec.push_back(node->tag);
+  return vec;
+}
+
+TagVector MarkovTree::getSamples() {
+  return this->getSamples(this->root);
+}

@@ -60,7 +60,7 @@ string str(FeaturePointer features) {
   return ss.str();
 }
 
-ParamPointer Tag::proposeSimple(int pos, bool withgrad) {
+ParamPointer Tag::proposeSimple(int pos, bool grad_expect, bool grad_sample) {
   const vector<Token>& sen = seq->seq;
   size_t seqlen = sen.size();
   if(pos > seqlen)
@@ -79,8 +79,9 @@ ParamPointer Tag::proposeSimple(int pos, bool withgrad) {
   tag[pos] = val;
   this->features = this->extractSimpleFeatures(this->tag, pos);
   ParamPointer gradient = makeParamPointer();
-  mapUpdate<double, double>(*gradient, *this->features);
-  if(withgrad) {
+  if(grad_sample)
+    mapUpdate<double, double>(*gradient, *this->features);
+  if(grad_expect) {
     for(size_t t = 0; t < taglen; t++) {
       mapUpdate<double, double>(*gradient, *featvec[t], -exp(sc[t]));
     }
@@ -88,7 +89,7 @@ ParamPointer Tag::proposeSimple(int pos, bool withgrad) {
   return gradient;
 }
 
-ParamPointer Tag::proposeGibbs(int pos, bool withgrad) {
+ParamPointer Tag::proposeGibbs(int pos, bool grad_expect, bool grad_sample) {
   const vector<Token>& sen = seq->seq;
   int seqlen = sen.size();
   if(pos >= seqlen) 
@@ -108,8 +109,9 @@ ParamPointer Tag::proposeGibbs(int pos, bool withgrad) {
   tag[pos] = val;
   this->features = this->extractFeatures(this->tag);
   ParamPointer gradient(new map<string, double>());
-  mapUpdate<double, double>(*gradient, *this->features);
-  if(withgrad) {
+  if(grad_sample)
+    mapUpdate<double, double>(*gradient, *this->features);
+  if(grad_expect) {
     for(int t = 0; t < taglen; t++) {
       mapUpdate<double, double>(*gradient, *featvec[t], -exp(sc[t]));
     }

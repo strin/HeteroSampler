@@ -7,6 +7,10 @@
 using namespace std;
 
 //////// Model CRF Gibbs ///////////////////////////////
+ModelCRFGibbs::ModelCRFGibbs(const Corpus& corpus, int T, int B, int Q, double eta)
+:Model(corpus, T, B, Q, eta) {
+}
+
 TagVector ModelCRFGibbs::sample(const Sentence& seq) { 
   TagVector vec;
   gradient(seq, &vec, false); 
@@ -40,6 +44,10 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
 }
 
 ////////// Simple Model (Independent Logit) ////////////
+ModelSimple::ModelSimple(const Corpus& corpus, int T, int B, int Q, double eta)
+:Model(corpus, T, B, Q, eta) {
+}
+
 TagVector ModelSimple::sample(const Sentence& seq) {
   TagVector vec;
   gradient(seq, &vec, false);
@@ -91,6 +99,10 @@ void ModelSimple::run(const Corpus& testCorpus, bool lets_test) {
 }
 
 ////////// Incremental Gibbs Sampling /////////////////////////
+ModelIncrGibbs::ModelIncrGibbs(const Corpus& corpus, int T, int B, int Q, double eta)
+:Model(corpus, T, B, Q, eta) {
+}
+
 TagVector ModelIncrGibbs::sample(const Sentence& seq) {
   TagVector samples;
   gradient(seq, &samples, false);

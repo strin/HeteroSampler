@@ -72,6 +72,10 @@ int main(int argc, char* argv[]) {
       shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(corpus));
       set_param(model);
       model->run(testCorpus);
+    }else if(inference == "FwBw") {
+      shared_ptr<Model> model = shared_ptr<Model>(new ModelFwBw(corpus));
+      set_param(model);
+      model->run(testCorpus);
     }else if(inference == "TreeUA") {
       shared_ptr<ModelTreeUA> model = shared_ptr<ModelTreeUA>(new ModelTreeUA(corpus, K));
       if(vm.count("eps_split")) {

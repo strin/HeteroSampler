@@ -65,5 +65,9 @@ static void mapDivide(std::map<std::string, K>& g, double eta) {
   }
 }
 
-
+template<class K>
+static K mapGet(std::map<std::string, K>& g, std::string key) {
+  if(g.find(key) == g.end()) return (K)0.0;
+  return g[key];
+}
 #endif

@@ -71,6 +71,15 @@ public:
   TagVector sample(const Sentence& seq);
 };
 
+/* using forward-backward inference for discriminative MRF */
+struct ModelFwBw : public ModelCRFGibbs {
+public:
+  ModelFwBw(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
+  ParamPointer gradient(const Sentence& seq);
+  TagVector sample(const Sentence& seq);
+};
+
 struct ModelTreeUA : public ModelCRFGibbs {
 public:
   ModelTreeUA(const Corpus& corpus, int K, int T = 1, int B = 0, int Q = 10, double eta = 0.5);

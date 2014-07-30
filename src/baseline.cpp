@@ -91,6 +91,7 @@ ParamPointer ModelSimple::gradient(const Sentence& seq) {
 
 ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
   Tag tag(&seq, corpus, &rngs[0], param);
+  Tag truth(seq, corpus, &rngs[0], param);
   ParamPointer gradient(new map<string, double>());
   for(size_t i = 0; i < tag.size(); i++) {
     auto featExtract = [&] (const Tag& tag) -> FeaturePointer {
@@ -99,7 +100,7 @@ ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool
     ParamPointer g = tag.proposeGibbs(i, featExtract, true, false);
     if(update_grad) {
       mapUpdate<double, double>(*gradient, *g);
-      mapUpdate<double, double>(*gradient, *featExtract(tag));
+      mapUpdate<double, double>(*gradient, *featExtract(truth));
     }
   }
   if(samples)
@@ -166,4 +167,60 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
   if(samples)
     samples->push_back(shared_ptr<Tag>(new Tag(tag)));
   return gradient;
+}
+
+///////// Forward-Backward Algorithm ////////////////////////////
+ModelFwBw::ModelFwBw(const Corpus& corpus, int T, int B, int Q, double eta) 
+:ModelCRFGibbs(corpus, T, B, Q, eta) { 
+}
+
+ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* vec, bool update_grad) {
+  Tag tag(&seq, corpus, &rngs[0], param);
+  Tag truth(seq, corpus, &rngs[0], param);
+  size_t seqlen = tag.size(), taglen = corpus.tags.size();
+  // dp[i][j] is the multiplicative factor for the marginal 
+  // of S_{i:end} starting with character j. (use log-space)
+  double dp[seqlen][taglen];
+  // forward.
+  for(size_t c = 0; c < taglen; c++) dp[0][c] = 0.0;
+  for(size_t i = 1; i < seqlen; i++) {
+    for(size_t c = 0; c < taglen; c++) {
+      dp[i][c] = -DBL_MAX;
+      for(size_t s = 0; s < taglen; s++) {
+	double uni = mapGet(*param, seq.seq[i-1].word+"-"+to_string(s));
+	double bi = mapGet(*param, "p-"+to_string(s)+"-"+to_string(c));
+	dp[i][c] = logAdd(dp[i][c], dp[i-1][c] + uni + bi);
+      }
+    }
+  }
+  // backward. 
+  double sc[taglen];
+  for(int i = seqlen-1; i >= 0; i--) {
+    for(size_t c = 0; c < taglen; c++) {
+      sc[c] = mapGet(*param, seq.seq[i].word+"-"+to_string(c));
+      if(i < seqlen-1) 
+	sc[c] += mapGet(*param, "p-"+to_string(c)+"-"+to_string(tag.tag[i+1]));
+      sc[c] += dp[i][c];
+    }
+    logNormalize(sc, taglen);
+    tag.tag[i] = rngs[0].sampleCategorical(sc, taglen);
+  }
+  if(vec) 
+    vec->push_back(shared_ptr<Tag>(new Tag(tag)));
+  ParamPointer gradient = makeParamPointer();
+  mapUpdate(*gradient, *this->extractFeatures(tag), -1);
+  mapUpdate(*gradient, *this->extractFeatures(truth));
+  xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
+  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+  return gradient;
+}
+
+ParamPointer ModelFwBw::gradient(const Sentence& seq) {
+  return this->gradient(seq, nullptr, true);
+}
+
+TagVector ModelFwBw::sample(const Sentence& seq) {
+  TagVector vec;
+  this->gradient(seq, &vec, false);
+  return vec;
 }

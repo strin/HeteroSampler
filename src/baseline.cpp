@@ -10,8 +10,6 @@ using namespace std;
 TagVector ModelCRFGibbs::sample(const Sentence& seq) { 
   TagVector vec;
   gradient(seq, &vec, false); 
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << vec.back()->str() << endl; xmllog.end();
   return vec;
 }
 
@@ -32,6 +30,8 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
   }
   if(samples)
     samples->push_back(shared_ptr<Tag>(new Tag(tag)));
+  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
   if(update_grad) {
     mapDivide<double>(*gradient, -(double)(T-B));
     mapUpdate<double, double>(*gradient, *feat);
@@ -43,8 +43,6 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
 TagVector ModelSimple::sample(const Sentence& seq) {
   TagVector vec;
   gradient(seq, &vec, false);
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << vec.back()->str() << endl; xmllog.end();
   return vec;
 }
 
@@ -64,6 +62,8 @@ ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool
   }
   if(samples)
     samples->push_back(shared_ptr<Tag>(new Tag(tag)));
+  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
   return gradient;
 }
 

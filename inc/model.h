@@ -51,6 +51,7 @@ public:
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq); 
+  FeaturePointer extractFeatures(const Tag& tag, int pos);
 };
 
 struct ModelCRFGibbs : public Model {
@@ -59,9 +60,10 @@ public:
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
+  FeaturePointer extractFeatures(const Tag& tag);
 };
 
-struct ModelIncrGibbs : public Model {
+struct ModelIncrGibbs : public ModelCRFGibbs {
 public:
   ModelIncrGibbs(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
@@ -69,9 +71,9 @@ public:
   TagVector sample(const Sentence& seq);
 };
 
-struct ModelTreeUA : public Model {
+struct ModelTreeUA : public ModelCRFGibbs {
 public:
-  ModelTreeUA(const Corpus& corpus, int K);
+  ModelTreeUA(const Corpus& corpus, int K, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
 
   void run(const Corpus& testCorpus);
 
@@ -101,7 +103,8 @@ private:
 
 struct ModelAdaTree : public ModelTreeUA {
 public:
-  ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar);
+  ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar, 
+	      double etaT = 0.5, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   /* implement components necessary */  
   void workerThreads(int tid, int seed, std::shared_ptr<MarkovTreeNode> node, 
 			Tag tag, objcokus rng);

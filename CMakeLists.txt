@@ -53,6 +53,7 @@ src/tag.cpp
 src/MarkovTree.cpp
 src/model.cpp
 src/baseline.cpp
+src/search.cpp
 src/objcokus.cpp
 )
 

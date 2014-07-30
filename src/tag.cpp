@@ -12,6 +12,13 @@ Tag::Tag(const Sentence* seq, const Corpus& corpus,
   this->randomInit();
 }
 
+Tag::Tag(const Sentence& seq, const Corpus& corpus, 
+        objcokus* rng, ParamPointer param)
+:seq(&seq), corpus(corpus), rng(rng), param(param) {
+  this->tag = seq.tag;
+
+}
+
 void Tag::randomInit() {
   int taglen = corpus.tags.size();
   int seqlen = seq->seq.size();
@@ -19,35 +26,6 @@ void Tag::randomInit() {
   for(int& t : tag) {
     t = rng->randomMT() % taglen;
   }
-}
-
-FeaturePointer Tag::extractSimpleFeatures(const vector<int>& tag, int pos) {
-  FeaturePointer features = makeFeaturePointer();
-  const vector<Token>& sen = seq->seq;
-  // extract word features only.
-  stringstream ss;
-  ss << "simple-" << sen[pos].word << "-" << tag[pos];
-  (*features)[ss.str()] = 1;
-  return features;
-}
-
-FeaturePointer Tag::extractFeatures(const vector<int>& tag) {
-  FeaturePointer features = makeFeaturePointer();
-  const vector<Token>& sen = seq->seq;
-  int seqlen = sen.size();
-  // extract word features. 
-  for(int si = 0; si < seqlen; si++) {
-    stringstream ss;
-    ss << sen[si].word << "-" << tag[si];
-    (*features)[ss.str()] = 1;
-  }
-  // extract bigram features.
-  for(int si = 1; si < seqlen; si++) {
-    stringstream ss;
-    ss << "p-" << tag[si-1] << "-" << tag[si];
-    (*features)[ss.str()] = 1;
-  }
-  return features;
 }
 
 string str(FeaturePointer features) {
@@ -60,36 +38,8 @@ string str(FeaturePointer features) {
   return ss.str();
 }
 
-ParamPointer Tag::proposeSimple(int pos, bool grad_expect, bool grad_sample) {
-  const vector<Token>& sen = seq->seq;
-  size_t seqlen = sen.size();
-  if(pos > seqlen)
-    throw "Simple model proposal out of boundary";
-  size_t taglen = corpus.tags.size();
-  vector<FeaturePointer> featvec;
-  double sc[taglen];
-  for(size_t t = 0; t < taglen; t++) {
-    tag[pos] = t;
-    FeaturePointer features = this->extractSimpleFeatures(this->tag, pos);
-    featvec.push_back(features);
-    sc[t] = this->score(features);
-  }
-  logNormalize(sc, taglen);
-  int val = rng->sampleCategorical(sc, taglen);
-  tag[pos] = val;
-  this->features = this->extractSimpleFeatures(this->tag, pos);
-  ParamPointer gradient = makeParamPointer();
-  if(grad_sample)
-    mapUpdate<double, double>(*gradient, *this->features);
-  if(grad_expect) {
-    for(size_t t = 0; t < taglen; t++) {
-      mapUpdate<double, double>(*gradient, *featvec[t], -exp(sc[t]));
-    }
-  }
-  return gradient;
-}
-
-ParamPointer Tag::proposeGibbs(int pos, bool grad_expect, bool grad_sample) {
+ParamPointer Tag::proposeGibbs(int pos, function<FeaturePointer(const Tag& tag)>
+featExtract, bool grad_expect, bool grad_sample) {
   const vector<Token>& sen = seq->seq;
   int seqlen = sen.size();
   if(pos >= seqlen) 
@@ -99,7 +49,7 @@ ParamPointer Tag::proposeGibbs(int pos, bool grad_expect, bool grad_sample) {
   vector<FeaturePointer> featvec;
   for(int t = 0; t < taglen; t++) {
     tag[pos] = t;
-    FeaturePointer features = this->extractFeatures(this->tag);
+    FeaturePointer features = featExtract(*this);
     featvec.push_back(features);
     sc[t] = this->score(features);
   }
@@ -107,7 +57,7 @@ ParamPointer Tag::proposeGibbs(int pos, bool grad_expect, bool grad_sample) {
   int val = rng->sampleCategorical(sc, taglen);
   if(val == taglen) throw "Gibbs sample out of bound.";
   tag[pos] = val;
-  this->features = this->extractFeatures(this->tag);
+  this->features = featExtract(*this);
   ParamPointer gradient(new map<string, double>());
   if(grad_sample)
     mapUpdate<double, double>(*gradient, *this->features);

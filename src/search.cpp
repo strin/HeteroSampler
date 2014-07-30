@@ -10,9 +10,11 @@
 #include <chrono>
 
 using namespace std;
+using namespace std::placeholders;
 
-ModelTreeUA::ModelTreeUA(const Corpus& corpus, int K) 
-:Model(corpus), eps(0), eps_split(0) {
+ModelTreeUA::ModelTreeUA(const Corpus& corpus, int K, int T, int B, int Q, 
+			  double eta) 
+:ModelCRFGibbs(corpus, T, B, Q, eta), eps(0), eps_split(0) {
   Model::K = K;
   this->initThreads(K);
 }
@@ -28,7 +30,9 @@ void ModelTreeUA::run(const Corpus& testCorpus) {
 void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
     while(true) {
       tag.rng = &rng; // unsafe, rng may be deleted.
-      node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
+      node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), 
+					bind(&ModelCRFGibbs::extractFeatures, this, _1), 
+					true);
      // xmllog.begin("tag"); xmllog << "[" << node->depth << "] " 
       //			<< tag.str() << endl; xmllog.end();
       this->configStepsize(node->gradient, this->eta);
@@ -136,22 +140,24 @@ double ModelTreeUA::score(const Tag& tag) {
 }
 
 
-ModelAdaTree::ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar)
-:ModelTreeUA(corpus, K), m_c(c), m_Tstar(Tstar) {
+ModelAdaTree::ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar, 
+			    double etaT, int T, int B, int Q, double eta)
+:ModelTreeUA(corpus, K, T, B, Q, eta), m_c(c), m_Tstar(Tstar), etaT(etaT) {
   // aggregate stats. 
   wordent = tagEntropySimple();
   wordfreq = wordFrequencies();
   auto tag_bigram_unigram = tagBigram();
   tag_bigram = tag_bigram_unigram.first;
   tag_unigram_start = tag_bigram_unigram.second;
-  this->etaT = this->eta;
 }
 
 void ModelAdaTree::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) { 
     XMLlog& lg = *th_log[tid];
     while(true) {
       tag.rng = &rng; // unsafe, rng may be deleted. 
-      node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), true);
+      node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), 
+					bind(&ModelCRFGibbs::extractFeatures, this, _1), 
+					true);
       node->tag = shared_ptr<Tag>(new Tag(tag));
       auto predT = this->logisticStop(node, *tag.seq, tag); 
       double prob = get<0>(predT);

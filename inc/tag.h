@@ -56,13 +56,12 @@ public:
    * DO NOT use the test corpus, as it would confuse the tagging.
    */
   Tag(const Sentence* seq, const Corpus& corpus, 
-     objcokus* rng, ParamPointer param);
+     objcokus* rng, ParamPointer param); // random init tag.
+  Tag(const Sentence& seq, const Corpus& corpus, 
+     objcokus* rng, ParamPointer param); // copy tag from seq.
   inline size_t size() const {return this->tag.size(); }
   void randomInit();
-  ParamPointer proposeSimple(int pos, bool grad_expect = false, bool grad_sample = true);
-  ParamPointer proposeGibbs(int pos, bool grad_expect = false, bool grad_sample = true);
-  FeaturePointer extractSimpleFeatures(const std::vector<int>& tag, int pos);
-  FeaturePointer extractFeatures(const std::vector<int>& tag);
+  ParamPointer proposeGibbs(int pos, std::function<FeaturePointer(const Tag& tag)> featExtract, bool grad_expect = false, bool grad_sample = true);
   double score(FeaturePointer features) const; // return un-normalized log-score.
   double distance(const Tag& tag); // warning: both tags should have same anchor dict.  
   std::string str(); 

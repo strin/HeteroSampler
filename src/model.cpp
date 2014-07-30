@@ -484,6 +484,13 @@ ModelAdaTree::logisticStop(shared_ptr<MarkovTreeNode> node, const Sentence& seq,
 		neggrad = makeParamPointer();
   FeaturePointer feat = this->extractStopFeatures(node, seq, tag);
   double prob = logisticFunc(log(eps)-log(1-eps)+tag.score(feat)); 
+  if(isnan(prob)) {
+    th_mutex.lock();
+    for(const pair<string, double>& p : *feat) {
+      xmllog << p.first << " : " << (*param)[p.first] << endl;
+    }
+    th_mutex.unlock();
+  }
   if(prob < 1e-3) prob = 1e-3;   // truncation, avoid too long transitions.
   else{
     mapUpdate<double, double>(*posgrad, *feat, (1-prob));

@@ -112,22 +112,19 @@ double Model::test(const Corpus& corpus) {
   int testcount = 0, alltaghits = 0;
   xmllog.begin("examples");
   for(const Sentence& seq : corpus.seqs) {
-    Tag tag(&seq, corpus, &rngs[0], param);
-    for(int i = 0; i < seq.tag.size(); i++) {
-      tag.proposeGibbs(i);
-    }
+    shared_ptr<Tag> tag = this->sample(seq).back();
     xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-    xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
-    for(int i = 0; i < seq.tag.size(); i++) {
-      if(tag.tag[i] == seq.tag[i]) {
-	if(taghits.find(tag.tag[i]) == taghits.end())
-	  taghits[tag.tag[i]] = 0;
-	taghits[tag.tag[i]]++;
+    xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
+    for(int i = 0; i < seq.size(); i++) {
+      if(tag->tag[i] == seq.tag[i]) {
+	if(taghits.find(tag->tag[i]) == taghits.end())
+	  taghits[tag->tag[i]] = 0;
+	taghits[tag->tag[i]]++;
 	alltaghits++;
       }
-      if(tagcounts.find(tag.tag[i]) == tagcounts.end())
-	tagcounts[tag.tag[i]] = 0;
-      tagcounts[tag.tag[i]]++;
+      if(tagcounts.find(tag->tag[i]) == tagcounts.end())
+	tagcounts[tag->tag[i]] = 0;
+      tagcounts[tag->tag[i]]++;
       testcount++;
     }
   }
@@ -415,6 +412,13 @@ ModelAdaTree::logisticStop(shared_ptr<MarkovTreeNode> node, const Sentence& seq,
 		neggrad = makeParamPointer();
   FeaturePointer feat = this->extractStopFeatures(node, seq, tag);
   double prob = logisticFunc(log(eps)-log(1-eps)+tag.score(feat)); 
+  if(isnan(prob)) {
+    th_mutex.lock();
+    for(const pair<string, double>& p : *feat) {
+      xmllog << p.first << " : " << (*param)[p.first] << endl;
+    }
+    th_mutex.unlock();
+  }
   if(prob < 1e-3) prob = 1e-3;   // truncation, avoid too long transitions.
   else{
     mapUpdate<double, double>(*posgrad, *feat, (1-prob));

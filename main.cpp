@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
     windowL = vm["windowL"].as<int>();
   try{
     if(inference == "Gibbs") {
-      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus));
+      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, windowL));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "Simple") {

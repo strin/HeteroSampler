@@ -28,8 +28,8 @@ void Token::parseline(const string& line) {
 
 
 // implement Sentence.
-Sentence::Sentence(const Corpus* const corpus) : corpus(corpus) {}
-Sentence::Sentence(const Corpus* const corpus, const vector<string>& lines)
+Sentence::Sentence(const Corpus* corpus) : corpus(corpus) {}
+Sentence::Sentence(const Corpus* corpus, const vector<string>& lines)
 :corpus(corpus) {
   this->parselines(lines);
 }

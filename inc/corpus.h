@@ -25,7 +25,7 @@ public:
   Sentence(const Corpus* const corpus, const std::vector<std::string>& lines);
   std::vector<Token> seq;
   std::vector<int> tag;
-  const Corpus* const corpus;
+  const Corpus* corpus;
   void parselines(const std::vector<std::string>& lines);
   std::string str() const;
   size_t size() const {return this->seq.size(); }

@@ -17,12 +17,15 @@ public:
   void parseline(const std::string& line);
 };
 
+struct Corpus;
+
 struct Sentence {
 public:
+  Sentence(const Corpus& corpus);
+  Sentence(const Corpus& corpus, const std::vector<std::string>& lines);
   std::vector<Token> seq;
   std::vector<int> tag;
-  Sentence();
-  Sentence(const std::vector<std::string>& lines);
+  const Corpus& corpus;
   void parselines(const std::vector<std::string>& lines);
   std::string str() const;
   size_t size() const {return this->seq.size(); }
@@ -30,13 +33,15 @@ public:
 
 struct Corpus {
 public:
+  enum Mode {MODE_POS, MODE_NER};
+  Mode mode;
+  Corpus(Mode mode = MODE_POS);
+  Corpus(const std::string& filename, Mode mode = MODE_POS);
   std::vector<Sentence> seqs;
   std::map<std::string, int> tags, tagcounts;
   std::map<std::string, int> dic, dic_counts;
-  size_t total_words;
+  size_t total_words, total_tags;
   std::map<int, std::string> invtags;
-  Corpus();
-  Corpus(const std::string& filename);
   void read(const std::string& filename);
   void retag(const Corpus& corpus); // retag using corpus' tag.
   int size() const {return seqs.size(); }

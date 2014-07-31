@@ -28,8 +28,9 @@ void Token::parseline(const string& line) {
 
 
 // implement Sentence.
-Sentence::Sentence() {}
-Sentence::Sentence(const vector<string>& lines) {
+Sentence::Sentence(const Corpus& corpus) : corpus(corpus) {}
+Sentence::Sentence(const Corpus& corpus, const vector<string>& lines)
+:corpus(corpus) {
   this->parselines(lines);
 }
 
@@ -45,15 +46,19 @@ void Sentence::parselines(const vector<string>& lines) {
 string Sentence::str() const {
   stringstream ss;
   for(const Token& token : seq) {
-    ss << token.word << "/" << token.pos << "\t";
+    if(corpus.mode == Corpus::MODE_POS)
+      ss << token.word << "/" << token.pos << "\t";
+    else if(corpus.mode == Corpus::MODE_NER)
+      ss << token.word << "/" << token.ner << "\t";
   }
   return ss.str();
 }
 
 // implement Corpus.
-Corpus::Corpus() {}
+Corpus::Corpus(Mode mode) : mode(mode) {}
 
-Corpus::Corpus(const string& filename) {
+Corpus::Corpus(const string& filename, Mode mode)
+:mode(mode) {
   this->read(filename);
 }
 
@@ -71,17 +76,20 @@ void Corpus::read(const string& filename) {
   while(!file.eof()) {
     getline(file, line);
     if(line == "") {
-      Sentence sen(lines);
+      Sentence sen(*this, lines);
       lines.clear();
       if(sen.seq.size() > 0) {
 	seqs.push_back(sen);
       }else continue;
       BOOST_FOREACH(const Token& token, seqs.back().seq) {
-	if(tags.find(token.pos) == tags.end()) {
-	  tags[token.pos] =  tagid++;
-	  tagcounts[token.pos] = 0;
+	string tg;
+	if(mode == MODE_POS) tg = token.pos;
+	else if(mode == MODE_NER) tg = token.ner;
+	if(tags.find(tg) == tags.end()) {
+	  tags[tg] =  tagid++;
+	  tagcounts[tg] = 0;
 	}
-	tagcounts[token.pos]++;
+	tagcounts[tg]++;
 	dic[token.word] = true;
 	if(dic_counts.find(token.word) == dic_counts.end()) 
 	  dic_counts[token.word] = 0;
@@ -92,12 +100,23 @@ void Corpus::read(const string& filename) {
     }else
       lines.push_back(line);
   }
+  // count tags.
+  if(mode == MODE_POS) total_tags = total_words; 
+  else{
+    total_tags = 0;
+    for(const pair<string, int>& p : tagcounts) {
+      if(p.first != "O") total_tags += p.second; 
+    }
+  }
   // convert raw tag into integer tag.
   invtags.clear();
   for(Sentence& seq : seqs) {
     for(const Token& token : seq.seq) {
-      seq.tag.push_back(tags[token.pos]); 
-      invtags[tags[token.pos]] = token.pos;
+      string tg;
+      if(mode == MODE_POS) tg = token.pos;
+      else if(mode == MODE_NER) tg = token.ner;
+      seq.tag.push_back(tags[tg]); 
+      invtags[tags[tg]] = tg;
     }
   }
 }

@@ -131,7 +131,6 @@ double Model::test(const Corpus& corpus) {
   xmllog.end();
 
   xmllog.begin("score"); 
-  double f1 = 0.0;
   for(const pair<string, int>& p : corpus.tags) {
     double accuracy = 0;
     if(tagcounts[p.second] != 0)
@@ -145,9 +144,18 @@ double Model::test(const Corpus& corpus) {
     //  f1 += 2*accuracy*recall/(accuracy+recall);
   }
   double accuracy = (double)alltaghits/testcount;
-  xmllog << "test accuracy = " << accuracy*100 << " %" << endl; 
-  xmllog.end();
-  return f1/corpus.tags.size();
+  double recall = (double)alltaghits/corpus.total_tags;
+  xmllog << "test precision = " << accuracy*100 << " %" << endl; 
+  if(corpus.mode == Corpus::MODE_POS) {
+    xmllog.end();
+    return accuracy;
+  }else if(corpus.mode == Corpus::MODE_NER) {  
+    xmllog << "test recall = " << recall*100 << " %" << endl;
+    double f1 = 2 * accuracy * recall / (accuracy + recall);
+    xmllog.end();
+    return f1;
+  }
+  return -1;
 }
 
 void Model::adagrad(ParamPointer gradient) {

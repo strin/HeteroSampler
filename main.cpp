@@ -24,6 +24,7 @@ int main(int argc, char* argv[]) {
       ("c", po::value<double>(), "extent of time regularization")
       ("Tstar", po::value<double>(), "time resource constraints")
       ("eps_split", po::value<int>(), "prob of split in MarkovTree")
+      ("mode", po::value<string>(), "mode (POS / NER)")
   ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -53,9 +54,12 @@ int main(int argc, char* argv[]) {
     eta = vm["eta"].as<double>();
 
   // run.
-  Corpus corpus;
+  Corpus::Mode mode = Corpus::MODE_POS;
+  if(vm.count("mode") && vm["mode"].as<string>() == "NER")
+    mode = Corpus::MODE_NER;
+  Corpus corpus(mode);
   corpus.read("data/eng_ner/train");
-  Corpus testCorpus;
+  Corpus testCorpus(mode);
   testCorpus.read("data/eng_ner/test");
   auto set_param = [&] (shared_ptr<Model> model) {
     model->T = T;

@@ -68,20 +68,20 @@ int main(int argc, char* argv[]) {
     model->B = B;
     model->eta = eta;
   };
+  int windowL = 0;
+  if(vm.count("windowL"))
+    windowL = vm["windowL"].as<int>();
   try{
     if(inference == "Gibbs") {
       shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "Simple") {
-      int windowL = 0;
-      if(vm.count("windowL"))
-	windowL = vm["windowL"].as<int>();
       shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(corpus, windowL));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "FwBw") {
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelFwBw(corpus));
+      shared_ptr<Model> model = shared_ptr<Model>(new ModelFwBw(corpus, windowL));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "TreeUA") {

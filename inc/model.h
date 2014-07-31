@@ -59,16 +59,19 @@ private:
 
 struct ModelCRFGibbs : public Model {
 public:
-  ModelCRFGibbs(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelCRFGibbs(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
   FeaturePointer extractFeatures(const Tag& tag);
+
+private:
+  int windowL;
 };
 
 struct ModelIncrGibbs : public ModelCRFGibbs {
 public:
-  ModelIncrGibbs(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelIncrGibbs(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
@@ -77,7 +80,7 @@ public:
 /* using forward-backward inference for discriminative MRF */
 struct ModelFwBw : public ModelCRFGibbs {
 public:
-  ModelFwBw(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelFwBw(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
@@ -85,7 +88,7 @@ public:
 
 struct ModelTreeUA : public ModelCRFGibbs {
 public:
-  ModelTreeUA(const Corpus& corpus, int K, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelTreeUA(const Corpus& corpus, int windowL = 0, int K = 5, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
 
   void run(const Corpus& testCorpus);
 
@@ -115,7 +118,7 @@ private:
 
 struct ModelAdaTree : public ModelTreeUA {
 public:
-  ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar, 
+  ModelAdaTree(const Corpus& corpus, int windowL = 0, int K = 5, double c = 1, double Tstar = 10, 
 	      double etaT = 0.5, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   /* implement components necessary */  
   void workerThreads(int tid, int seed, std::shared_ptr<MarkovTreeNode> node, 

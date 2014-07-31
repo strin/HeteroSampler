@@ -28,8 +28,8 @@ void Token::parseline(const string& line) {
 
 
 // implement Sentence.
-Sentence::Sentence(const Corpus& corpus) : corpus(corpus) {}
-Sentence::Sentence(const Corpus& corpus, const vector<string>& lines)
+Sentence::Sentence(const Corpus* const corpus) : corpus(corpus) {}
+Sentence::Sentence(const Corpus* const corpus, const vector<string>& lines)
 :corpus(corpus) {
   this->parselines(lines);
 }
@@ -46,9 +46,9 @@ void Sentence::parselines(const vector<string>& lines) {
 string Sentence::str() const {
   stringstream ss;
   for(const Token& token : seq) {
-    if(corpus.mode == Corpus::MODE_POS)
+    if(corpus->mode == Corpus::MODE_POS)
       ss << token.word << "/" << token.pos << "\t";
-    else if(corpus.mode == Corpus::MODE_NER)
+    else if(corpus->mode == Corpus::MODE_NER)
       ss << token.word << "/" << token.ner << "\t";
   }
   return ss.str();
@@ -76,7 +76,7 @@ void Corpus::read(const string& filename) {
   while(!file.eof()) {
     getline(file, line);
     if(line == "") {
-      Sentence sen(*this, lines);
+      Sentence sen(this, lines);
       lines.clear();
       if(sen.seq.size() > 0) {
 	seqs.push_back(sen);

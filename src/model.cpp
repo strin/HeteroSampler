@@ -119,30 +119,31 @@ double Model::test(const Corpus& testCorpus) {
 	}
 	pred_count++;
       }else if(corpus.mode == Corpus::MODE_NER) {
-	string str_seq = corpus.invtags.find(seq.tag[i])->second, 
-	       str_tag = corpus.invtags.find(tag->tag[i])->second;
-	if(str_seq[0] == 'B') 
-	  truth_begin = true;
-	if(str_tag[0] == 'B')
-	  pred_begin = true;
-	if(str_seq[0] == 'B' && str_tag[0] == 'B')
+	auto get_truth = [&] (int pos) -> string {
+	  return corpus.invtags.find(seq.tag[pos])->second;	      
+	};
+	auto get_tag   = [&] (int pos) -> string {
+	  return corpus.invtags.find(tag->tag[pos])->second;
+	};
+	auto check_truth_begin = [&] () {
+	  return get_truth(i) != "O" && (i == 0 || get_truth(i-1) == "O");
+	};
+	auto check_tag_begin = [&] () {
+	  return get_tag(i) != "O" && (i == 0 || get_tag(i-1) == "O");
+	};
+	auto check_truth_end = [&] () {
+	  return get_tag(i) != "O" && (i == seq.size()-1 || get_truth(i+1) == "O");
+	};
+	auto check_tag_end = [&] () {
+	  return get_truth(i) != "O" && (i == seq.size()-1 || get_tag(i+1) == "O");
+	};
+	truth_count += (int)check_truth_begin();
+	pred_count += (int)check_tag_begin();
+	if(check_truth_begin() && check_tag_begin())
 	  hit_begin = true;
 	if(tag->tag[i] != seq.tag[i]) hit_begin = false;
-	string str_seq_next = corpus.invtags.find(seq.tag[i+1])->second, 
-	       str_tag_next = corpus.invtags.find(tag->tag[i+1])->second;
-	if(i == seq.size()-1 || str_seq_next == "O") {
-	  truth_count += (truth_begin == true);
-	  truth_begin = false;
-	}
-	if(i == seq.size()-1 || str_tag_next == "O") { 
-	  pred_count += (pred_begin == true);
-	  pred_begin = false;
-	}
-	if(i == seq.size()-1 || (str_seq_next == "O"
-			     && str_tag_next == "O")) {
-	  hit_count += (hit_begin == true);
-	  hit_begin = false;
-	}
+	if(check_truth_end() && check_tag_end()) 
+	  hit_count += (int)hit_begin;
       }
     }
   }

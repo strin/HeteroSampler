@@ -21,11 +21,11 @@ struct Corpus;
 
 struct Sentence {
 public:
-  Sentence(const Corpus& corpus);
-  Sentence(const Corpus& corpus, const std::vector<std::string>& lines);
+  Sentence(const Corpus* const corpus);
+  Sentence(const Corpus* const corpus, const std::vector<std::string>& lines);
   std::vector<Token> seq;
   std::vector<int> tag;
-  const Corpus& corpus;
+  const Corpus* const corpus;
   void parselines(const std::vector<std::string>& lines);
   std::string str() const;
   size_t size() const {return this->seq.size(); }

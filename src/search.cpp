@@ -12,9 +12,9 @@
 using namespace std;
 using namespace std::placeholders;
 
-ModelTreeUA::ModelTreeUA(const Corpus& corpus, int K, int T, int B, int Q, 
+ModelTreeUA::ModelTreeUA(const Corpus& corpus, int windowL, int K, int T, int B, int Q, 
 			  double eta) 
-:ModelCRFGibbs(corpus, T, B, Q, eta), eps(0), eps_split(0) {
+:ModelCRFGibbs(corpus, windowL, T, B, Q, eta), eps(0), eps_split(0) {
   Model::K = K;
   this->initThreads(K);
 }
@@ -140,9 +140,9 @@ double ModelTreeUA::score(const Tag& tag) {
 }
 
 
-ModelAdaTree::ModelAdaTree(const Corpus& corpus, int K, double c, double Tstar, 
+ModelAdaTree::ModelAdaTree(const Corpus& corpus, int windowL, int K, double c, double Tstar, 
 			    double etaT, int T, int B, int Q, double eta)
-:ModelTreeUA(corpus, K, T, B, Q, eta), m_c(c), m_Tstar(Tstar), etaT(etaT) {
+:ModelTreeUA(corpus, windowL, K, T, B, Q, eta), m_c(c), m_Tstar(Tstar), etaT(etaT) {
   // aggregate stats. 
   wordent = tagEntropySimple();
   wordfreq = wordFrequencies();

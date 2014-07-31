@@ -8,8 +8,8 @@ using namespace std;
 using namespace std::placeholders;
 
 //////// Model CRF Gibbs ///////////////////////////////
-ModelCRFGibbs::ModelCRFGibbs(const Corpus& corpus, int T, int B, int Q, double eta)
-:Model(corpus, T, B, Q, eta) {
+ModelCRFGibbs::ModelCRFGibbs(const Corpus& corpus, int windowL, int T, int B, int Q, double eta)
+:Model(corpus, T, B, Q, eta), windowL(windowL) {
 }
 
 TagVector ModelCRFGibbs::sample(const Sentence& seq) { 
@@ -24,9 +24,12 @@ FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag) {
   int seqlen = sen.size();
   // extract word features. 
   for(int si = 0; si < seqlen; si++) {
-    stringstream ss;
-    ss << sen[si].word << "-" << tag.tag[si];
-    (*features)[ss.str()] = 1;
+    for(int l = max(0, si - windowL); l <= min(si + windowL, seqlen-1); l++) {
+      stringstream ss;
+      ss << "w-" << to_string(l-si) 
+	 << "-" << sen[l].word << "-" << tag.tag[si];
+      (*features)[ss.str()] = 1;
+    }
   }
   // extract bigram features.
   for(int si = 1; si < seqlen; si++) {
@@ -83,8 +86,8 @@ FeaturePointer ModelSimple::extractFeatures(const Tag& tag, int pos) {
   // extract word features only.
   for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
     stringstream ss;
-    ss << "simple-" << "w-" << to_string(l) 
-       << "-" << sen[pos].word << "-" << tag.tag[pos];
+    ss << "simple-" << "w-" << to_string(l-pos) 
+       << "-" << sen[l].word << "-" << tag.tag[pos];
     (*features)[ss.str()] = 1;
   }
   return features;
@@ -139,8 +142,8 @@ void ModelSimple::run(const Corpus& testCorpus, bool lets_test) {
 }
 
 ////////// Incremental Gibbs Sampling /////////////////////////
-ModelIncrGibbs::ModelIncrGibbs(const Corpus& corpus, int T, int B, int Q, double eta)
-:ModelCRFGibbs(corpus, T, B, Q, eta) {
+ModelIncrGibbs::ModelIncrGibbs(const Corpus& corpus, int windowL, int T, int B, int Q, double eta)
+:ModelCRFGibbs(corpus, windowL, T, B, Q, eta) {
 }
 
 TagVector ModelIncrGibbs::sample(const Sentence& seq) {
@@ -175,8 +178,8 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
 }
 
 ///////// Forward-Backward Algorithm ////////////////////////////
-ModelFwBw::ModelFwBw(const Corpus& corpus, int T, int B, int Q, double eta) 
-:ModelCRFGibbs(corpus, T, B, Q, eta) { 
+ModelFwBw::ModelFwBw(const Corpus& corpus, int windowL, int T, int B, int Q, double eta) 
+:ModelCRFGibbs(corpus, windowL, T, B, Q, eta) { 
 }
 
 ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* vec, bool update_grad) {

@@ -65,8 +65,9 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
 }
 
 ////////// Simple Model (Independent Logit) ////////////
-ModelSimple::ModelSimple(const Corpus& corpus, int T, int B, int Q, double eta)
-:Model(corpus, T, B, Q, eta) {
+ModelSimple::ModelSimple(const Corpus& corpus, int windowL, int T, int B, int Q, double eta)
+:Model(corpus, T, B, Q, eta), windowL(windowL) {
+  xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
 }
 
 TagVector ModelSimple::sample(const Sentence& seq) {
@@ -78,10 +79,14 @@ TagVector ModelSimple::sample(const Sentence& seq) {
 FeaturePointer ModelSimple::extractFeatures(const Tag& tag, int pos) {
   FeaturePointer features = makeFeaturePointer();
   const vector<Token>& sen = tag.seq->seq;
+  int seqlen = tag.size();
   // extract word features only.
-  stringstream ss;
-  ss << "simple-" << sen[pos].word << "-" << tag.tag[pos];
-  (*features)[ss.str()] = 1;
+  for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
+    stringstream ss;
+    ss << "simple-" << "w-" << to_string(l) 
+       << "-" << sen[pos].word << "-" << tag.tag[pos];
+    (*features)[ss.str()] = 1;
+  }
   return features;
 }
 

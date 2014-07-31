@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
       ("Q", po::value<int>(), "number of passes")
       ("K", po::value<int>(), "number of threads/particles")
       ("c", po::value<double>(), "extent of time regularization")
+      ("windowL", po::value<int>(), "window size for node-wise features")
       ("Tstar", po::value<double>(), "time resource constraints")
       ("eps_split", po::value<int>(), "prob of split in MarkovTree")
       ("mode", po::value<string>(), "mode (POS / NER)")
@@ -73,7 +74,10 @@ int main(int argc, char* argv[]) {
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "Simple") {
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(corpus));
+      int windowL = 0;
+      if(vm.count("windowL"))
+	windowL = vm["windowL"].as<int>();
+      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(corpus, windowL));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "FwBw") {

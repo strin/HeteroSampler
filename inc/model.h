@@ -16,7 +16,7 @@ struct Model {
 public:
   Model(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   virtual void run(const Corpus& testCorpus);
-  double test(const Corpus& corpus);
+  double test(const Corpus& testCorpus);
 
   /* gradient interface */
   virtual ParamPointer gradient(const Sentence& seq) = 0; 
@@ -46,12 +46,15 @@ protected:
 
 struct ModelSimple : public Model {
 public:
-  ModelSimple(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelSimple(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   void run(const Corpus& testCorpus, bool lets_test);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq); 
   FeaturePointer extractFeatures(const Tag& tag, int pos);
+
+private:
+  int windowL;
 };
 
 struct ModelCRFGibbs : public Model {

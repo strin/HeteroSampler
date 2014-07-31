@@ -79,7 +79,6 @@ void Model::run(const Corpus& testCorpus) {
   retagged.retag(this->corpus); // use training taggs. 
   int testLag = corpus.seqs.size()*testFrequency;
   int numObservation = 0;
-  xmllog.begin("param");
   xmllog.begin("Q"); xmllog << Q << endl; xmllog.end();
   xmllog.begin("T"); xmllog << T << endl; xmllog.end();
   xmllog.begin("B"); xmllog << B << endl; xmllog.end();
@@ -87,7 +86,6 @@ void Model::run(const Corpus& testCorpus) {
   xmllog.begin("num_train"); xmllog << corpus.size() << endl; xmllog.end();
   xmllog.begin("num_test"); xmllog << testCorpus.size() << endl; xmllog.end();
   xmllog.begin("test_lag"); xmllog << testLag << endl; xmllog.end();
-  xmllog.end();
   for(int q = 0; q < Q; q++) {
     xmllog.begin("pass "+to_string(q));
     for(const Sentence& seq : corpus.seqs) {
@@ -106,52 +104,61 @@ void Model::run(const Corpus& testCorpus) {
   }
 }
 
-double Model::test(const Corpus& corpus) {
-  map<int, int> tagcounts;
-  map<int, int> taghits;
-  int testcount = 0, alltaghits = 0;
+double Model::test(const Corpus& testCorpus) {
+  int pred_count = 0, truth_count = 0, hit_count = 0;
   xmllog.begin("examples");
   for(const Sentence& seq : corpus.seqs) {
     shared_ptr<Tag> tag = this->sample(seq).back();
     xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
     xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
+    bool pred_begin = false, truth_begin = false, hit_begin = false;
     for(int i = 0; i < seq.size(); i++) {
-      if(tag->tag[i] == seq.tag[i]) {
-	if(taghits.find(tag->tag[i]) == taghits.end())
-	  taghits[tag->tag[i]] = 0;
-	taghits[tag->tag[i]]++;
-	alltaghits++;
+      if(corpus.mode == Corpus::MODE_POS) {
+	if(tag->tag[i] == seq.tag[i]) {
+	  hit_count++;
+	}
+	pred_count++;
+      }else if(corpus.mode == Corpus::MODE_NER) {
+	string str_seq = corpus.invtags.find(seq.tag[i])->second, 
+	       str_tag = corpus.invtags.find(tag->tag[i])->second;
+	if(str_seq[0] == 'B') 
+	  truth_begin = true;
+	if(str_tag[0] == 'B')
+	  pred_begin = true;
+	if(str_seq[0] == 'B' && str_tag[0] == 'B')
+	  hit_begin = true;
+	if(tag->tag[i] != seq.tag[i]) hit_begin = false;
+	string str_seq_next = corpus.invtags.find(seq.tag[i+1])->second, 
+	       str_tag_next = corpus.invtags.find(tag->tag[i+1])->second;
+	if(i == seq.size()-1 || str_seq_next == "O") {
+	  truth_count += (truth_begin == true);
+	  truth_begin = false;
+	}
+	if(i == seq.size()-1 || str_tag_next == "O") { 
+	  pred_count += (pred_begin == true);
+	  pred_begin = false;
+	}
+	if(i == seq.size()-1 || (str_seq_next == "O"
+			     && str_tag_next == "O")) {
+	  hit_count += (hit_begin == true);
+	  hit_begin = false;
+	}
       }
-      if(tagcounts.find(tag->tag[i]) == tagcounts.end())
-	tagcounts[tag->tag[i]] = 0;
-      tagcounts[tag->tag[i]]++;
-      testcount++;
     }
   }
   xmllog.end();
 
   xmllog.begin("score"); 
-  for(const pair<string, int>& p : corpus.tags) {
-    double accuracy = 0;
-    if(tagcounts[p.second] != 0)
-      accuracy = taghits[p.second]/(double)tagcounts[p.second];
-    double recall = 0;
-    if((double)corpus.tagcounts.find(p.first)->second != 0)
-      recall = taghits[p.second]/(double)corpus.tagcounts.find(p.first)->second;
-    xmllog << "<tag: " << p.first << "\taccuracy: " << accuracy << "\trecall: " << recall << "\tF1: " <<
-    2*accuracy*recall/(accuracy+recall) << endl;
-    // if(accuracy != 0 && recall != 0)
-    //  f1 += 2*accuracy*recall/(accuracy+recall);
-  }
-  double accuracy = (double)alltaghits/testcount;
-  double recall = (double)alltaghits/corpus.total_tags;
-  xmllog << "test precision = " << accuracy*100 << " %" << endl; 
+  double accuracy = (double)hit_count/pred_count;
+  double recall = (double)hit_count/truth_count;
+  xmllog << "test precision = " << accuracy * 100 << " %" << endl; 
   if(corpus.mode == Corpus::MODE_POS) {
     xmllog.end();
     return accuracy;
   }else if(corpus.mode == Corpus::MODE_NER) {  
-    xmllog << "test recall = " << recall*100 << " %" << endl;
+    xmllog << "test recall = " << recall * 100 << " %" << endl;
     double f1 = 2 * accuracy * recall / (accuracy + recall);
+    xmllog << "test f1 = " << f1 * 100 << " %" << endl;
     xmllog.end();
     return f1;
   }

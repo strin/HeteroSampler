@@ -126,7 +126,10 @@ void Corpus::retag(const Corpus& corpus) {
   this->invtags = corpus.invtags;
   for(Sentence& sen : seqs) {
     for(int i = 0; i < sen.size(); i++) {
-      sen.tag[i] = this->tags[sen.seq[i].pos];
+      if(mode == MODE_POS)
+	sen.tag[i] = this->tags[sen.seq[i].pos];
+      else if(mode == MODE_NER)
+	sen.tag[i] = this->tags[sen.seq[i].ner];
     }
   }
 }

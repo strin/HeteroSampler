@@ -28,13 +28,19 @@ void Model::configStepsize(ParamPointer gradient, double new_eta) {
 vector<string> Model::NLPfunc(const string word) {
   vector<string> nlp;
   nlp.push_back(word);
-  nlp.push_back(word.substr(0, 1));
-  nlp.push_back(word.substr(0, 2));
-  nlp.push_back(word.substr(0, 3));
   size_t wordlen = word.length();
-  nlp.push_back(word.substr(wordlen-1, 1));
-  nlp.push_back(word.substr(wordlen-2, 2));
-  nlp.push_back(word.substr(wordlen-3, 3));
+  if(wordlen >= 1) {
+    nlp.push_back(word.substr(0, 1));
+    nlp.push_back(word.substr(wordlen-1, 1));
+  }
+  if(wordlen >= 2) {
+    nlp.push_back(word.substr(0, 2));
+    nlp.push_back(word.substr(wordlen-2, 2));
+  }
+  if(wordlen >= 3) {
+    nlp.push_back(word.substr(0, 3));
+    nlp.push_back(word.substr(wordlen-3, 3));
+  }
   if(std::find_if(word.begin(), word.end(), 
 	  [](char c) { return std::isdigit(c); }) != word.end()) {
       nlp.push_back("00");  // number

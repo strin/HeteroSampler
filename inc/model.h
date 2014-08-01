@@ -87,7 +87,7 @@ public:
 struct ModelFwBw : public ModelCRFGibbs {
 public:
   ModelFwBw(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
-  ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
+  ParamPointer gradient(const Sentence& seq, TagVector* samples = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
 };

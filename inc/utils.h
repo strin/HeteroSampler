@@ -60,6 +60,13 @@ static void mapCopy(std::unordered_map<std::string, K>& g, const std::unordered_
 }
 
 template<class K>
+static void mapRemove(std::unordered_map<std::string, K>& g, const std::unordered_map<std::string, K>& u) {
+  for(const std::pair<std::string, K>& p : u) {
+    g.erase(p.first);
+  }
+}
+
+template<class K>
 static void mapUpdate(std::unordered_map<std::string, K>& g, std::string key, K val) {
   if(g.find(key) == g.end())
     g[key] = (K)0.0;

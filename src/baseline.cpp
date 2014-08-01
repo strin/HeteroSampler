@@ -195,62 +195,87 @@ ModelFwBw::ModelFwBw(const Corpus& corpus, int windowL, int T, int B, int Q, dou
 :ModelCRFGibbs(corpus, windowL, T, B, Q, eta) { 
 }
 
-ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* vec, bool update_grad) {
+ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
   Tag tag(&seq, corpus, &rngs[0], param);
   Tag truth(seq, corpus, &rngs[0], param);
   size_t seqlen = tag.size(), taglen = corpus.tags.size();
   // dp[i][j] is the multiplicative factor for the marginal 
-  // of S_{i:end} starting with character j. (use log-space)
-  double dp[seqlen][taglen];
-  // forward.
-  for(size_t c = 0; c < taglen; c++) dp[0][c] = 0.0;
-  for(int i = 1; i < seqlen; i++) {
+  // of S_{i+1:end} starting with S_i being character j. (use log-space)
+  double a[seqlen][taglen], b[seqlen][taglen], phi[seqlen][taglen][taglen];
+  // compute phi.
+  FeaturePointer feat = makeFeaturePointer(), bifeat = makeFeaturePointer();
+  for(int i = 0; i < seqlen; i++) {
     for(size_t c = 0; c < taglen; c++) {
-      dp[i][c] = -DBL_MAX;
+      tag.tag[i] = c;
+      feat->clear();
+      this->addUnigramFeatures(tag, i, feat);
       for(size_t s = 0; s < taglen; s++) {
-	double uni = 0.0;
-	for(int l = max(0, i-1-windowL); l <= min(i-1+windowL, (int)seqlen-1); l++) { 
-	  StringVector nlp = NLPfunc(seq.seq[l].word);
-	  for(const string& token : *nlp) {
-	    stringstream ss;
-	    ss << "w-" << to_string(l-i+1) 
-		<< "-" << token << "-" << tag.tag[i-1];
-	    uni += mapGet(*param, ss.str());
-	  }
+	bifeat->clear();
+	if(i >= 1) {
+	  tag.tag[i-1] = s;
+	  this->addBigramFeatures(tag, i, bifeat); 
 	}
-	double bi = mapGet(*param, "p-"+to_string(s)+"-"+to_string(c));
-	dp[i][c] = logAdd(dp[i][c], dp[i-1][c] + uni + bi);
+	mapCopy(*feat, *bifeat);
+	phi[i][c][s] = exp(tag.score(feat));	
+	mapRemove(*feat, *bifeat);
       }
     }
   }
-  // backward. 
-  double sc[taglen];
-  for(int i = seqlen-1; i >= 0; i--) {
+  // forward.
+  for(size_t c = 0; c < taglen; c++) a[0][c] = phi[0][c][0];
+  for(int i = 1; i < seqlen; i++) {
     for(size_t c = 0; c < taglen; c++) {
-      sc[c] = 0.0;
-      for(int l = max(0, i-windowL); l <= min(i+windowL, (int)seqlen-1); l++) { 
-	StringVector nlp = NLPfunc(seq.seq[l].word);
-	for(const string& token : *nlp) {
-	  stringstream ss;
-	  ss << "w-" << to_string(l-i) 
-	      << "-" << token << "-" << tag.tag[i];
-	  sc[c] += mapGet(*param, ss.str());
+      a[i][c] = 0;
+      for(size_t s = 0; s < taglen; s++) {
+	a[i][c] += a[i-1][c] * phi[i][c][s];
+      }
+    }
+  }
+  double Z = 0;
+  for(size_t c = 0; c < taglen; c++) Z += a[seqlen-1][c];
+  // backward. 
+  for(size_t c = 0; c < taglen; c++) b[seqlen-1][c] = 1.0;
+  for(int i = seqlen-2; i >= 0; i--) {
+    for(size_t c = 0; c < taglen; c++) {
+      b[i][c] = 0;
+      for(size_t s = 0; s < taglen; s++) {
+	b[i][c] += b[i+1][s] * phi[i+1][s][c];
+      }
+    }
+  }
+  // compute gradient.
+  ParamPointer gradient = makeParamPointer(); 
+  for(int i = 0; i < seqlen; i++) {
+    for(size_t c = 0; c < taglen; c++) {
+      tag.tag[i] = c;
+      feat->clear();
+      this->addUnigramFeatures(tag, i, feat);
+      mapUpdate(*gradient, *feat, - a[i][c] * b[i][c] / Z);
+      if(i >= 1) {
+	for(size_t s = 0; s < taglen; s++) {
+	  bifeat->clear();
+	  this->addBigramFeatures(tag, i, bifeat);
+	  mapUpdate(*gradient, *bifeat, - a[i-1][s] * phi[i][c][s] * b[i][c] / Z);
 	}
       }
-      if(i < seqlen-1) 
-	sc[c] += mapGet(*param, "p-"+to_string(c)+"-"+to_string(tag.tag[i+1]));
-      sc[c] += dp[i][c];
+    }
+  }
+  mapUpdate(*gradient, *this->extractFeatures(truth));
+  // sample.
+  double sc[taglen];
+  for(int i = 0; i < seqlen; i++) {
+    for(size_t c = 0; c < taglen; c++) {
+      sc[c] = log(a[i][c]);
     }
     logNormalize(sc, taglen);
     tag.tag[i] = rngs[0].sampleCategorical(sc, taglen);
   }
-  if(vec) 
-    vec->push_back(shared_ptr<Tag>(new Tag(tag)));
-  ParamPointer gradient = makeParamPointer();
-  mapUpdate(*gradient, *this->extractFeatures(tag), -1);
-  mapUpdate(*gradient, *this->extractFeatures(truth));
-  xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+  if(samples) {
+    samples->push_back(shared_ptr<Tag>(new Tag(tag)));
+  }else{
+    xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
+    xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+  }
   return gradient;
 }
 

@@ -231,9 +231,6 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
       }
     }
   }
-  double Z = -DBL_MAX;
-  for(size_t c = 0; c < taglen; c++) 
-    Z = logAdd(Z, a[seqlen-1][c]);
   // backward. 
   for(size_t c = 0; c < taglen; c++) b[seqlen-1][c] = 0.0;
   for(int i = seqlen-2; i >= 0; i--) {
@@ -245,6 +242,9 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
     }
   }
   // compute gradient.
+  double Z = -DBL_MAX;
+  for(size_t c = 0; c < taglen; c++) 
+    Z = logAdd(Z, a[seqlen-1][c]);
   ParamPointer gradient = makeParamPointer(); 
   for(int i = 0; i < seqlen; i++) {
     for(size_t c = 0; c < taglen; c++) {
@@ -255,6 +255,7 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
       if(i >= 1) {
 	for(size_t s = 0; s < taglen; s++) {
 	  bifeat->clear();
+	  tag.tag[i-1] = s;
 	  this->addBigramFeatures(tag, i, bifeat);
 	  mapUpdate(*gradient, *bifeat, - exp(a[i-1][s] + phi[i][c][s] + b[i][c] - Z));
 	}

@@ -1,4 +1,5 @@
 import os, sys
+import matplotlib.pyplot as plt
 import numpy as np
 
 class Experiment:
@@ -21,7 +22,7 @@ class Experiment:
     f = open(path, 'r')
     stack = list()
     self.result = dict()
-    self.acc = dict()
+    self.acc = list()
     while True:
       line = f.readline()
       line = line.replace('\n', '')
@@ -42,7 +43,8 @@ class Experiment:
           elif len(stack) > 4 and stack[4] == '<dist>':
             item['dist'] = float(line)
             self.result[stack[3]] = item
-        elif len(stack) > 2 and stack[2] == '<score>':
+        if len(stack) > 2 and stack[2] == '<score>' or \
+             len(stack) > 3 and stack[3] == '<score>':
           self.acc.append(float(line.split(' ')[3]))
     return self.result
 
@@ -70,8 +72,16 @@ def analyze_infer():
 def plot_acc():
   expr = Experiment()
   expr.parse('wsj_simple.xml')
-  plt.plot(np.array(range(len(expr.acc)))*expr.test_lag, expr.acc)
-  plt.show()
+  plt.plot([i * expr.test_lag for i in range(len(expr.acc))], expr.acc, 'r.-', label='Ind')
+  expr.parse('wsj_gibbs.xml')
+  plt.plot([i * expr.test_lag for i in range(len(expr.acc))], expr.acc, 'b.-', label='Gibbs')
+  expr.parse('wsj_gibbsincr.xml')
+  plt.plot([i * expr.test_lag for i in range(len(expr.acc))], expr.acc, 'g.-', label='L2R')
+  plt.title('Accuracy of POS tagging')
+  plt.xlabel('num of observations')
+  plt.ylabel('precision')
+  plt.legend(loc=4,prop={'size':9})
+  plt.savefig('accuracy.pdf')
 
 if __name__ == '__main__':
   plot_acc()

@@ -241,35 +241,36 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
       }
     }
   }
-  // compute gradient.
   double Z = -DBL_MAX;
   for(size_t c = 0; c < taglen; c++) 
     Z = logAdd(Z, a[seqlen-1][c]);
+  // compute gradient.
   ParamPointer gradient = makeParamPointer(); 
-  for(int i = 0; i < seqlen; i++) {
-    for(size_t c = 0; c < taglen; c++) {
-      tag.tag[i] = c;
-      feat->clear();
-      this->addUnigramFeatures(tag, i, feat);
-      mapUpdate(*gradient, *feat, - exp(a[i][c] + b[i][c] - Z));
-      if(i >= 1) {
-	for(size_t s = 0; s < taglen; s++) {
-	  bifeat->clear();
-	  tag.tag[i-1] = s;
-	  this->addBigramFeatures(tag, i, bifeat);
-	  mapUpdate(*gradient, *bifeat, - exp(a[i-1][s] + phi[i][c][s] + b[i][c] - Z));
+  if(update_grad) {
+    for(int i = 0; i < seqlen; i++) {
+      for(size_t c = 0; c < taglen; c++) {
+	tag.tag[i] = c;
+	feat->clear();
+	this->addUnigramFeatures(tag, i, feat);
+	mapUpdate(*gradient, *feat, - exp(a[i][c] + b[i][c] - Z));
+	if(i >= 1) {
+	  for(size_t s = 0; s < taglen; s++) {
+	    bifeat->clear();
+	    tag.tag[i-1] = s;
+	    this->addBigramFeatures(tag, i, bifeat);
+	    mapUpdate(*gradient, *bifeat, - exp(a[i-1][s] + phi[i][c][s] + b[i][c] - Z));
+	  }
 	}
       }
     }
+    mapUpdate(*gradient, *this->extractFeatures(truth));
   }
-  mapUpdate(*gradient, *this->extractFeatures(truth));
   // sample.
   double sc[taglen];
   for(int i = 0; i < seqlen; i++) {
     for(size_t c = 0; c < taglen; c++) {
-      sc[c] = a[i][c] + b[i][c];
+      sc[c] = a[i][c] + b[i][c] - Z;
     }
-    logNormalize(sc, taglen);
     tag.tag[i] = rngs[0].sampleCategorical(sc, taglen);
   }
   if(samples) {

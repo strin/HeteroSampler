@@ -94,7 +94,7 @@ public:
 
 struct ModelTreeUA : public ModelCRFGibbs {
 public:
-  ModelTreeUA(const Corpus& corpus, int windowL = 0, int K = 5, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelTreeUA(const Corpus& corpus, int windowL = 0, int K = 5, int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
 
   void run(const Corpus& testCorpus);
 
@@ -116,6 +116,9 @@ public:
   std::condition_variable th_cv, th_finished;
   std::vector<std::shared_ptr<std::stringstream> > th_stream;
   std::vector<std::shared_ptr<XMLlog> > th_log;
+
+protected:
+  int Q0;
 
 private:
   void initThreads(size_t numThreads);

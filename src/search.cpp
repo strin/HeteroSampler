@@ -13,14 +13,14 @@ using namespace std;
 using namespace std::placeholders;
 
 ModelTreeUA::ModelTreeUA(const Corpus& corpus, int windowL, int K, int T, int B, int Q, 
-			  double eta) 
-:ModelCRFGibbs(corpus, windowL, T, B, Q, eta), eps(0), eps_split(0) {
+			  int Q0, double eta) 
+:ModelCRFGibbs(corpus, windowL, T, B, Q, eta), eps(0), eps_split(0), Q0(Q0) {
   Model::K = K;
   this->initThreads(K);
 }
 
 void ModelTreeUA::run(const Corpus& testCorpus) {   
-  ModelSimple simple_model(this->corpus, T, B, Q, eta);
+  ModelSimple simple_model(this->corpus, windowL, T, B, Q0, eta);
   simple_model.run(testCorpus, true);
   copyParamFeatures(simple_model.param, "simple-", this->param, "");
   Model::run(testCorpus); 
@@ -28,15 +28,13 @@ void ModelTreeUA::run(const Corpus& testCorpus) {
 
 
 void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
+    XMLlog& lg = *th_log[tid];
     while(true) {
       tag.rng = &rng; // unsafe, rng may be deleted.
       int pos = rng.randomMT() % tag.size();
       node->gradient = tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
 					  return this->extractFeatures(tag, pos);  
 					}, true);
-     // xmllog.begin("tag"); xmllog << "[" << node->depth << "] " 
-      //			<< tag.str() << endl; xmllog.end();
-      this->configStepsize(node->gradient, this->eta);
       if(node->depth < B) node->log_weight = -DBL_MAX;
       else node->log_weight = this->score(tag); 
 
@@ -60,10 +58,10 @@ void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> no
 	}
 	return;
       }else if(node->depth >= B && log(rng.random01()) < log(this->eps)) { // stop.
+	lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
+	lg.begin("weight"); lg << node->log_weight << endl; lg.end();
+	lg.begin("time"); lg << node->depth << endl; lg.end();
 	unique_lock<mutex> lock(th_mutex);
-	xmllog.begin("tag");  xmllog << tag.str() << endl; xmllog.end();
-	xmllog.begin("weight"); xmllog << node->log_weight << endl; xmllog.end();
-	xmllog.begin("time"); xmllog << node->depth << endl; xmllog.end();
 	active_work--;
 	lock.unlock();
 	return;

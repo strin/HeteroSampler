@@ -176,7 +176,7 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
   if(samples)
     samples->push_back(shared_ptr<Tag>(new Tag(mytag)));
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+  xmllog.begin("tag"); xmllog << mytag.str() << endl; xmllog.end();
   return gradient;
 }
 

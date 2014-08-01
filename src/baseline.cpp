@@ -174,7 +174,7 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
     mapUpdate<double, double>(*gradient, *this->extractFeatures(tag)); 
   }
   if(samples)
-    samples->push_back(shared_ptr<Tag>(new Tag(tag)));
+    samples->push_back(shared_ptr<Tag>(new Tag(mytag)));
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
   xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
   return gradient;

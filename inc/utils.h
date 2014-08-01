@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <iostream>
 #include "float.h"
@@ -43,7 +44,7 @@ static void logNormalize(double* logprob, int len) {
 }
 
 template<class K, class T>
-static void mapUpdate(std::map<std::string, K>& g, const std::map<std::string, T>& u, double eta = 1.0) {
+static void mapUpdate(std::unordered_map<std::string, K>& g, const std::unordered_map<std::string, T>& u, double eta = 1.0) {
   for(const std::pair<std::string, T>& p : u) {
     if(g.find(p.first) == g.end())
       g[p.first] = (K)0.0;
@@ -52,28 +53,28 @@ static void mapUpdate(std::map<std::string, K>& g, const std::map<std::string, T
 }
 
 template<class K>
-static void mapCopy(std::map<std::string, K>& g, const std::map<std::string, K>& u) {
+static void mapCopy(std::unordered_map<std::string, K>& g, const std::unordered_map<std::string, K>& u) {
   for(const std::pair<std::string, K>& p : u) {
     g[p.first] = p.second;
   }
 }
 
 template<class K>
-static void mapUpdate(std::map<std::string, K>& g, std::string key, K val) {
+static void mapUpdate(std::unordered_map<std::string, K>& g, std::string key, K val) {
   if(g.find(key) == g.end())
     g[key] = (K)0.0;
   g[key] += val;
 }
 
 template<class K>
-static void mapDivide(std::map<std::string, K>& g, double eta) {
+static void mapDivide(std::unordered_map<std::string, K>& g, double eta) {
   for(const std::pair<std::string, K>& p : g) {
     g[p.first] = p.second/(K)eta;
   }
 }
 
 template<class K>
-static K mapGet(std::map<std::string, K>& g, std::string key) {
+static K mapGet(std::unordered_map<std::string, K>& g, std::string key) {
   if(g.find(key) == g.end()) return (K)0.0;
   return g[key];
 }

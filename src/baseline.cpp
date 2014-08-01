@@ -28,7 +28,7 @@ FeaturePointer ModelSimple::extractFeatures(const Tag& tag, int pos) {
     vector<string> nlp = NLPfunc(sen[l].word);
     for(const string& token : nlp) {
       stringstream ss;
-      ss << "simple-" << "w-" << to_string(l-pos) 
+      ss << "simple-w-" << to_string(l-pos) 
 	 << "-" << token << "-" << tag.tag[pos];
       (*features)[ss.str()] = 1;
     }
@@ -43,7 +43,7 @@ ParamPointer ModelSimple::gradient(const Sentence& seq) {
 ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
   Tag tag(&seq, corpus, &rngs[0], param);
   Tag truth(seq, corpus, &rngs[0], param);
-  ParamPointer gradient(new map<string, double>());
+  ParamPointer gradient = makeParamPointer();
   for(size_t i = 0; i < tag.size(); i++) {
     auto featExtract = [&] (const Tag& tag) -> FeaturePointer {
 			  return this->extractFeatures(tag, i); 
@@ -80,10 +80,13 @@ FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
   // extract word features. 
   FeaturePointer features = makeFeaturePointer();
   for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
-    stringstream ss;
-    ss << "w-" << to_string(l-pos) 
-       << "-" << sen[l].word << "-" << tag.tag[pos];
-    (*features)[ss.str()] = 1;
+    vector<string> nlp = NLPfunc(sen[l].word);
+    for(const string& token : nlp) {
+      stringstream ss;
+      ss << "w-" << to_string(l-pos) 
+	 << "-" << token << "-" << tag.tag[pos];
+      (*features)[ss.str()] = 1;
+    }
   }
   // extract bigram features.
   if(pos >= 1) {
@@ -117,7 +120,7 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
   Tag tag(&seq, corpus, &rngs[0], param);
   Tag truth(seq, corpus, &rngs[0], param);
   FeaturePointer feat = this->extractFeatures(truth);
-  ParamPointer gradient(new map<string, double>()); 
+  ParamPointer gradient = makeFeaturePointer();
   for(int t = 0; t < T; t++) {
     for(int i = 0; i < seq.tag.size(); i++) 
       tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
@@ -160,7 +163,7 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
   Tag mytag(tag);
   Tag truth(seq, corpus, &rngs[0], param);
   FeaturePointer feat = this->extractFeatures(truth);
-  ParamPointer gradient(new map<string, double>());
+  ParamPointer gradient = makeFeaturePointer();
   for(int i = 0; i < seq.tag.size(); i++) {
     ParamPointer g = tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
 				      return this->extractFeatures(tag, i);  

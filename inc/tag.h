@@ -6,17 +6,18 @@
 #include "objcokus.h"
 
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <boost/random/uniform_int.hpp>
 
 typedef std::pair<std::string, double> ParamItem;
 typedef ParamItem FeatureItem;
-typedef std::shared_ptr<std::map<std::string, double> > ParamPointer;
+typedef std::shared_ptr<std::unordered_map<std::string, double> > ParamPointer;
 typedef ParamPointer FeaturePointer;
 typedef std::vector<std::vector<double> > Vector2d;
 
 inline static ParamPointer makeParamPointer() {
-  return ParamPointer(new std::map<std::string, double>());
+  return ParamPointer(new std::unordered_map<std::string, double>());
 }
 inline static FeaturePointer makeFeaturePointer() {
   return makeParamPointer();

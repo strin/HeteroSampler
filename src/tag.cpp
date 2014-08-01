@@ -58,7 +58,7 @@ featExtract, bool grad_expect, bool grad_sample) {
   if(val == taglen) throw "Gibbs sample out of bound.";
   tag[pos] = val;
   this->features = featExtract(*this);
-  ParamPointer gradient(new map<string, double>());
+  ParamPointer gradient = makeParamPointer();
   if(grad_sample)
     mapUpdate<double, double>(*gradient, *this->features);
   if(grad_expect) {

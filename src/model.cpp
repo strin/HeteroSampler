@@ -12,8 +12,8 @@
 using namespace std;
 
 Model::Model(const Corpus& corpus, int T, int B, int Q, double eta)
-:corpus(corpus), param(new map<string, double>()),
-  G2(new map<string, double>()) , stepsize(makeParamPointer()), 
+:corpus(corpus), param(makeParamPointer()),
+  G2(makeParamPointer()) , stepsize(makeParamPointer()), 
   T(T), B(B), K(5), Q(Q), Q0(1),  
   testFrequency(0.3), eta(eta) {
   rngs.resize(K);

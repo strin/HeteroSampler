@@ -25,8 +25,8 @@ FeaturePointer ModelSimple::extractFeatures(const Tag& tag, int pos) {
   int seqlen = tag.size();
   // extract word features only.
   for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
-    vector<string> nlp = NLPfunc(sen[l].word);
-    for(const string& token : nlp) {
+    StringVector nlp = NLPfunc(sen[l].word);
+    for(const string& token : *nlp) {
       stringstream ss;
       ss << "simple-w-" << to_string(l-pos) 
 	 << "-" << token << "-" << tag.tag[pos];
@@ -80,8 +80,8 @@ FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
   // extract word features. 
   FeaturePointer features = makeFeaturePointer();
   for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
-    vector<string> nlp = NLPfunc(sen[l].word);
-    for(const string& token : nlp) {
+    StringVector nlp = NLPfunc(sen[l].word);
+    for(const string& token : *nlp) {
       stringstream ss;
       ss << "w-" << to_string(l-pos) 
 	 << "-" << token << "-" << tag.tag[pos];

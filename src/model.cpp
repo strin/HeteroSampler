@@ -11,6 +11,8 @@
 
 using namespace std;
 
+unordered_map<string, StringVector> Model::word_feat;
+
 Model::Model(const Corpus& corpus, int T, int B, int Q, double eta)
 :corpus(corpus), param(makeParamPointer()),
   G2(makeParamPointer()) , stepsize(makeParamPointer()), 
@@ -25,25 +27,28 @@ void Model::configStepsize(ParamPointer gradient, double new_eta) {
 }
 
 /* use standard NLP functions of word */
-vector<string> Model::NLPfunc(const string word) {
-  vector<string> nlp;
-  nlp.push_back(word);
+StringVector Model::NLPfunc(const string word) {
+  unordered_map<std::string, StringVector>::iterator it = word_feat.find(word);
+  if(it != word_feat.end())
+    return it->second;
+  StringVector nlp = makeStringVector();
+  nlp->push_back(word);
   size_t wordlen = word.length();
   if(wordlen >= 1) {
-    nlp.push_back(word.substr(0, 1));
-    nlp.push_back(word.substr(wordlen-1, 1));
+    nlp->push_back(word.substr(0, 1));
+    nlp->push_back(word.substr(wordlen-1, 1));
   }
   if(wordlen >= 2) {
-    nlp.push_back(word.substr(0, 2));
-    nlp.push_back(word.substr(wordlen-2, 2));
+    nlp->push_back(word.substr(0, 2));
+    nlp->push_back(word.substr(wordlen-2, 2));
   }
   if(wordlen >= 3) {
-    nlp.push_back(word.substr(0, 3));
-    nlp.push_back(word.substr(wordlen-3, 3));
+    nlp->push_back(word.substr(0, 3));
+    nlp->push_back(word.substr(wordlen-3, 3));
   }
   if(std::find_if(word.begin(), word.end(), 
 	  [](char c) { return std::isdigit(c); }) != word.end()) {
-      nlp.push_back("00");  // number
+      nlp->push_back("00");  // number
   }
   // word signature.
   stringstream sig0;
@@ -68,10 +73,11 @@ vector<string> Model::NLPfunc(const string word) {
       capitalized = false;
     }
   }
-  nlp.push_back(sig0.str());
-  nlp.push_back(sig1);
+  nlp->push_back(sig0.str());
+  nlp->push_back(sig1);
   if(capitalized) 
-    nlp.push_back("CAP-");
+    nlp->push_back("CAP-");
+  word_feat[word] = nlp;
   return nlp;
 }
 

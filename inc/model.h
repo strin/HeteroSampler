@@ -12,6 +12,11 @@
 #include <thread>
 #include <condition_variable>
 
+typedef std::shared_ptr<std::vector<std::string> > StringVector;
+static StringVector makeStringVector() {
+  return StringVector(new std::vector<std::string>());
+}
+
 struct Model {
 public:
   Model(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
@@ -26,7 +31,7 @@ public:
   FeaturePointer tagEntropySimple() const;
   FeaturePointer wordFrequencies() const;
   std::pair<Vector2d, std::vector<double> > tagBigram() const;
-  static std::vector<std::string> NLPfunc(const std::string word);
+  static StringVector NLPfunc(const std::string word);
 
   /* parameters */
   int T, B, Q, Q0;
@@ -43,6 +48,7 @@ protected:
   int K;          // num of particle. 
 
   XMLlog xmllog;
+  static std::unordered_map<std::string, StringVector> word_feat;
 };
 
 struct ModelSimple : public Model {

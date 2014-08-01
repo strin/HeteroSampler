@@ -175,6 +175,8 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
   }
   if(samples)
     samples->push_back(shared_ptr<Tag>(new Tag(tag)));
+  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
   return gradient;
 }
 
@@ -197,8 +199,14 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* vec, bool updat
       dp[i][c] = -DBL_MAX;
       for(size_t s = 0; s < taglen; s++) {
 	double uni = 0.0;
-	for(int l = max(0, i-windowL); l <= min(i+windowL, (int)seqlen); l++) {
-	  uni += mapGet(*param, "w-"+to_string(l-i)+"-"+seq.seq[i-1].word+"-"+to_string(s));
+	for(int l = max(0, i-1-windowL); l <= min(i-1+windowL, (int)seqlen-1); l++) { 
+	  StringVector nlp = NLPfunc(seq.seq[l].word);
+	  for(const string& token : *nlp) {
+	    stringstream ss;
+	    ss << "w-" << to_string(l-i+1) 
+		<< "-" << token << "-" << tag.tag[i-1];
+	    uni += mapGet(*param, ss.str());
+	  }
 	}
 	double bi = mapGet(*param, "p-"+to_string(s)+"-"+to_string(c));
 	dp[i][c] = logAdd(dp[i][c], dp[i-1][c] + uni + bi);
@@ -210,8 +218,15 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* vec, bool updat
   for(int i = seqlen-1; i >= 0; i--) {
     for(size_t c = 0; c < taglen; c++) {
       sc[c] = 0.0;
-      for(int l = max(0, i-windowL); l <= min(i+windowL, (int)seqlen); l++) 
-        sc[c] += mapGet(*param, "w-"+to_string(l-i)+"-"+seq.seq[i].word+"-"+to_string(c));
+      for(int l = max(0, i-windowL); l <= min(i+windowL, (int)seqlen-1); l++) { 
+	StringVector nlp = NLPfunc(seq.seq[l].word);
+	for(const string& token : *nlp) {
+	  stringstream ss;
+	  ss << "w-" << to_string(l-i) 
+	      << "-" << token << "-" << tag.tag[i];
+	  sc[c] += mapGet(*param, ss.str());
+	}
+      }
       if(i < seqlen-1) 
 	sc[c] += mapGet(*param, "p-"+to_string(c)+"-"+to_string(tag.tag[i+1]));
       sc[c] += dp[i][c];

@@ -216,7 +216,7 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
 	  this->addBigramFeatures(tag, i, bifeat); 
 	}
 	mapCopy(*feat, *bifeat);
-	phi[i][c][s] = exp(tag.score(feat));	
+	phi[i][c][s] = tag.score(feat);	
 	mapRemove(*feat, *bifeat);
       }
     }
@@ -225,21 +225,22 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
   for(size_t c = 0; c < taglen; c++) a[0][c] = phi[0][c][0];
   for(int i = 1; i < seqlen; i++) {
     for(size_t c = 0; c < taglen; c++) {
-      a[i][c] = 0;
+      a[i][c] = -DBL_MAX;
       for(size_t s = 0; s < taglen; s++) {
-	a[i][c] += a[i-1][c] * phi[i][c][s];
+	a[i][c] = logAdd(a[i][c], a[i-1][c] + phi[i][c][s]);
       }
     }
   }
-  double Z = 0;
-  for(size_t c = 0; c < taglen; c++) Z += a[seqlen-1][c];
+  double Z = -DBL_MAX;
+  for(size_t c = 0; c < taglen; c++) 
+    Z = logAdd(Z, a[seqlen-1][c]);
   // backward. 
-  for(size_t c = 0; c < taglen; c++) b[seqlen-1][c] = 1.0;
+  for(size_t c = 0; c < taglen; c++) b[seqlen-1][c] = 0.0;
   for(int i = seqlen-2; i >= 0; i--) {
     for(size_t c = 0; c < taglen; c++) {
-      b[i][c] = 0;
+      b[i][c] = -DBL_MAX;
       for(size_t s = 0; s < taglen; s++) {
-	b[i][c] += b[i+1][s] * phi[i+1][s][c];
+	b[i][c] = logAdd(b[i][c], b[i+1][s] + phi[i+1][s][c]);
       }
     }
   }
@@ -250,12 +251,12 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
       tag.tag[i] = c;
       feat->clear();
       this->addUnigramFeatures(tag, i, feat);
-      mapUpdate(*gradient, *feat, - a[i][c] * b[i][c] / Z);
+      mapUpdate(*gradient, *feat, - exp(a[i][c] + b[i][c] - Z));
       if(i >= 1) {
 	for(size_t s = 0; s < taglen; s++) {
 	  bifeat->clear();
 	  this->addBigramFeatures(tag, i, bifeat);
-	  mapUpdate(*gradient, *bifeat, - a[i-1][s] * phi[i][c][s] * b[i][c] / Z);
+	  mapUpdate(*gradient, *bifeat, - exp(a[i-1][s] + phi[i][c][s] + b[i][c] - Z));
 	}
       }
     }
@@ -265,7 +266,7 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
   double sc[taglen];
   for(int i = 0; i < seqlen; i++) {
     for(size_t c = 0; c < taglen; c++) {
-      sc[c] = log(a[i][c]);
+      sc[c] = a[i][c] + b[i][c];
     }
     logNormalize(sc, taglen);
     tag.tag[i] = rngs[0].sampleCategorical(sc, taglen);

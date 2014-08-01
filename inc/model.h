@@ -69,6 +69,8 @@ public:
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
+  void addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features);
+  void addBigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   FeaturePointer extractFeatures(const Tag& tag, int pos);
   FeaturePointer extractFeatures(const Tag& tag);
 };

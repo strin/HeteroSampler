@@ -181,31 +181,38 @@ double Model::test(const Corpus& testCorpus) {
 	}
 	pred_count++;
       }else if(corpus.mode == Corpus::MODE_NER) {
+	bool use_chunk = false;
 	auto get_truth = [&] (int pos) -> string {
 	  return corpus.invtags.find(seq.tag[pos])->second;	      
 	};
 	auto get_tag   = [&] (int pos) -> string {
 	  return corpus.invtags.find(tag->tag[pos])->second;
 	};
-	auto check_truth_begin = [&] () {
-	  return get_truth(i) != "O" && (i == 0 || get_truth(i-1) == "O");
-	};
-	auto check_tag_begin = [&] () {
-	  return get_tag(i) != "O" && (i == 0 || get_tag(i-1) == "O");
-	};
-	auto check_truth_end = [&] () {
-	  return get_truth(i) != "O" && (i == seq.size()-1 || get_truth(i+1) == "O");
-	};
-	auto check_tag_end = [&] () {
-	  return get_tag(i) != "O" && (i == seq.size()-1 || get_tag(i+1) == "O");
-	};
-	truth_count += (int)check_truth_begin();
-	pred_count += (int)check_tag_begin();
-	if(check_truth_begin() && check_tag_begin())
-	  hit_begin = true;
-	if(tag->tag[i] != seq.tag[i]) hit_begin = false;
-	if(check_truth_end() && check_tag_end()) 
-	  hit_count += (int)hit_begin;
+	if(use_chunk) {
+	  auto check_truth_begin = [&] () {
+	    return get_truth(i) != "O" && (i == 0 || get_truth(i-1) == "O");
+	  };
+	  auto check_tag_begin = [&] () {
+	    return get_tag(i) != "O" && (i == 0 || get_tag(i-1) == "O");
+	  };
+	  auto check_truth_end = [&] () {
+	    return get_truth(i) != "O" && (i == seq.size()-1 || get_truth(i+1) == "O");
+	  };
+	  auto check_tag_end = [&] () {
+	    return get_tag(i) != "O" && (i == seq.size()-1 || get_tag(i+1) == "O");
+	  };
+	  truth_count += (int)check_truth_begin();
+	  pred_count += (int)check_tag_begin();
+	  if(check_truth_begin() && check_tag_begin())
+	    hit_begin = true;
+	  if(tag->tag[i] != seq.tag[i]) hit_begin = false;
+	  if(check_truth_end() && check_tag_end()) 
+	    hit_count += (int)hit_begin;
+	}else{
+	  truth_count += (int)(get_truth(i) != "O");
+	  pred_count += (int)(get_tag(i) != "O");
+	  hit_count += (int)(get_tag(i) != "O" && get_tag(i) == get_truth(i));
+	}
       }
     }
     ex++;

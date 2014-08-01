@@ -74,11 +74,9 @@ TagVector ModelCRFGibbs::sample(const Sentence& seq) {
   return vec;
 }
 
-FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
+void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features) {
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();
-  // extract word features. 
-  FeaturePointer features = makeFeaturePointer();
   for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
     StringVector nlp = NLPfunc(sen[l].word);
     for(const string& token : *nlp) {
@@ -88,16 +86,28 @@ FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
       (*features)[ss.str()] = 1;
     }
   }
+}
+
+void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer features) {
+  const vector<Token>& sen = tag.seq->seq;
+  int seqlen = tag.size();
+  stringstream ss;
+  ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
+  (*features)[ss.str()] = 1;
+}
+
+FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
+  const vector<Token>& sen = tag.seq->seq;
+  int seqlen = tag.size();
+  // extract word features. 
+  FeaturePointer features = makeFeaturePointer();
+  this->addUnigramFeatures(tag, pos, features);
   // extract bigram features.
   if(pos >= 1) {
-    stringstream ss;
-    ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
-    (*features)[ss.str()] = 1;
+    addBigramFeatures(tag, pos, features); 
   }
   if(pos < seqlen-1) {
-    stringstream ss;
-    ss << "p-" << tag.tag[pos] << "-" << tag.tag[pos+1];
-    (*features)[ss.str()] = 1;
+    addBigramFeatures(tag, pos+1, features);
   }
   return features;
 }
@@ -149,8 +159,6 @@ ModelIncrGibbs::ModelIncrGibbs(const Corpus& corpus, int windowL, int T, int B, 
 TagVector ModelIncrGibbs::sample(const Sentence& seq) {
   TagVector samples;
   gradient(seq, &samples, false);
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << samples.back()->str() << endl; xmllog.end();
   return samples;
 }
 
@@ -173,10 +181,12 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
     tag.tag[i] = seq.tag[i];
     mapUpdate<double, double>(*gradient, *this->extractFeatures(tag, i)); 
   }
-  if(samples)
+  if(samples) {
     samples->push_back(shared_ptr<Tag>(new Tag(mytag)));
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << mytag.str() << endl; xmllog.end();
+  }else{
+    xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+    xmllog.begin("tag"); xmllog << mytag.str() << endl; xmllog.end();
+  }
   return gradient;
 }
 

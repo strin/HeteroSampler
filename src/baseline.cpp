@@ -7,66 +7,6 @@
 using namespace std;
 using namespace std::placeholders;
 
-//////// Model CRF Gibbs ///////////////////////////////
-ModelCRFGibbs::ModelCRFGibbs(const Corpus& corpus, int windowL, int T, int B, int Q, double eta)
-:Model(corpus, T, B, Q, eta), windowL(windowL) {
-}
-
-TagVector ModelCRFGibbs::sample(const Sentence& seq) { 
-  TagVector vec;
-  gradient(seq, &vec, false); 
-  return vec;
-}
-
-FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag) {
-  FeaturePointer features = makeFeaturePointer();
-  const vector<Token>& sen = tag.seq->seq;
-  int seqlen = sen.size();
-  // extract word features. 
-  for(int si = 0; si < seqlen; si++) {
-    for(int l = max(0, si - windowL); l <= min(si + windowL, seqlen-1); l++) {
-      stringstream ss;
-      ss << "w-" << to_string(l-si) 
-	 << "-" << sen[l].word << "-" << tag.tag[si];
-      (*features)[ss.str()] = 1;
-    }
-  }
-  // extract bigram features.
-  for(int si = 1; si < seqlen; si++) {
-    stringstream ss;
-    ss << "p-" << tag.tag[si-1] << "-" << tag.tag[si];
-    (*features)[ss.str()] = 1;
-  }
-  return features;
-}
-
-ParamPointer ModelCRFGibbs::gradient(const Sentence& seq) {
-  return this->gradient(seq, nullptr, true);
-}
-
-ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
-  Tag tag(&seq, corpus, &rngs[0], param);
-  Tag truth(seq, corpus, &rngs[0], param);
-  FeaturePointer feat = this->extractFeatures(truth);
-  ParamPointer gradient(new map<string, double>()); 
-  for(int t = 0; t < T; t++) {
-    for(int i = 0; i < seq.tag.size(); i++) 
-      tag.proposeGibbs(i, bind(&ModelCRFGibbs::extractFeatures, this, _1));
-    if(t < B) continue;
-    if(update_grad)
-      mapUpdate<double, double>(*gradient, *this->extractFeatures(tag));
-  }
-  if(samples)
-    samples->push_back(shared_ptr<Tag>(new Tag(tag)));
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
-  if(update_grad) {
-    mapDivide<double>(*gradient, -(double)(T-B));
-    mapUpdate<double, double>(*gradient, *feat);
-  }
-  return gradient;
-}
-
 ////////// Simple Model (Independent Logit) ////////////
 ModelSimple::ModelSimple(const Corpus& corpus, int windowL, int T, int B, int Q, double eta)
 :Model(corpus, T, B, Q, eta), windowL(windowL) {
@@ -85,10 +25,13 @@ FeaturePointer ModelSimple::extractFeatures(const Tag& tag, int pos) {
   int seqlen = tag.size();
   // extract word features only.
   for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
-    stringstream ss;
-    ss << "simple-" << "w-" << to_string(l-pos) 
-       << "-" << sen[l].word << "-" << tag.tag[pos];
-    (*features)[ss.str()] = 1;
+    vector<string> nlp = NLPfunc(sen[l].word);
+    for(const string& token : nlp) {
+      stringstream ss;
+      ss << "simple-" << "w-" << to_string(l-pos) 
+	 << "-" << token << "-" << tag.tag[pos];
+      (*features)[ss.str()] = 1;
+    }
   }
   return features;
 }
@@ -113,32 +56,86 @@ ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool
   }
   if(samples)
     samples->push_back(shared_ptr<Tag>(new Tag(tag)));
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+  else{
+    xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+    xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+  }
   return gradient;
 }
 
-void ModelSimple::run(const Corpus& testCorpus, bool lets_test) {
-  Corpus retagged(testCorpus);
-  retagged.retag(this->corpus); // use training taggs. 
-  xmllog.begin("train_simple");
-  int numObservation = 0;
-  for(int q = 0; q < Q0; q++) {
-    for(const Sentence& seq : corpus.seqs) {
-      xmllog.begin("example_"+to_string(numObservation));
-      ParamPointer gradient = this->gradient(seq, nullptr, true);
-      this->configStepsize(gradient, this->eta);
-      this->adagrad(gradient);
-      xmllog.end();
-      numObservation++;
-    }
+//////// Model CRF Gibbs ///////////////////////////////
+ModelCRFGibbs::ModelCRFGibbs(const Corpus& corpus, int windowL, int T, int B, int Q, double eta)
+:ModelSimple(corpus, windowL, T, B, Q, eta) {
+}
+
+TagVector ModelCRFGibbs::sample(const Sentence& seq) { 
+  TagVector vec;
+  gradient(seq, &vec, false); 
+  return vec;
+}
+
+FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
+  const vector<Token>& sen = tag.seq->seq;
+  int seqlen = tag.size();
+  // extract word features. 
+  FeaturePointer features = makeFeaturePointer();
+  for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
+    stringstream ss;
+    ss << "w-" << to_string(l-pos) 
+       << "-" << sen[l].word << "-" << tag.tag[pos];
+    (*features)[ss.str()] = 1;
   }
-  xmllog.end();
-  if(lets_test) {
-    xmllog.begin("test");
-    test(retagged);
-    xmllog.end();
+  // extract bigram features.
+  if(pos >= 1) {
+    stringstream ss;
+    ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
+    (*features)[ss.str()] = 1;
   }
+  if(pos < seqlen-1) {
+    stringstream ss;
+    ss << "p-" << tag.tag[pos] << "-" << tag.tag[pos+1];
+    (*features)[ss.str()] = 1;
+  }
+  return features;
+}
+
+FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag) {
+  FeaturePointer features = makeFeaturePointer();
+  size_t seqlen = tag.size();
+  for(size_t t = 0; t < seqlen; t++) {
+    FeaturePointer this_feat = extractFeatures(tag, t);
+    mapCopy(*features, *this_feat);
+  }
+  return features;
+}
+
+ParamPointer ModelCRFGibbs::gradient(const Sentence& seq) {
+  return this->gradient(seq, nullptr, true);
+}
+
+ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
+  Tag tag(&seq, corpus, &rngs[0], param);
+  Tag truth(seq, corpus, &rngs[0], param);
+  FeaturePointer feat = this->extractFeatures(truth);
+  ParamPointer gradient(new map<string, double>()); 
+  for(int t = 0; t < T; t++) {
+    for(int i = 0; i < seq.tag.size(); i++) 
+      tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
+			    return this->extractFeatures(tag, i); 
+			  });
+    if(t < B) continue;
+    if(update_grad)
+      mapUpdate<double, double>(*gradient, *this->extractFeatures(tag));
+  }
+  if(samples)
+    samples->push_back(shared_ptr<Tag>(new Tag(tag)));
+  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+  xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+  if(update_grad) {
+    mapDivide<double>(*gradient, -(double)(T-B));
+    mapUpdate<double, double>(*gradient, *feat);
+  }
+  return gradient;
 }
 
 ////////// Incremental Gibbs Sampling /////////////////////////
@@ -165,8 +162,9 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
   FeaturePointer feat = this->extractFeatures(truth);
   ParamPointer gradient(new map<string, double>());
   for(int i = 0; i < seq.tag.size(); i++) {
-    ParamPointer g = tag.proposeGibbs(i, 
-			  bind(&ModelCRFGibbs::extractFeatures, this, _1), true, false);
+    ParamPointer g = tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
+				      return this->extractFeatures(tag, i);  
+				    }, true, false);
     mapUpdate<double, double>(*gradient, *g);
     mytag.tag[i] = tag.tag[i];
     tag.tag[i] = seq.tag[i];
@@ -191,11 +189,14 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* vec, bool updat
   double dp[seqlen][taglen];
   // forward.
   for(size_t c = 0; c < taglen; c++) dp[0][c] = 0.0;
-  for(size_t i = 1; i < seqlen; i++) {
+  for(int i = 1; i < seqlen; i++) {
     for(size_t c = 0; c < taglen; c++) {
       dp[i][c] = -DBL_MAX;
       for(size_t s = 0; s < taglen; s++) {
-	double uni = mapGet(*param, seq.seq[i-1].word+"-"+to_string(s));
+	double uni = 0.0;
+	for(int l = max(0, i-windowL); l <= min(i+windowL, (int)seqlen); l++) {
+	  uni += mapGet(*param, "w-"+to_string(l-i)+"-"+seq.seq[i-1].word+"-"+to_string(s));
+	}
 	double bi = mapGet(*param, "p-"+to_string(s)+"-"+to_string(c));
 	dp[i][c] = logAdd(dp[i][c], dp[i-1][c] + uni + bi);
       }
@@ -205,7 +206,9 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* vec, bool updat
   double sc[taglen];
   for(int i = seqlen-1; i >= 0; i--) {
     for(size_t c = 0; c < taglen; c++) {
-      sc[c] = mapGet(*param, seq.seq[i].word+"-"+to_string(c));
+      sc[c] = 0.0;
+      for(int l = max(0, i-windowL); l <= min(i+windowL, (int)seqlen); l++) 
+        sc[c] += mapGet(*param, "w-"+to_string(l-i)+"-"+seq.seq[i].word+"-"+to_string(c));
       if(i < seqlen-1) 
 	sc[c] += mapGet(*param, "p-"+to_string(c)+"-"+to_string(tag.tag[i+1]));
       sc[c] += dp[i][c];

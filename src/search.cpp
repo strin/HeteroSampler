@@ -30,9 +30,10 @@ void ModelTreeUA::run(const Corpus& testCorpus) {
 void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> node, Tag tag, objcokus rng) {
     while(true) {
       tag.rng = &rng; // unsafe, rng may be deleted.
-      node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), 
-					bind(&ModelCRFGibbs::extractFeatures, this, _1), 
-					true);
+      int pos = rng.randomMT() % tag.size();
+      node->gradient = tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
+					  return this->extractFeatures(tag, pos);  
+					}, true);
      // xmllog.begin("tag"); xmllog << "[" << node->depth << "] " 
       //			<< tag.str() << endl; xmllog.end();
       this->configStepsize(node->gradient, this->eta);
@@ -155,9 +156,11 @@ void ModelAdaTree::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> n
     XMLlog& lg = *th_log[tid];
     while(true) {
       tag.rng = &rng; // unsafe, rng may be deleted. 
-      node->gradient = tag.proposeGibbs(rng.randomMT() % tag.size(), 
-					bind(&ModelCRFGibbs::extractFeatures, this, _1), 
-					true);
+      int pos = rng.randomMT() % tag.size();
+      node->gradient = tag.proposeGibbs(pos, 
+					[&] (const Tag& tag) -> FeaturePointer {
+					  return this->extractFeatures(tag, pos);  
+					}, true);
       node->tag = shared_ptr<Tag>(new Tag(tag));
       auto predT = this->logisticStop(node, *tag.seq, tag); 
       double prob = get<0>(predT);

@@ -24,6 +24,51 @@ void Model::configStepsize(ParamPointer gradient, double new_eta) {
     (*stepsize)[p.first] = new_eta;
 }
 
+/* use standard NLP functions of word */
+vector<string> Model::NLPfunc(const string word) {
+  vector<string> nlp;
+  nlp.push_back(word);
+  nlp.push_back(word.substr(0, 1));
+  nlp.push_back(word.substr(0, 2));
+  nlp.push_back(word.substr(0, 3));
+  size_t wordlen = word.length();
+  nlp.push_back(word.substr(wordlen-1, 1));
+  nlp.push_back(word.substr(wordlen-2, 2));
+  nlp.push_back(word.substr(wordlen-3, 3));
+  if(std::find_if(word.begin(), word.end(), 
+	  [](char c) { return std::isdigit(c); }) != word.end()) {
+      nlp.push_back("00");  // number
+  }
+  // word signature.
+  stringstream sig0;
+  string sig1(word);
+  char prev = '0';
+  bool capitalized = true;
+  for(size_t i = 0; i < wordlen; i++) {
+    if(word[i] <= 'Z' && word[i] >= 'A') {
+      if(prev != 'A') 
+	sig0 << "A";
+      sig1[i] = 'A';
+      prev = 'A';
+    }else if(word[i] <= 'z' && word[i] >= 'a') {
+      if(prev != 'a')
+	sig0 << "a";
+      sig1[i] = 'a';
+      prev = 'a';
+      capitalized = false;
+    }else{
+      sig1[i] = 'x';
+      prev = 'x';
+      capitalized = false;
+    }
+  }
+  nlp.push_back(sig0.str());
+  nlp.push_back(sig1);
+  if(capitalized) 
+    nlp.push_back("CAP-");
+  return nlp;
+}
+
 FeaturePointer Model::tagEntropySimple() const {
   FeaturePointer feat = makeFeaturePointer();
   const size_t taglen = corpus.tags.size();
@@ -74,7 +119,7 @@ pair<Vector2d, vector<double> > Model::tagBigram() const {
   return make_pair(mat, vec);
 }
 
-void Model::run(const Corpus& testCorpus) {
+void Model::run(const Corpus& testCorpus, bool lets_test) {
   Corpus retagged(testCorpus);
   retagged.retag(this->corpus); // use training taggs. 
   int testLag = corpus.seqs.size()*testFrequency;
@@ -94,10 +139,10 @@ void Model::run(const Corpus& testCorpus) {
       this->adagrad(gradient);
       xmllog.end();
       numObservation++;
-      if(numObservation % testLag == 0) {
-	xmllog.begin("test");
-	test(retagged);
-	xmllog.end();
+      if(lets_test) {
+	if(numObservation % testLag == 0) {
+	  test(retagged);
+	}
       }
     }
     xmllog.end();
@@ -106,11 +151,16 @@ void Model::run(const Corpus& testCorpus) {
 
 double Model::test(const Corpus& testCorpus) {
   int pred_count = 0, truth_count = 0, hit_count = 0;
-  xmllog.begin("examples");
-  for(const Sentence& seq : corpus.seqs) {
+  xmllog.begin("test");
+  int ex = 0;
+  for(const Sentence& seq : testCorpus.seqs) {
     shared_ptr<Tag> tag = this->sample(seq).back();
-    xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+    Tag truth(seq, corpus, &rngs[0], param);
+    xmllog.begin("example_"+to_string(ex));
+    xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
     xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
+    xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
+    xmllog.end();
     bool pred_begin = false, truth_begin = false, hit_begin = false;
     for(int i = 0; i < seq.size(); i++) {
       if(corpus.mode == Corpus::MODE_POS) {
@@ -132,10 +182,10 @@ double Model::test(const Corpus& testCorpus) {
 	  return get_tag(i) != "O" && (i == 0 || get_tag(i-1) == "O");
 	};
 	auto check_truth_end = [&] () {
-	  return get_tag(i) != "O" && (i == seq.size()-1 || get_truth(i+1) == "O");
+	  return get_truth(i) != "O" && (i == seq.size()-1 || get_truth(i+1) == "O");
 	};
 	auto check_tag_end = [&] () {
-	  return get_truth(i) != "O" && (i == seq.size()-1 || get_tag(i+1) == "O");
+	  return get_tag(i) != "O" && (i == seq.size()-1 || get_tag(i+1) == "O");
 	};
 	truth_count += (int)check_truth_begin();
 	pred_count += (int)check_tag_begin();
@@ -146,6 +196,7 @@ double Model::test(const Corpus& testCorpus) {
 	  hit_count += (int)hit_begin;
       }
     }
+    ex++;
   }
   xmllog.end();
 

@@ -28,8 +28,8 @@ static long getFingerPrint(long iterations, long startSeed) { // random hash fun
 static double logAdd(double a, double b) { // add in log space.
   if(a == -DBL_MAX) return b;
   if(b == -DBL_MAX) return a;
-  if(a < b) return b+log(1+exp(a-b)); // may overflow, ignore for now.
-  else return a+log(1+exp(b-a));
+  if(a < b) return b + log(1 + exp(a - b)); // may overflow, ignore for now.
+  else return a + log(1 + exp(b - a));
 }
 
 static void logNormalize(double* logprob, int len) {
@@ -48,6 +48,13 @@ static void mapUpdate(std::map<std::string, K>& g, const std::map<std::string, T
     if(g.find(p.first) == g.end())
       g[p.first] = (K)0.0;
     g[p.first] += (K)p.second * eta;
+  }
+}
+
+template<class K>
+static void mapCopy(std::map<std::string, K>& g, const std::map<std::string, K>& u) {
+  for(const std::pair<std::string, K>& p : u) {
+    g[p.first] = p.second;
   }
 }
 

@@ -26,6 +26,8 @@ int main(int argc, char* argv[]) {
       ("Tstar", po::value<double>(), "time resource constraints")
       ("eps_split", po::value<int>(), "prob of split in MarkovTree")
       ("mode", po::value<string>(), "mode (POS / NER)")
+      ("train", po::value<string>(), "training data")
+      ("test", po::value<string>(), "test data")
   ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -58,10 +60,13 @@ int main(int argc, char* argv[]) {
   Corpus::Mode mode = Corpus::MODE_POS;
   if(vm.count("mode") && vm["mode"].as<string>() == "NER")
     mode = Corpus::MODE_NER;
+  string train = "data/eng_ner/train", test = "data/eng_ner/test";
+  if(vm.count("train")) train = vm["train"].as<string>();
+  if(vm.count("test")) test = vm["test"].as<string>();
   Corpus corpus(mode);
-  corpus.read("data/eng_ner/train");
+  corpus.read(train);
   Corpus testCorpus(mode);
-  testCorpus.read("data/eng_ner/test");
+  testCorpus.read(test);
   auto set_param = [&] (shared_ptr<Model> model) {
     model->T = T;
     model->Q = Q;

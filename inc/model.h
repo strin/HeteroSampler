@@ -15,7 +15,7 @@
 struct Model {
 public:
   Model(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
-  virtual void run(const Corpus& testCorpus);
+  virtual void run(const Corpus& testCorpus, bool lets_test = true);
   double test(const Corpus& testCorpus);
 
   /* gradient interface */
@@ -26,6 +26,7 @@ public:
   FeaturePointer tagEntropySimple() const;
   FeaturePointer wordFrequencies() const;
   std::pair<Vector2d, std::vector<double> > tagBigram() const;
+  static std::vector<std::string> NLPfunc(const std::string word);
 
   /* parameters */
   int T, B, Q, Q0;
@@ -47,26 +48,23 @@ protected:
 struct ModelSimple : public Model {
 public:
   ModelSimple(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
-  void run(const Corpus& testCorpus, bool lets_test);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq); 
   FeaturePointer extractFeatures(const Tag& tag, int pos);
 
-private:
+protected:
   int windowL;
 };
 
-struct ModelCRFGibbs : public Model {
+struct ModelCRFGibbs : public ModelSimple {
 public:
   ModelCRFGibbs(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
+  FeaturePointer extractFeatures(const Tag& tag, int pos);
   FeaturePointer extractFeatures(const Tag& tag);
-
-private:
-  int windowL;
 };
 
 struct ModelIncrGibbs : public ModelCRFGibbs {

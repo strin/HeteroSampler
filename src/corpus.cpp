@@ -20,8 +20,10 @@ void Token::parseline(const string& line) {
   split(parts, line, is_any_of(" "));
   word = parts[0];
   pos = parts[1];
-  pos2 = parts[2];
-  ner = parts[3];
+  if(parts.size() >= 3)
+    pos2 = parts[2];
+  if(parts.size() >= 4)
+    ner = parts[3];
   if(word == "-DOCSTART-") 
     is_doc_start = true;
 }

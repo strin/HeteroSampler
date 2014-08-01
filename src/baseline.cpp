@@ -227,7 +227,7 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
     for(size_t c = 0; c < taglen; c++) {
       a[i][c] = -DBL_MAX;
       for(size_t s = 0; s < taglen; s++) {
-	a[i][c] = logAdd(a[i][c], a[i-1][c] + phi[i][c][s]);
+	a[i][c] = logAdd(a[i][c], a[i-1][s] + phi[i][c][s]);
       }
     }
   }

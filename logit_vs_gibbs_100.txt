@@ -1,0 +1,900 @@
+--- Ground Truth ---
+Rod/NNP	Canion/NNP	,/,	Compaq/NNP	's/POS	president/NN	and/CC	chief/JJ	executive/JJ	officer/NN	,/,	notes/VBZ	pointedly/RB	that/IN	Zenith/NNP	's/POS	$/$	2,000/CD	*U*/-NONE-	MinisPort/NNP	uses/VBZ	an/DT	``/``	unconventional/JJ	''/''	two-inch/JJ	floppy/JJ	disk/NN	,/,	whereas/IN	Compaq/NNP	's/POS	new/JJ	machines/NNS	use/VBP	the/DT	more/RBR	common/JJ	3/CD	1\/2-inch/JJ	disk/NN	./.	
+--- Independent Inference ---
+Rod/NNP	Canion/NNP	,/,	Compaq/NNP	's/VBZ	president/NN	and/CC	chief/NN	executive/NN	officer/NN	,/,	notes/NNS	pointedly/RB	that/WDT	Zenith/NNP	's/POS	$/$	2,000/CD	*U*/-NONE-	MinisPort/NNP	uses/NNS	an/DT	``/``	unconventional/JJ	''/''	two-inch/JJ	floppy/JJ	disk/NN	,/,	whereas/IN	Compaq/NNP	's/POS	new/JJ	machines/NNS	use/VB	the/DT	more/JJR	common/JJ	3/CD	1\/2-inch/JJ	disk/NN	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+Rod/NNP	Canion/NNP	,/,	Compaq/NNP	's/POS	president/NN	and/CC	chief/JJ	executive/JJ	officer/NN	,/,	notes/NNS	pointedly/RB	that/IN	Zenith/NNP	's/POS	$/$	2,000/CD	*U*/-NONE-	MinisPort/NNP	uses/VBZ	an/DT	``/``	unconventional/JJ	''/''	two-inch/JJ	floppy/JJ	disk/NN	,/,	whereas/IN	Compaq/NNP	's/POS	new/JJ	machines/NNS	use/VBP	the/DT	more/RBR	common/JJ	3/CD	1\/2-inch/JJ	disk/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+*-1/-NONE-	Asked/VBD	*-2/-NONE-	*-3/-NONE-	to/TO	compare/VB	her/PRP	visit/NN	to/TO	Mr./NNP	Mosbacher/NNP	's/POS	,/,	Mrs./NNP	Hills/NNP	replied/VBD	:/:	0/-NONE-	``/``	I/PRP	did/VBD	n't/RB	hear/VB	every/DT	word/NN	0/-NONE-	he/PRP	spoke/VBD	*T*-4/-NONE-	,/,	but/CC	as/IN	a/DT	general/JJ	proposition/NN	,/,	I/PRP	think/VBP	0/-NONE-	we/PRP	have/VBP	a/DT	very/RB	consistent/JJ	trade/NN	strategy/NN	in/IN	the/DT	Bush/NNP	administration/NN	./.	''/''	
+--- Independent Inference ---
+*-1/-NONE-	Asked/VBN	*-2/-NONE-	*-3/-NONE-	to/TO	compare/VBP	her/PRP$	visit/VBP	to/TO	Mr./NNP	Mosbacher/NNP	's/POS	,/,	Mrs./NNP	Hills/NNPS	replied/VBD	:/:	0/-NONE-	``/``	I/PRP	did/VBD	n't/RB	hear/VB	every/DT	word/NN	0/-NONE-	he/PRP	spoke/VBD	*T*-4/-NONE-	,/,	but/IN	as/RB	a/DT	general/JJ	proposition/NN	,/,	I/PRP	think/VBP	0/-NONE-	we/PRP	have/VB	a/DT	very/RB	consistent/JJ	trade/NN	strategy/NN	in/IN	the/DT	Bush/NNP	administration/NN	./.	''/''	
+[errors =  8.0 ]
+--- Full Inference ---
+*-1/-NONE-	Asked/VBD	*-2/-NONE-	*-3/-NONE-	to/TO	compare/VB	her/PRP	visit/VBP	to/TO	Mr./NNP	Mosbacher/NNP	's/POS	,/,	Mrs./NNP	Hills/NNP	replied/VBD	:/:	0/-NONE-	``/``	I/PRP	did/VBD	n't/RB	hear/VB	every/DT	word/NN	0/-NONE-	he/PRP	spoke/VBD	*T*-4/-NONE-	,/,	but/CC	as/IN	a/DT	general/JJ	proposition/NN	,/,	I/PRP	think/VBP	0/-NONE-	we/PRP	have/VBP	a/DT	very/RB	consistent/JJ	trade/NN	strategy/NN	in/IN	the/DT	Bush/NNP	administration/NN	./.	''/''	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+*/-NONE-	Allowing/VBG	the/DT	defendant/NN	to/TO	take/VB	the/DT	Fifth/NNP	in/IN	a/DT	civil/JJ	matter/NN	is/VBZ	not/RB	based/VBN	*-2/-NONE-	on/IN	a/DT	constitutional/JJ	right/NN	*/-NONE-	to/TO	refuse/VB	*-3/-NONE-	to/TO	testify/VB	where/WRB	one/PRP	's/POS	testimony/NN	harms/VBZ	him/PRP	in/IN	the/DT	civil/JJ	matter/NN	*T*-4/-NONE-	,/,	but/CC	because/IN	the/DT	testimony/NN	in/IN	the/DT	civil/JJ	matter/NN	could/MD	be/VB	unconstitutionally/RB	used/VBN	*-1/-NONE-	against/IN	him/PRP	in/IN	a/DT	subsequent/JJ	criminal/JJ	prosecution/NN	./.	
+--- Independent Inference ---
+*/-NONE-	Allowing/VBG	the/DT	defendant/NN	to/TO	take/VB	the/DT	Fifth/NNP	in/IN	a/DT	civil/JJ	matter/NN	is/VBZ	not/RB	based/VBN	*-2/-NONE-	on/IN	a/SYM	constitutional/JJ	right/RB	*/-NONE-	to/TO	refuse/VBP	*-3/-NONE-	to/TO	testify/VB	where/WRB	one/CD	's/VBZ	testimony/NN	harms/NNS	him/PRP	in/IN	the/DT	civil/JJ	matter/VB	*T*-4/-NONE-	,/,	but/CC	because/IN	the/DT	testimony/NN	in/IN	the/DT	civil/JJ	matter/VBP	could/MD	be/VB	unconstitutionally/RB	used/VBN	*-1/-NONE-	against/IN	him/PRP	in/IN	a/DT	subsequent/JJ	criminal/JJ	prosecution/NN	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+*/-NONE-	Allowing/VBG	the/DT	defendant/NN	to/TO	take/VB	the/DT	Fifth/NNP	in/IN	a/DT	civil/JJ	matter/NN	is/VBZ	not/RB	based/VBN	*-2/-NONE-	on/IN	a/DT	constitutional/JJ	right/NN	*/-NONE-	to/TO	refuse/VB	*-3/-NONE-	to/TO	testify/VB	where/WRB	one/NNP	's/POS	testimony/NN	harms/VBZ	him/PRP	in/IN	the/DT	civil/JJ	matter/NN	*T*-4/-NONE-	,/,	but/CC	because/IN	the/DT	testimony/NN	in/IN	the/DT	civil/JJ	matter/NN	could/MD	be/VB	unconstitutionally/RB	used/VBN	*-1/-NONE-	against/IN	him/PRP	in/IN	a/DT	subsequent/JJ	criminal/JJ	prosecution/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Any/DT	such/JJ	attempt/NN	*/-NONE-	to/TO	distinguish/VB	``/``	good/JJ	debt/NN	''/''	from/IN	``/``	bad/JJ	debt/NN	,/,	''/''	or/CC	to/TO	draw/VB	the/DT	line/NN	at/IN	a/DT	particular/JJ	industry/NN	,/,	such/JJ	as/IN	the/DT	airlines/NNS	,/,	is/VBZ	likely/JJ	*-2/-NONE-	to/TO	blunt/VB	the/DT	spur/NN	that/IN	the/DT	proper/JJ	amount/NN	of/IN	leverage/NN	provides/VBZ	*T*-1/-NONE-	both/DT	to/TO	equity/NN	markets/NNS	and/CC	economic/JJ	efficiency/NN	in/IN	general/NN	./.	
+--- Independent Inference ---
+Any/DT	such/JJ	attempt/VB	*/-NONE-	to/TO	distinguish/VB	``/``	good/JJ	debt/NN	''/''	from/IN	``/``	bad/JJ	debt/NN	,/,	''/''	or/CC	to/TO	draw/VBP	the/DT	line/NN	at/IN	a/DT	particular/JJ	industry/NN	,/,	such/JJ	as/IN	the/DT	airlines/NNS	,/,	is/VBZ	likely/RB	*-2/-NONE-	to/TO	blunt/JJ	the/DT	spur/VB	that/DT	the/DT	proper/JJ	amount/NN	of/IN	leverage/NN	provides/VBZ	*T*-1/-NONE-	both/DT	to/TO	equity/NN	markets/NNS	and/CC	economic/JJ	efficiency/NN	in/IN	general/JJ	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Any/DT	such/JJ	attempt/NN	*/-NONE-	to/TO	distinguish/VB	``/``	good/JJ	debt/NN	''/''	from/IN	``/``	bad/JJ	debt/NN	,/,	''/''	or/CC	to/TO	draw/VB	the/DT	line/NN	at/IN	a/DT	particular/JJ	industry/NN	,/,	such/JJ	as/IN	the/DT	airlines/NNS	,/,	is/VBZ	likely/JJ	*-2/-NONE-	to/TO	blunt/VB	the/DT	spur/NN	that/IN	the/DT	proper/JJ	amount/NN	of/IN	leverage/NN	provides/VBZ	*T*-1/-NONE-	both/DT	to/TO	equity/NN	markets/NNS	and/CC	economic/JJ	efficiency/NN	in/IN	general/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+That/IN	PASOK/NNP	could/MD	win/VB	the/DT	elections/NNS	outright/RB	is/VBZ	improbable/JJ	;/:	the/DT	Greek/JJ	press/NN	,/,	previously/RB	eager/JJ	*/-NONE-	to/TO	palm/VB	off/RP	PASOK/NNP	's/POS	line/NN	,/,	has/VBZ	turned/VBN	on/IN	Mr./NNP	Papandreou/NNP	with/IN	a/DT	wild-eyed/JJ	vengeance/NN	./.	
+--- Independent Inference ---
+That/DT	PASOK/JJ	could/MD	win/VB	the/DT	elections/NNS	outright/JJ	is/VBZ	improbable/JJ	;/:	the/DT	Greek/JJ	press/VB	,/,	previously/RB	eager/JJ	*/-NONE-	to/TO	palm/NN	off/IN	PASOK/JJ	's/POS	line/NN	,/,	has/VBZ	turned/VBD	on/IN	Mr./NNP	Papandreou/NNP	with/IN	a/DT	wild-eyed/JJ	vengeance/NN	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+That/DT	PASOK/NNP	could/MD	win/VB	the/DT	elections/NNS	outright/RB	is/VBZ	improbable/JJ	;/:	the/DT	Greek/JJ	press/NN	,/,	previously/RB	eager/JJ	*/-NONE-	to/TO	palm/VB	off/RP	PASOK/NNP	's/POS	line/NN	,/,	has/VBZ	turned/VBN	on/IN	Mr./NNP	Papandreou/NNP	with/IN	a/DT	wild-eyed/JJ	vengeance/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+*/-NONE-	Suffice/VB	it/PRP	*/-NONE-	to/TO	say/VB	that/IN	if/IN	this/DT	were/VBD	a/DT	New/NNP	York/NNP	Yankees-Mets/JJ	series/NN	,/,	or/CC	one/CD	between/IN	the/DT	Chicago/NNP	Cubs/NNP	and/CC	White/NNP	Sox/NNP	hey/UH	,/,	it/PRP	's/VBZ	possible/JJ	-RRB-/-RRB-	,/,	you/PRP	'd/MD	need/VB	uniformed/JJ	police/NNS	in/IN	every/DT	other/JJ	seat/NN	*-1/-NONE-	to/TO	separate/VB	opposing/VBG	fans/NNS	,/,	only/RB	the/DT	suicidal/JJ	would/MD	bifurcate/VB	their/PRP$	bonnets/NNS	./.	
+--- Independent Inference ---
+*/-NONE-	Suffice/NNP	it/PRP	*/-NONE-	to/TO	say/VBP	that/DT	if/IN	this/DT	were/VBD	a/DT	New/NNP	York/NNP	Yankees-Mets/NNPS	series/NN	,/,	or/CC	one/NN	between/IN	the/DT	Chicago/NNP	Cubs/NNP	and/CC	White/NNP	Sox/NNP	hey/PRP	,/,	it/PRP	's/POS	possible/JJ	-RRB-/-RRB-	,/,	you/PRP	'd/MD	need/VB	uniformed/JJ	police/NN	in/IN	every/DT	other/JJ	seat/NN	*-1/-NONE-	to/TO	separate/JJ	opposing/VBG	fans/NNS	,/,	only/RB	the/DT	suicidal/NN	would/MD	bifurcate/VBD	their/PRP$	bonnets/NNS	./.	
+[errors =  11.0 ]
+--- Full Inference ---
+*/-NONE-	Suffice/VB	it/PRP	*/-NONE-	to/TO	say/VB	that/IN	if/IN	this/DT	were/VBD	a/DT	New/NNP	York/NNP	Yankees-Mets/NNP	series/NN	,/,	or/CC	one/CD	between/IN	the/DT	Chicago/NNP	Cubs/NNP	and/CC	White/NNP	Sox/NNP	hey/PRP	,/,	it/PRP	's/VBZ	possible/JJ	-RRB-/-RRB-	,/,	you/PRP	'd/MD	need/VB	uniformed/JJ	police/NN	in/IN	every/DT	other/JJ	seat/NN	*-1/-NONE-	to/TO	separate/VB	opposing/VBG	fans/NNS	,/,	only/RB	the/DT	suicidal/NN	would/MD	bifurcate/VB	their/PRP$	bonnets/NNS	./.	
+[errors =  4.0 ]
+
+--- Ground Truth ---
+Production/NN	at/IN	the/DT	mill/NN	has/VBZ	exceeded/VBN	the/DT	ability/NN	*ICH*-2/-NONE-	of/IN	Keystone/NNP	's/POS	casting/NN	operation/NN	*/-NONE-	to/TO	supply/VB	it/PRP	he/PRP	said/VBD	0/-NONE-	*T*-3/-NONE-	,/,	which/WDT	*T*-1/-NONE-	will/MD	force/VB	Keystone/NNP	*-4/-NONE-	to/TO	purchase/VB	billet/NN	,/,	or/CC	unfinished/JJ	steel/NN	bars/NNS	,/,	from/IN	outside/IN	the/DT	company/NN	during/IN	the/DT	fourth/JJ	quarter/NN	and/CC	next/JJ	year/NN	./.	
+--- Independent Inference ---
+Production/NNP	at/IN	the/DT	mill/NN	has/VBZ	exceeded/VBD	the/DT	ability/NN	*ICH*-2/-NONE-	of/IN	Keystone/NN	's/POS	casting/VBG	operation/NN	*/-NONE-	to/TO	supply/NN	it/PRP	he/PRP	said/VBD	0/-NONE-	*T*-3/-NONE-	,/,	which/WDT	*T*-1/-NONE-	will/MD	force/NN	Keystone/NNP	*-4/-NONE-	to/TO	purchase/NN	billet/VBD	,/,	or/CC	unfinished/JJ	steel/NN	bars/NNS	,/,	from/IN	outside/RB	the/DT	company/NN	during/IN	the/DT	fourth/JJ	quarter/NN	and/CC	next/JJ	year/NN	./.	
+[errors =  9.0 ]
+--- Full Inference ---
+Production/NN	at/IN	the/DT	mill/NN	has/VBZ	exceeded/VBN	the/DT	ability/NN	*ICH*-2/-NONE-	of/IN	Keystone/NNP	's/POS	casting/NN	operation/NN	*/-NONE-	to/TO	supply/VB	it/PRP	he/PRP	said/VBD	0/-NONE-	*T*-3/-NONE-	,/,	which/WDT	*T*-1/-NONE-	will/MD	force/VB	Keystone/NN	*-4/-NONE-	to/TO	purchase/VB	billet/VB	,/,	or/CC	unfinished/JJ	steel/NN	bars/NNS	,/,	from/IN	outside/IN	the/DT	company/NN	during/IN	the/DT	fourth/JJ	quarter/NN	and/CC	next/JJ	year/NN	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+``/``	There/EX	have/VBP	been/VBN	many/JJ	preposterous/JJ	reasons/NNS	*ICH*-1/-NONE-	advanced/VBN	*/-NONE-	*/-NONE-	to/TO	support/VB	a/DT	capital-gains/NNS	tax/NN	cut/NN	''/''	Sen./NNP	Mitchell/NNP	said/VBD	*T*-2/-NONE-	during/IN	his/PRP$	television/NN	appearance/NN	,/,	``/``	but/CC	I/PRP	suggest/VBP	0/-NONE-	that/DT	is/VBZ	perhaps/RB	more/RBR	than/IN	any/DT	of/IN	the/DT	others/NNS	./.	
+--- Independent Inference ---
+``/``	There/EX	have/VB	been/VBN	many/JJ	preposterous/JJ	reasons/NNS	*ICH*-1/-NONE-	advanced/VBD	*/-NONE-	*/-NONE-	to/TO	support/NN	a/DT	capital-gains/JJ	tax/NN	cut/VBN	''/''	Sen./NNP	Mitchell/NNP	said/VBD	*T*-2/-NONE-	during/IN	his/PRP$	television/NN	appearance/NN	,/,	``/``	but/CC	I/PRP	suggest/VBP	0/-NONE-	that/IN	is/VBZ	perhaps/RB	more/JJR	than/IN	any/DT	of/IN	the/DT	others/NNS	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+``/``	There/EX	have/VBP	been/VBN	many/JJ	preposterous/JJ	reasons/NNS	*ICH*-1/-NONE-	advanced/VBN	*/-NONE-	*/-NONE-	to/TO	support/VB	a/DT	capital-gains/NNS	tax/NN	cut/NN	''/''	Sen./NNP	Mitchell/NNP	said/VBD	*T*-2/-NONE-	during/IN	his/PRP$	television/NN	appearance/NN	,/,	``/``	but/CC	I/PRP	suggest/VBP	0/-NONE-	that/DT	is/VBZ	perhaps/RB	more/RBR	than/IN	any/DT	of/IN	the/DT	others/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+The/DT	decision/NN	,/,	*-1/-NONE-	reported/VBN	*/-NONE-	by/IN	the/DT	official/JJ	Xinhua/NNP	News/NNP	Agency/NNP	,/,	indicated/VBD	that/IN	the/DT	crackdown/NN	prompted/VBN	*/-NONE-	by/IN	student-led/JJ	pro-democracy/JJ	protests/NNS	in/IN	June/NNP	is/VBZ	intensifying/VBG	./.	
+--- Independent Inference ---
+The/DT	decision/NN	,/,	*-1/-NONE-	reported/VBD	*/-NONE-	by/IN	the/DT	official/NN	Xinhua/NNP	News/NNP	Agency/NNP	,/,	indicated/JJ	that/DT	the/DT	crackdown/NN	prompted/VBD	*/-NONE-	by/IN	student-led/JJ	pro-democracy/JJ	protests/VBZ	in/IN	June/NNP	is/VBZ	intensifying/VBG	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+The/DT	decision/NN	,/,	*-1/-NONE-	reported/VBN	*/-NONE-	by/IN	the/DT	official/JJ	Xinhua/NNP	News/NNP	Agency/NNP	,/,	indicated/VBD	that/IN	the/DT	crackdown/NN	prompted/VBN	*/-NONE-	by/IN	student-led/JJ	pro-democracy/JJ	protests/NNS	in/IN	June/NNP	is/VBZ	intensifying/VBG	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+The/DT	offer/NN	covers/VBZ	the/DT	massive/JJ	1.8/CD	million-square-foot/JJ	Forest/NNP	Fair/NNP	Mall/NNP	in/IN	Cincinnati/NNP	,/,	the/DT	800,000/CD	square-foot/JJ	Richland/NNP	Fashion/NNP	Mall/NNP	in/IN	Columbia/NNP	,/,	S.C./NNP	,/,	the/DT	700,000/CD	square-foot/JJ	Thornton/NNP	Town/NNP	Center/NNP	mall/NN	in/IN	Thornton/NNP	,/,	Colo/NNP	./.	
+--- Independent Inference ---
+The/DT	offer/VB	covers/VBZ	the/DT	massive/JJ	1.8/CD	million-square-foot/NN	Forest/NNP	Fair/NN	Mall/PDT	in/IN	Cincinnati/NNS	,/,	the/DT	800,000/CD	square-foot/NN	Richland/NNP	Fashion/NNP	Mall/NN	in/IN	Columbia/NNP	,/,	S.C./NNP	,/,	the/DT	700,000/CD	square-foot/NN	Thornton/NNP	Town/NNP	Center/NNP	mall/NN	in/IN	Thornton/NNP	,/,	Colo/NNP	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+The/DT	offer/NN	covers/VBZ	the/DT	massive/JJ	1.8/CD	million-square-foot/VBP	Forest/NNP	Fair/NNP	Mall/NNP	in/IN	Cincinnati/NNP	,/,	the/DT	800,000/CD	square-foot/NN	Richland/NNP	Fashion/NNP	Mall/NNP	in/IN	Columbia/NNP	,/,	S.C./NNP	,/,	the/DT	700,000/CD	square-foot/JJ	Thornton/NNP	Town/NNP	Center/NNP	mall/NN	in/IN	Thornton/NNP	,/,	Colo/NNP	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+The/DT	London/NNP	Sunday/NNP	Times/NNP	,/,	which/WDT	*T*-1/-NONE-	first/RB	reported/VBD	the/DT	U.S./NNP	concerns/NNS	,/,	cited/VBD	a/DT	U.S./NNP	intelligence/NN	report/NN	as/IN	the/DT	source/NN	of/IN	the/DT	allegations/NNS	that/IN	Olivetti/NNP	exported/VBD	$/$	25/CD	million/CD	*U*/-NONE-	in/IN	``/``	embargoed/JJ	state-of-the-art/JJ	flexible/JJ	manufacturing/NN	systems/NNS	to/TO	the/DT	Soviet/JJ	aviation/NN	industry/NN	./.	''/''	
+--- Independent Inference ---
+The/DT	London/NNP	Sunday/NNP	Times/NNP	,/,	which/WDT	*T*-1/-NONE-	first/JJ	reported/VBN	the/DT	U.S./NNP	concerns/NNS	,/,	cited/VBN	a/DT	U.S./NNP	intelligence/NN	report/VB	as/RB	the/DT	source/NN	of/IN	the/DT	allegations/NNS	that/DT	Olivetti/NNP	exported/VBD	$/$	25/CD	million/CD	*U*/-NONE-	in/IN	``/``	embargoed/VBD	state-of-the-art/JJ	flexible/JJ	manufacturing/VBG	systems/NNS	to/TO	the/DT	Soviet/NNP	aviation/NN	industry/NN	./.	''/''	
+[errors =  9.0 ]
+--- Full Inference ---
+The/DT	London/NNP	Sunday/NNP	Times/NNPS	,/,	which/WDT	*T*-1/-NONE-	first/RB	reported/VBD	the/DT	U.S./NNP	concerns/NNS	,/,	cited/VBD	a/DT	U.S./NNP	intelligence/NN	report/NN	as/IN	the/DT	source/NN	of/IN	the/DT	allegations/NNS	that/IN	Olivetti/NNP	exported/VBD	$/$	25/CD	million/CD	*U*/-NONE-	in/IN	``/``	embargoed/VBD	state-of-the-art/JJ	flexible/JJ	manufacturing/NN	systems/NNS	to/TO	the/DT	Soviet/NNP	aviation/NN	industry/NN	./.	''/''	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+The/DT	team/NN	that/WDT	*T*-2/-NONE-	dumped/VBD	runs/NNS	by/IN	the/DT	bushel/NN	on/IN	the/DT	Chicago/NNP	Cubs/NNP	in/IN	the/DT	National/NNP	League/NNP	playoffs/NNS	was/VBD	held/VBN	*-1/-NONE-	to/TO	just/RB	one/CD	in/IN	two/CD	games/NNS	by/IN	the/DT	home-team/JJ	Oakland/NNP	A/NNP	's/NNP	,/,	the/DT	gang/NN	that/WDT	*T*-3/-NONE-	had/VBD	been/VBN	done/VBN	unto/RP	*-4/-NONE-	similarly/RB	by/IN	the/DT	Los/NNP	Angeles/NNP	Dodgers/NNP	and/CC	Orel/NNP	Hershiser/NNP	in/IN	last/JJ	year/NN	's/POS	tournament/NN	./.	
+--- Independent Inference ---
+The/DT	team/NN	that/DT	*T*-2/-NONE-	dumped/VBN	runs/VBZ	by/IN	the/DT	bushel/NN	on/IN	the/DT	Chicago/NNP	Cubs/NNP	in/IN	the/DT	National/NNP	League/NNP	playoffs/NNS	was/VBD	held/VBN	*-1/-NONE-	to/TO	just/RB	one/CD	in/IN	two/CD	games/NNS	by/IN	the/DT	home-team/NN	Oakland/NNP	A/DT	's/POS	,/,	the/DT	gang/NN	that/IN	*T*-3/-NONE-	had/VBD	been/VBN	done/VBN	unto/IN	*-4/-NONE-	similarly/RB	by/IN	the/DT	Los/NNP	Angeles/NNP	Dodgers/NNP	and/CC	Orel/NNP	Hershiser/NNP	in/IN	last/JJ	year/NN	's/POS	tournament/NN	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+The/DT	team/NN	that/WDT	*T*-2/-NONE-	dumped/VBD	runs/NNS	by/IN	the/DT	bushel/NN	on/IN	the/DT	Chicago/NNP	Cubs/NNP	in/IN	the/DT	National/NNP	League/NNP	playoffs/NNS	was/VBD	held/VBN	*-1/-NONE-	to/TO	just/RB	one/CD	in/IN	two/CD	games/NNS	by/IN	the/DT	home-team/JJ	Oakland/NNP	A/NNP	's/POS	,/,	the/DT	gang/NN	that/WDT	*T*-3/-NONE-	had/VBD	been/VBN	done/VBN	unto/NNP	*-4/-NONE-	similarly/RB	by/IN	the/DT	Los/NNP	Angeles/NNP	Dodgers/NNP	and/CC	Orel/NNP	Hershiser/NNP	in/IN	last/JJ	year/NN	's/POS	tournament/NN	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+The/DT	judge/NN	turned/VBD	down/RP	an/DT	earlier/JJR	Sony/NNP	request/NN	for/IN	such/PDT	an/DT	order/NN	--/:	a/DT	decision/NN	upheld/VBN	*/-NONE-	on/IN	appeal/NN	--/:	but/CC	Sony/NNP	returned/VBD	with/IN	additional/JJ	evidence/NN	arguments/NNS	./.	
+--- Independent Inference ---
+The/DT	judge/NN	turned/VBD	down/RB	an/DT	earlier/RBR	Sony/NNP	request/NN	for/IN	such/JJ	an/DT	order/NN	--/:	a/DT	decision/NN	upheld/VBD	*/-NONE-	on/IN	appeal/VB	--/:	but/CC	Sony/NNP	returned/VBN	with/IN	additional/JJ	evidence/NN	arguments/NNS	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+The/DT	judge/NN	turned/VBD	down/RP	an/DT	earlier/JJR	Sony/NNP	request/NN	for/IN	such/PDT	an/DT	order/NN	--/:	a/DT	decision/NN	upheld/VBN	*/-NONE-	on/IN	appeal/NN	--/:	but/CC	Sony/NNP	returned/VBD	with/IN	additional/JJ	evidence/NN	arguments/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+I/PRP	think/VBP	0/-NONE-	what/WP	*T*-1/-NONE-	bothered/VBD	me/PRP	most/RBS	about/IN	the/DT	piece/NN	was/VBD	that/IN	there/EX	seemed/VBD	*-2/-NONE-	to/TO	be/VB	an/DT	underlying/JJ	attitude/NN	*/-NONE-	to/TO	tell/VB	your/PRP$	readers/NNS	0/-NONE-	all/DT	is/VBZ	well/JJ	--/:	if/IN	you/PRP	're/VBP	getting/VBG	laid/VBN	*-3/-NONE-	off/RP	*/-NONE-	do/VBP	n't/RB	worry/VB	,/,	if/IN	you/PRP	're/VBP	unemployed/JJ	,/,	it/PRP	's/VBZ	a/DT	seller/NN	's/POS	market/NN	./.	
+--- Independent Inference ---
+I/PRP	think/VB	0/-NONE-	what/WP	*T*-1/-NONE-	bothered/VBN	me/PRP	most/RBS	about/RB	the/DT	piece/NN	was/VBD	that/DT	there/EX	seemed/VBN	*-2/-NONE-	to/TO	be/VB	an/DT	underlying/VBG	attitude/NN	*/-NONE-	to/TO	tell/VB	your/PRP$	readers/NNS	0/-NONE-	all/DT	is/VBZ	well/RB	--/:	if/IN	you/PRP	're/VBP	getting/VBG	laid/VBD	*-3/-NONE-	off/RP	*/-NONE-	do/VBP	n't/RB	worry/VBP	,/,	if/IN	you/PRP	're/VBP	unemployed/JJ	,/,	it/PRP	's/POS	a/DT	seller/NN	's/POS	market/NN	./.	
+[errors =  10.0 ]
+--- Full Inference ---
+I/PRP	think/VBP	0/-NONE-	what/WP	*T*-1/-NONE-	bothered/VBD	me/PRP	most/RBS	about/RB	the/DT	piece/NN	was/VBD	that/IN	there/EX	seemed/VBP	*-2/-NONE-	to/TO	be/VB	an/DT	underlying/JJ	attitude/NN	*/-NONE-	to/TO	tell/VB	your/PRP$	readers/NNS	0/-NONE-	all/DT	is/VBZ	well/RB	--/:	if/IN	you/PRP	're/VBP	getting/VBG	laid/VBN	*-3/-NONE-	off/RP	*/-NONE-	do/VBP	n't/RB	worry/VBP	,/,	if/IN	you/PRP	're/VBP	unemployed/JJ	,/,	it/PRP	's/VBZ	a/DT	seller/NN	's/POS	market/NN	./.	
+[errors =  4.0 ]
+
+--- Ground Truth ---
+Big/JJ	investment/NN	banks/NNS	refused/VBD	*-1/-NONE-	to/TO	step/VB	up/IN	to/TO	the/DT	plate/NN	*-2/-NONE-	to/TO	support/VB	the/DT	beleaguered/JJ	floor/NN	traders/NNS	by/IN	*-3/-NONE-	buying/VBG	big/JJ	blocks/NNS	of/IN	stock/NN	,/,	traders/NNS	say/VBP	0/-NONE-	*T*-4/-NONE-	./.	
+--- Independent Inference ---
+Big/NNP	investment/NN	banks/NNS	refused/VBN	*-1/-NONE-	to/TO	step/NN	up/RB	to/TO	the/DT	plate/NN	*-2/-NONE-	to/TO	support/NN	the/DT	beleaguered/JJ	floor/NN	traders/NNS	by/IN	*-3/-NONE-	buying/NN	big/JJ	blocks/NNS	of/IN	stock/VB	,/,	traders/NNS	say/VBP	0/-NONE-	*T*-4/-NONE-	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Big/JJ	investment/NN	banks/NNS	refused/VBD	*-1/-NONE-	to/TO	step/VB	up/RP	to/TO	the/DT	plate/NN	*-2/-NONE-	to/TO	support/VB	the/DT	beleaguered/JJ	floor/NN	traders/NNS	by/IN	*-3/-NONE-	buying/VBG	big/JJ	blocks/NNS	of/IN	stock/NN	,/,	traders/NNS	say/VBP	0/-NONE-	*T*-4/-NONE-	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Yesterday/NN	,/,	a/DT	source/NN	close/RB	to/TO	GEC/NNP	confirmed/VBD	that/IN	his/PRP$	company/NN	may/MD	join/VB	the/DT	Ferranti/NNP	fight/NN	,/,	as/IN	part/NN	of/IN	a/DT	possible/JJ	consortium/NN	that/WDT	*T*-1/-NONE-	would/MD	bid/VB	against/IN	British/NNP	Aerospace/NNP	and/CC	Thomson-CSF/NNP	./.	
+--- Independent Inference ---
+Yesterday/NN	,/,	a/DT	source/NN	close/JJ	to/TO	GEC/NNP	confirmed/VBN	that/IN	his/PRP$	company/NN	may/MD	join/VB	the/DT	Ferranti/NNP	fight/VB	,/,	as/IN	part/NN	of/IN	a/DT	possible/JJ	consortium/NN	that/DT	*T*-1/-NONE-	would/MD	bid/NN	against/IN	British/JJ	Aerospace/NN	and/CC	Thomson-CSF/NNP	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Yesterday/NN	,/,	a/DT	source/NN	close/NN	to/TO	GEC/NNP	confirmed/VBD	that/IN	his/PRP$	company/NN	may/MD	join/VB	the/DT	Ferranti/NNP	fight/NN	,/,	as/IN	part/NN	of/IN	a/DT	possible/JJ	consortium/NN	that/WDT	*T*-1/-NONE-	would/MD	bid/VB	against/IN	British/NNP	Aerospace/NNP	and/CC	Thomson-CSF/NNP	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+The/DT	Soviet/NNP	Union/NNP	reported/VBD	that/IN	thousands/NNS	of/IN	tons/NNS	of/IN	goods/NNS	needed/VBN	*/-NONE-	*-1/-NONE-	to/TO	ease/VB	widespread/JJ	shortages/NNS	across/IN	the/DT	nation/NN	were/VBD	piled/VBN	*-2/-NONE-	up/RP	at/IN	ports/NNS	and/CC	rail/NN	depots/NNS	,/,	food/NN	shipments/NNS	were/VBD	rotting/VBG	because/RB	of/IN	a/DT	lack/NN	of/IN	people/NNS	equipment/NN	0/-NONE-	*T*-3/-NONE-	to/TO	move/VB	the/DT	cargo/NN	./.	
+--- Independent Inference ---
+The/DT	Soviet/JJ	Union/NNP	reported/VBD	that/IN	thousands/NNS	of/IN	tons/NNS	of/IN	goods/NNS	needed/VBN	*/-NONE-	*-1/-NONE-	to/TO	ease/VB	widespread/JJ	shortages/NNS	across/IN	the/DT	nation/NN	were/VBD	piled/VBD	*-2/-NONE-	up/RB	at/IN	ports/NNS	and/CC	rail/NN	depots/VBZ	,/,	food/NN	shipments/NNS	were/VBD	rotting/VBG	because/IN	of/IN	a/DT	lack/NN	of/IN	people/NNS	equipment/NN	0/-NONE-	*T*-3/-NONE-	to/TO	move/NN	the/DT	cargo/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+The/DT	Soviet/NNP	Union/NNP	reported/VBD	that/IN	thousands/NNS	of/IN	tons/NNS	of/IN	goods/NNS	needed/VBN	*/-NONE-	*-1/-NONE-	to/TO	ease/VB	widespread/JJ	shortages/NNS	across/IN	the/DT	nation/NN	were/VBD	piled/VBN	*-2/-NONE-	up/RP	at/IN	ports/NNS	and/CC	rail/NN	depots/NNS	,/,	food/NN	shipments/NNS	were/VBD	rotting/VBG	because/RB	of/IN	a/DT	lack/NN	of/IN	people/NNS	equipment/NN	0/-NONE-	*T*-3/-NONE-	to/TO	move/VB	the/DT	cargo/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Refiners/NNS	say/VBP	0/-NONE-	margins/NNS	picked/VBD	up/RP	in/IN	September/NNP	,/,	many/JJ	industry/NN	officials/NNS	believe/VBP	0/-NONE-	gasoline/NN	profits/NNS	will/MD	rebound/VB	this/DT	quarter/NN	,/,	though/IN	still/RB	not/RB	to/TO	the/DT	level/NN	of/IN	1988/CD	's/POS	fourth/JJ	quarter/NN	./.	
+--- Independent Inference ---
+Refiners/NNP	say/NN	0/-NONE-	margins/NNS	picked/VBN	up/RB	in/IN	September/NNP	,/,	many/JJ	industry/NN	officials/NNS	believe/VB	0/-NONE-	gasoline/NN	profits/NNS	will/MD	rebound/NN	this/DT	quarter/NN	,/,	though/IN	still/RB	not/RB	to/TO	the/DT	level/NN	of/IN	1988/CD	's/POS	fourth/JJ	quarter/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Refiners/NNS	say/VBP	0/-NONE-	margins/NNS	picked/VBD	up/RP	in/IN	September/NNP	,/,	many/JJ	industry/NN	officials/NNS	believe/VBP	0/-NONE-	gasoline/NN	profits/NNS	will/MD	rebound/VB	this/DT	quarter/NN	,/,	though/IN	still/RB	not/RB	to/TO	the/DT	level/NN	of/IN	1988/CD	's/POS	fourth/JJ	quarter/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Michelle/NNP	lives/VBZ	in/IN	a/DT	hotel/NN	room/NN	,/,	although/IN	she/PRP	drives/VBZ	a/DT	canary-colored/JJ	Porsche/NNP	,/,	she/PRP	has/VBZ	n't/RB	time/NN	0/-NONE-	*/-NONE-	to/TO	clean/VB	or/CC	repair/VB	it/PRP	*T*-3/-NONE-	;/:	the/DT	beat-up/JJ	vehicle/NN	can/MD	be/VB	started/VBN	*-1/-NONE-	only/RB	with/IN	a/DT	huge/JJ	pair/NN	of/IN	pliers/NNS	because/IN	the/DT	ignition/NN	key/NN	has/VBZ	broken/VBN	off/RP	in/IN	the/DT	lock/NN	./.	
+--- Independent Inference ---
+Michelle/NNP	lives/NNS	in/IN	a/DT	hotel/NN	room/NN	,/,	although/IN	she/PRP	drives/NNS	a/DT	canary-colored/JJ	Porsche/NNP	,/,	she/PRP	has/VBZ	n't/RB	time/NN	0/-NONE-	*/-NONE-	to/TO	clean/VB	or/CC	repair/NN	it/PRP	*T*-3/-NONE-	;/:	the/DT	beat-up/JJ	vehicle/NN	can/MD	be/VB	started/VBN	*-1/-NONE-	only/JJ	with/IN	a/DT	huge/JJ	pair/VB	of/IN	pliers/NNS	because/IN	the/DT	ignition/JJ	key/NN	has/VBZ	broken/VBN	off/RP	in/IN	the/DT	lock/VB	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Michelle/NNP	lives/VBZ	in/IN	a/DT	hotel/NN	room/NN	,/,	although/IN	she/PRP	drives/VBZ	a/DT	canary-colored/MD	Porsche/NNP	,/,	she/PRP	has/VBZ	n't/RB	time/NN	0/-NONE-	*/-NONE-	to/TO	clean/VB	or/CC	repair/VB	it/PRP	*T*-3/-NONE-	;/:	the/DT	beat-up/JJ	vehicle/NN	can/MD	be/VB	started/VBN	*-1/-NONE-	only/RB	with/IN	a/DT	huge/JJ	pair/NN	of/IN	pliers/NNS	because/IN	the/DT	ignition/NN	key/NN	has/VBZ	broken/VBN	off/RP	in/IN	the/DT	lock/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+While/IN	it/PRP	*ICH*-3/-NONE-	is/VBZ	possible/JJ	that/IN	the/DT	Big/NNP	Green/NNP	initiative/NN	will/MD	be/VB	ruled/VBN	*-5/-NONE-	unconstitutional/JJ	,/,	it/PRP	*EXP*-4/-NONE-	is/VBZ	of/IN	course/NN	conceivable/JJ	that/IN	in/IN	modern/JJ	California/NNP	it/PRP	could/MD	slide/VB	through/RB	./.	
+--- Independent Inference ---
+While/IN	it/PRP	*ICH*-3/-NONE-	is/VBZ	possible/JJ	that/WDT	the/DT	Big/JJ	Green/NNP	initiative/NN	will/MD	be/VB	ruled/VBD	*-5/-NONE-	unconstitutional/JJ	,/,	it/PRP	*EXP*-4/-NONE-	is/VBZ	of/IN	course/NN	conceivable/JJ	that/WDT	in/IN	modern/NN	California/NNP	it/PRP	could/MD	slide/NN	through/RB	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+While/IN	it/PRP	*ICH*-3/-NONE-	is/VBZ	possible/JJ	that/IN	the/DT	Big/NNP	Green/NNP	initiative/NN	will/MD	be/VB	ruled/VBN	*-5/-NONE-	unconstitutional/JJ	,/,	it/PRP	*EXP*-4/-NONE-	is/VBZ	of/IN	course/NN	conceivable/JJ	that/IN	in/IN	modern/JJ	California/NNP	it/PRP	could/MD	slide/VB	through/RB	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+``/``	We/PRP	're/VBP	encouraged/VBN	*-3/-NONE-	that/IN	talks/NNS	are/VBP	scheduled/VBN	*-1/-NONE-	again/RB	but/CC	beyond/IN	that/DT	,/,	we/PRP	have/VBP	made/VBN	no/DT	expression/NN	of/IN	expectations/NNS	,/,	''/''	a/DT	Boeing/VBG	spokesman/NN	said/VBD	*T*-2/-NONE-	./.	
+--- Independent Inference ---
+``/``	We/PRP	're/VBP	encouraged/JJ	*-3/-NONE-	that/DT	talks/NNS	are/VBP	scheduled/VBN	*-1/-NONE-	again/RB	but/CC	beyond/IN	that/IN	,/,	we/PRP	have/VB	made/VBD	no/RB	expression/NN	of/IN	expectations/NNS	,/,	''/''	a/DT	Boeing/NNP	spokesman/NN	said/VBD	*T*-2/-NONE-	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+``/``	We/PRP	're/VBP	encouraged/VBN	*-3/-NONE-	that/IN	talks/NNS	are/VBP	scheduled/VBN	*-1/-NONE-	again/RB	but/CC	beyond/IN	that/DT	,/,	we/PRP	have/VBP	made/VBN	no/DT	expression/NN	of/IN	expectations/NNS	,/,	''/''	a/DT	Boeing/NNP	spokesman/NN	said/VBD	*T*-2/-NONE-	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+The/DT	most/RBS	militant/JJ	opposition/NN	to/TO	American/JJ	TV/NN	imports/NNS	has/VBZ	come/VBN	from/IN	French/JJ	television/NN	movie/NN	producers/NNS	,/,	who/WP	*T*-2/-NONE-	have/VBP	demanded/VBN	quotas/NNS	ensuring/VBG	that/IN	a/DT	full/JJ	60/CD	%/NN	of/IN	Europe/NNP	's/POS	TV/NN	shows/NNS	be/VB	produced/VBN	*-1/-NONE-	in/IN	Europe/NNP	./.	
+--- Independent Inference ---
+The/DT	most/JJS	militant/JJ	opposition/NN	to/TO	American/NNP	TV/NN	imports/NNS	has/VBZ	come/VB	from/IN	French/JJ	television/NN	movie/NN	producers/NNS	,/,	who/WP	*T*-2/-NONE-	have/VB	demanded/VBN	quotas/NNS	ensuring/VBG	that/DT	a/DT	full/JJ	60/CD	%/NN	of/IN	Europe/NNP	's/POS	TV/NN	shows/VBZ	be/VB	produced/VBD	*-1/-NONE-	in/IN	Europe/NNP	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+The/DT	most/RBS	militant/JJ	opposition/NN	to/TO	American/JJ	TV/NN	imports/NNS	has/VBZ	come/VB	from/IN	French/JJ	television/NN	movie/NN	producers/NNS	,/,	who/WP	*T*-2/-NONE-	have/VBP	demanded/VBN	quotas/NNS	ensuring/VBG	that/IN	a/DT	full/JJ	60/CD	%/NN	of/IN	Europe/NNP	's/POS	TV/NN	shows/NNS	be/VB	produced/VBN	*-1/-NONE-	in/IN	Europe/NNP	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+*/-NONE-	Do/VB	n't/RB	say/VB	0/-NONE-	the/DT	TV/NN	sitcom/NN	,/,	because/IN	that/DT	happens/VBZ	*-2/-NONE-	to/TO	be/VB	a/DT	genre/NN	that/IN	,/,	in/IN	its/PRP$	desperate/JJ	need/NN	*/-NONE-	to/TO	attract/VB	everybody/NN	and/CC	offend/VB	nobody/NN	,/,	*T*-1/-NONE-	resembles/VBZ	politics/NNS	more/RBR	than/IN	it/PRP	does/VBZ	*&#x03F;*/-NONE-	comedy/NN	./.	
+--- Independent Inference ---
+*/-NONE-	Do/VBP	n't/RB	say/VB	0/-NONE-	the/DT	TV/NN	sitcom/NN	,/,	because/IN	that/IN	happens/VBZ	*-2/-NONE-	to/TO	be/VB	a/DT	genre/JJ	that/DT	,/,	in/IN	its/PRP$	desperate/JJ	need/VB	*/-NONE-	to/TO	attract/VB	everybody/NN	and/CC	offend/VB	nobody/NN	,/,	*T*-1/-NONE-	resembles/VBZ	politics/NNS	more/JJR	than/IN	it/PRP	does/VBZ	*&#x03F;*/-NONE-	comedy/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+*/-NONE-	Do/VBP	n't/RB	say/VB	0/-NONE-	the/DT	TV/NN	sitcom/NN	,/,	because/IN	that/DT	happens/VBZ	*-2/-NONE-	to/TO	be/VB	a/DT	genre/NN	that/IN	,/,	in/IN	its/PRP$	desperate/JJ	need/NN	*/-NONE-	to/TO	attract/VB	everybody/NN	and/CC	offend/VB	nobody/NN	,/,	*T*-1/-NONE-	resembles/VBZ	politics/NNS	more/RBR	than/IN	it/PRP	does/VBZ	*&#x03F;*/-NONE-	comedy/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Compaq/NNP	's/POS	machines/NNS	include/VBP	the/DT	3/CD	1\/2-inch/JJ	floppy/JJ	disk/NN	drive/NN	,/,	a/DT	backlit/JJ	screen/NN	that/WDT	*T*-1/-NONE-	is/VBZ	only/RB	1\/4-inch/JJ	thick/JJ	and/CC	an/DT	internal/JJ	expansion/NN	slot/NN	for/IN	a/DT	modem/NN	--/:	in/IN	other/JJ	words/NNS	,/,	almost/RB	all/PDT	the/DT	capabilities/NNS	of/IN	a/DT	typical/JJ	office/NN	machine/NN	./.	
+--- Independent Inference ---
+Compaq/NNP	's/POS	machines/NNS	include/VB	the/DT	3/CD	1\/2-inch/JJ	floppy/JJ	disk/NN	drive/VB	,/,	a/DT	backlit/JJ	screen/NN	that/DT	*T*-1/-NONE-	is/VBZ	only/RB	1\/4-inch/JJ	thick/JJ	and/CC	an/DT	internal/JJ	expansion/NN	slot/NN	for/IN	a/DT	modem/VB	--/:	in/IN	other/JJ	words/NNS	,/,	almost/RB	all/DT	the/DT	capabilities/NNS	of/IN	a/DT	typical/JJ	office/NN	machine/NN	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Compaq/NNP	's/POS	machines/NNS	include/VBP	the/DT	3/CD	1\/2-inch/JJ	floppy/JJ	disk/NN	drive/NN	,/,	a/DT	backlit/JJ	screen/NN	that/WDT	*T*-1/-NONE-	is/VBZ	only/RB	1\/4-inch/JJ	thick/JJ	and/CC	an/DT	internal/JJ	expansion/NN	slot/NN	for/IN	a/DT	modem/NN	--/:	in/IN	other/JJ	words/NNS	,/,	almost/RB	all/PDT	the/DT	capabilities/NNS	of/IN	a/DT	typical/JJ	office/NN	machine/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+``/``	You/PRP	say/VBP	0/-NONE-	you/PRP	could/MD	have/VB	sold/VBN	X/NN	percent/NN	of/IN	this/DT	product/NN	and/CC	Y/NN	percent/NN	of/IN	that/DT	,/,	''/''	recalls/VBZ	*T*-2/-NONE-	Theodore/NNP	Semegran/NNP	,/,	an/DT	analyst/NN	at/IN	Shearson/NNP	Lehman/NNP	Hutton/NNP	who/WP	*T*-1/-NONE-	went/VBD	through/IN	this/DT	exercise/NN	during/IN	his/PRP$	former/JJ	career/NN	as/IN	a/DT	chemical/JJ	engineer/NN	./.	
+--- Independent Inference ---
+``/``	You/PRP	say/VB	0/-NONE-	you/PRP	could/MD	have/VBP	sold/VBD	X/NNP	percent/NN	of/IN	this/DT	product/NN	and/CC	Y/NNP	percent/NN	of/IN	that/IN	,/,	''/''	recalls/VBZ	*T*-2/-NONE-	Theodore/NNP	Semegran/NNP	,/,	an/DT	analyst/NN	at/IN	Shearson/NNP	Lehman/NNP	Hutton/NNP	who/WP	*T*-1/-NONE-	went/VBD	through/IN	this/DT	exercise/VB	during/IN	his/PRP$	former/JJ	career/NN	as/IN	a/DT	chemical/NN	engineer/NN	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+``/``	You/PRP	say/VBP	0/-NONE-	you/PRP	could/MD	have/VB	sold/VBN	X/NNP	percent/NN	of/IN	this/DT	product/NN	and/CC	Y/DT	percent/NN	of/IN	that/DT	,/,	''/''	recalls/VBZ	*T*-2/-NONE-	Theodore/NNP	Semegran/NNP	,/,	an/DT	analyst/NN	at/IN	Shearson/NNP	Lehman/NNP	Hutton/NNP	who/WP	*T*-1/-NONE-	went/VBD	through/IN	this/DT	exercise/NN	during/IN	his/PRP$	former/JJ	career/NN	as/IN	a/DT	chemical/NN	engineer/NN	./.	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+Indeed/RB	,/,	Matchbox/NNP	and/CC	other/JJ	leading/VBG	Hong/NNP	Kong/NNP	toy/NN	makers/NNS	were/VBD	setting/VBG	up/RP	factories/NNS	in/IN	Southeast/NNP	Asia/NNP	,/,	especially/RB	in/IN	Thailand/NNP	,/,	long/RB	before/IN	the/DT	massacre/NN	./.	
+--- Independent Inference ---
+Indeed/UH	,/,	Matchbox/NN	and/CC	other/JJ	leading/VBG	Hong/NNP	Kong/NNP	toy/NN	makers/NNS	were/VBD	setting/VBG	up/RB	factories/NNS	in/IN	Southeast/JJ	Asia/NNP	,/,	especially/RB	in/IN	Thailand/NNP	,/,	long/JJ	before/IN	the/DT	massacre/NN	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Indeed/RB	,/,	Matchbox/NNP	and/CC	other/JJ	leading/VBG	Hong/NNP	Kong/NNP	toy/NN	makers/NNS	were/VBD	setting/VBG	up/RP	factories/NNS	in/IN	Southeast/NNP	Asia/NNP	,/,	especially/RB	in/IN	Thailand/NNP	,/,	long/RB	before/IN	the/DT	massacre/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Lots/NNS	of/IN	other/JJ	entries/NNS	*ICH*-2/-NONE-	made/VBN	up/RP	the/DT	parade/NN	,/,	of/IN	course/NN	--/:	notably/RB	a/DT	surprisingly/RB	large/JJ	increase/NN	in/IN	producer/NN	prices/NNS	,/,	signalling/VBG	Federal/NNP	Reserve/NNP	tightness/NN	;/:	the/DT	Bush/NNP	administration/NN	's/POS	temporary/JJ	&#x03F;/.	defeat/NN	in/IN	*/-NONE-	trying/VBG	*-1/-NONE-	to/TO	lower/VB	the/DT	capital-gains/NNS	tax/NN	./.	
+--- Independent Inference ---
+Lots/NNP	of/IN	other/JJ	entries/NN	*ICH*-2/-NONE-	made/VBD	up/RB	the/DT	parade/NN	,/,	of/IN	course/NN	--/:	notably/RB	a/DT	surprisingly/RB	large/JJ	increase/VB	in/IN	producer/NN	prices/NNS	,/,	signalling/NN	Federal/NNP	Reserve/NNP	tightness/JJ	;/:	the/DT	Bush/NNP	administration/NN	's/POS	temporary/JJ	&#x03F;/.	defeat/VB	in/IN	*/-NONE-	trying/VBG	*-1/-NONE-	to/TO	lower/RBR	the/DT	capital-gains/NNS	tax/NN	./.	
+[errors =  9.0 ]
+--- Full Inference ---
+Lots/NNS	of/IN	other/JJ	entries/NNS	*ICH*-2/-NONE-	made/VBN	up/IN	the/DT	parade/NN	,/,	of/IN	course/NN	--/:	notably/RB	a/DT	surprisingly/RB	large/JJ	increase/NN	in/IN	producer/NN	prices/NNS	,/,	signalling/VBG	Federal/NNP	Reserve/NNP	tightness/NN	;/:	the/DT	Bush/NNP	administration/NN	's/POS	temporary/JJ	&#x03F;/.	defeat/VB	in/IN	*/-NONE-	trying/VBG	*-1/-NONE-	to/TO	lower/RBR	the/DT	capital-gains/JJ	tax/NN	./.	
+[errors =  4.0 ]
+
+--- Ground Truth ---
+``/``	This/DT	has/VBZ	become/VBN	a/DT	very/RB	politicized/JJ	deal/NN	,/,	concerning/VBG	Canada/NNP	's/POS	only/JJ	large/JJ	world-class/JJ	bio-research/NN	or/CC	pharmaceutical/JJ	company/NN	,/,	''/''	Mr./NNP	Mehta/NNP	said/VBD	*T*-1/-NONE-	./.	
+--- Independent Inference ---
+``/``	This/DT	has/VBZ	become/VB	a/DT	very/RB	politicized/VBN	deal/VB	,/,	concerning/VBG	Canada/NNP	's/POS	only/RB	large/JJ	world-class/JJ	bio-research/JJ	or/CC	pharmaceutical/NN	company/NN	,/,	''/''	Mr./NNP	Mehta/NNP	said/VBD	*T*-1/-NONE-	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+``/``	This/DT	has/VBZ	become/VBN	a/DT	very/RB	politicized/VBN	deal/NN	,/,	concerning/VBG	Canada/NNP	's/POS	only/JJ	large/JJ	world-class/JJ	bio-research/NN	or/CC	pharmaceutical/JJ	company/NN	,/,	''/''	Mr./NNP	Mehta/NNP	said/VBD	*T*-1/-NONE-	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+If/IN	all/DT	the/DT	bondholders/NNS	holders/NNS	of/IN	one/CD	million/CD	common/JJ	shares/NNS	accept/VBP	the/DT	offer/NN	,/,	BSN/NNP	will/MD	increase/VB	its/PRP$	debt/NN	by/IN	$/$	9/CD	million/CD	*U*/-NONE-	,/,	but/CC	it/PRP	also/RB	will/MD	recognize/VB	a/DT	$/$	2/CD	million/CD	*U*/-NONE-	gain/NN	from/IN	*/-NONE-	retiring/VBG	the/DT	old/JJ	debt/NN	,/,	said/VBD	0/-NONE-	*T*-1/-NONE-	Michael/NNP	J./NNP	Blumenfeld/NNP	,/,	president/NN	./.	
+--- Independent Inference ---
+If/IN	all/PDT	the/DT	bondholders/NNS	holders/NNS	of/IN	one/CD	million/CD	common/NN	shares/NNS	accept/VB	the/DT	offer/VB	,/,	BSN/NNP	will/MD	increase/NN	its/PRP$	debt/NN	by/IN	$/$	9/CD	million/CD	*U*/-NONE-	,/,	but/CC	it/PRP	also/RB	will/MD	recognize/VB	a/DT	$/$	2/CD	million/CD	*U*/-NONE-	gain/NN	from/IN	*/-NONE-	retiring/VBG	the/DT	old/JJ	debt/NN	,/,	said/VBD	0/-NONE-	*T*-1/-NONE-	Michael/NNP	J./NNP	Blumenfeld/NNP	,/,	president/NN	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+If/IN	all/DT	the/DT	bondholders/NNS	holders/NNS	of/IN	one/CD	million/CD	common/JJ	shares/NNS	accept/VBP	the/DT	offer/NN	,/,	BSN/NNP	will/MD	increase/VB	its/PRP$	debt/NN	by/IN	$/$	9/CD	million/CD	*U*/-NONE-	,/,	but/CC	it/PRP	also/RB	will/MD	recognize/VB	a/DT	$/$	2/CD	million/CD	*U*/-NONE-	gain/NN	from/IN	*/-NONE-	retiring/VBG	the/DT	old/JJ	debt/NN	,/,	said/VBD	0/-NONE-	*T*-1/-NONE-	Michael/NNP	J./NNP	Blumenfeld/NNP	,/,	president/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Charles/NNP	Beseler/NNP	Co./NNP	,/,	a/DT	leading/VBG	maker/NN	of/IN	photographic/JJ	enlargers/NNS	,/,	introduced/VBD	last/JJ	month/NN	a/DT	complete/JJ	darkroom/NN	starter/NN	kit/NN	targeted/VBN	*/-NONE-	at/IN	teen-agers/NNS	who/WP	*T*-1/-NONE-	want/VBP	*-2/-NONE-	to/TO	process/VB	their/PRP$	own/JJ	black-and-white/JJ	photographs/NNS	./.	
+--- Independent Inference ---
+Charles/NNP	Beseler/JJR	Co./NNP	,/,	a/DT	leading/VBG	maker/NN	of/IN	photographic/JJ	enlargers/NNS	,/,	introduced/VBD	last/JJ	month/NN	a/DT	complete/JJ	darkroom/NN	starter/JJ	kit/NN	targeted/VBN	*/-NONE-	at/IN	teen-agers/NNS	who/WP	*T*-1/-NONE-	want/VB	*-2/-NONE-	to/TO	process/NN	their/PRP$	own/JJ	black-and-white/JJ	photographs/VBZ	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Charles/NNP	Beseler/NNP	Co./NNP	,/,	a/DT	leading/VBG	maker/NN	of/IN	photographic/JJ	enlargers/NNS	,/,	introduced/VBD	last/JJ	month/NN	a/DT	complete/JJ	darkroom/NN	starter/NN	kit/NN	targeted/VBN	*/-NONE-	at/IN	teen-agers/NNS	who/WP	*T*-1/-NONE-	want/VBP	*-2/-NONE-	to/TO	process/VB	their/PRP$	own/JJ	black-and-white/JJ	photographs/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Mr./NNP	Cooperman/NNP	sees/VBZ	this/DT	as/IN	a/DT	good/JJ	time/NN	0/-NONE-	*/-NONE-	to/TO	pick/VB	up/RP	bargains/NNS	*T*-1/-NONE-	,/,	but/CC	he/PRP	does/VBZ	n't/RB	think/VB	0/-NONE-	there/EX	's/VBZ	any/DT	need/NN	*/-NONE-	to/TO	rush/VB	./.	
+--- Independent Inference ---
+Mr./NNP	Cooperman/NNP	sees/VBZ	this/DT	as/IN	a/DT	good/JJ	time/NN	0/-NONE-	*/-NONE-	to/TO	pick/VB	up/RP	bargains/NNS	*T*-1/-NONE-	,/,	but/CC	he/PRP	does/VBZ	n't/RB	think/VBP	0/-NONE-	there/RB	's/POS	any/DT	need/VBP	*/-NONE-	to/TO	rush/NN	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Mr./NNP	Cooperman/NNP	sees/VBZ	this/DT	as/IN	a/DT	good/JJ	time/NN	0/-NONE-	*/-NONE-	to/TO	pick/VB	up/RP	bargains/NNS	*T*-1/-NONE-	,/,	but/CC	he/PRP	does/VBZ	n't/RB	think/VB	0/-NONE-	there/EX	's/VBZ	any/DT	need/NN	*/-NONE-	to/TO	rush/VB	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+For/IN	the/DT	next/JJ	two/CD	years/NNS	,/,	the/DT	Bank/NNP	Board/NNP	,/,	which/WDT	at/IN	the/DT	time/NN	*T*-1/-NONE-	was/VBD	the/DT	agency/NN	responsible/JJ	for/IN	*/-NONE-	regulating/VBG	thrifts/NNS	,/,	failed/VBD	*-2/-NONE-	to/TO	act/VB	--/:	even/RB	after/IN	federal/JJ	auditors/NNS	warned/VBD	in/IN	May/NNP	1987/CD	that/IN	Mr./NNP	Keating/NNP	had/VBD	caused/VBN	Lincoln/NNP	to/TO	become/VB	insolvent/JJ	./.	
+--- Independent Inference ---
+For/IN	the/DT	next/IN	two/CD	years/NNS	,/,	the/DT	Bank/NNP	Board/NNP	,/,	which/WDT	at/IN	the/DT	time/NN	*T*-1/-NONE-	was/VBD	the/DT	agency/NN	responsible/JJ	for/IN	*/-NONE-	regulating/NN	thrifts/NNS	,/,	failed/VBN	*-2/-NONE-	to/TO	act/NN	--/:	even/RB	after/IN	federal/JJ	auditors/NNS	warned/VBD	in/IN	May/NNP	1987/CD	that/IN	Mr./NNP	Keating/NNP	had/VBD	caused/VBN	Lincoln/NNP	to/TO	become/VBP	insolvent/JJ	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+For/IN	the/DT	next/JJ	two/CD	years/NNS	,/,	the/DT	Bank/NNP	Board/NNP	,/,	which/WDT	at/IN	the/DT	time/NN	*T*-1/-NONE-	was/VBD	the/DT	agency/NN	responsible/JJ	for/IN	*/-NONE-	regulating/VBG	thrifts/NNS	,/,	failed/VBD	*-2/-NONE-	to/TO	act/VB	--/:	even/RB	after/IN	federal/JJ	auditors/NNS	warned/VBD	in/IN	May/NNP	1987/CD	that/IN	Mr./NNP	Keating/NNP	had/VBD	caused/VBN	Lincoln/NNP	to/TO	become/VB	insolvent/JJ	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Added/VBD	*ICH*-2/-NONE-	another/DT	executive/NN	at/IN	a/DT	big/JJ	bank/NN	:/:	``/``	We/PRP	were/VBD	all/DT	a/DT	little/JJ	goosey/JJ	over/IN	the/DT	weekend/NN	*-3/-NONE-	trying/VBG	*-4/-NONE-	to/TO	forecast/VB	what/WP	*T*-1/-NONE-	would/MD	happen/VB	Monday/NNP	-RCB-/-RRB-	,/,	but/CC	it/PRP	's/VBZ	been/VBN	very/RB	quiet/JJ	./.	
+--- Independent Inference ---
+Added/VBN	*ICH*-2/-NONE-	another/DT	executive/JJ	at/IN	a/DT	big/JJ	bank/NN	:/:	``/``	We/PRP	were/VBD	all/DT	a/DT	little/JJ	goosey/JJ	over/RP	the/DT	weekend/NN	*-3/-NONE-	trying/VBG	*-4/-NONE-	to/TO	forecast/NN	what/WP	*T*-1/-NONE-	would/MD	happen/VB	Monday/NNP	-RCB-/-RRB-	,/,	but/CC	it/PRP	's/POS	been/VBN	very/RB	quiet/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Added/VBD	*ICH*-2/-NONE-	another/DT	executive/NN	at/IN	a/DT	big/JJ	bank/NN	:/:	``/``	We/PRP	were/VBD	all/DT	a/DT	little/JJ	goosey/NN	over/IN	the/DT	weekend/NN	*-3/-NONE-	trying/VBG	*-4/-NONE-	to/TO	forecast/VB	what/WP	*T*-1/-NONE-	would/MD	happen/VB	Monday/NNP	-RCB-/-RRB-	,/,	but/CC	it/PRP	's/VBZ	been/VBN	very/RB	quiet/JJ	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+As/IN	*/-NONE-	previously/RB	reported/VBN	*-1/-NONE-	,/,	Huntsman/NNP	Holdings/NNP	Corp./NNP	,/,	owned/VBN	*/-NONE-	by/IN	Jon/NNP	M./NNP	Huntsman/NNP	and/CC	other/JJ	members/NNS	of/IN	his/PRP$	family/NN	,/,	proposed/VBD	that/IN	Banstar/NNP	Corp./NNP	,/,	an/DT	affiliate/NN	of/IN	Huntsman/NNP	Holdings/NNP	,/,	acquire/VB	Aristech/NNP	in/IN	a/DT	friendly/JJ	transaction/NN	for/IN	$/$	25-a-share/JJ	*U*/-NONE-	in/IN	cash/NN	,/,	or/CC	$/$	817.5/CD	million/CD	*U*/-NONE-	./.	
+--- Independent Inference ---
+As/RB	*/-NONE-	previously/RB	reported/VBD	*-1/-NONE-	,/,	Huntsman/NNP	Holdings/NNP	Corp./NNP	,/,	owned/JJ	*/-NONE-	by/IN	Jon/NNP	M./NNP	Huntsman/JJ	and/CC	other/JJ	members/NNS	of/IN	his/PRP$	family/NN	,/,	proposed/VBN	that/WDT	Banstar/NNP	Corp./NNP	,/,	an/DT	affiliate/NN	of/IN	Huntsman/NNP	Holdings/NNPS	,/,	acquire/VB	Aristech/NNP	in/IN	a/DT	friendly/JJ	transaction/NN	for/IN	$/$	25-a-share/JJ	*U*/-NONE-	in/IN	cash/NN	,/,	or/CC	$/$	817.5/CD	million/CD	*U*/-NONE-	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+As/IN	*/-NONE-	previously/RB	reported/VBD	*-1/-NONE-	,/,	Huntsman/NNP	Holdings/NNP	Corp./NNP	,/,	owned/VBN	*/-NONE-	by/IN	Jon/NNP	M./NNP	Huntsman/NNP	and/CC	other/JJ	members/NNS	of/IN	his/PRP$	family/NN	,/,	proposed/VBD	that/IN	Banstar/NNP	Corp./NNP	,/,	an/DT	affiliate/NN	of/IN	Huntsman/NNP	Holdings/NNPS	,/,	acquire/VB	Aristech/NNP	in/IN	a/DT	friendly/JJ	transaction/NN	for/IN	$/$	25-a-share/JJ	*U*/-NONE-	in/IN	cash/NN	,/,	or/CC	$/$	817.5/CD	million/CD	*U*/-NONE-	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+They/PRP	hope/VBP	0/-NONE-	the/DT	foreign/JJ	deals/NNS	will/MD	divide/VB	the/DT	Hollywood/NNP	opposition/NN	and/CC	prod/VB	Congress/NNP	to/TO	push/VB	for/IN	*/-NONE-	ending/VBG	federal/JJ	rules/NNS	that/WDT	*T*-1/-NONE-	prohibit/VBP	the/DT	networks/NNS	from/IN	*-3/-NONE-	grabbing/VBG	a/DT	piece/NN	of/IN	rerun/NN	sales/NNS	and/CC	owning/VBG	part/NN	of/IN	the/DT	shows/NNS	0/-NONE-	they/PRP	put/VBP	*T*-2/-NONE-	on/IN	the/DT	air/NN	./.	
+--- Independent Inference ---
+They/PRP	hope/NN	0/-NONE-	the/DT	foreign/JJ	deals/NNS	will/MD	divide/VBP	the/DT	Hollywood/NNP	opposition/NN	and/CC	prod/VB	Congress/NNP	to/TO	push/VB	for/IN	*/-NONE-	ending/VBG	federal/JJ	rules/NNS	that/IN	*T*-1/-NONE-	prohibit/VB	the/DT	networks/NNS	from/IN	*-3/-NONE-	grabbing/VBG	a/DT	piece/NN	of/IN	rerun/VBN	sales/NNS	and/CC	owning/VBG	part/NN	of/IN	the/DT	shows/NNS	0/-NONE-	they/PRP	put/VB	*T*-2/-NONE-	on/IN	the/DT	air/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+They/PRP	hope/VBP	0/-NONE-	the/DT	foreign/JJ	deals/NNS	will/MD	divide/VB	the/DT	Hollywood/NNP	opposition/NN	and/CC	prod/NN	Congress/NNP	to/TO	push/VB	for/IN	*/-NONE-	ending/VBG	federal/JJ	rules/NNS	that/WDT	*T*-1/-NONE-	prohibit/VBP	the/DT	networks/NNS	from/IN	*-3/-NONE-	grabbing/VBG	a/DT	piece/NN	of/IN	rerun/NN	sales/NNS	and/CC	owning/VBG	part/NN	of/IN	the/DT	shows/NNS	0/-NONE-	they/PRP	put/VBP	*T*-2/-NONE-	on/IN	the/DT	air/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+And/CC	some/DT	other/JJ	segments/NNS	of/IN	California/NNP	's/POS	political/JJ	media/NNS	culture/NN	may/MD	yet/RB	start/VB	*-1/-NONE-	to/TO	point/VB	out/RP	that/IN	the/DT	initiative/NN	would/MD	impose/VB	significant/JJ	costs/NNS	on/IN	the/DT	state/NN	's/POS	less/RBR	affluent/JJ	citizens/NNS	in/IN	the/DT	form/NN	of/IN	higher/JJR	food/NN	prices/NNS	and/CC	lost/VBN	jobs/NNS	./.	
+--- Independent Inference ---
+And/CC	some/RB	other/JJ	segments/NNS	of/IN	California/NNP	's/POS	political/JJ	media/NNS	culture/NN	may/MD	yet/RB	start/VBP	*-1/-NONE-	to/TO	point/NN	out/RP	that/DT	the/DT	initiative/NN	would/MD	impose/VB	significant/JJ	costs/NNS	on/IN	the/DT	state/NN	's/VBZ	less/RBR	affluent/JJ	citizens/NNS	in/RP	the/DT	form/VB	of/IN	higher/JJR	food/NN	prices/NNS	and/CC	lost/VBD	jobs/NNS	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+And/CC	some/DT	other/JJ	segments/NNS	of/IN	California/NNP	's/POS	political/JJ	media/NNS	culture/NN	may/MD	yet/RB	start/VB	*-1/-NONE-	to/TO	point/NN	out/IN	that/IN	the/DT	initiative/NN	would/MD	impose/VB	significant/JJ	costs/NNS	on/IN	the/DT	state/NN	's/POS	less/JJR	affluent/JJ	citizens/NNS	in/IN	the/DT	form/NN	of/IN	higher/JJR	food/NN	prices/NNS	and/CC	lost/VBN	jobs/NNS	./.	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+General/NNP	Motors/NNPS	signaled/VBD	that/IN	up/IN	to/TO	five/CD	North/NNP	American/NNP	assembly/NN	plants/NNS	may/MD	close/VB	by/IN	the/DT	mid-1990s/CD	as/IN	it/PRP	tries/VBZ	*-1/-NONE-	to/TO	cut/VB	excess/JJ	capacity/NN	./.	
+--- Independent Inference ---
+General/NNP	Motors/NNPS	signaled/VBN	that/IN	up/RP	to/TO	five/CD	North/NNP	American/JJ	assembly/NN	plants/NNS	may/MD	close/RB	by/IN	the/DT	mid-1990s/NNS	as/IN	it/PRP	tries/NNS	*-1/-NONE-	to/TO	cut/JJ	excess/NN	capacity/NN	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+General/NNP	Motors/NNP	signaled/VBD	that/IN	up/RB	to/TO	five/CD	North/NNP	American/NNP	assembly/NN	plants/NNS	may/MD	close/VB	by/IN	the/DT	mid-1990s/NNS	as/IN	it/PRP	tries/VBZ	*-1/-NONE-	to/TO	cut/VB	excess/JJ	capacity/NN	./.	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+Hard/RB	on/IN	the/DT	heels/NNS	of/IN	Friday/NNP	's/POS	190-point/JJ	stock-market/NN	plunge/NN	and/CC	the/DT	uncertainty/NN	that/WDT	*T*-1/-NONE-	's/VBZ	followed/VBN	,/,	a/DT	few/JJ	big/JJ	brokerage/NN	firms/NNS	are/VBP	rolling/VBG	out/RP	new/JJ	ads/NNS	trumpeting/VBG	a/DT	familiar/JJ	message/NN	:/:	*/-NONE-	Keep/VB	on/RP	*-2/-NONE-	investing/VBG	,/,	the/DT	market/NN	's/VBZ	just/RB	fine/JJ	./.	
+--- Independent Inference ---
+Hard/NNP	on/IN	the/DT	heels/NNS	of/IN	Friday/NNP	's/POS	190-point/JJ	stock-market/NN	plunge/NN	and/CC	the/DT	uncertainty/NN	that/IN	*T*-1/-NONE-	's/POS	followed/VBN	,/,	a/DT	few/JJ	big/JJ	brokerage/NN	firms/NNS	are/VBP	rolling/VBG	out/RB	new/JJ	ads/NNS	trumpeting/VBG	a/DT	familiar/JJ	message/NN	:/:	*/-NONE-	Keep/VB	on/IN	*-2/-NONE-	investing/NN	,/,	the/DT	market/NN	's/POS	just/RB	fine/NN	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+Hard/NNP	on/IN	the/DT	heels/NNS	of/IN	Friday/NNP	's/POS	190-point/JJ	stock-market/JJ	plunge/NN	and/CC	the/DT	uncertainty/NN	that/WDT	*T*-1/-NONE-	's/VBZ	followed/VBN	,/,	a/DT	few/JJ	big/JJ	brokerage/NN	firms/NNS	are/VBP	rolling/VBG	out/RP	new/JJ	ads/NNS	trumpeting/VBG	a/DT	familiar/JJ	message/NN	:/:	*/-NONE-	Keep/VB	on/IN	*-2/-NONE-	investing/VBG	,/,	the/DT	market/NN	's/VBZ	just/RB	fine/JJ	./.	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+Other/JJ	Hooker/NNP	properties/NNS	included/VBN	*/-NONE-	are/VBP	a/DT	20-story/JJ	office/NN	tower/NN	in/IN	midtown/JJ	Atlanta/NNP	,/,	expected/VBN	*/-NONE-	to/TO	be/VB	completed/VBN	*-1/-NONE-	next/IN	February/NNP	;/:	vacant/JJ	land/NN	sites/NNS	in/IN	Florida/NNP	Ohio/NNP	;/:	L.J./NNP	Hooker/NNP	International/NNP	,/,	the/DT	commercial/JJ	real-estate/NN	brokerage/NN	company/NN	that/WDT	*T*-2/-NONE-	once/RB	did/VBD	business/NN	as/IN	Merrill/NNP	Lynch/NNP	Commercial/NNP	Real/NNP	Estate/NNP	,/,	plus/CC	other/JJ	shopping/NN	centers/NNS	./.	
+--- Independent Inference ---
+Other/JJ	Hooker/NNP	properties/NNS	included/VBD	*/-NONE-	are/VBP	a/DT	20-story/JJ	office/NN	tower/NN	in/IN	midtown/NN	Atlanta/NNP	,/,	expected/VBN	*/-NONE-	to/TO	be/VB	completed/VBD	*-1/-NONE-	next/JJ	February/NNP	;/:	vacant/JJ	land/NN	sites/NNS	in/IN	Florida/NNP	Ohio/NNP	;/:	L.J./NNP	Hooker/NNP	International/NNP	,/,	the/DT	commercial/JJ	real-estate/NN	brokerage/NN	company/NN	that/DT	*T*-2/-NONE-	once/IN	did/VBD	business/NN	as/IN	Merrill/NNP	Lynch/NNP	Commercial/NNP	Real/JJ	Estate/NNP	,/,	plus/CC	other/JJ	shopping/NN	centers/NNS	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Other/JJ	Hooker/NNP	properties/NNS	included/VBN	*/-NONE-	are/VBP	a/DT	20-story/JJ	office/NN	tower/NN	in/IN	midtown/NN	Atlanta/NNP	,/,	expected/VBN	*/-NONE-	to/TO	be/VB	completed/VBN	*-1/-NONE-	next/IN	February/NNP	;/:	vacant/JJ	land/NN	sites/NNS	in/IN	Florida/NNP	Ohio/NNP	;/:	L.J./NNP	Hooker/NNP	International/NNP	,/,	the/DT	commercial/JJ	real-estate/NN	brokerage/NN	company/NN	that/WDT	*T*-2/-NONE-	once/RB	did/VBD	business/NN	as/IN	Merrill/NNP	Lynch/NNP	Commercial/NNP	Real/NNP	Estate/NNP	,/,	plus/IN	other/JJ	shopping/NN	centers/NNS	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+That/DT	issue/NN	,/,	like/IN	racial/JJ	tensions/NNS	in/IN	New/NNP	York/NNP	City/NNP	,/,	will/MD	have/VB	*-1/-NONE-	to/TO	cool/VB	down/RP	,/,	not/RB	heat/VB	up/RP	,/,	before/IN	it/PRP	can/MD	simmer/VB	./.	
+--- Independent Inference ---
+That/DT	issue/NN	,/,	like/IN	racial/JJ	tensions/NNS	in/IN	New/NNP	York/NNP	City/NNP	,/,	will/MD	have/VBP	*-1/-NONE-	to/TO	cool/NN	down/RB	,/,	not/RB	heat/VB	up/IN	,/,	before/IN	it/PRP	can/MD	simmer/JJR	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+That/DT	issue/NN	,/,	like/IN	racial/JJ	tensions/NNS	in/IN	New/NNP	York/NNP	City/NNP	,/,	will/MD	have/VB	*-1/-NONE-	to/TO	cool/VB	down/RP	,/,	not/RB	heat/VB	up/RP	,/,	before/IN	it/PRP	can/MD	simmer/VB	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+However/RB	,/,	it/PRP	gave/VBD	the/DT	shareholders/NNS	the/DT	right/NN	*/-NONE-	to/TO	pursue/VB	a/DT	small/JJ	portion/NN	of/IN	their/PRP$	claim/NN	that/WDT	*T*-1/-NONE-	pertains/VBZ	to/TO	Lisa/NNP	's/POS	disk/NN	drive/NN	,/,	known/VBN	*/-NONE-	as/IN	Twiggy/NNP	./.	
+--- Independent Inference ---
+However/RB	,/,	it/PRP	gave/VBD	the/DT	shareholders/NNS	the/DT	right/RB	*/-NONE-	to/TO	pursue/VB	a/DT	small/JJ	portion/NN	of/IN	their/PRP$	claim/NN	that/DT	*T*-1/-NONE-	pertains/NNS	to/TO	Lisa/NNP	's/POS	disk/NN	drive/VB	,/,	known/VBN	*/-NONE-	as/IN	Twiggy/JJ	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+However/RB	,/,	it/PRP	gave/VBD	the/DT	shareholders/NNS	the/DT	right/NN	*/-NONE-	to/TO	pursue/VB	a/DT	small/JJ	portion/NN	of/IN	their/PRP$	claim/NN	that/WDT	*T*-1/-NONE-	pertains/VBZ	to/TO	Lisa/NNP	's/POS	disk/NN	drive/NN	,/,	known/VBN	*/-NONE-	as/IN	Twiggy/NNP	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Queens/NNP	newsletter/NN	writer/NN	Francis/NNP	X./NNP	Curzio/NNP	actually/RB	did/VBD	it/PRP	:/:	He/PRP	stated/VBD	in/IN	writing/NN	in/IN	September/NNP	1987/CD	that/IN	the/DT	Dow/NNP	Jones/NNP	Industrial/NNP	Average/NNP	was/VBD	likely/JJ	*-1/-NONE-	to/TO	decline/VB	about/RB	500/CD	points/NNS	the/DT	following/JJ	month/NN	./.	
+--- Independent Inference ---
+Queens/NNP	newsletter/NN	writer/NN	Francis/NNP	X./NNP	Curzio/NNP	actually/RB	did/VBD	it/PRP	:/:	He/PRP	stated/VBD	in/IN	writing/VBG	in/IN	September/NNP	1987/CD	that/IN	the/DT	Dow/NNP	Jones/NNP	Industrial/JJ	Average/NNP	was/VBD	likely/RB	*-1/-NONE-	to/TO	decline/NN	about/IN	500/CD	points/NNS	the/DT	following/VBG	month/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Queens/NNP	newsletter/NN	writer/NN	Francis/NNP	X./NNP	Curzio/NNP	actually/RB	did/VBD	it/PRP	:/:	He/PRP	stated/VBD	in/IN	writing/VBG	in/IN	September/NNP	1987/CD	that/IN	the/DT	Dow/NNP	Jones/NNP	Industrial/NNP	Average/NNP	was/VBD	likely/JJ	*-1/-NONE-	to/TO	decline/VB	about/RB	500/CD	points/NNS	the/DT	following/JJ	month/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Mortgage/NN	securities/NNS	rose/VBD	in/IN	hectic/JJ	trading/NN	,/,	with/IN	most/JJS	of/IN	the/DT	activity/NN	concentrated/VBN	in/IN	Government/NNP	National/NNP	Mortgage/NNP	Association/NNP	9/CD	%/NN	coupon/NN	securities/NNS	,/,	the/DT	most/RBS	liquid/JJ	mortgage/NN	issue/NN	./.	
+--- Independent Inference ---
+Mortgage/NNP	securities/NNS	rose/VBD	in/IN	hectic/JJ	trading/NN	,/,	with/IN	most/RBS	of/IN	the/DT	activity/NN	concentrated/VBD	in/IN	Government/NNP	National/NNP	Mortgage/NNP	Association/NNP	9/CD	%/NN	coupon/NN	securities/NNS	,/,	the/DT	most/JJS	liquid/NN	mortgage/VB	issue/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Mortgage/NN	securities/NNS	rose/VBD	in/IN	hectic/JJ	trading/NN	,/,	with/IN	most/JJS	of/IN	the/DT	activity/NN	concentrated/VBD	in/IN	Government/NNP	National/NNP	Mortgage/NNP	Association/NNP	9/CD	%/NN	coupon/NN	securities/NNS	,/,	the/DT	most/RBS	liquid/JJ	mortgage/NN	issue/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+So/IN	it/PRP	seems/VBZ	that/IN	Mr./NNP	Mitsotakis/NNP	and/CC	his/PRP$	communist/NN	chums/NNS	may/MD	have/VB	unwittingly/RB	served/VBN	Mr./NNP	Papandreou/NNP	a/DT	moral/JJ	victory/NN	on/IN	a/DT	platter/JJ	:/:	PASOK/NNP	,/,	whether/IN	guilty/JJ	or/CC	not/RB	,/,	can/MD	now/RB	traipse/VB	the/DT	countryside/NN	*/-NONE-	condemning/VBG	the/DT	whole/JJ	affair/NN	as/IN	a/DT	witch/NN	hunt/NN	at/IN	Mr./NNP	Papandreou/NNP	's/POS	expense/NN	./.	
+--- Independent Inference ---
+So/IN	it/PRP	seems/VBZ	that/IN	Mr./NNP	Mitsotakis/NNS	and/CC	his/PRP$	communist/NN	chums/NNS	may/MD	have/VBP	unwittingly/RB	served/VBD	Mr./NNP	Papandreou/NNP	a/DT	moral/JJ	victory/NN	on/IN	a/DT	platter/NN	:/:	PASOK/JJ	,/,	whether/IN	guilty/JJ	or/CC	not/RB	,/,	can/MD	now/RB	traipse/VB	the/DT	countryside/NN	*/-NONE-	condemning/VBG	the/DT	whole/NN	affair/NN	as/RB	a/DT	witch/VB	hunt/NN	at/IN	Mr./NNP	Papandreou/NNP	's/POS	expense/NN	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+So/IN	it/PRP	seems/VBZ	that/IN	Mr./NNP	Mitsotakis/NNP	and/CC	his/PRP$	communist/NN	chums/NNS	may/MD	have/VB	unwittingly/RB	served/VBD	Mr./NNP	Papandreou/NNP	a/DT	moral/JJ	victory/NN	on/IN	a/DT	platter/NN	:/:	PASOK/JJ	,/,	whether/IN	guilty/JJ	or/CC	not/RB	,/,	can/MD	now/RB	traipse/VB	the/DT	countryside/NN	*/-NONE-	condemning/VBG	the/DT	whole/JJ	affair/NN	as/IN	a/DT	witch/NN	hunt/NN	at/IN	Mr./NNP	Papandreou/NNP	's/POS	expense/NN	./.	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+Over/IN	the/DT	full/JJ	post-World/NNP	War/NNP	II/NNP	era/NN	,/,	the/DT	Columbia/NNP	index/NN	,/,	on/IN	the/DT	average/NN	,/,	has/VBZ	entered/VBN	sustained/VBN	declines/NNS	14/CD	months/NNS	before/IN	the/DT	onset/NN	of/IN	recessions/NNS	and/CC	turned/VBD	up/RP	eight/CD	months/NNS	before/IN	recoveries/NNS	./.	
+--- Independent Inference ---
+Over/IN	the/DT	full/JJ	post-World/JJ	War/NNP	II/NNP	era/NN	,/,	the/DT	Columbia/NNP	index/NN	,/,	on/IN	the/DT	average/NN	,/,	has/VBZ	entered/VBD	sustained/VBD	declines/NNS	14/CD	months/NNS	before/IN	the/DT	onset/NN	of/IN	recessions/NNS	and/CC	turned/VBN	up/RB	eight/CD	months/NNS	before/RB	recoveries/NNS	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Over/IN	the/DT	full/JJ	post-World/NNP	War/NNP	II/NNP	era/NN	,/,	the/DT	Columbia/NNP	index/NN	,/,	on/IN	the/DT	average/NN	,/,	has/VBZ	entered/VBN	sustained/VBN	declines/NNS	14/CD	months/NNS	before/IN	the/DT	onset/NN	of/IN	recessions/NNS	and/CC	turned/VBD	up/IN	eight/CD	months/NNS	before/IN	recoveries/NNS	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Good/JJ	will/NN	is/VBZ	the/DT	excess/NN	of/IN	cost/NN	of/IN	an/DT	acquired/VBN	firm/NN	,/,	operating/VBG	unit/NN	or/CC	assets/NNS	over/IN	the/DT	current/JJ	or/CC	fair/JJ	market/NN	value/NN	of/IN	those/DT	assets/NNS	./.	
+--- Independent Inference ---
+Good/JJ	will/MD	is/VBZ	the/DT	excess/JJ	of/IN	cost/VBD	of/IN	an/DT	acquired/VBD	firm/NN	,/,	operating/NN	unit/NN	or/CC	assets/NNS	over/IN	the/DT	current/JJ	or/CC	fair/JJ	market/NN	value/NN	of/IN	those/DT	assets/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Good/JJ	will/NN	is/VBZ	the/DT	excess/NN	of/IN	cost/NN	of/IN	an/DT	acquired/VBN	firm/NN	,/,	operating/VBG	unit/NN	or/CC	assets/NNS	over/IN	the/DT	current/JJ	or/CC	fair/JJ	market/NN	value/NN	of/IN	those/DT	assets/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+The/DT	judge/NN	dismissed/VBD	the/DT	fan/NN	's/POS	suit/NN	against/IN	the/DT	team/NN	,/,	however/RB	,/,	*-2/-NONE-	ruling/VBG	the/DT	Orioles/NNP	innocent/JJ	of/IN	negligent/JJ	hiring/NN	,/,	not/RB	responsible/JJ	for/IN	a/DT	fight/NN	that/WDT	*T*-1/-NONE-	was/VBD	outside/IN	the/DT	players/NNS	'/POS	employment/NN	./.	
+--- Independent Inference ---
+The/DT	judge/NN	dismissed/VBN	the/DT	fan/NN	's/POS	suit/NN	against/IN	the/DT	team/NN	,/,	however/RB	,/,	*-2/-NONE-	ruling/NN	the/DT	Orioles/NNP	innocent/JJ	of/IN	negligent/NN	hiring/VBG	,/,	not/RB	responsible/JJ	for/IN	a/DT	fight/VB	that/DT	*T*-1/-NONE-	was/VBD	outside/JJ	the/DT	players/NNS	'/POS	employment/NN	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+The/DT	judge/NN	dismissed/VBD	the/DT	fan/NN	's/POS	suit/NN	against/IN	the/DT	team/NN	,/,	however/RB	,/,	*-2/-NONE-	ruling/VBG	the/DT	Orioles/NNP	innocent/NN	of/IN	negligent/NN	hiring/NN	,/,	not/RB	responsible/JJ	for/IN	a/DT	fight/NN	that/WDT	*T*-1/-NONE-	was/VBD	outside/IN	the/DT	players/NNS	'/POS	employment/NN	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+*-2/-NONE-	To/TO	make/VB	its/PRP$	point/NN	,/,	it/PRP	is/VBZ	challenging/VBG	the/DT	Italian/JJ	government/NN	*-3/-NONE-	to/TO	explain/VB	reports/NNS	that/IN	Olivetti/NNP	may/MD	have/VB	supplied/VBN	the/DT	Soviet/NNP	Union/NNP	with/IN	sophisticated/JJ	computer-driven/JJ	devices/NNS	that/WDT	*T*-1/-NONE-	could/MD	be/VB	used/VBN	*-4/-NONE-	*/-NONE-	to/TO	build/VB	parts/NNS	for/IN	combat/NN	aircraft/NN	./.	
+--- Independent Inference ---
+*-2/-NONE-	To/TO	make/VB	its/PRP$	point/VB	,/,	it/PRP	is/VBZ	challenging/VBG	the/DT	Italian/JJ	government/NN	*-3/-NONE-	to/TO	explain/VB	reports/NNS	that/IN	Olivetti/NNP	may/MD	have/VBP	supplied/VBD	the/DT	Soviet/NNP	Union/NNP	with/IN	sophisticated/JJ	computer-driven/JJ	devices/NNS	that/IN	*T*-1/-NONE-	could/MD	be/VB	used/VBN	*-4/-NONE-	*/-NONE-	to/TO	build/VB	parts/NNS	for/IN	combat/VB	aircraft/NN	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+*-2/-NONE-	To/TO	make/VB	its/PRP$	point/NN	,/,	it/PRP	is/VBZ	challenging/VBG	the/DT	Italian/JJ	government/NN	*-3/-NONE-	to/TO	explain/VB	reports/NNS	that/IN	Olivetti/NNP	may/MD	have/VB	supplied/VBN	the/DT	Soviet/NNP	Union/NNP	with/IN	sophisticated/JJ	computer-driven/JJ	devices/NNS	that/WDT	*T*-1/-NONE-	could/MD	be/VB	used/VBN	*-4/-NONE-	*/-NONE-	to/TO	build/VB	parts/NNS	for/IN	combat/NN	aircraft/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+In/IN	order/NN	*/-NONE-	to/TO	head/VB	off/RP	any/DT	divisions/NNS	,/,	Mr./NNP	Mandela/NNP	,/,	in/IN	a/DT	meeting/NN	with/IN	his/PRP$	colleagues/NNS	before/IN	they/PRP	were/VBD	released/VBN	*-1/-NONE-	,/,	instructed/VBD	them/PRP	*-2/-NONE-	to/TO	report/VB	to/TO	the/DT	ANC/NNP	headquarters/NN	in/IN	Lusaka/NNP	as/RB	soon/RB	as/IN	possible/JJ	./.	
+--- Independent Inference ---
+In/IN	order/NN	*/-NONE-	to/TO	head/NN	off/RB	any/DT	divisions/NNS	,/,	Mr./NNP	Mandela/NNP	,/,	in/IN	a/DT	meeting/NN	with/IN	his/PRP$	colleagues/NNS	before/IN	they/PRP	were/VBD	released/VBN	*-1/-NONE-	,/,	instructed/VBN	them/PRP	*-2/-NONE-	to/TO	report/NN	to/TO	the/DT	ANC/NNP	headquarters/NNS	in/IN	Lusaka/NNP	as/IN	soon/RB	as/IN	possible/JJ	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+In/IN	order/NN	*/-NONE-	to/TO	head/VB	off/RP	any/DT	divisions/NNS	,/,	Mr./NNP	Mandela/NNP	,/,	in/IN	a/DT	meeting/NN	with/IN	his/PRP$	colleagues/NNS	before/IN	they/PRP	were/VBD	released/VBN	*-1/-NONE-	,/,	instructed/VBD	them/PRP	*-2/-NONE-	to/TO	report/VB	to/TO	the/DT	ANC/NNP	headquarters/NN	in/IN	Lusaka/NNP	as/IN	soon/RB	as/IN	possible/JJ	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Australian/JJ	press/NN	magnate/NN	Rupert/NNP	Murdoch/NNP	has/VBZ	bought/VBN	50/CD	%/NN	stakes/NNS	in/IN	two/CD	popular/JJ	gossipy/JJ	Hungarian/JJ	newspapers/NNS	,/,	while/IN	Britain/NNP	's/POS	Robert/NNP	Maxwell/NNP	has/VBZ	let/VBN	it/PRP	*EXP*-2/-NONE-	be/VB	known/VBN	*-1/-NONE-	here/RB	that/IN	he/PRP	is/VBZ	thinking/VBG	about/IN	similar/JJ	moves/NNS	./.	
+--- Independent Inference ---
+Australian/JJ	press/NN	magnate/NN	Rupert/NNP	Murdoch/NNP	has/VBZ	bought/VBD	50/CD	%/NN	stakes/NNS	in/IN	two/CD	popular/JJ	gossipy/JJ	Hungarian/JJ	newspapers/NNS	,/,	while/NN	Britain/NNP	's/POS	Robert/NNP	Maxwell/NNP	has/VBZ	let/VB	it/PRP	*EXP*-2/-NONE-	be/VB	known/VBN	*-1/-NONE-	here/RB	that/IN	he/PRP	is/VBZ	thinking/NN	about/RB	similar/JJ	moves/VBZ	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Australian/JJ	press/NN	magnate/NN	Rupert/NNP	Murdoch/NNP	has/VBZ	bought/VBN	50/CD	%/NN	stakes/NNS	in/IN	two/CD	popular/JJ	gossipy/JJ	Hungarian/JJ	newspapers/NNS	,/,	while/IN	Britain/NNP	's/POS	Robert/NNP	Maxwell/NNP	has/VBZ	let/VB	it/PRP	*EXP*-2/-NONE-	be/VB	known/VBN	*-1/-NONE-	here/RB	that/IN	he/PRP	is/VBZ	thinking/VBG	about/IN	similar/JJ	moves/NNS	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+The/DT	Supreme/NNP	Court/NNP	agreed/VBD	*-2/-NONE-	to/TO	decide/VB	whether/IN	a/DT	federal/JJ	court/NN	may/MD	dismantle/VB	a/DT	merger/NN	that/WDT	*T*-1/-NONE-	has/VBZ	won/VBN	regulatory/JJ	approval/NN	but/CC	been/VBN	ruled/VBN	*-3/-NONE-	anticompetitive/JJ	in/IN	a/DT	private/JJ	suit/NN	./.	
+--- Independent Inference ---
+The/DT	Supreme/NNP	Court/NNP	agreed/VBN	*-2/-NONE-	to/TO	decide/VB	whether/IN	a/DT	federal/JJ	court/NN	may/MD	dismantle/VB	a/DT	merger/NN	that/IN	*T*-1/-NONE-	has/VBZ	won/VBD	regulatory/JJ	approval/NN	but/CC	been/VBN	ruled/VBD	*-3/-NONE-	anticompetitive/JJ	in/RB	a/DT	private/JJ	suit/NN	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+The/DT	Supreme/NNP	Court/NNP	agreed/VBD	*-2/-NONE-	to/TO	decide/VB	whether/IN	a/DT	federal/JJ	court/NN	may/MD	dismantle/VB	a/DT	merger/NN	that/WDT	*T*-1/-NONE-	has/VBZ	won/VBN	regulatory/JJ	approval/NN	but/CC	been/VBN	ruled/VBN	*-3/-NONE-	anticompetitive/JJ	in/IN	a/DT	private/JJ	suit/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+When/WRB	Rosie/NNP	died/VBD	*T*-1/-NONE-	,/,	her/PRP$	uncles/NNS	moved/VBD	in/RP	--/:	let/VB	her/PRP	make/VB	the/DT	sleeping/NN	other/JJ	household/NN	arrangements/NNS	./.	
+--- Independent Inference ---
+When/WRB	Rosie/NNP	died/VBD	*T*-1/-NONE-	,/,	her/PRP	uncles/VBZ	moved/VBD	in/IN	--/:	let/VB	her/PRP$	make/VB	the/DT	sleeping/VBG	other/JJ	household/NN	arrangements/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+When/WRB	Rosie/NNP	died/VBD	*T*-1/-NONE-	,/,	her/PRP$	uncles/NNS	moved/VBD	in/RP	--/:	let/VB	her/PRP	make/VB	the/DT	sleeping/NN	other/JJ	household/NN	arrangements/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+It/PRP	filed/VBD	for/IN	protection/NN	from/IN	creditors/NNS	under/IN	Chapter/NN	11/CD	of/IN	the/DT	federal/JJ	Bankruptcy/NNP	Code/NNP	Sept./NNP	24/CD	*/-NONE-	to/TO	give/VB	it/PRP	additional/JJ	time/NN	0/-NONE-	*/-NONE-	to/TO	work/VB	on/IN	a/DT	plan/NN	*/-NONE-	to/TO	restructure/VB	its/PRP$	$/$	1.45/CD	billion/CD	*U*/-NONE-	in/IN	senior/JJ	debt/NN	*T*-1/-NONE-	./.	
+--- Independent Inference ---
+It/PRP	filed/VBN	for/IN	protection/NN	from/IN	creditors/NNS	under/IN	Chapter/NNP	11/CD	of/IN	the/DT	federal/JJ	Bankruptcy/NNP	Code/NNP	Sept./NNP	24/CD	*/-NONE-	to/TO	give/VBP	it/PRP	additional/JJ	time/NN	0/-NONE-	*/-NONE-	to/TO	work/NN	on/IN	a/DT	plan/NN	*/-NONE-	to/TO	restructure/NN	its/PRP$	$/$	1.45/CD	billion/CD	*U*/-NONE-	in/IN	senior/JJ	debt/NN	*T*-1/-NONE-	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+It/PRP	filed/VBD	for/IN	protection/NN	from/IN	creditors/NNS	under/IN	Chapter/NN	11/CD	of/IN	the/DT	federal/JJ	Bankruptcy/NNP	Code/NNP	Sept./NNP	24/CD	*/-NONE-	to/TO	give/VB	it/PRP	additional/JJ	time/NN	0/-NONE-	*/-NONE-	to/TO	work/VB	on/IN	a/DT	plan/NN	*/-NONE-	to/TO	restructure/VB	its/PRP$	$/$	1.45/CD	billion/CD	*U*/-NONE-	in/IN	senior/JJ	debt/NN	*T*-1/-NONE-	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+A/DT	third/JJ	model/NN	,/,	*-1/-NONE-	marketed/VBN	*-2/-NONE-	in/IN	Japan/NNP	,/,	may/MD	hit/VB	the/DT	U.S./NNP	by/IN	the/DT	end/NN	of/IN	the/DT	first/JJ	quarter/NN	of/IN	1990/CD	,/,	but/CC	by/IN	then/RB	analysts/NNS	say/VBP	0/-NONE-	*T*-3/-NONE-	,/,	Compaq/NNP	will/MD	have/VB	established/VBN	itself/PRP	as/IN	one/CD	of/IN	three/CD	major/JJ	players/NNS	./.	
+--- Independent Inference ---
+A/DT	third/JJ	model/NN	,/,	*-1/-NONE-	marketed/VBD	*-2/-NONE-	in/IN	Japan/NNP	,/,	may/MD	hit/NN	the/DT	U.S./NNP	by/IN	the/DT	end/VB	of/IN	the/DT	first/JJ	quarter/NN	of/IN	1990/CD	,/,	but/CC	by/IN	then/RB	analysts/NNS	say/VBP	0/-NONE-	*T*-3/-NONE-	,/,	Compaq/NNP	will/MD	have/VBP	established/VBD	itself/PRP	as/RB	one/PRP	of/IN	three/CD	major/JJ	players/NNS	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+A/DT	third/JJ	model/NN	,/,	*-1/-NONE-	marketed/VBD	*-2/-NONE-	in/IN	Japan/NNP	,/,	may/MD	hit/VB	the/DT	U.S./NNP	by/IN	the/DT	end/NN	of/IN	the/DT	first/JJ	quarter/NN	of/IN	1990/CD	,/,	but/CC	by/IN	then/JJ	analysts/NNS	say/VBP	0/-NONE-	*T*-3/-NONE-	,/,	Compaq/NNP	will/MD	have/VB	established/VBN	itself/PRP	as/IN	one/CD	of/IN	three/CD	major/JJ	players/NNS	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+Whether/IN	a/DT	cash/NN	crunch/NN	might/MD	eventually/RB	force/VB	the/DT	company/NN	to/TO	cut/VB	its/PRP$	quarterly/JJ	dividend/NN	,/,	raised/VBD	36/CD	%/NN	to/TO	75/CD	cents/NNS	a/DT	share/NN	only/RB	a/DT	year/NN	ago/RB	,/,	has/VBZ	become/VBN	a/DT	topic/NN	of/IN	intense/JJ	speculation/NN	on/IN	Wall/NNP	Street/NNP	since/IN	Mr./NNP	Stookey/NNP	deflected/VBD	dividend/NN	questions/NNS	in/IN	a/DT	Sept./NNP	29/CD	meeting/NN	with/IN	analysts/NNS	./.	
+--- Independent Inference ---
+Whether/IN	a/DT	cash/NN	crunch/NN	might/MD	eventually/RB	force/NN	the/DT	company/NN	to/TO	cut/NN	its/PRP$	quarterly/JJ	dividend/NN	,/,	raised/VBN	36/CD	%/NN	to/TO	75/CD	cents/NNS	a/DT	share/NN	only/RB	a/DT	year/NN	ago/RB	,/,	has/VBZ	become/VB	a/DT	topic/NN	of/IN	intense/JJ	speculation/NN	on/IN	Wall/NNP	Street/NNP	since/IN	Mr./NNP	Stookey/NNP	deflected/VBN	dividend/NN	questions/NNS	in/IN	a/DT	Sept./NNP	29/CD	meeting/NN	with/IN	analysts/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Whether/IN	a/DT	cash/NN	crunch/NN	might/MD	eventually/RB	force/VB	the/DT	company/NN	to/TO	cut/VB	its/PRP$	quarterly/JJ	dividend/NN	,/,	raised/VBD	36/CD	%/NN	to/TO	75/CD	cents/NNS	a/DT	share/NN	only/RB	a/DT	year/NN	ago/RB	,/,	has/VBZ	become/VBN	a/DT	topic/NN	of/IN	intense/JJ	speculation/NN	on/IN	Wall/NNP	Street/NNP	since/IN	Mr./NNP	Stookey/NNP	deflected/VBD	dividend/NN	questions/NNS	in/IN	a/DT	Sept./NNP	29/CD	meeting/NN	with/IN	analysts/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Blue/NNP	Arrow/NNP	blamed/VBD	the/DT	pretax/JJ	profit/NN	drop/NN	in/IN	the/DT	quarter/NN	ended/VBN	July/NNP	31/CD	partly/RB	on/IN	slower/JJR	earnings/NNS	growth/NN	of/IN	non-Manpower/JJ	units/NNS	in/IN	Britain/NNP	./.	
+--- Independent Inference ---
+Blue/JJ	Arrow/NNP	blamed/VBN	the/DT	pretax/NN	profit/VB	drop/NN	in/IN	the/DT	quarter/NN	ended/VBD	July/NNP	31/CD	partly/RB	on/IN	slower/JJR	earnings/NNS	growth/NN	of/IN	non-Manpower/NN	units/NNS	in/IN	Britain/NNP	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Blue/NNP	Arrow/NNP	blamed/VBD	the/DT	pretax/JJ	profit/NN	drop/NN	in/IN	the/DT	quarter/NN	ended/VBD	July/NNP	31/CD	partly/RB	on/IN	slower/JJR	earnings/NNS	growth/NN	of/IN	non-Manpower/JJ	units/NNS	in/IN	Britain/NNP	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Also/RB	stricken/VBN	*-3/-NONE-	was/VBD	*T*-2/-NONE-	a/DT	fivefold/JJ	increase/NN	in/IN	the/DT	maximum/JJ	Occupational/NNP	Safety/NNP	Health/NNP	Administration/NNP	penalties/NNS	,/,	which/WDT	*T*-1/-NONE-	would/MD	have/VB	raised/VBN	$/$	65/CD	million/CD	*U*/-NONE-	in/IN	fiscal/JJ	1990/CD	./.	
+--- Independent Inference ---
+Also/RB	stricken/JJ	*-3/-NONE-	was/VBD	*T*-2/-NONE-	a/DT	fivefold/RB	increase/NN	in/IN	the/DT	maximum/NN	Occupational/JJ	Safety/NNP	Health/NNP	Administration/NNP	penalties/NNS	,/,	which/WDT	*T*-1/-NONE-	would/MD	have/VBP	raised/VBD	$/$	65/CD	million/CD	*U*/-NONE-	in/IN	fiscal/JJ	1990/CD	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Also/RB	stricken/VBN	*-3/-NONE-	was/VBD	*T*-2/-NONE-	a/DT	fivefold/JJ	increase/NN	in/IN	the/DT	maximum/NN	Occupational/NNP	Safety/NNP	Health/NNP	Administration/NNP	penalties/NNS	,/,	which/WDT	*T*-1/-NONE-	would/MD	have/VB	raised/VBN	$/$	65/CD	million/CD	*U*/-NONE-	in/IN	fiscal/JJ	1990/CD	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+The/DT	Machinists/NNP	union/NN	has/VBZ	rejected/VBN	a/DT	three-year/JJ	contract/NN	offer/NN	that/WDT	*T*-1/-NONE-	would/MD	have/VB	provided/VBN	a/DT	10/CD	%/NN	wage/NN	increase/NN	over/IN	the/DT	life/NN	of/IN	the/DT	pact/NN	,/,	plus/CC	some/DT	bonuses/NNS	./.	
+--- Independent Inference ---
+The/DT	Machinists/NNS	union/NN	has/VBZ	rejected/VBD	a/DT	three-year/JJ	contract/NN	offer/VB	that/IN	*T*-1/-NONE-	would/MD	have/VB	provided/VBD	a/DT	10/CD	%/NN	wage/NN	increase/NN	over/IN	the/DT	life/NN	of/IN	the/DT	pact/NN	,/,	plus/CC	some/DT	bonuses/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+The/DT	Machinists/NNP	union/NN	has/VBZ	rejected/VBN	a/DT	three-year/JJ	contract/NN	offer/NN	that/WDT	*T*-1/-NONE-	would/MD	have/VB	provided/VBN	a/DT	10/CD	%/NN	wage/NN	increase/NN	over/IN	the/DT	life/NN	of/IN	the/DT	pact/NN	,/,	plus/CC	some/DT	bonuses/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+``/``	The/DT	last/JJ	crash/NN	taught/VBD	institutional/JJ	investors/NNS	that/IN	they/PRP	have/VBP	*-2/-NONE-	to/TO	be/VB	long-term/JJ	holders/NNS	,/,	that/IN	they/PRP	ca/MD	n't/RB	react/VB	to/TO	short-term/JJ	events/NNS	,/,	good/JJ	or/CC	bad/JJ	,/,	''/''	said/VBD	*T*-1/-NONE-	Stephen/NNP	L./NNP	Nesbitt/NNP	,/,	senior/JJ	vice/NN	president/NN	for/IN	the/DT	pension/NN	consultants/NNS	Wilshire/NNP	Associates/NNP	in/IN	Santa/NNP	Monica/NNP	,/,	Calif/NNP	./.	
+--- Independent Inference ---
+``/``	The/DT	last/JJ	crash/NN	taught/VBD	institutional/JJ	investors/NNS	that/DT	they/PRP	have/VB	*-2/-NONE-	to/TO	be/VB	long-term/NN	holders/NNS	,/,	that/DT	they/PRP	ca/MD	n't/RB	react/VB	to/TO	short-term/JJ	events/NNS	,/,	good/JJ	or/CC	bad/JJ	,/,	''/''	said/VBD	*T*-1/-NONE-	Stephen/NNP	L./NNP	Nesbitt/NNP	,/,	senior/JJ	vice/NN	president/NN	for/IN	the/DT	pension/NN	consultants/NNS	Wilshire/NNP	Associates/NNPS	in/IN	Santa/NNP	Monica/NNP	,/,	Calif/NNP	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+``/``	The/DT	last/JJ	crash/NN	taught/VBD	institutional/JJ	investors/NNS	that/IN	they/PRP	have/VBP	*-2/-NONE-	to/TO	be/VB	long-term/JJ	holders/NNS	,/,	that/IN	they/PRP	ca/MD	n't/RB	react/VB	to/TO	short-term/JJ	events/NNS	,/,	good/JJ	or/CC	bad/JJ	,/,	''/''	said/VBD	*T*-1/-NONE-	Stephen/NNP	L./NNP	Nesbitt/NNP	,/,	senior/JJ	vice/NN	president/NN	for/IN	the/DT	pension/NN	consultants/NNS	Wilshire/NNP	Associates/NNP	in/IN	Santa/NNP	Monica/NNP	,/,	Calif/NNP	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+The/DT	coalition/NN	government/NN	tried/VBD	*-1/-NONE-	to/TO	show/VB	that/IN	PASOK/NNP	ministers/NNS	had/VBD	received/VBN	hefty/JJ	sums/NNS	for/IN	*/-NONE-	OKing/NNP	the/DT	purchase/NN	of/IN	F-16/NNP	Fighting/NNP	Falcon/NNP	and/CC	Mirage/NNP	2000/CD	combat/NN	aircraft/NN	,/,	produced/VBN	*/-NONE-	by/IN	the/DT	U.S.based/JJ	General/NNP	Dynamics/NNP	Corp./NNP	and/CC	France/NNP	's/POS	Avions/NNP	Marcel/NNP	Dassault/NNP	,/,	respectively/RB	./.	
+--- Independent Inference ---
+The/DT	coalition/NN	government/NN	tried/JJ	*-1/-NONE-	to/TO	show/NN	that/IN	PASOK/JJ	ministers/NNS	had/VBD	received/VBN	hefty/JJ	sums/NNS	for/IN	*/-NONE-	OKing/JJ	the/DT	purchase/VB	of/IN	F-16/NN	Fighting/NN	Falcon/NNP	and/CC	Mirage/NNP	2000/CD	combat/NN	aircraft/NN	,/,	produced/VBN	*/-NONE-	by/IN	the/DT	U.S.based/JJ	General/NNP	Dynamics/NNPS	Corp./NNP	and/CC	France/NNP	's/POS	Avions/NNP	Marcel/NNP	Dassault/NNP	,/,	respectively/RB	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+The/DT	coalition/NN	government/NN	tried/VBD	*-1/-NONE-	to/TO	show/VB	that/DT	PASOK/JJ	ministers/NNS	had/VBD	received/VBN	hefty/JJ	sums/NNS	for/IN	*/-NONE-	OKing/VBG	the/DT	purchase/NN	of/IN	F-16/NNP	Fighting/NNP	Falcon/NNP	and/CC	Mirage/NNP	2000/CD	combat/NN	aircraft/NN	,/,	produced/VBN	*/-NONE-	by/IN	the/DT	U.S.based/JJ	General/NNP	Dynamics/NNP	Corp./NNP	and/CC	France/NNP	's/POS	Avions/NNP	Marcel/NNP	Dassault/NNP	,/,	respectively/RB	./.	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+Even/RB	if/IN	that/DT	is/VBZ	so/RB	,/,	however/RB	,/,	it/PRP	*ICH*-1/-NONE-	's/VBZ	probably/RB	the/DT	case/NN	that/IN	no/DT	barriers/NNS	should/MD	have/VB	been/VBN	erected/VBN	*-2/-NONE-	*-3/-NONE-	to/TO	stop/VB	the/DT	procession/NN	before/IN	the/DT	end/NN	of/IN	the/DT	rout/NN	e/NN	./.	
+--- Independent Inference ---
+Even/RB	if/IN	that/WDT	is/VBZ	so/RB	,/,	however/RB	,/,	it/PRP	*ICH*-1/-NONE-	's/POS	probably/RB	the/DT	case/NN	that/IN	no/DT	barriers/NNS	should/MD	have/VBP	been/VBN	erected/VBD	*-2/-NONE-	*-3/-NONE-	to/TO	stop/NN	the/DT	procession/JJ	before/IN	the/DT	end/NN	of/IN	the/DT	rout/NN	e/DT	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Even/RB	if/IN	that/WDT	is/VBZ	so/RB	,/,	however/RB	,/,	it/PRP	*ICH*-1/-NONE-	's/VBZ	probably/RB	the/DT	case/NN	that/IN	no/DT	barriers/NNS	should/MD	have/VB	been/VBN	erected/VBN	*-2/-NONE-	*-3/-NONE-	to/TO	stop/VB	the/DT	procession/NN	before/IN	the/DT	end/NN	of/IN	the/DT	rout/NN	e/DT	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+The/DT	White/NNP	House/NNP	Office/NNP	of/IN	Management/NNP	Budget/NNP	,/,	whose/WP$	calculations/NNS	*T*-2/-NONE-	determine/VBP	whether/IN	the/DT	Gramm-Rudman/NNP	targets/NNS	are/VBP	met/VBN	*-1/-NONE-	,/,	estimated/VBD	that/IN	the/DT	House-passed/JJ	deficit-reduction/NN	measure/NN	would/MD	cut/VB	the/DT	fiscal/JJ	1990/CD	shortfall/NN	by/IN	$/$	6.2/CD	billion/CD	*U*/-NONE-	,/,	almost/RB	half/DT	of/IN	the/DT	Congressional/NNP	Budget/NNP	Office/NNP	's/POS	estimate/NN	of/IN	$/$	11.0/CD	billion/CD	*U*/-NONE-	./.	
+--- Independent Inference ---
+The/DT	White/NNP	House/NNP	Office/NNP	of/IN	Management/NNP	Budget/NNP	,/,	whose/WP$	calculations/NNS	*T*-2/-NONE-	determine/VB	whether/IN	the/DT	Gramm-Rudman/NNP	targets/NNS	are/VBP	met/VBD	*-1/-NONE-	,/,	estimated/VBD	that/IN	the/DT	House-passed/JJ	deficit-reduction/JJ	measure/NN	would/MD	cut/NN	the/DT	fiscal/JJ	1990/CD	shortfall/NN	by/IN	$/$	6.2/CD	billion/CD	*U*/-NONE-	,/,	almost/RB	half/PDT	of/IN	the/DT	Congressional/NNP	Budget/NNP	Office/NNP	's/POS	estimate/NN	of/IN	$/$	11.0/CD	billion/CD	*U*/-NONE-	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+The/DT	White/NNP	House/NNP	Office/NNP	of/IN	Management/NNP	Budget/NNP	,/,	whose/WP$	calculations/NNS	*T*-2/-NONE-	determine/VBP	whether/IN	the/DT	Gramm-Rudman/NNP	targets/NNS	are/VBP	met/VBN	*-1/-NONE-	,/,	estimated/VBD	that/IN	the/DT	House-passed/JJ	deficit-reduction/NN	measure/NN	would/MD	cut/VB	the/DT	fiscal/JJ	1990/CD	shortfall/NN	by/IN	$/$	6.2/CD	billion/CD	*U*/-NONE-	,/,	almost/RB	half/DT	of/IN	the/DT	Congressional/NNP	Budget/NNP	Office/NNP	's/POS	estimate/NN	of/IN	$/$	11.0/CD	billion/CD	*U*/-NONE-	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+``/``	We/PRP	're/VBP	saying/VBG	0/-NONE-	the/DT	worst/JJS	thing/NN	that/IN	anyone/NN	can/MD	do/VB	*T*-2/-NONE-	is/VBZ	*/-NONE-	to/TO	see/VB	the/DT	market/NN	go/VB	down/RB	and/CC	dump/VB	everything/NN	,/,	which/WDT	*T*-1/-NONE-	just/RB	drives/VBZ	the/DT	prices/NNS	down/IN	further/RBR	,/,	''/''	says/VBZ	*T*-3/-NONE-	John/NNP	Lampe/NNP	,/,	PaineWebber/NNP	's/POS	director/NN	of/IN	advertising/NN	./.	
+--- Independent Inference ---
+``/``	We/PRP	're/VBP	saying/VBG	0/-NONE-	the/DT	worst/JJS	thing/NN	that/WDT	anyone/NN	can/MD	do/VBP	*T*-2/-NONE-	is/VBZ	*/-NONE-	to/TO	see/VB	the/DT	market/NN	go/VBP	down/RB	and/CC	dump/VB	everything/NN	,/,	which/WDT	*T*-1/-NONE-	just/RB	drives/NNS	the/DT	prices/NNS	down/RB	further/RB	,/,	''/''	says/VBZ	*T*-3/-NONE-	John/NNP	Lampe/NNP	,/,	PaineWebber/NNP	's/POS	director/NN	of/IN	advertising/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+``/``	We/PRP	're/VBP	saying/VBG	0/-NONE-	the/DT	worst/JJS	thing/NN	that/IN	anyone/NN	can/MD	do/VB	*T*-2/-NONE-	is/VBZ	*/-NONE-	to/TO	see/VB	the/DT	market/NN	go/VB	down/IN	and/CC	dump/VB	everything/NN	,/,	which/WDT	*T*-1/-NONE-	just/RB	drives/VBZ	the/DT	prices/NNS	down/IN	further/RBR	,/,	''/''	says/VBZ	*T*-3/-NONE-	John/NNP	Lampe/NNP	,/,	PaineWebber/NNP	's/POS	director/NN	of/IN	advertising/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Spokesmen/NNP	for/IN	Merieux/NNP	Connaught/NNP	said/VBD	0/-NONE-	they/PRP	had/VBD	n't/RB	been/VBN	informed/VBN	*-1/-NONE-	of/IN	specific/JJ	areas/NNS	of/IN	concern/NN	by/IN	either/CC	the/DT	government/NN	or/CC	Investment/NNP	Canada/NNP	,/,	but/CC	added/VBD	0/-NONE-	they/PRP	hope/VBP	*-2/-NONE-	to/TO	have/VB	more/JJR	information/NN	early/RB	this/DT	week/NN	./.	
+--- Independent Inference ---
+Spokesmen/NNS	for/IN	Merieux/NNP	Connaught/NNP	said/VBD	0/-NONE-	they/PRP	had/VBD	n't/RB	been/VBN	informed/VBD	*-1/-NONE-	of/IN	specific/JJ	areas/NNS	of/IN	concern/NN	by/IN	either/RB	the/DT	government/NN	or/CC	Investment/NNP	Canada/NNP	,/,	but/CC	added/VBD	0/-NONE-	they/PRP	hope/NN	*-2/-NONE-	to/TO	have/VBP	more/RBR	information/NN	early/JJ	this/DT	week/NN	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Spokesmen/NNS	for/IN	Merieux/NNP	Connaught/NNP	said/VBD	0/-NONE-	they/PRP	had/VBD	n't/RB	been/VBN	informed/VBN	*-1/-NONE-	of/IN	specific/JJ	areas/NNS	of/IN	concern/NN	by/IN	either/CC	the/DT	government/NN	or/CC	Investment/NNP	Canada/NNP	,/,	but/CC	added/VBN	0/-NONE-	they/PRP	hope/VBP	*-2/-NONE-	to/TO	have/VB	more/JJR	information/NN	early/RB	this/DT	week/NN	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+As/IN	usual/JJ	,/,	few/JJ	favorable/JJ	reviews/NNS	*ICH*-3/-NONE-	were/VBD	heard/VBN	*-1/-NONE-	for/IN	that/DT	ever-present/JJ	marching/VBG	band/NN	of/IN	program/NN	traders/NNS	,/,	although/IN	most/JJS	serious/JJ	studies/NNS	suggest/VBP	0/-NONE-	they/PRP	only/RB	play/VB	the/DT	music/NN	that/WDT	others/NNS	write/VBP	*T*-2/-NONE-	./.	
+--- Independent Inference ---
+As/IN	usual/JJ	,/,	few/JJ	favorable/JJ	reviews/NNS	*ICH*-3/-NONE-	were/VBD	heard/VBN	*-1/-NONE-	for/IN	that/IN	ever-present/JJ	marching/VBG	band/NN	of/IN	program/NN	traders/NNS	,/,	although/IN	most/RBS	serious/JJ	studies/NNS	suggest/VBP	0/-NONE-	they/PRP	only/JJ	play/NN	the/DT	music/NN	that/IN	others/NNS	write/VB	*T*-2/-NONE-	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+As/IN	usual/JJ	,/,	few/JJ	favorable/JJ	reviews/NNS	*ICH*-3/-NONE-	were/VBD	heard/VBN	*-1/-NONE-	for/IN	that/DT	ever-present/JJ	marching/VBG	band/NN	of/IN	program/NN	traders/NNS	,/,	although/IN	most/JJS	serious/JJ	studies/NNS	suggest/VBP	0/-NONE-	they/PRP	only/RB	play/VB	the/DT	music/NN	that/IN	others/NNS	write/VBP	*T*-2/-NONE-	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+The/DT	subcommittee/NN	,/,	Congress/NNP	and/CC	the/DT	American/JJ	public/NN	have/VBP	every/DT	right/NN	*/-NONE-	to/TO	draw/VB	the/DT	adverse/JJ	inference/NN	and/CC	to/TO	concur/VB	with/IN	Mr./NNP	Pierce/NNP	's/POS	own/JJ	belief/NN	that/IN	his/PRP$	testimony/NN	could/MD	help/VB	*-1/-NONE-	convict/VB	him/PRP	of/IN	a/DT	crime/NN	./.	
+--- Independent Inference ---
+The/DT	subcommittee/NN	,/,	Congress/NNP	and/CC	the/DT	American/NNP	public/JJ	have/VBP	every/DT	right/JJ	*/-NONE-	to/TO	draw/VB	the/DT	adverse/JJ	inference/JJ	and/CC	to/TO	concur/VBP	with/IN	Mr./NNP	Pierce/NNP	's/POS	own/JJ	belief/NN	that/IN	his/PRP$	testimony/NN	could/MD	help/NN	*-1/-NONE-	convict/VB	him/PRP	of/IN	a/DT	crime/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+The/DT	subcommittee/NN	,/,	Congress/NNP	and/CC	the/DT	American/JJ	public/NN	have/VBP	every/DT	right/NN	*/-NONE-	to/TO	draw/VB	the/DT	adverse/JJ	inference/NN	and/CC	to/TO	concur/VB	with/IN	Mr./NNP	Pierce/NNP	's/POS	own/JJ	belief/NN	that/IN	his/PRP$	testimony/NN	could/MD	help/VB	*-1/-NONE-	convict/VBP	him/PRP	of/IN	a/DT	crime/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Investors/NNS	who/WP	*T*-1/-NONE-	bought/VBD	stock/NN	with/IN	borrowed/JJ	money/NN	--/:	that/DT	is/VBZ	,/,	``/``	on/IN	margin/NN	''/''	--/:	may/MD	be/VB	more/RBR	worried/JJ	than/IN	most/JJS	following/VBG	Friday/NNP	's/POS	market/NN	drop/NN	./.	
+--- Independent Inference ---
+Investors/NNS	who/WP	*T*-1/-NONE-	bought/VBD	stock/NN	with/IN	borrowed/VBN	money/NN	--/:	that/IN	is/VBZ	,/,	``/``	on/IN	margin/NN	''/''	--/:	may/MD	be/VBP	more/JJR	worried/VBN	than/IN	most/RBS	following/VBG	Friday/NNP	's/VBZ	market/NN	drop/NN	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Investors/NNS	who/WP	*T*-1/-NONE-	bought/VBD	stock/NN	with/IN	borrowed/JJ	money/NN	--/:	that/DT	is/VBZ	,/,	``/``	on/IN	margin/NN	''/''	--/:	may/MD	be/VB	more/RBR	worried/JJ	than/IN	most/RBS	following/JJ	Friday/NNP	's/POS	market/NN	drop/NN	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+A/DT	careful/JJ	look/NN	reveals/VBZ	that/IN	where/WRB	deal/NN	financing/NN	has/VBZ	been/VBN	secured/VBN	*-1/-NONE-	*T*-3/-NONE-	,/,	the/DT	target/NN	's/POS	stock/NN	price/NN	was/VBD	not/RB	affected/VBN	*-2/-NONE-	on/IN	Friday/NNP	./.	
+--- Independent Inference ---
+A/NNP	careful/JJ	look/VB	reveals/VBZ	that/IN	where/WRB	deal/VB	financing/NN	has/VBZ	been/VBN	secured/JJ	*-1/-NONE-	*T*-3/-NONE-	,/,	the/DT	target/NN	's/POS	stock/NN	price/NN	was/VBD	not/RB	affected/JJ	*-2/-NONE-	on/IN	Friday/NNP	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+A/DT	careful/JJ	look/NN	reveals/VBZ	that/IN	where/WRB	deal/NN	financing/NN	has/VBZ	been/VBN	secured/VBN	*-1/-NONE-	*T*-3/-NONE-	,/,	the/DT	target/NN	's/POS	stock/NN	price/NN	was/VBD	not/RB	affected/VBN	*-2/-NONE-	on/IN	Friday/NNP	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+*/-NONE-	Witness/VB	the/DT	fact/NN	that/IN	trading/NN	in/IN	some/DT	stocks/NNS	closed/VBD	early/JJ	Friday/NNP	and/CC	opened/VBD	late/JJ	Monday/NNP	because/IN	of/IN	an/DT	excess/NN	of/IN	sell/NN	orders/NNS	./.	
+--- Independent Inference ---
+*/-NONE-	Witness/VB	the/DT	fact/NN	that/DT	trading/NN	in/IN	some/DT	stocks/NNS	closed/VBD	early/JJ	Friday/NNP	and/CC	opened/VBN	late/RB	Monday/NNP	because/RB	of/IN	an/DT	excess/JJ	of/IN	sell/VB	orders/NNS	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+*/-NONE-	Witness/IN	the/DT	fact/NN	that/IN	trading/NN	in/IN	some/DT	stocks/NNS	closed/VBD	early/JJ	Friday/NNP	and/CC	opened/VBD	late/JJ	Monday/NNP	because/IN	of/IN	an/DT	excess/NN	of/IN	sell/NN	orders/NNS	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Mr./NNP	Stanley/NNP	's/POS	arrest/NN	is/VBZ	the/DT	latest/JJS	in/IN	a/DT	series/NN	of/IN	incidents/NNS	that/WDT	*T*-1/-NONE-	threaten/VBP	*-2/-NONE-	to/TO	derail/VB	Namibia/NNP	's/POS	elections/NNS	./.	
+--- Independent Inference ---
+Mr./NNP	Stanley/NNP	's/VBZ	arrest/VB	is/VBZ	the/DT	latest/JJS	in/IN	a/DT	series/NN	of/IN	incidents/NNS	that/IN	*T*-1/-NONE-	threaten/VB	*-2/-NONE-	to/TO	derail/VB	Namibia/NNP	's/VBZ	elections/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Mr./NNP	Stanley/NNP	's/POS	arrest/NN	is/VBZ	the/DT	latest/JJS	in/IN	a/DT	series/NN	of/IN	incidents/NNS	that/WDT	*T*-1/-NONE-	threaten/VBP	*-2/-NONE-	to/TO	derail/VB	Namibia/NNP	's/POS	elections/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Robert/NNP	White/NNP	,/,	Canadian/NNP	Auto/NNP	Workers/NNP	union/NN	president/NN	,/,	used/VBD	the/DT	impending/JJ	Scarborough/NNP	shutdown/NN	*-1/-NONE-	to/TO	criticize/VB	the/DT	U.S.-Canada/NNP	free/JJ	trade/NN	agreement/NN	and/CC	its/PRP$	champion/NN	,/,	Prime/NNP	Minister/NNP	Brian/NNP	Mulroney/NNP	./.	
+--- Independent Inference ---
+Robert/NNP	White/JJ	,/,	Canadian/JJ	Auto/NN	Workers/NNPS	union/NN	president/NN	,/,	used/VBN	the/DT	impending/JJ	Scarborough/NNP	shutdown/NN	*-1/-NONE-	to/TO	criticize/VBP	the/DT	U.S.-Canada/NNP	free/JJ	trade/NN	agreement/NN	and/NN	its/PRP$	champion/NN	,/,	Prime/NNP	Minister/NNP	Brian/NNP	Mulroney/NNP	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Robert/NNP	White/NNP	,/,	Canadian/NNP	Auto/NNP	Workers/NNP	union/NN	president/NN	,/,	used/VBD	the/DT	impending/VBG	Scarborough/NNP	shutdown/NN	*-1/-NONE-	to/TO	criticize/VB	the/DT	U.S.-Canada/JJ	free/JJ	trade/NN	agreement/NN	and/CC	its/PRP$	champion/NN	,/,	Prime/NNP	Minister/NNP	Brian/NNP	Mulroney/NNP	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+A/DT	key/NN	is/VBZ	whether/IN	House/NNP	Republicans/NNPS	are/VBP	willing/JJ	*-1/-NONE-	to/TO	acquiesce/VB	to/TO	their/PRP$	Senate/NNP	colleagues/NNS	'/POS	decision/NN	*/-NONE-	to/TO	drop/VB	many/JJ	pet/JJ	provisions/NNS	./.	
+--- Independent Inference ---
+A/DT	key/JJ	is/VBZ	whether/CC	House/NNP	Republicans/NNPS	are/VBP	willing/JJ	*-1/-NONE-	to/TO	acquiesce/NN	to/TO	their/PRP$	Senate/NNP	colleagues/NNS	'/POS	decision/NN	*/-NONE-	to/TO	drop/NN	many/JJ	pet/NN	provisions/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+A/DT	key/NN	is/VBZ	whether/IN	House/NNP	Republicans/NNPS	are/VBP	willing/JJ	*-1/-NONE-	to/TO	acquiesce/VB	to/TO	their/PRP$	Senate/NNP	colleagues/NNS	'/POS	decision/NN	*/-NONE-	to/TO	drop/VB	many/JJ	pet/JJ	provisions/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Such/JJ	*ICH*-2/-NONE-	is/VBZ	*T*-5/-NONE-	his/PRP$	reputation/NN	among/IN	the/DT	East/NNP	Bay/NNP	Bashers/NNP	that/IN	when/WRB	he/PRP	hit/VBD	his/PRP$	first/JJ	career/NN	home/NN	run/NN	last/JJ	season/NN	*T*-3/-NONE-	,/,	the/DT	fan/NN	who/WP	*T*-1/-NONE-	caught/VBD	it/PRP	agreed/VBD	*-4/-NONE-	to/TO	turn/VB	the/DT	ball/NN	over/RP	to/TO	him/PRP	in/IN	return/NN	for/IN	an/DT	autograph/NN	./.	
+--- Independent Inference ---
+Such/JJ	*ICH*-2/-NONE-	is/VBZ	*T*-5/-NONE-	his/PRP$	reputation/NN	among/IN	the/DT	East/JJ	Bay/NNP	Bashers/NNS	that/DT	when/WRB	he/PRP	hit/VBN	his/PRP$	first/JJ	career/NN	home/NN	run/VB	last/JJ	season/NN	*T*-3/-NONE-	,/,	the/DT	fan/NN	who/WP	*T*-1/-NONE-	caught/VBN	it/PRP	agreed/VBD	*-4/-NONE-	to/TO	turn/VB	the/DT	ball/NN	over/IN	to/TO	him/PRP	in/IN	return/NN	for/IN	an/DT	autograph/VB	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+Such/JJ	*ICH*-2/-NONE-	is/VBZ	*T*-5/-NONE-	his/PRP$	reputation/NN	among/IN	the/DT	East/NNP	Bay/NNP	Bashers/NNP	that/IN	when/WRB	he/PRP	hit/VB	his/PRP$	first/JJ	career/NN	home/NN	run/VBP	last/JJ	season/NN	*T*-3/-NONE-	,/,	the/DT	fan/NN	who/WP	*T*-1/-NONE-	caught/VBD	it/PRP	agreed/VBD	*-4/-NONE-	to/TO	turn/VB	the/DT	ball/NN	over/IN	to/TO	him/PRP	in/IN	return/NN	for/IN	an/DT	autograph/NN	./.	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+``/``	Those/DT	shares/NNS	which/WDT	*T*-3/-NONE-	had/VBD	posted/VBN	gains/NNS	on/IN	M&#x026;A/NNP	speculation/NN	were/VBD	dashed/VBN	*-1/-NONE-	with/IN	cold/JJ	water/NN	,/,	but/CC	as/RB	far/RB	as/IN	major/JJ	stocks/NNS	are/VBP	concerned/VBN	*-2/-NONE-	,/,	there/EX	is/VBZ	n't/RB	much/JJ	impact/NN	./.	''/''	
+--- Independent Inference ---
+``/``	Those/DT	shares/NNS	which/WDT	*T*-3/-NONE-	had/VBD	posted/VBD	gains/NNS	on/IN	M&#x026;A/NNP	speculation/NN	were/VBD	dashed/VBN	*-1/-NONE-	with/IN	cold/JJ	water/NN	,/,	but/CC	as/IN	far/RB	as/RB	major/JJ	stocks/NNS	are/VBP	concerned/JJ	*-2/-NONE-	,/,	there/EX	is/VBZ	n't/RB	much/RB	impact/NN	./.	''/''	
+[errors =  5.0 ]
+--- Full Inference ---
+``/``	Those/DT	shares/NNS	which/WDT	*T*-3/-NONE-	had/VBD	posted/VBN	gains/NNS	on/IN	M&#x026;A/NNP	speculation/NN	were/VBD	dashed/VBN	*-1/-NONE-	with/IN	cold/JJ	water/NN	,/,	but/CC	as/RB	far/RB	as/IN	major/JJ	stocks/NNS	are/VBP	concerned/VBN	*-2/-NONE-	,/,	there/EX	is/VBZ	n't/RB	much/JJ	impact/NN	./.	''/''	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Blue/NNP	Arrow/NNP	was/VBD	able/JJ	*-1/-NONE-	to/TO	pull/VB	off/RP	the/DT	$/$	1.34/CD	billion/CD	*U*/-NONE-	takeover/NN	of/IN	Manpower/NNP	in/IN	1987/CD	largely/RB	because/IN	different/JJ	British/JJ	American/JJ	accounting/NN	standards/NNS	produce/VBP	higher/JJR	reported/VBN	earnings/NNS	for/IN	British/JJ	companies/NNS	./.	
+--- Independent Inference ---
+Blue/NNP	Arrow/NNP	was/VBD	able/JJ	*-1/-NONE-	to/TO	pull/VB	off/RB	the/DT	$/$	1.34/CD	billion/CD	*U*/-NONE-	takeover/NN	of/IN	Manpower/NNP	in/IN	1987/CD	largely/RB	because/IN	different/JJ	British/NNP	American/NNP	accounting/NN	standards/NNS	produce/VB	higher/JJR	reported/VBD	earnings/NNS	for/IN	British/JJ	companies/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Blue/NNP	Arrow/NNP	was/VBD	able/JJ	*-1/-NONE-	to/TO	pull/VB	off/RP	the/DT	$/$	1.34/CD	billion/CD	*U*/-NONE-	takeover/NN	of/IN	Manpower/NNP	in/IN	1987/CD	largely/RB	because/IN	different/JJ	British/JJ	American/JJ	accounting/NN	standards/NNS	produce/VBP	higher/JJR	reported/VBN	earnings/NNS	for/IN	British/JJ	companies/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Avner/NNP	Arbel/NNP	,/,	a/DT	Cornell/NNP	University/NNP	finance/NN	professor/NN	,/,	says/VBZ	0/-NONE-	government/NN	regulators/NNS	will/MD	have/VB	*-1/-NONE-	to/TO	more/RBR	closely/RB	control/VB	program/NN	trading/NN	*-1/-NONE-	to/TO	``/``	win/VB	back/RP	the/DT	confidence/NN	of/IN	the/DT	small/JJ	investor/NN	./.	''/''	
+--- Independent Inference ---
+Avner/NNP	Arbel/NNP	,/,	a/DT	Cornell/NNP	University/NNP	finance/VB	professor/NN	,/,	says/VBZ	0/-NONE-	government/NN	regulators/NNS	will/MD	have/VBP	*-1/-NONE-	to/TO	more/JJR	closely/RB	control/NN	program/NN	trading/NN	*-1/-NONE-	to/TO	``/``	win/VBP	back/VB	the/DT	confidence/NN	of/IN	the/DT	small/JJ	investor/NN	./.	''/''	
+[errors =  6.0 ]
+--- Full Inference ---
+Avner/NNP	Arbel/NNP	,/,	a/DT	Cornell/NNP	University/NNP	finance/NN	professor/NN	,/,	says/VBZ	0/-NONE-	government/NN	regulators/NNS	will/MD	have/VB	*-1/-NONE-	to/TO	more/RBR	closely/RB	control/JJ	program/NN	trading/NN	*-1/-NONE-	to/TO	``/``	win/VB	back/RP	the/DT	confidence/NN	of/IN	the/DT	small/JJ	investor/NN	./.	''/''	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Rosie/NN	died/VBD	*-2/-NONE-	young/JJ	and/CC	Lily/NNP	has/VBZ	remembered/VBN	her/PRP	as/IN	a/DT	romantic/JJ	figure/NN	,/,	who/WP	*T*-1/-NONE-	did/VBD	n't/RB	interfere/VB	much/RB	with/IN	her/PRP$	child/NN	's/POS	education/NN	on/IN	the/DT	streets/NNS	./.	
+--- Independent Inference ---
+Rosie/NNP	died/VBN	*-2/-NONE-	young/JJ	and/CC	Lily/NNP	has/VBZ	remembered/VBD	her/PRP$	as/IN	a/DT	romantic/JJ	figure/NN	,/,	who/WP	*T*-1/-NONE-	did/VBD	n't/RB	interfere/VBP	much/RB	with/IN	her/PRP$	child/NN	's/VBZ	education/NN	on/IN	the/DT	streets/NNS	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Rosie/NNP	died/VBD	*-2/-NONE-	young/JJ	and/CC	Lily/NNP	has/VBZ	remembered/VBN	her/PRP	as/IN	a/DT	romantic/JJ	figure/NN	,/,	who/WP	*T*-1/-NONE-	did/VBD	n't/RB	interfere/VB	much/RB	with/IN	her/PRP$	child/NN	's/POS	education/NN	on/IN	the/DT	streets/NNS	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Elcotel/NNP	has/VBZ	also/RB	developed/VBN	an/DT	automatic/JJ	call/NN	processor/NN	that/WDT	*T*-1/-NONE-	will/MD	make/VB	further/JJ	use/NN	of/IN	the/DT	company/NN	's/POS	system/NN	for/IN	*/-NONE-	automating/VBG	handling/VBG	credit-card/NN	calls/NNS	and/CC	collect/JJ	calls/NNS	./.	
+--- Independent Inference ---
+Elcotel/NNP	has/VBZ	also/RB	developed/JJ	an/DT	automatic/JJ	call/VB	processor/NN	that/IN	*T*-1/-NONE-	will/MD	make/VB	further/RB	use/VB	of/IN	the/DT	company/NN	's/POS	system/NN	for/IN	*/-NONE-	automating/VBG	handling/VBG	credit-card/JJ	calls/VBZ	and/CC	collect/VB	calls/NNS	./.	
+[errors =  8.0 ]
+--- Full Inference ---
+Elcotel/NNP	has/VBZ	also/RB	developed/VBD	an/DT	automatic/JJ	call/NN	processor/NN	that/WDT	*T*-1/-NONE-	will/MD	make/VB	further/JJ	use/NN	of/IN	the/DT	company/NN	's/POS	system/NN	for/IN	*/-NONE-	automating/VBG	handling/NN	credit-card/NN	calls/NNS	and/CC	collect/VB	calls/NNS	./.	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+The/DT	show/NN	,/,	despite/IN	a/DT	promising/JJ	start/NN	,/,	has/VBZ	slipped/VBN	badly/RB	in/IN	the/DT	weekly/JJ	ratings/NNS	as/IN	*/-NONE-	compiled/VBN	*-1/-NONE-	by/IN	A.C./NNP	Nielsen/NNP	Co./NNP	,/,	*-2/-NONE-	finishing/VBG	far/RB	below/IN	``/``	Tonight/NNP	''/''	on/IN	NBC/NNP	,/,	a/DT	unit/NN	of/IN	General/NNP	Electric/NNP	Co./NNP	,/,	``/``	Nightline/NNP	''/''	on/IN	ABC-TV/NNP	,/,	a/DT	unit/NN	of/IN	Capital/NNP	Cities\/ABC/NNP	Inc/NNP	./.	
+--- Independent Inference ---
+The/DT	show/VBP	,/,	despite/IN	a/DT	promising/JJ	start/VB	,/,	has/VBZ	slipped/VBD	badly/RB	in/IN	the/DT	weekly/RB	ratings/NNS	as/IN	*/-NONE-	compiled/VBN	*-1/-NONE-	by/IN	A.C./NNP	Nielsen/NNP	Co./NNP	,/,	*-2/-NONE-	finishing/VBG	far/RB	below/RB	``/``	Tonight/NNP	''/''	on/IN	NBC/NNP	,/,	a/DT	unit/NN	of/IN	General/NNP	Electric/NNP	Co./NNP	,/,	``/``	Nightline/NNP	''/''	on/IN	ABC-TV/NNP	,/,	a/DT	unit/NN	of/IN	Capital/NNP	Cities\/ABC/NNP	Inc/NNP	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+The/DT	show/NN	,/,	despite/IN	a/DT	promising/JJ	start/NN	,/,	has/VBZ	slipped/VBN	badly/RB	in/IN	the/DT	weekly/JJ	ratings/NNS	as/IN	*/-NONE-	compiled/VBN	*-1/-NONE-	by/IN	A.C./NNP	Nielsen/NNP	Co./NNP	,/,	*-2/-NONE-	finishing/VBG	far/RB	below/IN	``/``	Tonight/NNP	''/''	on/IN	NBC/NNP	,/,	a/DT	unit/NN	of/IN	General/NNP	Electric/NNP	Co./NNP	,/,	``/``	Nightline/NNP	''/''	on/IN	ABC-TV/NNP	,/,	a/DT	unit/NN	of/IN	Capital/NNP	Cities\/ABC/NNP	Inc/NNP	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Atco/NNP	Ltd./NNP	said/VBD	0/-NONE-	its/PRP$	utilities/NNS	arm/NN	is/VBZ	considering/VBG	*-1/-NONE-	building/VBG	new/JJ	electric/JJ	power/NN	plants/NNS	,/,	some/DT	valued/VBN	*/-NONE-	at/IN	more/JJR	than/IN	one/CD	billion/CD	Canadian/JJ	dollars/NNS	US$/$	851/CD	million/CD	*U*/-NONE-	-RRB-/-RRB-	,/,	in/IN	Great/NNP	Britain/NNP	and/CC	elsewhere/RB	./.	
+--- Independent Inference ---
+Atco/IN	Ltd./NNP	said/VBD	0/-NONE-	its/PRP$	utilities/NNS	arm/NN	is/VBZ	considering/VBG	*-1/-NONE-	building/NN	new/JJ	electric/JJ	power/NN	plants/NNS	,/,	some/DT	valued/VBN	*/-NONE-	at/IN	more/RBR	than/IN	one/NN	billion/CD	Canadian/NNP	dollars/NNS	US$/$	851/CD	million/CD	*U*/-NONE-	-RRB-/-RRB-	,/,	in/IN	Great/JJ	Britain/NNP	and/CC	elsewhere/RB	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Atco/NNP	Ltd./NNP	said/VBD	0/-NONE-	its/PRP$	utilities/NNS	arm/NN	is/VBZ	considering/VBG	*-1/-NONE-	building/VBG	new/JJ	electric/NN	power/NN	plants/NNS	,/,	some/DT	valued/VBN	*/-NONE-	at/IN	more/JJR	than/IN	one/CD	billion/CD	Canadian/JJ	dollars/NNS	US$/$	851/CD	million/CD	*U*/-NONE-	-RRB-/-RRB-	,/,	in/IN	Great/NNP	Britain/NNP	and/CC	elsewhere/RB	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+The/DT	firm/NN	's/POS	drop/NN	in/IN	net/JJ	reflected/VBD	weaker/JJR	revenue/NN	in/IN	transactions/NNS	for/IN	its/PRP$	own/JJ	account/NN	--/:	a/DT	decline/NN	of/IN	19/CD	%/NN	to/TO	$/$	314.6/CD	million/CD	*U*/-NONE-	on/IN	reduced/VBN	revenue/NN	from/IN	*/-NONE-	trading/VBG	fixed-income/JJ	securities/NNS	./.	
+--- Independent Inference ---
+The/DT	firm/NN	's/POS	drop/NN	in/RP	net/JJ	reflected/VBN	weaker/JJR	revenue/NN	in/IN	transactions/NNS	for/IN	its/PRP$	own/JJ	account/NN	--/:	a/DT	decline/NN	of/IN	19/CD	%/NN	to/TO	$/$	314.6/CD	million/CD	*U*/-NONE-	on/IN	reduced/VBD	revenue/NN	from/IN	*/-NONE-	trading/NN	fixed-income/NN	securities/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+The/DT	firm/NN	's/POS	drop/NN	in/IN	net/JJ	reflected/VBD	weaker/JJR	revenue/NN	in/IN	transactions/NNS	for/IN	its/PRP$	own/JJ	account/NN	--/:	a/DT	decline/NN	of/IN	19/CD	%/NN	to/TO	$/$	314.6/CD	million/CD	*U*/-NONE-	on/IN	reduced/VBN	revenue/NN	from/IN	*/-NONE-	trading/VBG	fixed-income/JJ	securities/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Instead/RB	of/IN	*/-NONE-	closing/VBG	ranks/NNS	*/-NONE-	to/TO	protect/VB	the/DT	firm/NN	's/POS	reputation/NN	,/,	the/DT	executive/NN	's/POS	internal/JJ	rivals/NNS	,/,	led/VBN	*/-NONE-	by/IN	a/DT	loutish/JJ	American/NNP	,/,	demand/VBP	his/PRP$	resignation/NN	./.	
+--- Independent Inference ---
+Instead/RB	of/IN	*/-NONE-	closing/NN	ranks/VBZ	*/-NONE-	to/TO	protect/VB	the/DT	firm/NN	's/POS	reputation/NN	,/,	the/DT	executive/JJ	's/POS	internal/JJ	rivals/NNS	,/,	led/VBN	*/-NONE-	by/IN	a/DT	loutish/NN	American/JJ	,/,	demand/NN	his/PRP$	resignation/NN	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Instead/RB	of/IN	*/-NONE-	closing/VBG	ranks/NNS	*/-NONE-	to/TO	protect/VB	the/DT	firm/NN	's/POS	reputation/NN	,/,	the/DT	executive/NN	's/POS	internal/JJ	rivals/NNS	,/,	led/VBD	*/-NONE-	by/IN	a/DT	loutish/JJ	American/NNP	,/,	demand/VBP	his/PRP$	resignation/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+But/CC	Sen./NNP	McCain/NNP	says/VBZ	0/-NONE-	Mr./NNP	Keating/NNP	broke/VBD	off/RP	their/PRP$	friendship/NN	abruptly/RB	in/IN	1987/CD	,/,	because/IN	the/DT	senator/NN	refused/VBD	*-1/-NONE-	to/TO	press/VB	the/DT	thrift/NN	executive/NN	's/POS	case/NN	as/RB	vigorously/RB	as/IN	Mr./NNP	Keating/NNP	wanted/VBD	*&#x03F;*/-NONE-	./.	
+--- Independent Inference ---
+But/CC	Sen./NNP	McCain/NNP	says/VBZ	0/-NONE-	Mr./NNP	Keating/NNP	broke/VBD	off/RB	their/PRP$	friendship/NN	abruptly/RB	in/IN	1987/CD	,/,	because/IN	the/DT	senator/NN	refused/VBD	*-1/-NONE-	to/TO	press/NN	the/DT	thrift/NN	executive/NN	's/VBZ	case/NN	as/IN	vigorously/RB	as/RB	Mr./NNP	Keating/NNP	wanted/VBD	*&#x03F;*/-NONE-	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+But/CC	Sen./NNP	McCain/NNP	says/VBZ	0/-NONE-	Mr./NNP	Keating/NNP	broke/VBD	off/RP	their/PRP$	friendship/NN	abruptly/RB	in/IN	1987/CD	,/,	because/IN	the/DT	senator/NN	refused/VBD	*-1/-NONE-	to/TO	press/VB	the/DT	thrift/NN	executive/NN	's/POS	case/NN	as/RB	vigorously/RB	as/IN	Mr./NNP	Keating/NNP	wanted/VBD	*&#x03F;*/-NONE-	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Although/IN	the/DT	report/NN	,/,	which/WDT	*T*-2/-NONE-	was/VBD	released/VBN	*-1/-NONE-	before/IN	the/DT	stock/NN	market/NN	opened/VBD	,/,	did/VBD	n't/RB	trigger/VB	the/DT	190.58-point/JJ	drop/NN	in/IN	the/DT	Dow/NNP	Jones/NNP	Industrial/NNP	Average/NNP	,/,	analysts/NNS	said/VBD	0/-NONE-	it/PRP	did/VBD	play/VB	a/DT	role/NN	in/IN	the/DT	market/NN	's/POS	decline/NN	./.	
+--- Independent Inference ---
+Although/IN	the/DT	report/VB	,/,	which/WDT	*T*-2/-NONE-	was/VBD	released/VBN	*-1/-NONE-	before/RB	the/DT	stock/NN	market/NN	opened/VBD	,/,	did/VBD	n't/RB	trigger/NN	the/DT	190.58-point/JJ	drop/NN	in/IN	the/DT	Dow/NNP	Jones/NNP	Industrial/NNP	Average/NNP	,/,	analysts/NNS	said/VBD	0/-NONE-	it/PRP	did/VBD	play/NN	a/DT	role/NN	in/IN	the/DT	market/NN	's/POS	decline/VB	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Although/IN	the/DT	report/NN	,/,	which/WDT	*T*-2/-NONE-	was/VBD	released/VBN	*-1/-NONE-	before/IN	the/DT	stock/NN	market/NN	opened/VBD	,/,	did/VBD	n't/RB	trigger/VB	the/DT	190.58-point/JJ	drop/NN	in/IN	the/DT	Dow/NNP	Jones/NNP	Industrial/NNP	Average/NNP	,/,	analysts/NNS	said/VBD	0/-NONE-	it/PRP	did/VBD	play/VB	a/DT	role/NN	in/IN	the/DT	market/NN	's/POS	decline/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+In/IN	recent/JJ	months/NNS	,/,	Compaq/NNP	's/POS	competition/NN	,/,	including/VBG	Zenith/NNP	,/,	Toshiba/NNP	Corp./NNP	,/,	Tandy/NNP	Corp./NNP	and/CC	NEC/NNP	Corp./NNP	all/DT	have/VBP	introduced/VBN	portables/NNS	that/WDT	*T*-3/-NONE-	weigh/VBP	approximately/RB	the/DT	same/JJ	and/CC	that/WDT	*T*-4/-NONE-	are/VBP	called/VBN	*-2/-NONE-	notebooks/NNS	--/:	perhaps/RB	misleadingly/RB	./.	
+--- Independent Inference ---
+In/IN	recent/JJ	months/NNS	,/,	Compaq/NNP	's/POS	competition/NN	,/,	including/VBG	Zenith/NNP	,/,	Toshiba/NNP	Corp./NNP	,/,	Tandy/NNP	Corp./NNP	and/CC	NEC/NNP	Corp./NNP	all/PDT	have/VBP	introduced/VBD	portables/NNS	that/IN	*T*-3/-NONE-	weigh/VB	approximately/RB	the/DT	same/JJ	and/CC	that/IN	*T*-4/-NONE-	are/VBP	called/VBD	*-2/-NONE-	notebooks/NNS	--/:	perhaps/RB	misleadingly/RB	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+In/IN	recent/JJ	months/NNS	,/,	Compaq/NNP	's/POS	competition/NN	,/,	including/VBG	Zenith/NNP	,/,	Toshiba/NNP	Corp./NNP	,/,	Tandy/NNP	Corp./NNP	and/CC	NEC/NNP	Corp./NNP	all/DT	have/VBP	introduced/VBN	portables/NNS	that/WDT	*T*-3/-NONE-	weigh/VBP	approximately/RB	the/DT	same/JJ	and/CC	that/WDT	*T*-4/-NONE-	are/VBP	called/VBN	*-2/-NONE-	notebooks/RB	--/:	perhaps/RB	misleadingly/RB	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+The/DT	executive/NN	close/RB	to/TO	Saatchi/NNP	&#x026;/CC	Saatchi/NNP	said/VBD	that/IN	``/``	if/IN	a/DT	bidder/NN	came/VBD	up/RP	with/IN	a/DT	ludicrously/RB	high/JJ	offer/NN	,/,	a/DT	crazy/JJ	offer/NN	which/WDT	Saatchi/NNP	knew/VBD	0/-NONE-	it/PRP	could/MD	n't/RB	beat/VB	*T*-1/-NONE-	,/,	it/PRP	would/MD	have/VB	no/DT	choice/NN	but/CC	*/-NONE-	to/TO	recommend/VB	it/PRP	to/TO	shareholders/NNS	./.	
+--- Independent Inference ---
+The/DT	executive/NN	close/NN	to/TO	Saatchi/NNP	&#x026;/CC	Saatchi/NNP	said/VBD	that/DT	``/``	if/IN	a/DT	bidder/NN	came/VBD	up/RB	with/IN	a/DT	ludicrously/RB	high/JJ	offer/NN	,/,	a/DT	crazy/JJ	offer/VB	which/WDT	Saatchi/NNP	knew/VBD	0/-NONE-	it/PRP	could/MD	n't/RB	beat/VBD	*T*-1/-NONE-	,/,	it/PRP	would/MD	have/VBP	no/DT	choice/NN	but/CC	*/-NONE-	to/TO	recommend/VBP	it/PRP	to/TO	shareholders/NNS	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+The/DT	executive/JJ	close/NN	to/TO	Saatchi/NNP	&#x026;/CC	Saatchi/NNP	said/VBD	that/IN	``/``	if/IN	a/DT	bidder/NN	came/VBD	up/RP	with/IN	a/DT	ludicrously/RB	high/JJ	offer/NN	,/,	a/DT	crazy/JJ	offer/NN	which/WDT	Saatchi/NNP	knew/VBD	0/-NONE-	it/PRP	could/MD	n't/RB	beat/VB	*T*-1/-NONE-	,/,	it/PRP	would/MD	have/VB	no/DT	choice/NN	but/CC	*/-NONE-	to/TO	recommend/VB	it/PRP	to/TO	shareholders/NNS	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+Rightly/RB	or/CC	wrongly/RB	,/,	many/JJ	giant/JJ	institutional/JJ	investors/NNS	appear/VBP	*-2/-NONE-	to/TO	be/VB	fighting/VBG	the/DT	latest/JJS	war/NN	by/IN	*-3/-NONE-	applying/VBG	the/DT	lesson/NN	0/-NONE-	they/PRP	learned/VBD	*T*-1/-NONE-	in/IN	the/DT	October/NNP	1987/CD	crash/NN	:/:	*/-NONE-	Buying/VBG	at/IN	the/DT	bottom/NN	pays/VBZ	off/RP	./.	
+--- Independent Inference ---
+Rightly/RB	or/CC	wrongly/RB	,/,	many/JJ	giant/NN	institutional/JJ	investors/NNS	appear/VB	*-2/-NONE-	to/TO	be/VB	fighting/VBG	the/DT	latest/JJS	war/NN	by/IN	*-3/-NONE-	applying/VBG	the/DT	lesson/NN	0/-NONE-	they/PRP	learned/VBN	*T*-1/-NONE-	in/IN	the/DT	October/NNP	1987/CD	crash/NN	:/:	*/-NONE-	Buying/NN	at/IN	the/DT	bottom/JJ	pays/VBZ	off/RB	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Rightly/RB	or/CC	wrongly/RB	,/,	many/JJ	giant/JJ	institutional/JJ	investors/NNS	appear/VBP	*-2/-NONE-	to/TO	be/VB	fighting/VBG	the/DT	latest/JJS	war/NN	by/IN	*-3/-NONE-	applying/VBG	the/DT	lesson/NN	0/-NONE-	they/PRP	learned/VBD	*T*-1/-NONE-	in/IN	the/DT	October/NNP	1987/CD	crash/NN	:/:	*/-NONE-	Buying/NN	at/IN	the/DT	bottom/NN	pays/VBZ	off/RP	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+``/``	We/PRP	got/VBD	calls/NNS	from/IN	big/JJ	block/NN	houses/NNS	asking/VBG	us/PRP	if/IN	we/PRP	want/VBP	*-2/-NONE-	to/TO	make/VB	bids/NNS	on/IN	anything/NN	,/,	''/''	said/VBD	*T*-1/-NONE-	Mr./NNP	Weisman/NNP	,/,	who/WP	,/,	*-4/-NONE-	happy/JJ	with/IN	his/PRP$	returns/NNS	on/IN	investments/NNS	chalked/VBN	*/-NONE-	up/RP	earlier/RBR	,/,	*T*-3/-NONE-	declined/VBD	the/DT	offers/NNS	./.	
+--- Independent Inference ---
+``/``	We/PRP	got/VBD	calls/NNS	from/IN	big/JJ	block/VB	houses/NNS	asking/VBG	us/PRP	if/IN	we/PRP	want/VB	*-2/-NONE-	to/TO	make/VB	bids/NNS	on/IN	anything/NN	,/,	''/''	said/VBD	*T*-1/-NONE-	Mr./NNP	Weisman/NNP	,/,	who/WP	,/,	*-4/-NONE-	happy/JJ	with/IN	his/PRP$	returns/NNS	on/IN	investments/NNS	chalked/JJ	*/-NONE-	up/RB	earlier/RBR	,/,	*T*-3/-NONE-	declined/VBD	the/DT	offers/VBZ	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+``/``	We/PRP	got/VBD	calls/NNS	from/IN	big/JJ	block/NN	houses/NNS	asking/VBG	us/PRP	if/IN	we/PRP	want/VBP	*-2/-NONE-	to/TO	make/VB	bids/NNS	on/IN	anything/NN	,/,	''/''	said/VBD	*T*-1/-NONE-	Mr./NNP	Weisman/NNP	,/,	who/WP	,/,	*-4/-NONE-	happy/JJ	with/IN	his/PRP$	returns/NNS	on/IN	investments/NNS	chalked/VBN	*/-NONE-	up/RP	earlier/RBR	,/,	*T*-3/-NONE-	declined/VBD	the/DT	offers/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Even/RB	as/IN	trading/NN	in/IN	high-yield/JJ	issues/NNS	dried/VBN	up/RP	over/IN	the/DT	past/JJ	month/NN	,/,	corporations/NNS	sold/VBD	more/JJR	than/IN	$/$	2/CD	billion/CD	*U*/-NONE-	of/IN	new/JJ	junk/NN	bonds/NNS	./.	
+--- Independent Inference ---
+Even/RB	as/RB	trading/NN	in/IN	high-yield/JJ	issues/NNS	dried/VBD	up/RB	over/RB	the/DT	past/JJ	month/NN	,/,	corporations/NNS	sold/VBN	more/JJR	than/IN	$/$	2/CD	billion/CD	*U*/-NONE-	of/IN	new/JJ	junk/NN	bonds/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Even/RB	as/IN	trading/NN	in/IN	high-yield/JJ	issues/NNS	dried/VBN	up/RP	over/IN	the/DT	past/JJ	month/NN	,/,	corporations/NNS	sold/VBD	more/JJR	than/IN	$/$	2/CD	billion/CD	*U*/-NONE-	of/IN	new/JJ	junk/NN	bonds/NNS	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+Treasury/NNP	officials/NNS	have/VBP	been/VBN	arguing/VBG	for/IN	months/NNS	that/IN	the/DT	dollar/NN	's/POS	strength/NN	was/VBD	out/IN	of/IN	whack/NN	with/IN	economic/JJ	fundamentals/NNS	,/,	*-2/-NONE-	threatening/VBG	*-3/-NONE-	to/TO	extinguish/VB	the/DT	export/NN	boom/NN	that/WDT	*T*-1/-NONE-	has/VBZ	sustained/VBN	manufacturers/NNS	for/IN	several/JJ	years/NNS	./.	
+--- Independent Inference ---
+Treasury/NNP	officials/NNS	have/VB	been/VBN	arguing/VBG	for/IN	months/NNS	that/IN	the/DT	dollar/NN	's/POS	strength/NN	was/VBD	out/RP	of/IN	whack/VB	with/IN	economic/JJ	fundamentals/NNS	,/,	*-2/-NONE-	threatening/VBG	*-3/-NONE-	to/TO	extinguish/VB	the/DT	export/NN	boom/VB	that/IN	*T*-1/-NONE-	has/VBZ	sustained/VBD	manufacturers/NNS	for/IN	several/JJ	years/NNS	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Treasury/NNP	officials/NNS	have/VBP	been/VBN	arguing/VBG	for/IN	months/NNS	that/IN	the/DT	dollar/NN	's/POS	strength/NN	was/VBD	out/RP	of/IN	whack/NN	with/IN	economic/JJ	fundamentals/NNS	,/,	*-2/-NONE-	threatening/VBG	*-3/-NONE-	to/TO	extinguish/VB	the/DT	export/NN	boom/NN	that/WDT	*T*-1/-NONE-	has/VBZ	sustained/VBN	manufacturers/NNS	for/IN	several/JJ	years/NNS	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Deafening/VBG	chants/NNS	of/IN	``/``	ANC/NNP	''/''	``/``	Umkhonto/NNP	we/PRP	Sizwe/NNP	''/''	shook/VBD	the/DT	church/NN	as/IN	the/DT	seven/CD	aging/VBG	men/NNS	vowed/VBD	that/IN	the/DT	ANC/NNP	would/MD	continue/VB	its/PRP$	fight/NN	against/IN	the/DT	government/NN	and/CC	the/DT	policies/NNS	of/IN	racial/JJ	segregation/NN	on/IN	all/DT	fronts/NNS	,/,	including/VBG	the/DT	armed/VBN	struggle/NN	./.	
+--- Independent Inference ---
+Deafening/VBG	chants/NNS	of/IN	``/``	ANC/NNP	''/''	``/``	Umkhonto/NNP	we/PRP	Sizwe/NN	''/''	shook/VBD	the/DT	church/NN	as/RB	the/DT	seven/CD	aging/VBG	men/NNS	vowed/VBN	that/IN	the/DT	ANC/NNP	would/MD	continue/VBP	its/PRP$	fight/VB	against/IN	the/DT	government/NN	and/CC	the/DT	policies/NNS	of/IN	racial/JJ	segregation/NN	on/RB	all/DT	fronts/NNS	,/,	including/VBG	the/DT	armed/JJ	struggle/NN	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+Deafening/VBG	chants/NNS	of/IN	``/``	ANC/NNP	''/''	``/``	Umkhonto/TO	we/PRP	Sizwe/NNP	''/''	shook/VBD	the/DT	church/NN	as/IN	the/DT	seven/CD	aging/VBG	men/NNS	vowed/VBD	that/IN	the/DT	ANC/NNP	would/MD	continue/VB	its/PRP$	fight/NN	against/IN	the/DT	government/NN	and/CC	the/DT	policies/NNS	of/IN	racial/JJ	segregation/NN	on/IN	all/DT	fronts/NNS	,/,	including/VBG	the/DT	armed/JJ	struggle/NN	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+Some/DT	shareholders/NNS	have/VBP	held/VBN	off/RP	until/IN	today/NN	because/IN	any/DT	fund/NN	exchanges/NNS	made/VBN	*/-NONE-	after/IN	Friday/NNP	's/POS	close/NN	would/MD	take/VB	place/NN	at/IN	today/NN	's/POS	closing/NN	prices/NNS	./.	
+--- Independent Inference ---
+Some/DT	shareholders/NNS	have/VB	held/VBN	off/RB	until/IN	today/NN	because/RB	any/DT	fund/NN	exchanges/NNS	made/VBD	*/-NONE-	after/IN	Friday/NNP	's/POS	close/RB	would/MD	take/VB	place/NN	at/IN	today/NN	's/POS	closing/VBG	prices/NNS	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Some/DT	shareholders/NNS	have/VBP	held/VBN	off/RP	until/IN	today/NN	because/IN	any/DT	fund/NN	exchanges/NNS	made/VBN	*/-NONE-	after/IN	Friday/NNP	's/POS	close/NN	would/MD	take/VB	place/NN	at/IN	today/NN	's/POS	closing/VBG	prices/NNS	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+In/IN	a/DT	Madrid/NNP	hotel/NN	room/NN	recently/RB	,/,	a/DT	viewer/NN	caught/VBD	the/DT	end/NN	of/IN	a/DT	badly/RB	acted/VBN	series/NN	about/IN	a/DT	fishing/NN	boat/NN	on/IN	Australia/NNP	's/POS	Great/NNP	Barrier/NNP	Reef/NNP	,/,	*-2/-NONE-	only/RB	to/TO	be/VB	urged/VBN	*-6/-NONE-	by/IN	the/DT	British/JJ	announcer/NN	*-3/-NONE-	to/TO	``/``	stay/VB	*-4/-NONE-	tuned/VBN	*-5/-NONE-	for/IN	the/DT	further/JJ	adventures/NNS	of/IN	Skippy/NNP	the/DT	Kangaroo/NNP	./.	''/''	
+--- Independent Inference ---
+In/IN	a/DT	Madrid/NNP	hotel/NN	room/NN	recently/RB	,/,	a/DT	viewer/NN	caught/VBN	the/DT	end/NN	of/IN	a/DT	badly/RB	acted/VBD	series/NN	about/IN	a/DT	fishing/NN	boat/NN	on/IN	Australia/NNP	's/POS	Great/NNP	Barrier/NNP	Reef/NNP	,/,	*-2/-NONE-	only/RB	to/TO	be/VB	urged/VBD	*-6/-NONE-	by/IN	the/DT	British/NNP	announcer/NN	*-3/-NONE-	to/TO	``/``	stay/VB	*-4/-NONE-	tuned/VBN	*-5/-NONE-	for/IN	the/DT	further/RB	adventures/NNS	of/IN	Skippy/JJ	the/DT	Kangaroo/NNP	./.	''/''	
+[errors =  6.0 ]
+--- Full Inference ---
+In/IN	a/DT	Madrid/NNP	hotel/NN	room/NN	recently/RB	,/,	a/DT	viewer/NN	caught/VBD	the/DT	end/NN	of/IN	a/DT	badly/RB	acted/VBN	series/NN	about/IN	a/DT	fishing/NN	boat/NN	on/IN	Australia/NNP	's/POS	Great/NNP	Barrier/NNP	Reef/NNP	,/,	*-2/-NONE-	only/RB	to/TO	be/VB	urged/VBN	*-6/-NONE-	by/IN	the/DT	British/NNP	announcer/NN	*-3/-NONE-	to/TO	``/``	stay/VB	*-4/-NONE-	tuned/VBN	*-5/-NONE-	for/IN	the/DT	further/JJ	adventures/NNS	of/IN	Skippy/NNP	the/DT	Kangaroo/NNP	./.	''/''	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+The/DT	Greeks/NNPS	seem/VBP	barely/RB	aware/JJ	of/IN	the/DT	importance/NN	of/IN	the/DT	case/NN	as/IN	a/DT	litmus/NN	test/NN	of/IN	whether/IN	Greece/NNP	will/MD	be/VB	counted/VBN	*-1/-NONE-	in/RB	or/CC	out/RB	for/IN	international/JJ	efforts/NNS	*/-NONE-	to/TO	combat/VB	terrorism/NN	./.	
+--- Independent Inference ---
+The/NNP	Greeks/NNS	seem/VB	barely/RB	aware/JJ	of/IN	the/DT	importance/NN	of/IN	the/DT	case/NN	as/RB	a/DT	litmus/NN	test/NN	of/IN	whether/IN	Greece/NNP	will/MD	be/VB	counted/VBD	*-1/-NONE-	in/IN	or/CC	out/RP	for/IN	international/JJ	efforts/NNS	*/-NONE-	to/TO	combat/VB	terrorism/NN	./.	
+[errors =  7.0 ]
+--- Full Inference ---
+The/DT	Greeks/NNS	seem/VBP	barely/RB	aware/JJ	of/IN	the/DT	importance/NN	of/IN	the/DT	case/NN	as/IN	a/DT	litmus/NN	test/NN	of/IN	whether/CC	Greece/NNP	will/MD	be/VB	counted/VBN	*-1/-NONE-	in/IN	or/CC	out/RB	for/IN	international/JJ	efforts/NNS	*/-NONE-	to/TO	combat/VB	terrorism/NN	./.	
+[errors =  3.0 ]
+
+--- Ground Truth ---
+Weatherford/NNP	International/NNP	Inc./NNP	said/VBD	0/-NONE-	it/PRP	canceled/VBD	plans/NNS	for/IN	a/DT	preferred-stock/NN	swap/NN	but/CC	may/MD	resume/VB	payment/NN	of/IN	dividends/NNS	on/IN	the/DT	stock/NN	,/,	added/VBD	that/IN	it/PRP	expects/VBZ	*-1/-NONE-	to/TO	publicly/RB	offer/VB	about/RB	10/CD	million/CD	common/JJ	shares/NNS	./.	
+--- Independent Inference ---
+Weatherford/NNP	International/NNP	Inc./NNP	said/VBD	0/-NONE-	it/PRP	canceled/JJ	plans/VBZ	for/IN	a/DT	preferred-stock/JJ	swap/VB	but/CC	may/MD	resume/VB	payment/NN	of/IN	dividends/NNS	on/IN	the/DT	stock/NN	,/,	added/VBD	that/IN	it/PRP	expects/VBZ	*-1/-NONE-	to/TO	publicly/RB	offer/NN	about/IN	10/CD	million/CD	common/JJ	shares/NNS	./.	
+[errors =  6.0 ]
+--- Full Inference ---
+Weatherford/NNP	International/NNP	Inc./NNP	said/VBD	0/-NONE-	it/PRP	canceled/VBD	plans/NNS	for/IN	a/DT	preferred-stock/JJ	swap/NN	but/CC	may/MD	resume/VB	payment/NN	of/IN	dividends/NNS	on/IN	the/DT	stock/NN	,/,	added/VBD	that/IN	it/PRP	expects/VBZ	*-1/-NONE-	to/TO	publicly/RB	offer/VB	about/IN	10/CD	million/CD	common/JJ	shares/NNS	./.	
+[errors =  2.0 ]
+
+--- Ground Truth ---
+Waterford/NNP	Wedgwood/NNP	PLC/NNP	,/,	a/DT	financially/RB	troubled/VBN	Irish/JJ	maker/NN	of/IN	fine/JJ	crystal/NN	and/CC	Wedgwood/NNP	china/NN	,/,	reported/VBD	that/DT	its/PRP$	pretax/JJ	loss/NN	for/IN	the/DT	first/JJ	six/CD	months/NNS	widened/VBD	to/TO	10.6/CD	million/CD	Irish/JJ	punts/NNS	$/$	14.9/CD	million/CD	*U*/-NONE-	-RRB-/-RRB-	from/IN	5.8/CD	million/CD	Irish/JJ	punts/NNS	a/DT	year/NN	earlier/RBR	./.	
+--- Independent Inference ---
+Waterford/NNP	Wedgwood/NNP	PLC/NNP	,/,	a/DT	financially/RB	troubled/JJ	Irish/JJ	maker/NN	of/IN	fine/JJ	crystal/NN	and/CC	Wedgwood/NNP	china/NN	,/,	reported/VBN	that/IN	its/PRP$	pretax/JJ	loss/NN	for/IN	the/DT	first/JJ	six/CD	months/NNS	widened/VBN	to/TO	10.6/CD	million/CD	Irish/JJ	punts/NNS	$/$	14.9/CD	million/CD	*U*/-NONE-	-RRB-/-RRB-	from/IN	5.8/CD	million/CD	Irish/JJ	punts/NNS	a/DT	year/NN	earlier/RB	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+Waterford/NNP	Wedgwood/NNP	PLC/NNP	,/,	a/DT	financially/RB	troubled/VBD	Irish/JJ	maker/NN	of/IN	fine/JJ	crystal/NN	and/CC	Wedgwood/NNP	china/NN	,/,	reported/VBD	that/DT	its/PRP$	pretax/JJ	loss/NN	for/IN	the/DT	first/JJ	six/CD	months/NNS	widened/VBD	to/TO	10.6/CD	million/CD	Irish/JJ	punts/NNS	$/$	14.9/CD	million/CD	*U*/-NONE-	-RRB-/-RRB-	from/IN	5.8/CD	million/CD	Irish/JJ	punts/NNS	a/DT	year/NN	earlier/RBR	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+If/IN	she/PRP	is/VBZ	nominated/VBN	*-2/-NONE-	by/IN	President/NNP	Bush/NNP	and/CC	confirmed/VBN	*-2/-NONE-	by/IN	the/DT	Senate/NNP	,/,	Dr./NNP	Novello/NNP	would/MD	succeed/VB	C./NNP	Everett/NNP	Koop/NNP	,/,	who/WP	*T*-1/-NONE-	rattled/VBD	liberals/NNS	conservatives/NNS	alike/RB	with/IN	his/PRP$	outspoken/JJ	views/NNS	on/IN	a/DT	range/NN	of/IN	health/NN	issues/NNS	./.	
+--- Independent Inference ---
+If/IN	she/PRP	is/VBZ	nominated/VBD	*-2/-NONE-	by/IN	President/NNP	Bush/NNP	and/CC	confirmed/VBD	*-2/-NONE-	by/IN	the/DT	Senate/NNP	,/,	Dr./NNP	Novello/NNP	would/MD	succeed/VB	C./NNP	Everett/NNP	Koop/NN	,/,	who/WP	*T*-1/-NONE-	rattled/JJ	liberals/NNS	conservatives/NNS	alike/RB	with/IN	his/PRP$	outspoken/JJ	views/NNS	on/RP	a/DT	range/NN	of/IN	health/NN	issues/NNS	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+If/IN	she/PRP	is/VBZ	nominated/VBN	*-2/-NONE-	by/IN	President/NNP	Bush/NNP	and/CC	confirmed/VBN	*-2/-NONE-	by/IN	the/DT	Senate/NNP	,/,	Dr./NNP	Novello/NNP	would/MD	succeed/VB	C./NNP	Everett/NNP	Koop/NNP	,/,	who/WP	*T*-1/-NONE-	rattled/JJ	liberals/NNS	conservatives/NNS	alike/RB	with/IN	his/PRP$	outspoken/JJ	views/NNS	on/IN	a/DT	range/NN	of/IN	health/NN	issues/NNS	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+But/CC	the/DT	NAHB/NNP	was/VBD	created/VBN	*-1/-NONE-	in/IN	1943/CD	out/IN	of/IN	an/DT	organization/NN	that/WDT	*T*-2/-NONE-	made/VBD	its/PRP$	name/NN	*-3/-NONE-	fighting/VBG	a/DT	Roosevelt/NNP	administration/NN	proposal/NN	*/-NONE-	to/TO	take/VB	over/RP	all/DT	defense/NN	housing/NN	production/NN	./.	
+--- Independent Inference ---
+But/CC	the/DT	NAHB/NNP	was/VBD	created/VBN	*-1/-NONE-	in/IN	1943/CD	out/RP	of/IN	an/DT	organization/NN	that/IN	*T*-2/-NONE-	made/VBN	its/PRP$	name/VB	*-3/-NONE-	fighting/VBG	a/DT	Roosevelt/NNP	administration/NN	proposal/NN	*/-NONE-	to/TO	take/VB	over/RB	all/DT	defense/NN	housing/NN	production/NN	./.	
+[errors =  5.0 ]
+--- Full Inference ---
+But/CC	the/DT	NAHB/NNP	was/VBD	created/VBN	*-1/-NONE-	in/IN	1943/CD	out/IN	of/IN	an/DT	organization/NN	that/WDT	*T*-2/-NONE-	made/VBD	its/PRP$	name/NN	*-3/-NONE-	fighting/VBG	a/DT	Roosevelt/VBN	administration/NN	proposal/NN	*/-NONE-	to/TO	take/VB	over/RP	all/DT	defense/NN	housing/NN	production/NN	./.	
+[errors =  1.0 ]
+
+--- Ground Truth ---
+Mr./NNP	Wertheimer/NNP	based/VBD	this/DT	on/IN	a/DT	statement/NN	by/IN	Mr./NNP	Keating/NNP	that/WDT	*T*-2/-NONE-	was/VBD	quoted/VBN	*-1/-NONE-	in/IN	a/DT	Wall/NNP	Street/NNP	Journal/NNP	story/NN	in/IN	April/NNP	:/:	``/``	One/CD	question/NN	.../:	had/VBD	*-3/-NONE-	to/TO	do/VB	with/IN	whether/IN	my/PRP$	financial/JJ	support/NN	in/IN	any/DT	way/NN	influenced/VBD	several/JJ	political/JJ	figures/NNS	to/TO	take/VB	up/RP	my/PRP$	cause/NN	./.	
+--- Independent Inference ---
+Mr./NNP	Wertheimer/NNP	based/VBN	this/DT	on/IN	a/DT	statement/NN	by/IN	Mr./NNP	Keating/NNP	that/IN	*T*-2/-NONE-	was/VBD	quoted/VBN	*-1/-NONE-	in/IN	a/DT	Wall/NNP	Street/NNP	Journal/NNP	story/NN	in/IN	April/NNP	:/:	``/``	One/CD	question/NN	.../:	had/VBD	*-3/-NONE-	to/TO	do/VB	with/IN	whether/IN	my/PRP$	financial/JJ	support/NN	in/IN	any/DT	way/NN	influenced/VBN	several/JJ	political/JJ	figures/NNS	to/TO	take/VB	up/IN	my/PRP$	cause/NN	./.	
+[errors =  4.0 ]
+--- Full Inference ---
+Mr./NNP	Wertheimer/NNP	based/VBD	this/DT	on/IN	a/DT	statement/NN	by/IN	Mr./NNP	Keating/NNP	that/WDT	*T*-2/-NONE-	was/VBD	quoted/VBN	*-1/-NONE-	in/IN	a/DT	Wall/NNP	Street/NNP	Journal/NNP	story/NN	in/IN	April/NNP	:/:	``/``	One/CD	question/NN	.../:	had/VBD	*-3/-NONE-	to/TO	do/VB	with/IN	whether/IN	my/PRP$	financial/JJ	support/NN	in/IN	any/DT	way/NN	influenced/VBD	several/JJ	political/JJ	figures/NNS	to/TO	take/VB	up/RP	my/PRP$	cause/NN	./.	
+[errors =  0.0 ]
+
+--- Ground Truth ---
+One/CD	reason/NN	is/VBZ	mounting/VBG	competition/NN	from/IN	new/JJ	Japanese/JJ	car/NN	plants/NNS	in/IN	the/DT	U.S./NNP	that/WDT	*T*-1/-NONE-	are/VBP	pouring/VBG	out/RP	more/JJR	than/IN	one/CD	million/CD	vehicles/NNS	a/DT	year/NN	at/IN	costs/NNS	lower/JJR	than/IN	GM/NNP	can/MD	match/VB	*&#x03F;*/-NONE-	./.	
+--- Independent Inference ---
+One/CD	reason/NN	is/VBZ	mounting/VBG	competition/NN	from/IN	new/JJ	Japanese/JJ	car/NN	plants/NNS	in/IN	the/DT	U.S./NNP	that/IN	*T*-1/-NONE-	are/VBP	pouring/VBG	out/RB	more/JJR	than/IN	one/NN	million/CD	vehicles/NNS	a/DT	year/NN	at/IN	costs/NNS	lower/RBR	than/IN	GM/NNP	can/MD	match/VB	*&#x03F;*/-NONE-	./.	
+[errors =  4.0 ]
+--- Full Inference ---
+One/CD	reason/NN	is/VBZ	mounting/VBG	competition/NN	from/IN	new/JJ	Japanese/JJ	car/NN	plants/NNS	in/IN	the/DT	U.S./NNP	that/WDT	*T*-1/-NONE-	are/VBP	pouring/VBG	out/RP	more/JJR	than/IN	one/CD	million/CD	vehicles/NNS	a/DT	year/NN	at/IN	costs/NNS	lower/JJR	than/IN	GM/NNP	can/MD	match/VB	*&#x03F;*/-NONE-	./.	
+[errors =  0.0 ]
+

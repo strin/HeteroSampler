@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
       ("mode", po::value<string>(), "mode (POS / NER)")
       ("train", po::value<string>(), "training data")
       ("test", po::value<string>(), "test data")
+      ("testFrequency", po::value<double>(), "frequency of testing")
   ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -55,6 +56,9 @@ int main(int argc, char* argv[]) {
   double eta = 0.4;
   if(vm.count("eta"))
     eta = vm["eta"].as<double>();
+  double testFrequency = 0.3;
+  if(vm.count("testFrequency"))
+    testFrequency = vm["testFrequency"].as<double>();
 
   // run.
   Corpus::Mode mode = Corpus::MODE_POS;
@@ -72,6 +76,7 @@ int main(int argc, char* argv[]) {
     model->Q = Q;
     model->B = B;
     model->eta = eta;
+    model->testFrequency = testFrequency;
   };
   int windowL = 0;
   if(vm.count("windowL"))

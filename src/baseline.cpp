@@ -255,8 +255,8 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
 	mapUpdate(*gradient, *feat, - exp(a[i][c] + b[i][c] - Z));
 	if(i >= 1) {
 	  for(size_t s = 0; s < taglen; s++) {
-	    bifeat->clear();
 	    tag.tag[i-1] = s;
+	    bifeat->clear();
 	    this->addBigramFeatures(tag, i, bifeat);
 	    mapUpdate(*gradient, *bifeat, - exp(a[i-1][s] + phi[i][c][s] + b[i][c] - Z));
 	  }
@@ -265,12 +265,20 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
     }
     mapUpdate(*gradient, *this->extractFeatures(truth));
   }
-  // sample.
+  // sample backward (DO NOT sample from marginal!).
   double sc[taglen];
-  for(int i = 0; i < seqlen; i++) {
+  for(int i = seqlen-1; i >= 0; i--) { 
     for(size_t c = 0; c < taglen; c++) {
-      sc[c] = a[i][c] + b[i][c] - Z;
+      if(i == seqlen-1)
+	sc[c] = a[i][c];
+      else{
+	tag.tag[i] = c;
+	bifeat->clear();
+	this->addBigramFeatures(tag, i+1, bifeat);
+	sc[c] = a[i][c] + tag.score(bifeat); 
+      }
     }
+    logNormalize(sc, taglen);
     tag.tag[i] = rngs[0].sampleCategorical(sc, taglen);
   }
   if(samples) {

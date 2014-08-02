@@ -10,6 +10,7 @@
 #include <functional>
 #include <algorithm>
 #include <sstream>
+#include "log.h"
 
 inline static double logisticFunc(double z) {
   return 1./(1+exp(0-z));

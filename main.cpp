@@ -20,6 +20,7 @@ int main(int argc, char* argv[]) {
       ("T", po::value<int>(), "number of transitions")
       ("B", po::value<int>(), "number of burnin steps")
       ("Q", po::value<int>(), "number of passes")
+      ("Q0", po::value<int>(), "number of passes for smart init")
       ("K", po::value<int>(), "number of threads/particles")
       ("c", po::value<double>(), "extent of time regularization")
       ("windowL", po::value<int>(), "window size for node-wise features")
@@ -29,6 +30,7 @@ int main(int argc, char* argv[]) {
       ("train", po::value<string>(), "training data")
       ("test", po::value<string>(), "test data")
       ("testFrequency", po::value<double>(), "frequency of testing")
+      ("stopDataSize", po::value<int>(), "stopDataSize")
   ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -50,12 +52,18 @@ int main(int argc, char* argv[]) {
   int Q = 10;
   if(vm.count("Q"))
     Q = vm["Q"].as<int>();
+  int Q0 = 1;
+  if(vm.count("Q0"))
+    Q0 = vm["Q0"].as<int>();
   int K = 5;
   if(vm.count("K"))
     K = vm["K"].as<int>();
   double eta = 0.4;
   if(vm.count("eta"))
     eta = vm["eta"].as<double>();
+  double etaT = 0.4;
+  if(vm.count("etaT"))
+    etaT = vm["etaT"].as<double>();
   double testFrequency = 0.3;
   if(vm.count("testFrequency"))
     testFrequency = vm["testFrequency"].as<double>();
@@ -95,7 +103,7 @@ int main(int argc, char* argv[]) {
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "TreeUA") {
-      shared_ptr<ModelTreeUA> model = shared_ptr<ModelTreeUA>(new ModelTreeUA(corpus, windowL, K));
+      shared_ptr<ModelTreeUA> model = shared_ptr<ModelTreeUA>(new ModelTreeUA(corpus, windowL, K, T, B, Q, Q0, eta));
       if(vm.count("eps_split")) {
 	model->eps_split = vm["eps_split"].as<int>();
       }
@@ -105,7 +113,8 @@ int main(int argc, char* argv[]) {
       double m_c = 1.0;
       if(vm.count("c")) m_c = vm["c"].as<double>();
       double Tstar = T;
-      shared_ptr<ModelAdaTree> model = shared_ptr<ModelAdaTree>(new ModelAdaTree(corpus, windowL, K, m_c, Tstar));
+      shared_ptr<ModelAdaTree> model = shared_ptr<ModelAdaTree>(new ModelAdaTree(corpus, windowL,
+						  K, m_c, Tstar, T, B, Q, Q0));
       set_param(model);
       if(vm.count("eps_split")) {
 	model->eps_split = vm["eps_split"].as<int>();
@@ -113,6 +122,16 @@ int main(int argc, char* argv[]) {
       if(vm.count("etaT")) {
 	model->etaT = vm["etaT"].as<double>();
       }
+      model->run(testCorpus);
+    }else if(inference == "Prune") {
+      double m_c = 1.0;
+      if(vm.count("c")) m_c = vm["c"].as<double>();
+      int stop_data_size = 100;
+      if(vm.count("stopDataSize")) stop_data_size = vm["stopDataSize"].as<int>();
+      double Tstar = T;
+      shared_ptr<ModelPrune> model = shared_ptr<ModelPrune>(new ModelPrune(corpus, windowL, K, stop_data_size,
+						    m_c, Tstar, etaT, T, B, Q, Q0));
+      set_param(model);
       model->run(testCorpus);
     }else if(inference == "GibbsIncr") { 
       shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(corpus, windowL));

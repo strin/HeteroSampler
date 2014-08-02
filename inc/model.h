@@ -46,6 +46,7 @@ protected:
   void configStepsize(ParamPointer gradient, double new_eta);
 
   int K;          // num of particle. 
+  int num_ob;     // current number of observations.
 
   XMLlog xmllog;
   static std::unordered_map<std::string, StringVector> word_feat;
@@ -94,7 +95,8 @@ public:
 
 struct ModelTreeUA : public ModelCRFGibbs {
 public:
-  ModelTreeUA(const Corpus& corpus, int windowL = 0, int K = 5, int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
+  ModelTreeUA(const Corpus& corpus, int windowL = 0, int K = 5, 
+	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
 
   void run(const Corpus& testCorpus);
 
@@ -108,9 +110,9 @@ public:
   double eps, eps_split;
 
   /* parallel environment */
-  virtual void workerThreads(int tid, int seed, std::shared_ptr<MarkovTreeNode>, Tag tag, objcokus rng);
+  virtual void workerThreads(int tid, std::shared_ptr<MarkovTreeNode> node, Tag tag);
   std::vector<std::shared_ptr<std::thread> > th;
-  std::list<std::tuple<int, std::shared_ptr<MarkovTreeNode>, Tag, objcokus> > th_work;
+  std::list<std::tuple<std::shared_ptr<MarkovTreeNode>, Tag> > th_work;
   size_t active_work;
   std::mutex th_mutex;
   std::condition_variable th_cv, th_finished;
@@ -119,27 +121,25 @@ public:
 
 protected:
   int Q0;
-
-private:
   void initThreads(size_t numThreads);
 };
 
 
 struct ModelAdaTree : public ModelTreeUA {
 public:
-  ModelAdaTree(const Corpus& corpus, int windowL = 0, int K = 5, double c = 1, double Tstar = 10, 
-	      double etaT = 0.5, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelAdaTree(const Corpus& corpus, int windowL = 0, int K = 5, 
+	      double c = 1, double Tstar = 0, double etaT = 0.05, 
+	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
   /* implement components necessary */  
-  void workerThreads(int tid, int seed, std::shared_ptr<MarkovTreeNode> node, 
-			Tag tag, objcokus rng);
+  void workerThreads(int tid, MarkovTreeNodePtr node, Tag tag);
   /* extract posgrad and neggrad for stop-or-not logistic regression */
-  std::tuple<double, ParamPointer, ParamPointer, ParamPointer> logisticStop
-    (std::shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag); 
+  std::tuple<double, ParamPointer, ParamPointer, FeaturePointer> logisticStop
+    (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag); 
 
   FeaturePointer extractStopFeatures
-    (std::shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag);
+    (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag);
 
-  double score(std::shared_ptr<MarkovTreeNode> node, const Tag& tag);
+  double score(MarkovTreeNodePtr node, const Tag& tag);
 
   /* parameters */
   double etaT;
@@ -148,5 +148,19 @@ private:
   Vector2d tag_bigram;
   std::vector<double> tag_unigram_start;
   double m_c, m_Tstar;
+};
+
+struct ModelPrune : public ModelAdaTree {
+public:
+  ModelPrune(const Corpus& corpus, int windowL = 0, int K = 5, 
+	      size_t data_size = 100, double c = 1, double Tstar = 0, double etaT = 0.05, 
+	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
+
+  void workerThreads(int td, std::shared_ptr<MarkovTreeNode> node, Tag tag);
+  std::shared_ptr<MarkovTree> explore(const Sentence& seq);
+protected:
+  StopDatasetPtr stop_data;
+  XMLlog stop_data_log;
+  size_t data_size;
 };
 #endif

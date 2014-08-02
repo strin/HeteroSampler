@@ -28,9 +28,9 @@ void Model::configStepsize(ParamPointer gradient, double new_eta) {
 
 /* use standard NLP functions of word */
 StringVector Model::NLPfunc(const string word) {
-  unordered_map<std::string, StringVector>::iterator it = word_feat.find(word);
+  /* unordered_map<std::string, StringVector>::iterator it = word_feat.find(word);
   if(it != word_feat.end())
-    return it->second;
+    return it->second; */
   StringVector nlp = makeStringVector();
   nlp->push_back(word);
   size_t wordlen = word.length();
@@ -77,7 +77,7 @@ StringVector Model::NLPfunc(const string word) {
   nlp->push_back(sig1);
   if(capitalized) 
     nlp->push_back("CAP-");
-  word_feat[word] = nlp;
+  // word_feat[word] = nlp;
   return nlp;
 }
 
@@ -135,7 +135,7 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
   Corpus retagged(testCorpus);
   retagged.retag(this->corpus); // use training taggs. 
   int testLag = corpus.seqs.size()*testFrequency;
-  int numObservation = 0;
+  num_ob = 0;
   xmllog.begin("Q"); xmllog << Q << endl; xmllog.end();
   xmllog.begin("T"); xmllog << T << endl; xmllog.end();
   xmllog.begin("B"); xmllog << B << endl; xmllog.end();
@@ -146,13 +146,13 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
   for(int q = 0; q < Q; q++) {
     xmllog.begin("pass "+to_string(q));
     for(const Sentence& seq : corpus.seqs) {
-      xmllog.begin("example_"+to_string(numObservation));
+      xmllog.begin("example_"+to_string(num_ob));
       ParamPointer gradient = this->gradient(seq);
       this->adagrad(gradient);
       xmllog.end();
-      numObservation++;
+      num_ob++;
       if(lets_test) {
-	if(numObservation % testLag == 0) {
+	if(num_ob % testLag == 0) {
 	  test(retagged);
 	}
       }

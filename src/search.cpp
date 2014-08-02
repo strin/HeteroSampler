@@ -32,6 +32,8 @@ void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> no
     while(true) {
       tag.rng = &rng; // unsafe, rng may be deleted.
       int pos = node->depth % tag.size();
+      if(node->depth >= tag.size())
+	pos = rng.randomMT() % tag.size();
       node->gradient = tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
 					  return this->extractFeatures(tag, pos);  
 					}, true);

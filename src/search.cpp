@@ -20,9 +20,9 @@ ModelTreeUA::ModelTreeUA(const Corpus& corpus, int windowL, int K, int T, int B,
 }
 
 void ModelTreeUA::run(const Corpus& testCorpus) {   
-  ModelSimple simple_model(this->corpus, windowL, T, B, Q0, eta);
+  ModelIncrGibbs simple_model(this->corpus, windowL, T, B, Q0, eta);
   simple_model.run(testCorpus, true);
-  copyParamFeatures(simple_model.param, "simple-", this->param, "");
+  copyParamFeatures(simple_model.param, "", this->param, "");
   Model::run(testCorpus); 
 }
 
@@ -31,7 +31,7 @@ void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> no
     XMLlog& lg = *th_log[tid];
     while(true) {
       tag.rng = &rng; // unsafe, rng may be deleted.
-      int pos = rng.randomMT() % tag.size();
+      int pos = node->depth % tag.size();
       node->gradient = tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
 					  return this->extractFeatures(tag, pos);  
 					}, true);
@@ -100,7 +100,8 @@ void ModelTreeUA::initThreads(size_t numThreads) {
 }
 
 shared_ptr<MarkovTree> ModelTreeUA::explore(const Sentence& seq) {
-  this->eps = 1.0/(T-B);
+  this->B = seq.size();     // at least one sweep.
+  this->eps = 1.0/T;
   shared_ptr<MarkovTree> tree = shared_ptr<MarkovTree>(new MarkovTree());
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
   Tag tag(&seq, corpus, &rngs[0], param);

@@ -10,6 +10,10 @@ MarkovTreeNode::MarkovTreeNode(shared_ptr<MarkovTreeNode> parent)
   tag = nullptr;
 }
 
+bool MarkovTreeNode::is_split() {
+  return this->children.size() >= 2;
+}
+
 MarkovTree::MarkovTree() 
 :root(new MarkovTreeNode(nullptr)) {
 }

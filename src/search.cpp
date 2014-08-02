@@ -61,6 +61,7 @@ void ModelTreeUA::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> no
 	lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
 	lg.begin("weight"); lg << node->log_weight << endl; lg.end();
 	lg.begin("time"); lg << node->depth << endl; lg.end();
+	node->tag = shared_ptr<Tag>(new Tag(tag));
 	unique_lock<mutex> lock(th_mutex);
 	active_work--;
 	lock.unlock();
@@ -181,9 +182,8 @@ void ModelAdaTree::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> n
       if(node->depth < B) node->log_weight = -DBL_MAX;
       else node->log_weight = this->score(node, tag)+log(prob); 
 
-      if(node->depth == 0) { // multithread split.
+      if(node->depth == 0 || log(rng.random01()) < log(this->eps_split)) { // multithread split.
 	unique_lock<mutex> lock(th_mutex);
-	active_work--;
 	vector<objcokus> cokus(K);
 	for(int k = 0; k < K; k++) {
 	  int new_seed = getFingerPrint((k+5)*3, seed);
@@ -191,14 +191,10 @@ void ModelAdaTree::workerThreads(int tid, int seed, shared_ptr<MarkovTreeNode> n
 	  node->children.push_back(makeMarkovTreeNode(node));
 	  th_work.push_back(make_tuple(new_seed, node->children.back(), tag, cokus[k]));
 	}
+	active_work--;
 	th_cv.notify_all();
 	lock.unlock();
-	return;
-      }else if(log(rng.random01()) < log(this->eps_split)) {
-	for(int k = 0; k < K; k++) {
-	  node->children.push_back(makeMarkovTreeNode(node));
-	  workerThreads(tid, seed, node->children.back(), tag, rng);
-	}
+	node->stop_feat = feat;
 	return;
       }else if(node->depth >= B && log(rng.random01()) < log(prob)) { // stop.
 	unique_lock<mutex> lock(th_mutex);

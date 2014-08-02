@@ -8,6 +8,7 @@
 struct MarkovTreeNode {
 public:
   MarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent);
+  bool is_split();
   /* weighting convention 
      gradient: sum of weights of node and descendants. 
      posgrad : weight of node. 
@@ -18,6 +19,7 @@ public:
   int depth;
   std::weak_ptr<MarkovTreeNode> parent; // weak_ptr: avoid cycle in reference count.
   std::vector<std::shared_ptr<MarkovTreeNode> > children;
+  FeaturePointer stop_feat;            
 };
 
 static std::shared_ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent) {

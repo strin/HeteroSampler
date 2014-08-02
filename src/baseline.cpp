@@ -176,10 +176,12 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
     ParamPointer g = tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
 				      return this->extractFeatures(tag, i);  
 				    }, true, false);
-    mapUpdate<double, double>(*gradient, *g);
     mytag.tag[i] = tag.tag[i];
-    tag.tag[i] = seq.tag[i];
-    mapUpdate<double, double>(*gradient, *this->extractFeatures(tag, i)); 
+    if(update_grad) {
+      mapUpdate<double, double>(*gradient, *g);
+      tag.tag[i] = seq.tag[i];
+      mapUpdate<double, double>(*gradient, *this->extractFeatures(tag, i)); 
+    }
   }
   if(samples) {
     samples->push_back(shared_ptr<Tag>(new Tag(mytag)));

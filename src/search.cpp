@@ -19,11 +19,26 @@ ModelTreeUA::ModelTreeUA(const Corpus& corpus, int windowL, int K, int T, int B,
   this->initThreads(K);
 }
 
-void ModelTreeUA::run(const Corpus& testCorpus) {   
-  if(Q0 > 0) {
-    ModelIncrGibbs simple_model(this->corpus, windowL, T, B, Q0, eta);
+void ModelTreeUA::run(const Corpus& testCorpus) {
+  auto init_simple = [&] () {
+    ModelSimple simple_model(this->corpus, windowL, T, B, Q0, eta);
     simple_model.run(testCorpus, true);
-    copyParamFeatures(simple_model.param, "", this->param, "");
+    copyParamFeatures(simple_model.param, "simple-", this->param, "");
+  };
+  if(Q0 > 0) {
+    init_simple();
+    ofstream file;
+    file.open("simple.model");
+    file << (*this);
+    file.close();
+  }else if(Q0 == -1) { // read model from simple.txt
+    ifstream file; 
+    file.open("simple.model");
+    if(!file.is_open()) {
+      init_simple();
+    }else{
+      file >> (*this);
+    }
   }
   Model::run(testCorpus); 
 }
@@ -287,7 +302,7 @@ ModelPrune::ModelPrune(const Corpus& corpus, int windowL, int K,
 		       size_t data_size, double c, double Tstar, double etaT,
 			int T, int B, int Q, int Q0, double eta) 
 :ModelAdaTree(corpus, windowL, K, c, Tstar, etaT, T, B, Q, Q0, eta), 
-	  data_size(data_size), stop_data_log("stopdata.xml") {
+	  data_size(data_size) {
   stop_data = makeStopDataset();
 }
 
@@ -362,7 +377,9 @@ shared_ptr<MarkovTree> ModelPrune::explore(const Sentence& seq) {
   }
   mergeStopDataset(stop_data, tree->generateStopDataset(tree->root));
   if(num_ob % data_size) {
-    logStopDataset(stop_data, this->stop_data_log);
+    truncateStopDataset(stop_data, data_size);
+    stop_data_log = shared_ptr<XMLlog>(new XMLlog("stopdata.xml"));
+    logStopDataset(stop_data, *this->stop_data_log);
   }
   return tree;
 }

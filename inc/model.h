@@ -41,6 +41,10 @@ public:
   const Corpus& corpus;
   ParamPointer param, G2, stepsize;   // model.
 
+  /* IO */
+  friend std::ostream& operator<<(std::ostream& os, const Model& model);
+  friend std::istream& operator>>(std::istream& os, Model& model);
+
 protected:
   void adagrad(ParamPointer gradient);
   void configStepsize(ParamPointer gradient, double new_eta);
@@ -98,13 +102,12 @@ public:
   ModelTreeUA(const Corpus& corpus, int windowL = 0, int K = 5, 
 	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
 
-  void run(const Corpus& testCorpus);
+  virtual void run(const Corpus& testCorpus);
 
-  std::shared_ptr<MarkovTree> explore(const Sentence& seq);
-  ParamPointer gradient(const Sentence& seq);
-  TagVector sample(const Sentence& seq);
-
-  double score(const Tag& tag);
+  virtual std::shared_ptr<MarkovTree> explore(const Sentence& seq);
+  virtual ParamPointer gradient(const Sentence& seq);
+  virtual TagVector sample(const Sentence& seq);
+  virtual double score(const Tag& tag);
 
   /* parameters */
   double eps, eps_split;
@@ -160,7 +163,7 @@ public:
   std::shared_ptr<MarkovTree> explore(const Sentence& seq);
 protected:
   StopDatasetPtr stop_data;
-  XMLlog stop_data_log;
+  std::shared_ptr<XMLlog> stop_data_log;
   size_t data_size;
 };
 #endif

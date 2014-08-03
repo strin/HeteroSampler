@@ -247,3 +247,21 @@ void Model::adagrad(ParamPointer gradient) {
   }
 }
 
+ostream& operator<<(ostream& os, const Model& model) {
+  for(const pair<string, double>& p : *model.param) {
+    os << p.first << " " << p.second << endl;
+  }
+  return os;
+}
+
+istream& operator>>(istream& is, Model& model) {
+  string line;
+  while(!is.eof()) {
+    getline(is, line);
+    vector<string> parts;
+    split(parts, line, boost::is_any_of(" "));
+    (*model.param)[parts[0]] = stod(parts[1]);
+  }
+  return is;
+}
+

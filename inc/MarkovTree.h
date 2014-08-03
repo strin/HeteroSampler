@@ -27,7 +27,9 @@ static std::shared_ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<Markov
   return std::shared_ptr<MarkovTreeNode>(new MarkovTreeNode(parent));
 }
 
-typedef std::pair<std::vector<FeaturePointer>, std::vector<double> > StopDataset;
+typedef std::list<FeaturePointer> StopDatasetKeyContainer;
+typedef std::list<double> StopDatasetValueContainer;
+typedef std::pair<StopDatasetKeyContainer, StopDatasetValueContainer> StopDataset;
 typedef std::shared_ptr<StopDataset> StopDatasetPtr;
 inline static StopDatasetPtr makeStopDataset() {
   return StopDatasetPtr(new StopDataset());
@@ -37,17 +39,34 @@ inline static void incrStopDataset(StopDatasetPtr data, FeaturePointer stop_feat
   data->first.push_back(stop_feat);
   data->second.push_back(val);
 }
+
 inline static void mergeStopDataset(StopDatasetPtr to, StopDatasetPtr from) {
-  for(size_t i = 0; i < from->first.size(); i++) {
-    to->first.push_back(from->first[i]);
-    to->second.push_back(from->second[i]);
+  StopDatasetKeyContainer::iterator key_iter;
+  StopDatasetValueContainer::iterator value_iter;
+  for(key_iter = from->first.begin(), value_iter = from->second.begin();
+      key_iter != from->first.end() && value_iter != from->second.end(); 
+      key_iter++, value_iter++) {
+    to->first.push_back(*key_iter);
+    to->second.push_back(*value_iter);
   }
 }
+
+inline static void truncateStopDataset(StopDatasetPtr dataset, size_t size) {
+  while(dataset->first.size() > size) {
+    dataset->first.pop_front();
+    dataset->second.pop_front();
+  }
+}
+
 inline static void logStopDataset(StopDatasetPtr data, XMLlog& log) {
-  for(size_t i = 0; i < data->first.size(); i++) {
+  StopDatasetKeyContainer::iterator key_iter;
+  StopDatasetValueContainer::iterator value_iter;
+  for(key_iter = data->first.begin(), value_iter = data->second.begin();
+      key_iter != data->first.end() && value_iter != data->second.end(); 
+      key_iter++, value_iter++) {
     log.begin("data");
-    log << *data->first[i];
-    log.begin("value"); log << data->second[i] << std::endl; log.end();
+    log << **key_iter;
+    log.begin("value"); log << *value_iter << std::endl; log.end();
     log.end();
   }
 }

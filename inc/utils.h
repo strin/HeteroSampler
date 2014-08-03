@@ -4,12 +4,15 @@
 #include <cmath>
 #include <map>
 #include <unordered_map>
+#include "boost/algorithm/string.hpp"
 #include <string>
 #include <iostream>
+#include <list>
 #include "float.h"
 #include <functional>
 #include <algorithm>
 #include <sstream>
+#include <fstream>
 #include "log.h"
 
 inline static double logisticFunc(double z) {
@@ -86,4 +89,6 @@ static K mapGet(std::unordered_map<std::string, K>& g, std::string key) {
   if(g.find(key) == g.end()) return (K)0.0;
   return g[key];
 }
+
+
 #endif

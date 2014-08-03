@@ -86,9 +86,13 @@ FeaturePointer Model::tagEntropySimple() const {
   const size_t taglen = corpus.tags.size();
   double logweights[taglen];
   for(const pair<string, int>& p : corpus.dic) {
+    auto count = corpus.word_tag_count.find(p.first);
+    if(count == corpus.word_tag_count.end()) {
+      (*feat)[p.first] = log(taglen);
+      continue;
+    }
     for(size_t t = 0; t < taglen; t++) {
-      string feat = "simple-"+p.first+"-"+to_string(t);
-      logweights[t] = (*param)[feat];
+      logweights[t] = log(1.0+(count->second)[t]);
     }
     logNormalize(logweights, taglen);
     double entropy = 0.0;

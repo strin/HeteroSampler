@@ -40,6 +40,7 @@ public:
   std::vector<Sentence> seqs;
   std::map<std::string, int> tags, tagcounts;
   std::map<std::string, int> dic, dic_counts;
+  std::map<std::string, std::vector<int> > word_tag_count;
   size_t total_words, total_tags;
   std::map<int, std::string> invtags;
   void read(const std::string& filename);

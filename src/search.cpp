@@ -316,7 +316,7 @@ ModelPrune::ModelPrune(const Corpus& corpus, int windowL, int K,
 		       size_t data_size, double c, double Tstar, double etaT,
 			int T, int B, int Q, int Q0, double eta) 
 :ModelAdaTree(corpus, windowL, K, c, Tstar, etaT, T, B, Q, Q0, eta), 
-	  data_size(data_size) {
+	  data_size(data_size), stop_data_log(nullptr) {
   stop_data = makeStopDataset();
 }
 
@@ -392,6 +392,7 @@ shared_ptr<MarkovTree> ModelPrune::explore(const Sentence& seq) {
   mergeStopDataset(stop_data, tree->generateStopDataset(tree->root));
   if(num_ob % data_size == 0) {
     truncateStopDataset(stop_data, data_size);
+    if(stop_data_log != nullptr) stop_data_log->end();
     stop_data_log = shared_ptr<XMLlog>(new XMLlog("stopdata.xml"));
     logStopDataset(stop_data, *this->stop_data_log);
   }

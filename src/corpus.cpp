@@ -112,13 +112,19 @@ void Corpus::read(const string& filename) {
   }
   // convert raw tag into integer tag.
   invtags.clear();
+  word_tag_count.clear();
   for(Sentence& seq : seqs) {
     for(const Token& token : seq.seq) {
       string tg;
       if(mode == MODE_POS) tg = token.pos;
       else if(mode == MODE_NER) tg = token.ner;
-      seq.tag.push_back(tags[tg]); 
-      invtags[tags[tg]] = tg;
+      int itg = tags[tg];
+      seq.tag.push_back(itg); 
+      invtags[itg] = tg;
+      if(word_tag_count.find(token.word) == word_tag_count.end()) {
+	word_tag_count[token.word].resize(tagid, 0.0);
+      }
+      word_tag_count[token.word][itg]++;
     }
   }
 }

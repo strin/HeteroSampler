@@ -35,20 +35,20 @@ StringVector Model::NLPfunc(const string word) {
   nlp->push_back(word);
   size_t wordlen = word.length();
   if(wordlen >= 1) {
-    nlp->push_back(word.substr(0, 1));
-    nlp->push_back(word.substr(wordlen-1, 1));
+    nlp->push_back("p1-"+word.substr(0, 1));
+    nlp->push_back("s1-"+word.substr(wordlen-1, 1));
   }
   if(wordlen >= 2) {
-    nlp->push_back(word.substr(0, 2));
-    nlp->push_back(word.substr(wordlen-2, 2));
+    nlp->push_back("p2-"+word.substr(0, 2));
+    nlp->push_back("s2-"+word.substr(wordlen-2, 2));
   }
   if(wordlen >= 3) {
-    nlp->push_back(word.substr(0, 3));
-    nlp->push_back(word.substr(wordlen-3, 3));
+    nlp->push_back("p3-"+word.substr(0, 3));
+    nlp->push_back("s3-"+word.substr(wordlen-3, 3));
   }
   if(std::find_if(word.begin(), word.end(), 
 	  [](char c) { return std::isdigit(c); }) != word.end()) {
-      nlp->push_back("00");  // number
+      nlp->push_back("00-");  // number
   }
   // word signature.
   stringstream sig0;
@@ -73,8 +73,8 @@ StringVector Model::NLPfunc(const string word) {
       capitalized = false;
     }
   }
-  nlp->push_back(sig0.str());
-  nlp->push_back(sig1);
+  nlp->push_back("SG-"+sig0.str());
+  nlp->push_back("sg-"+sig1);
   if(capitalized) 
     nlp->push_back("CAP-");
   // word_feat[word] = nlp;

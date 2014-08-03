@@ -14,6 +14,10 @@ bool MarkovTreeNode::is_split() {
   return this->children.size() >= 2;
 }
 
+bool MarkovTreeNode::is_leaf() {
+  return this->children.size() == 0;
+}
+
 MarkovTree::MarkovTree() 
 :root(new MarkovTreeNode(nullptr)) {
 }
@@ -40,6 +44,18 @@ double MarkovTree::aggregateReward(shared_ptr<MarkovTreeNode> node, double norma
   return reward;
 }
 
+vector<shared_ptr<Tag> > MarkovTree::aggregateTag(MarkovTreeNodePtr node) {
+  vector<shared_ptr<Tag> > ret;
+  if(node->is_leaf()) ret.push_back(node->tag);
+  else {
+    for(MarkovTreeNodePtr child : node->children) {
+      vector<shared_ptr<Tag> > this_ret = aggregateTag(child);
+      ret.insert(ret.end(), this_ret.begin(), this_ret.end());
+    }
+  }
+  return ret;
+}
+
 StopDatasetPtr MarkovTree::generateStopDataset(MarkovTreeNodePtr node) {
   StopDatasetPtr stop_data = makeStopDataset();
   if(node->is_split()) {
@@ -49,7 +65,11 @@ StopDatasetPtr MarkovTree::generateStopDataset(MarkovTreeNodePtr node) {
       reward = logAdd(reward, aggregateReward(child, weight));
     }
     reward = reward-log(node->children.size());
-    incrStopDataset(stop_data, node->stop_feat, node->log_weight-reward, *node->tag); 
+    TagVector vec;
+    vec.push_back(node->tag);
+    TagVector child_vec = aggregateTag(node);
+    vec.insert(vec.end(), child_vec.begin(), child_vec.end());
+    incrStopDataset(stop_data, node->stop_feat, node->log_weight-reward, vec); 
     return stop_data;
   }
   for(MarkovTreeNodePtr child : node->children) {

@@ -9,6 +9,7 @@ struct MarkovTreeNode {
 public:
   MarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent);
   bool is_split();
+  bool is_leaf();
   /* weighting convention 
      gradient: sum of weights of node and descendants. 
      posgrad : weight of node. 
@@ -29,14 +30,14 @@ static std::shared_ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<Markov
 
 typedef std::list<FeaturePointer> StopDatasetKeyContainer;
 typedef std::list<double> StopDatasetValueContainer;
-typedef std::list<Tag> StopDatasetSeqContainer;
+typedef std::list<TagVector> StopDatasetSeqContainer;
 typedef std::tuple<StopDatasetKeyContainer, StopDatasetValueContainer, StopDatasetSeqContainer> StopDataset;
 typedef std::shared_ptr<StopDataset> StopDatasetPtr;
 inline static StopDatasetPtr makeStopDataset() {
   return StopDatasetPtr(new StopDataset());
 }
 typedef std::shared_ptr<MarkovTreeNode> MarkovTreeNodePtr;
-inline static void incrStopDataset(StopDatasetPtr data, FeaturePointer stop_feat, double val, Tag seq) {
+inline static void incrStopDataset(StopDatasetPtr data, FeaturePointer stop_feat, double val, TagVector seq) {
   std::get<0>(*data).push_back(stop_feat);
   std::get<1>(*data).push_back(val);
   std::get<2>(*data).push_back(seq);
@@ -78,10 +79,15 @@ inline static void logStopDataset(StopDatasetPtr data, XMLlog& log) {
     log << **key_iter;
     log.begin("value"); log << *value_iter << std::endl; log.end();
     log.begin("truth"); 
-    log << seq_iter->seq->str() << std::endl;
+    log << (*seq_iter)[0]->seq->str() << std::endl;
     log.end();
     log.begin("tag");
-    log << seq_iter->str() << std::endl;
+    log << (*seq_iter)[0]->str() << std::endl;
+    log.end();
+    log.begin("final_tag");
+    for(size_t i = 1; i < seq_iter->size(); i++) {
+      log << (*seq_iter)[i]->str() << std::endl;
+    }
     log.end();
     log.end();
   }
@@ -97,6 +103,8 @@ public:
   double logSumPriorWeights(MarkovTreeNodePtr node);
   // return log expected reward starting from a ndoe (include).
   double aggregateReward(MarkovTreeNodePtr node, double normalize);
+  // return final tags.
+  std::vector<std::shared_ptr<Tag> > aggregateTag(MarkovTreeNodePtr node);
   // generate stop dataset from split nodes.
   StopDatasetPtr generateStopDataset(MarkovTreeNodePtr node);
   // return expected value of the gradient (unnormalized).

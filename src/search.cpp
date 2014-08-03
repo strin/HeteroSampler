@@ -323,23 +323,20 @@ ModelPrune::ModelPrune(const Corpus& corpus, int windowL, int K,
 void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag) {
     XMLlog& lg = *th_log[tid];
     while(true) {
-      int pos = node->depth % tag.size();
-      if(node->depth >= tag.size())
-	pos = rngs[tid].randomMT() % tag.size();
       node->tag = shared_ptr<Tag>(new Tag(tag));
-      node->gradient = tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
+      node->gradient = makeParamPointer();
+      for(size_t pos = 0; pos < tag.size(); pos++) { // propose a sweep.
+	 mapUpdate(*node->gradient, *tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
 					  return this->extractFeatures(tag, pos);  
-					}, true);
+					}, true));
+      }
       auto predT = this->logisticStop(node, *tag.seq, tag); 
       double prob = get<0>(predT);
       FeaturePointer feat = get<3>(predT); 
-      if(node->depth < B) node->log_weight = -DBL_MAX;
-      else {
-	node->log_weight = this->score(node, tag); 
-	node->log_prior_weight = log(this->eps);
-      }
+      node->log_weight = this->score(node, tag); 
+      node->log_prior_weight = log(this->eps);
 
-      if(node->depth == tag.size()) { // multithread split.
+      if(node->depth == 0) { // multithread split.
 	node->stop_feat = feat;
 	unique_lock<mutex> lock(th_mutex);
 	active_work--;
@@ -351,7 +348,7 @@ void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag
 	th_cv.notify_all();
 	lock.unlock();
 	return;
-      }else if(node->depth >= B && log(rngs[tid].random01()) < log(this->eps)) { // stop.
+      }else if(log(rngs[tid].random01()) < log(this->eps)) { // stop.
 	lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
 	lg.begin("weight"); lg << node->log_weight << endl; lg.end();
 	lg.begin("time"); lg << node->depth << endl; lg.end();

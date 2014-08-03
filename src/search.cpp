@@ -336,7 +336,7 @@ void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag
       if(node->depth < B) node->log_weight = -DBL_MAX;
       else {
 	node->log_weight = this->score(node, tag); 
-	node->log_prior_weight = log(prob);
+	node->log_prior_weight = log(this->eps);
       }
 
       if(node->depth == tag.size()) { // multithread split.

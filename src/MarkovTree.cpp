@@ -43,12 +43,12 @@ double MarkovTree::aggregateReward(shared_ptr<MarkovTreeNode> node, double norma
 StopDatasetPtr MarkovTree::generateStopDataset(MarkovTreeNodePtr node) {
   StopDatasetPtr stop_data = makeStopDataset();
   if(node->is_split()) {
-    double reward = 0;
+    double reward = -DBL_MAX;
     for(MarkovTreeNodePtr child : node->children) { 
       double weight = logSumPriorWeights(child);
-      reward += aggregateReward(child, weight);
+      reward = logAdd(reward, aggregateReward(child, weight));
     }
-    reward /= (double)node->children.size();
+    reward = reward-log(node->children.size());
     incrStopDataset(stop_data, node->stop_feat, node->log_weight-reward, *node->tag); 
     return stop_data;
   }

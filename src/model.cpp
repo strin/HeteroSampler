@@ -258,8 +258,10 @@ istream& operator>>(istream& is, Model& model) {
   string line;
   while(!is.eof()) {
     getline(is, line);
+    if(line == "") break;
     vector<string> parts;
     split(parts, line, boost::is_any_of(" "));
+    cout << "line: " << line << endl;
     (*model.param)[parts[0]] = stod(parts[1]);
   }
   return is;

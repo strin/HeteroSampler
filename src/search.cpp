@@ -376,7 +376,7 @@ shared_ptr<MarkovTree> ModelPrune::explore(const Sentence& seq) {
     xmllog.end();
   }
   mergeStopDataset(stop_data, tree->generateStopDataset(tree->root));
-  if(num_ob % data_size) {
+  if(num_ob % data_size == 0) {
     truncateStopDataset(stop_data, data_size);
     stop_data_log = shared_ptr<XMLlog>(new XMLlog("stopdata.xml"));
     logStopDataset(stop_data, *this->stop_data_log);

@@ -242,17 +242,31 @@ FeaturePointer ModelAdaTree::extractStopFeatures(shared_ptr<MarkovTreeNode> node
   (*feat)["len-stopornot"] = (double)seqlen; 
   (*feat)["len-inv-stopornot"] = 1/(double)seqlen;
   // feat: entropy and frequency.
+  double max_ent = -DBL_MAX, ave_ent = 0.0;
+  double max_freq = -DBL_MAX, ave_freq = 0.0;
   for(size_t t = 0; t < seqlen; t++) {
     string word = seq.seq[t].word;
+    double ent = 0, freq = 0;
     if(wordent->find(word) == wordent->end())
-      (*feat)["ent-"+word] = log(taglen); // no word, use maxent.
+      ent = log(taglen); // no word, use maxent.
     else
-      (*feat)["ent-"+word] = (*wordent)[word];
+      ent = (*wordent)[word];
+    if(ent > max_ent) max_ent = ent;
+    ave_ent += ent;
+
     if(wordfreq->find(word) == wordfreq->end())
-      (*feat)["freq-"+word] = log(corpus.total_words);
+      freq = log(corpus.total_words);
     else
-      (*feat)["freq-"+word] = (*wordfreq)[word];
+      freq = (*wordfreq)[word];
+    if(freq > max_freq) max_freq = freq;
+    ave_freq += freq;
   }
+  ave_ent /= seqlen;
+  ave_freq /= seqlen;
+  (*feat)["max-ent"] = max_ent;
+  (*feat)["max-freq"] = max_freq;
+  (*feat)["ave-ent"] = ave_ent;
+  (*feat)["ave-freq"] = ave_freq;
   // feat: avg sample path length.
   int L = 3, l = 0;
   double dist = 0.0;

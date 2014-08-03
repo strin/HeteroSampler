@@ -323,13 +323,13 @@ ModelPrune::ModelPrune(const Corpus& corpus, int windowL, int K,
 void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag) {
     XMLlog& lg = *th_log[tid];
     while(true) {
-      node->tag = shared_ptr<Tag>(new Tag(tag));
       node->gradient = makeParamPointer();
       for(size_t pos = 0; pos < tag.size(); pos++) { // propose a sweep.
 	 mapUpdate(*node->gradient, *tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
 					  return this->extractFeatures(tag, pos);  
 					}, true));
       }
+      node->tag = shared_ptr<Tag>(new Tag(tag));
       auto predT = this->logisticStop(node, *tag.seq, tag); 
       double prob = get<0>(predT);
       FeaturePointer feat = get<3>(predT); 

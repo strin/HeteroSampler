@@ -33,7 +33,7 @@ void ModelTreeUA::run(const Corpus& testCorpus) {
     file.close();
   }else if(Q0 == -1) { // read model from simple.txt
     ifstream file; 
-    file.open("simple.model");
+    file.open("simple.model", ifstream::in);
     if(!file.is_open()) {
       init_simple();
     }else{

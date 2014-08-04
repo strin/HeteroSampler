@@ -192,8 +192,8 @@ double Model::test(const Corpus& testCorpus) {
 		 prev_type = pos > 0 ? tag.seq->seq[pos-1].pos : "";
 	  char tg_ch = tg[0], prev_tg_ch = prev_tg[0];  
 	  return (prev_tg_ch == 'B' && tg_ch == 'B') ||
-		 (prev_tg_ch == 'I' && tg_ch == 'I') ||
-		 (prev_tg_ch == 'O' && tg_ch == 'O') ||
+		 (prev_tg_ch == 'I' && tg_ch == 'B') ||
+		 (prev_tg_ch == 'O' && tg_ch == 'B') ||
 		 (prev_tg_ch == 'O' && tg_ch == 'I') ||
 		 (prev_tg_ch == 'E' && tg_ch == 'E') ||
 		 (prev_tg_ch == 'E' && tg_ch == 'I') ||

@@ -185,38 +185,47 @@ double Model::test(const Corpus& testCorpus) {
 	}
 	pred_count++;
       }else if(corpus.mode == Corpus::MODE_NER) {
-	bool use_chunk = false;
-	auto get_truth = [&] (int pos) -> string {
-	  return corpus.invtags.find(seq.tag[pos])->second;	      
+	auto check_chunk_begin = [&] (const Tag& tag, int pos) {
+	  string tg = corpus.invtags.find(tag.tag[pos])->second, 
+		 prev_tg = pos > 0 ? corpus.invtags.find(tag.tag[pos-1])->second : "O";
+	  string type = tag.seq->seq[pos].pos, 
+		 prev_type = pos > 0 ? tag.seq->seq[pos-1].pos : "";
+	  char tg_ch = tg[0], prev_tg_ch = prev_tg[0];  
+	  return (prev_tg_ch == 'B' && tg_ch == 'B') ||
+		 (prev_tg_ch == 'I' && tg_ch == 'I') ||
+		 (prev_tg_ch == 'O' && tg_ch == 'O') ||
+		 (prev_tg_ch == 'O' && tg_ch == 'I') ||
+		 (prev_tg_ch == 'E' && tg_ch == 'E') ||
+		 (prev_tg_ch == 'E' && tg_ch == 'I') ||
+		 (prev_tg_ch == 'O' && tg_ch == 'E') ||
+		 (prev_tg_ch == 'O' && tg_ch == 'I') ||
+		 (tg != "O" && tg != "." && type != prev_type) ||
+		 (tg == "[") || (tg == "]");
 	};
-	auto get_tag   = [&] (int pos) -> string {
-	  return corpus.invtags.find(tag->tag[pos])->second;
+	auto check_chunk_end = [&] (const Tag& tag, int pos) { 
+	  string tg = corpus.invtags.find(tag.tag[pos])->second, 
+		 next_tg = pos < tag.size()-1 ? corpus.invtags.find(tag.tag[pos+1])->second : "O";
+	  string type = tag.seq->seq[pos].pos, 
+		 next_type = pos < tag.size()-1 ? tag.seq->seq[pos+1].pos : "";
+	  char tg_ch = tg[0], next_tg_ch = next_tg[0];
+	  return (tg_ch == 'B' && next_tg_ch == 'B') ||
+		 (tg_ch == 'B' && next_tg_ch == 'O') ||
+		 (tg_ch == 'I' && next_tg_ch == 'B') ||
+		 (tg_ch == 'I' && next_tg_ch == 'O') ||
+		 (tg_ch == 'E' && next_tg_ch == 'E') ||
+		 (tg_ch == 'E' && next_tg_ch == 'I') ||
+		 (tg_ch == 'E' && next_tg_ch == 'O') ||
+		 (tg != "O" && tg != "." && type != next_type) ||
+		 (tg == "[") || (tg == "]");
+
 	};
-	if(use_chunk) {
-	  auto check_truth_begin = [&] () {
-	    return get_truth(i) != "O" && (i == 0 || get_truth(i-1) == "O");
-	  };
-	  auto check_tag_begin = [&] () {
-	    return get_tag(i) != "O" && (i == 0 || get_tag(i-1) == "O");
-	  };
-	  auto check_truth_end = [&] () {
-	    return get_truth(i) != "O" && (i == seq.size()-1 || get_truth(i+1) == "O");
-	  };
-	  auto check_tag_end = [&] () {
-	    return get_tag(i) != "O" && (i == seq.size()-1 || get_tag(i+1) == "O");
-	  };
-	  truth_count += (int)check_truth_begin();
-	  pred_count += (int)check_tag_begin();
-	  if(check_truth_begin() && check_tag_begin())
-	    hit_begin = true;
-	  if(tag->tag[i] != seq.tag[i]) hit_begin = false;
-	  if(check_truth_end() && check_tag_end()) 
-	    hit_count += (int)hit_begin;
-	}else{
-	  truth_count += (int)(get_truth(i) != "O");
-	  pred_count += (int)(get_tag(i) != "O");
-	  hit_count += (int)(get_tag(i) != "O" && get_tag(i) == get_truth(i));
-	}
+	truth_count += (int)check_chunk_begin(truth, i);
+	pred_count += (int)check_chunk_begin(*tag, i);
+	if(check_chunk_begin(truth, i) && check_chunk_begin(*tag, i))
+	  hit_begin = true;
+	if(tag->tag[i] != seq.tag[i]) hit_begin = false;
+	if(check_chunk_end(truth, i) && check_chunk_end(*tag, i)) 
+	  hit_count += (int)hit_begin;
       }
     }
     ex++;

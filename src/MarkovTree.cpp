@@ -69,7 +69,7 @@ StopDatasetPtr MarkovTree::generateStopDataset(MarkovTreeNodePtr node) {
     vec.push_back(node->tag);
     TagVector child_vec = aggregateTag(node);
     vec.insert(vec.end(), child_vec.begin(), child_vec.end());
-    incrStopDataset(stop_data, node->stop_feat, node->log_weight-reward, vec); 
+    incrStopDataset(stop_data, node->stop_feat, node->log_weight, reward, vec); 
     return stop_data;
   }
   for(MarkovTreeNodePtr child : node->children) {

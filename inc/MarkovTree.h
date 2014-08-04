@@ -31,30 +31,33 @@ static std::shared_ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<Markov
 typedef std::list<FeaturePointer> StopDatasetKeyContainer;
 typedef std::list<double> StopDatasetValueContainer;
 typedef std::list<TagVector> StopDatasetSeqContainer;
-typedef std::tuple<StopDatasetKeyContainer, StopDatasetValueContainer, StopDatasetSeqContainer> StopDataset;
+typedef std::tuple<StopDatasetKeyContainer, StopDatasetValueContainer, StopDatasetValueContainer, StopDatasetSeqContainer> StopDataset; // param, R, epR, tag.
 typedef std::shared_ptr<StopDataset> StopDatasetPtr;
 inline static StopDatasetPtr makeStopDataset() {
   return StopDatasetPtr(new StopDataset());
 }
 typedef std::shared_ptr<MarkovTreeNode> MarkovTreeNodePtr;
-inline static void incrStopDataset(StopDatasetPtr data, FeaturePointer stop_feat, double val, TagVector seq) {
+inline static void incrStopDataset(StopDatasetPtr data, FeaturePointer stop_feat, double R, double epR, TagVector seq) {
   std::get<0>(*data).push_back(stop_feat);
-  std::get<1>(*data).push_back(val);
-  std::get<2>(*data).push_back(seq);
+  std::get<1>(*data).push_back(R);
+  std::get<2>(*data).push_back(epR);
+  std::get<3>(*data).push_back(seq);
 }
 
 inline static void mergeStopDataset(StopDatasetPtr to, StopDatasetPtr from) {
   StopDatasetKeyContainer::iterator key_iter;
-  StopDatasetValueContainer::iterator value_iter;
+  StopDatasetValueContainer::iterator R_iter;
+  StopDatasetValueContainer::iterator epR_iter;
   StopDatasetSeqContainer::iterator seq_iter;
-  for(key_iter = std::get<0>(*from).begin(), value_iter = std::get<1>(*from).begin(),
-      seq_iter = std::get<2>(*from).begin();
-      key_iter != std::get<0>(*from).end() && value_iter != std::get<1>(*from).end(),
-      seq_iter != std::get<2>(*from).end(); 
-      key_iter++, value_iter++, seq_iter++) {
+  for(key_iter = std::get<0>(*from).begin(), R_iter = std::get<1>(*from).begin(),
+      epR_iter = std::get<2>(*from).begin(), seq_iter = std::get<3>(*from).begin();
+      key_iter != std::get<0>(*from).end() && R_iter != std::get<1>(*from).end() 
+      && epR_iter != std::get<2>(*from).end() && seq_iter != std::get<3>(*from).end(); 
+      key_iter++, R_iter++, epR_iter++, seq_iter++) {
     std::get<0>(*to).push_back(*key_iter);
-    std::get<1>(*to).push_back(*value_iter);
-    std::get<2>(*to).push_back(*seq_iter);
+    std::get<1>(*to).push_back(*R_iter);
+    std::get<2>(*to).push_back(*epR_iter);
+    std::get<3>(*to).push_back(*seq_iter);
   }
 }
 
@@ -63,32 +66,35 @@ inline static void truncateStopDataset(StopDatasetPtr dataset, size_t size) {
     std::get<0>(*dataset).pop_front();
     std::get<1>(*dataset).pop_front();
     std::get<2>(*dataset).pop_front();
+    std::get<3>(*dataset).pop_front();
   }
 }
 
 inline static void logStopDataset(StopDatasetPtr data, XMLlog& log) {
   StopDatasetKeyContainer::iterator key_iter;
-  StopDatasetValueContainer::iterator value_iter;
+  StopDatasetValueContainer::iterator R_iter;
+  StopDatasetValueContainer::iterator epR_iter;
   StopDatasetSeqContainer::iterator seq_iter;
-  for(key_iter = std::get<0>(*data).begin(), value_iter = std::get<1>(*data).begin(),
-      seq_iter = std::get<2>(*data).begin();
-      key_iter != std::get<0>(*data).end() && value_iter != std::get<1>(*data).end(),
-      seq_iter != std::get<2>(*data).end(); 
-      key_iter++, value_iter++, seq_iter++) {
-    log.begin("data");
-    log << **key_iter;
-    log.begin("value"); log << *value_iter << std::endl; log.end();
-    log.begin("truth"); 
-    log << (*seq_iter)[0]->seq->str() << std::endl;
-    log.end();
-    log.begin("tag");
-    log << (*seq_iter)[0]->str() << std::endl;
-    log.end();
-    log.begin("final_tag");
-    for(size_t i = 1; i < seq_iter->size(); i++) {
-      log << (*seq_iter)[i]->str() << std::endl;
-    }
-    log.end();
+    for(key_iter = std::get<0>(*data).begin(), R_iter = std::get<1>(*data).begin(),
+	epR_iter = std::get<2>(*data).begin(), seq_iter = std::get<3>(*data).begin();
+	key_iter != std::get<0>(*data).end() && R_iter != std::get<1>(*data).end() 
+	&& epR_iter != std::get<2>(*data).end() && seq_iter != std::get<3>(*data).end(); 
+	key_iter++, R_iter++, epR_iter++, seq_iter++) {
+    log.begin("data"); 
+      log << **key_iter;
+      log.begin("R"); log << *R_iter << std::endl; log.end();
+      log.begin("epR"); log << *epR_iter << std::endl; log.end();
+      log.begin("truth"); 
+	log << (*seq_iter)[0]->seq->str() << std::endl;
+      log.end();
+      log.begin("tag");
+	log << (*seq_iter)[0]->str() << std::endl;
+      log.end();
+      log.begin("final_tag");
+      for(size_t i = 1; i < seq_iter->size(); i++) {
+	log << (*seq_iter)[i]->str() << std::endl;
+      }
+      log.end();
     log.end();
   }
 }

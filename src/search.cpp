@@ -336,7 +336,7 @@ void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag
       node->log_weight = this->score(node, tag); 
       node->log_prior_weight = log(this->eps);
 
-      if(node->depth == 0) { // multithread split.
+      if(node->depth == B) { // multithread split.
 	node->stop_feat = feat;
 	unique_lock<mutex> lock(th_mutex);
 	active_work--;
@@ -348,7 +348,7 @@ void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag
 	th_cv.notify_all();
 	lock.unlock();
 	return;
-      }else if(log(rngs[tid].random01()) < log(this->eps)) { // stop.
+      }else if(node->depth > B && log(rngs[tid].random01()) < log(this->eps)) { // stop.
 	lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
 	lg.begin("weight"); lg << node->log_weight << endl; lg.end();
 	lg.begin("time"); lg << node->depth << endl; lg.end();
@@ -365,7 +365,6 @@ void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag
 }
 
 shared_ptr<MarkovTree> ModelPrune::explore(const Sentence& seq) {
-  this->B = seq.size();     // at least one sweep.
   this->eps = 1.0/T;
   shared_ptr<MarkovTree> tree = shared_ptr<MarkovTree>(new MarkovTree());
   xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();

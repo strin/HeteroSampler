@@ -155,7 +155,7 @@ private:
 
 struct ModelPrune : public ModelAdaTree {
 public:
-  ModelPrune(const Corpus& corpus, int windowL = 0, int K = 5, 
+  ModelPrune(const Corpus& corpus, int windowL = 0, int K = 5, int prune_mode = 1,  
 	      size_t data_size = 100, double c = 1, double Tstar = 0, double etaT = 0.05, 
 	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
 
@@ -165,5 +165,6 @@ protected:
   StopDatasetPtr stop_data;
   std::shared_ptr<XMLlog> stop_data_log;
   size_t data_size;
+  int prune_mode;
 };
 #endif

@@ -312,11 +312,11 @@ double ModelAdaTree::score(shared_ptr<MarkovTreeNode> node, const Tag& tag) {
   return score;
 }
 
-ModelPrune::ModelPrune(const Corpus& corpus, int windowL, int K, 
+ModelPrune::ModelPrune(const Corpus& corpus, int windowL, int K, int prune_mode,  
 		       size_t data_size, double c, double Tstar, double etaT,
 			int T, int B, int Q, int Q0, double eta) 
 :ModelAdaTree(corpus, windowL, K, c, Tstar, etaT, T, B, Q, Q0, eta), 
-	  data_size(data_size), stop_data_log(nullptr) {
+	  data_size(data_size), stop_data_log(nullptr), prune_mode(prune_mode) {
   stop_data = makeStopDataset();
 }
 
@@ -324,6 +324,7 @@ void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag
     XMLlog& lg = *th_log[tid];
     while(true) {
       node->gradient = makeParamPointer();
+      tag.rng = &rngs[tid];
       for(size_t pos = 0; pos < tag.size(); pos++) { // propose a sweep.
 	 mapUpdate(*node->gradient, *tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
 					  return this->extractFeatures(tag, pos);  
@@ -335,14 +336,16 @@ void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag
       FeaturePointer feat = get<3>(predT); 
       node->log_weight = this->score(node, tag); 
       node->log_prior_weight = log(this->eps);
+      if(node->depth == 0) {
+	node->compute_stop = true;
+      }
 
-      if(node->depth == B) { // multithread split.
+      if(node->depth <= B) { // multithread split.
 	node->stop_feat = feat;
 	unique_lock<mutex> lock(th_mutex);
 	active_work--;
 	for(int k = 0; k < K; k++) {
 	  node->children.push_back(makeMarkovTreeNode(node));
-	  tag.rng = &rngs[k];
 	  th_work.push_back(make_tuple(node->children.back(), tag));
 	}
 	th_cv.notify_all();
@@ -385,7 +388,7 @@ shared_ptr<MarkovTree> ModelPrune::explore(const Sentence& seq) {
     xmllog << endl;
     xmllog.end();
   }
-  mergeStopDataset(stop_data, tree->generateStopDataset(tree->root));
+  mergeStopDataset(stop_data, tree->generateStopDataset(tree->root, prune_mode));
   if(num_ob % data_size == 0) {
     truncateStopDataset(stop_data, data_size);
     stop_data_log = shared_ptr<XMLlog>(new XMLlog("stopdata.xml"));

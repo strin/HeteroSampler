@@ -22,6 +22,7 @@ public:
   std::weak_ptr<MarkovTreeNode> parent; // weak_ptr: avoid cycle in reference count.
   std::vector<std::shared_ptr<MarkovTreeNode> > children;
   FeaturePointer stop_feat;            
+  bool compute_stop;
 };
 
 static std::shared_ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent) {
@@ -82,16 +83,21 @@ inline static void logStopDataset(StopDatasetPtr data, XMLlog& log) {
 	key_iter++, R_iter++, epR_iter++, seq_iter++) {
     log.begin("data"); 
       log << **key_iter;
-      log.begin("R"); log << *R_iter << std::endl; log.end();
-      log.begin("epR"); log << *epR_iter << std::endl; log.end();
+      log.begin("RNow"); log << *R_iter << std::endl; log.end();
+      log.begin("RFuture"); log << *epR_iter << std::endl; log.end();
       log.begin("truth"); 
 	log << (*seq_iter)[0]->seq->str() << std::endl;
       log.end();
-      log.begin("tag");
-	log << (*seq_iter)[0]->str() << std::endl;
+      log.begin("TagNow");
+	size_t i;
+	for(i = 0; i < seq_iter->size(); i++) {
+	  if((*seq_iter)[i] == nullptr) break;
+	  log << (*seq_iter)[i]->str() << std::endl;
+	}
+	i++;
       log.end();
-      log.begin("final_tag");
-      for(size_t i = 1; i < seq_iter->size(); i++) {
+      log.begin("TagFuture");
+      for(; i < seq_iter->size(); i++) {
 	log << (*seq_iter)[i]->str() << std::endl;
       }
       log.end();
@@ -106,13 +112,18 @@ public:
   // return log(sum(posterior weights of all nodes)).
   double logSumWeights(MarkovTreeNodePtr node); 
   // return log(sum(prior weights of all nodes)).
-  double logSumPriorWeights(MarkovTreeNodePtr node);
-  // return log expected reward starting from a ndoe (include).
-  double aggregateReward(MarkovTreeNodePtr node, double normalize);
+  double logSumPriorWeights(MarkovTreeNodePtr node, size_t max_level = -1);
+  // return log expected reward starting from a node (include).
+  double aggregateReward(MarkovTreeNodePtr node, double normalize, size_t max_level = -1);
   // return final tags.
-  std::vector<std::shared_ptr<Tag> > aggregateTag(MarkovTreeNodePtr node);
-  // generate stop dataset from split nodes.
-  StopDatasetPtr generateStopDataset(MarkovTreeNodePtr node);
+  std::vector<std::shared_ptr<Tag> > aggregateTag(MarkovTreeNodePtr node, size_t max_level = -1);
+  /* generate stop dataset from split nodes.
+   * node: the node from which dataset generation starts.
+   * mode: -1 if gain = node->father->log_weight-node->father
+   *	    0 if gain = node->log_weight-E[node->descent->log_weight]
+   *	    1 if gain = E[node->children->log_weight]-E[node->children->descent->log_weight]
+   */
+  StopDatasetPtr generateStopDataset(MarkovTreeNodePtr node, int mode);
   // return expected value of the gradient (unnormalized).
   std::pair<ParamPointer,double> aggregateGradient(std::shared_ptr<MarkovTreeNode> node, double normalize);
   // return expected gradient.
@@ -120,6 +131,7 @@ public:
   // return all samples.
   TagVector getSamples();
   TagVector getSamples(std::shared_ptr<MarkovTreeNode> node);
+
 };
 
 #endif

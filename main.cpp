@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
       ("test", po::value<string>(), "test data")
       ("testFrequency", po::value<double>(), "frequency of testing")
       ("stopDataSize", po::value<int>(), "stopDataSize")
+      ("pruneMode", po::value<int>(), "prune mode")
   ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -129,7 +130,9 @@ int main(int argc, char* argv[]) {
       int stop_data_size = 100;
       if(vm.count("stopDataSize")) stop_data_size = vm["stopDataSize"].as<int>();
       double Tstar = T;
-      shared_ptr<ModelPrune> model = shared_ptr<ModelPrune>(new ModelPrune(corpus, windowL, K, stop_data_size,
+      int prune_mode = 0;
+      if(vm.count("pruneMode")) prune_mode = vm["pruneMode"].as<int>();
+      shared_ptr<ModelPrune> model = shared_ptr<ModelPrune>(new ModelPrune(corpus, windowL, K, prune_mode, stop_data_size,
 						    m_c, Tstar, etaT, T, B, Q, Q0));
       set_param(model);
       model->run(testCorpus);

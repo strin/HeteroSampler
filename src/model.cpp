@@ -53,6 +53,9 @@ StringVector Model::NLPfunc(const string word) {
   // word signature.
   stringstream sig0;
   string sig1(word);
+  string lowercase = word;
+  transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
+  nlp->push_back(lowercase);
   char prev = '0';
   bool capitalized = true;
   for(size_t i = 0; i < wordlen; i++) {

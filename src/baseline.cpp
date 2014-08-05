@@ -33,8 +33,6 @@ FeaturePointer ModelSimple::extractFeatures(const Tag& tag, int pos) {
       (*features)[ss.str()] = 1;
     }
   }
-  xmllog << *features << endl;
-  xmllog << endl;
   return features;
 }
 

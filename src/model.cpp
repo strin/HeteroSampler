@@ -172,6 +172,7 @@ double Model::test(const Corpus& testCorpus) {
   int pred_count = 0, truth_count = 0, hit_count = 0;
   xmllog.begin("test");
   int ex = 0;
+  XMLlog lg("error.xml");
   for(const Sentence& seq : testCorpus.seqs) {
     shared_ptr<Tag> tag = this->sample(seq).back();
     Tag truth(seq, corpus, &rngs[0], param);
@@ -224,15 +225,23 @@ double Model::test(const Corpus& testCorpus) {
 	};
 	truth_count += (int)check_chunk_begin(truth, i);
 	pred_count += (int)check_chunk_begin(*tag, i);
-	if(check_chunk_begin(truth, i) && check_chunk_begin(*tag, i))
+	if(check_chunk_begin(truth, i) && check_chunk_begin(*tag, i)) 
 	  hit_begin = true;
-	if(tag->tag[i] != seq.tag[i]) hit_begin = false;
-	if(check_chunk_end(truth, i) && check_chunk_end(*tag, i)) 
+	if(tag->tag[i] != seq.tag[i]) {
+	  hit_begin = false;
+	  lg.begin("error");
+	  lg << corpus.invtags.find(truth.tag[i])->second << endl;
+	  lg << corpus.invtags.find(tag->tag[i])->second << endl;
+	  lg.end();
+	}
+	if(check_chunk_end(truth, i) && check_chunk_end(*tag, i)) { 
 	  hit_count += (int)hit_begin;
+	}
       }
     }
     ex++;
   }
+  lg.end();
   xmllog.end();
 
   xmllog.begin("score"); 

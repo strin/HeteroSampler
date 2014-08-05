@@ -93,6 +93,10 @@ void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer fe
   int seqlen = tag.size();
   stringstream ss;
   ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
+  StringVector nlp = NLPfunc(sen[pos].word);
+  for(const string& token : *nlp) {
+    ss << "p2-" << tag.tag[pos-1] << "-" << tag.tag[pos] << "-" << token;
+  }
   (*features)[ss.str()] = 1;
 }
 
@@ -255,21 +259,19 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
 	feat->clear();
 	this->addUnigramFeatures(tag, i, feat);
 	mapUpdate(*gradient, *feat, - exp(a[i][c] + b[i][c] - Z));
-	/*if(i >= 1) {
+	if(i >= 1) {
 	  for(size_t s = 0; s < taglen; s++) {
 	    tag.tag[i-1] = s;
 	    bifeat->clear();
 	    this->addBigramFeatures(tag, i, bifeat);
 	    mapUpdate(*gradient, *bifeat, - exp(a[i-1][s] + phi[i][c][s] + b[i][c] - Z));
 	  }
-	}*/
+	}
       }
       // this->addUnigramFeatures(tag, pos, features);
     }
     FeaturePointer truth_feat = makeFeaturePointer();
-    for(size_t i = 0; i < seqlen; i++) 
-      addUnigramFeatures(truth, i, truth_feat);
-    // mapUpdate(*gradient, *this->extractFeatures(truth));
+    mapUpdate(*gradient, *this->extractFeatures(truth));
     mapUpdate(*gradient, *truth_feat);
   }
   // sample backward (DO NOT sample from marginal!).

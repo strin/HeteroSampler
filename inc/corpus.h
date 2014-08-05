@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "utils.h"
 
 struct Token {
 public:
@@ -38,6 +39,7 @@ public:
   Corpus(Mode mode = MODE_POS);
   Corpus(const std::string& filename, Mode mode = MODE_POS);
   std::vector<Sentence> seqs;
+  objcokus cokus;
   std::map<std::string, int> tags, tagcounts;
   std::map<std::string, int> dic, dic_counts;
   std::map<std::string, std::vector<int> > word_tag_count;

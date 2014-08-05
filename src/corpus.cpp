@@ -127,6 +127,8 @@ void Corpus::read(const string& filename) {
       word_tag_count[token.word][itg]++;
     }
   }
+  // shuffle corpus.
+  shuffle<Sentence>(seqs, cokus);
 }
 
 void Corpus::retag(const Corpus& corpus) {

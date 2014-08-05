@@ -14,6 +14,7 @@
 #include <sstream>
 #include <fstream>
 #include "log.h"
+#include "objcokus.h"
 
 inline static double logisticFunc(double z) {
   return 1./(1+exp(0-z));
@@ -88,6 +89,15 @@ template<class K>
 static K mapGet(std::unordered_map<std::string, K>& g, std::string key) {
   if(g.find(key) == g.end()) return (K)0.0;
   return g[key];
+}
+
+template<class T>
+static void shuffle(std::vector<T>& vec, objcokus& cokus) {
+  size_t size = vec.size();
+  for(size_t i = size-1; i >= 1; i--) {
+    size_t j = cokus.randomMT() % (i+1);
+    std::swap(vec[i], vec[j]);
+  }
 }
 
 

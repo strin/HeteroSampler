@@ -160,7 +160,7 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
       num_ob++;
       if(lets_test) {
 	if(num_ob % testLag == 0) {
-	  test(retagged);
+	  test(retagged, T);
 	}
       }
     }
@@ -168,18 +168,18 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
   }
 }
 
-double Model::test(const Corpus& testCorpus) {
+double Model::test(const Corpus& testCorpus, int time) {
   int pred_count = 0, truth_count = 0, hit_count = 0;
   xmllog.begin("test");
   int ex = 0;
   XMLlog lg("error.xml");
   for(const Sentence& seq : testCorpus.seqs) {
-    shared_ptr<Tag> tag = this->sample(seq).back();
+    shared_ptr<Tag> tag = this->sample(seq, time).back();
     Tag truth(seq, corpus, &rngs[0], param);
     xmllog.begin("example_"+to_string(ex));
-    xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
-    xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
-    xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
+      xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
+      xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
+      xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
     xmllog.end();
     bool pred_begin = false, truth_begin = false, hit_begin = false;
     for(int i = 0; i < seq.size(); i++) {
@@ -259,6 +259,10 @@ double Model::test(const Corpus& testCorpus) {
     return f1;
   }
   return -1;
+}
+
+TagVector Model::sample(const Sentence& seq, int time) {
+  this->sample(seq);
 }
 
 void Model::adagrad(ParamPointer gradient) {

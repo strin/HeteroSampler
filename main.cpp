@@ -76,6 +76,12 @@ int main(int argc, char* argv[]) {
   string train = "data/eng_ner/train", test = "data/eng_ner/test";
   if(vm.count("train")) train = vm["train"].as<string>();
   if(vm.count("test")) test = vm["test"].as<string>();
+  double m_c = 1.0;
+  if(vm.count("c")) m_c = vm["c"].as<double>();
+  int stop_data_size = 100;
+  if(vm.count("stopDataSize")) stop_data_size = vm["stopDataSize"].as<int>();
+  int prune_mode = 0;
+  if(vm.count("pruneMode")) prune_mode = vm["pruneMode"].as<int>();
   Corpus corpus(mode);
   corpus.read(train);
   Corpus testCorpus(mode);
@@ -95,6 +101,24 @@ int main(int argc, char* argv[]) {
       shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, windowL));
       set_param(model);
       model->run(testCorpus);
+    }if(inference == "GibbsTime") { 
+      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, windowL));
+      set_param(model);
+      if(Q >= 0) {   // run model.
+	model->run(testCorpus);
+	ofstream file;
+	file.open("model/gibbs.model");
+	file << *model;
+	file.close();
+      }else{         // read model.
+	ifstream file; 
+	file.open("model/gibbs.model", ifstream::in);
+	file >> *model;
+	file.close();
+      }
+      for(int t = 0; t < T; t++) {  
+	model->test(testCorpus, t);
+      }
     }else if(inference == "Simple") {
       shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(corpus, windowL));
       set_param(model);
@@ -125,14 +149,14 @@ int main(int argc, char* argv[]) {
       }
       model->run(testCorpus);
     }else if(inference == "Prune") {
-      double m_c = 1.0;
-      if(vm.count("c")) m_c = vm["c"].as<double>();
-      int stop_data_size = 100;
-      if(vm.count("stopDataSize")) stop_data_size = vm["stopDataSize"].as<int>();
       double Tstar = T;
-      int prune_mode = 0;
-      if(vm.count("pruneMode")) prune_mode = vm["pruneMode"].as<int>();
       shared_ptr<ModelPrune> model = shared_ptr<ModelPrune>(new ModelPrune(corpus, windowL, K, prune_mode, stop_data_size,
+						    m_c, Tstar, etaT, T, B, Q, Q0));
+      set_param(model);
+      model->run(testCorpus);
+    }else if(inference == "PruneInd") {
+      double Tstar = T;
+      shared_ptr<ModelPruneInd> model = shared_ptr<ModelPruneInd>(new ModelPruneInd(corpus, windowL, K, prune_mode, stop_data_size,
 						    m_c, Tstar, etaT, T, B, Q, Q0));
       set_param(model);
       model->run(testCorpus);

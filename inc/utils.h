@@ -48,6 +48,15 @@ static void logNormalize(double* logprob, int len) {
   }
 }
 
+static double logEntropy(double* logprob, int len) {
+  double ent = 0.0;
+  for(int i = 0; i < len; i++) {
+    if(logprob[i] == -DBL_MAX) continue;
+    ent -= logprob[i] * exp(logprob[i]);
+  }
+  return ent;
+}
+
 template<class K, class T>
 static void mapUpdate(std::unordered_map<std::string, K>& g, const std::unordered_map<std::string, T>& u, double eta = 1.0) {
   for(const std::pair<std::string, T>& p : u) {

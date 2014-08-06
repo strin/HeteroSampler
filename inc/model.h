@@ -21,11 +21,14 @@ struct Model {
 public:
   Model(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   virtual void run(const Corpus& testCorpus, bool lets_test = true);
-  double test(const Corpus& testCorpus);
+  double test(const Corpus& testCorpus, int time);
 
   /* gradient interface */
   virtual ParamPointer gradient(const Sentence& seq) = 0; 
   virtual TagVector sample(const Sentence& seq) = 0;
+  // infer under computational constraints.
+  // default: use Model::sample(const Sentence& seq), i.e. time = T.
+  virtual TagVector sample(const Sentence& seq, int time);   
 
   /* stats utils */
   FeaturePointer tagEntropySimple() const;
@@ -74,10 +77,14 @@ public:
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
+  TagVector sample(const Sentence& seq, int time);
   void addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   void addBigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   FeaturePointer extractFeatures(const Tag& tag, int pos);
   FeaturePointer extractFeatures(const Tag& tag);
+
+private:
+  void sampleOneSweep(Tag& tag);
 };
 
 struct ModelIncrGibbs : public ModelCRFGibbs {
@@ -139,7 +146,11 @@ public:
   std::tuple<double, ParamPointer, ParamPointer, FeaturePointer> logisticStop
     (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag); 
 
-  FeaturePointer extractStopFeatures
+  /* stop feature extraction for each word */
+  virtual FeaturePointer extractStopFeatures
+    (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag, int pos);
+  /* stop feature extraction for entire sentence */
+  virtual FeaturePointer extractStopFeatures
     (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag);
 
   double score(MarkovTreeNodePtr node, const Tag& tag);
@@ -166,5 +177,15 @@ protected:
   std::shared_ptr<XMLlog> stop_data_log;
   size_t data_size;
   int prune_mode;
+};
+
+struct ModelPruneInd : public ModelPrune {
+public: 
+  ModelPruneInd(const Corpus& corpus, int windowL = 0, int K = 5, int prune_mode = 1,  
+	      size_t data_size = 100, double c = 1, double Tstar = 0, double etaT = 0.05, 
+	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
+  
+  void workerThreads(int td, std::shared_ptr<MarkovTreeNode> node, Tag tag);
+  std::shared_ptr<MarkovTree> explore(const Sentence& seq);
 };
 #endif

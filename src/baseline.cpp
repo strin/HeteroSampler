@@ -68,6 +68,16 @@ ModelCRFGibbs::ModelCRFGibbs(const Corpus& corpus, int windowL, int T, int B, in
 :ModelSimple(corpus, windowL, T, B, Q, eta) {
 }
 
+TagVector ModelCRFGibbs::sample(const Sentence& seq, int time) {
+  Tag tag(&seq, corpus, &rngs[0], param);
+  for(int t = 0; t < time; t++) {
+    this->sampleOneSweep(tag);  
+  }
+  TagVector vec;
+  vec.push_back(shared_ptr<Tag>(new Tag(tag)));
+  return vec;
+}
+
 TagVector ModelCRFGibbs::sample(const Sentence& seq) { 
   TagVector vec;
   gradient(seq, &vec, false); 
@@ -126,6 +136,13 @@ FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag) {
   return features;
 }
 
+void ModelCRFGibbs::sampleOneSweep(Tag& tag) {
+  for(int i = 0; i < tag.tag.size(); i++) 
+    tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
+			  return this->extractFeatures(tag, i); 
+			});
+}
+
 ParamPointer ModelCRFGibbs::gradient(const Sentence& seq) {
   return this->gradient(seq, nullptr, true);
 }
@@ -136,11 +153,8 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
   FeaturePointer feat = this->extractFeatures(truth);
   ParamPointer gradient = makeFeaturePointer();
   for(int t = 0; t < T; t++) {
-    for(int i = 0; i < seq.tag.size(); i++) 
-      tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
-			    return this->extractFeatures(tag, i); 
-			  });
     if(t < B) continue;
+    this->sampleOneSweep(tag);
     if(update_grad)
       mapUpdate<double, double>(*gradient, *this->extractFeatures(tag));
   }

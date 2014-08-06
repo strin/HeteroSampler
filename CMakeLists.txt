@@ -55,9 +55,44 @@ src/model.cpp
 src/baseline.cpp
 src/search.cpp
 src/objcokus.cpp
+src/ThreadPool.cpp
+src/stop.cpp
 )
 
 target_link_libraries(pos
+  scilog
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${LIBS}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+)
+
+add_executable(stop test_stop.cpp
+src/corpus.cpp
+src/tag.cpp
+src/MarkovTree.cpp
+src/model.cpp
+src/baseline.cpp
+src/search.cpp
+src/objcokus.cpp
+src/ThreadPool.cpp
+src/stop.cpp
+)
+
+target_link_libraries(stop
+  scilog
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${LIBS}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+)
+
+add_executable(test-thread test_thread.cpp
+src/ThreadPool.cpp
+src/objcokus.cpp
+)
+
+target_link_libraries(test-thread
   scilog
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}

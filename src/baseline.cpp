@@ -8,7 +8,7 @@ using namespace std;
 using namespace std::placeholders;
 
 ////////// Simple Model (Independent Logit) ////////////
-ModelSimple::ModelSimple(const Corpus& corpus, int windowL, int T, int B, int Q, double eta)
+ModelSimple::ModelSimple(const Corpus* corpus, int windowL, int T, int B, int Q, double eta)
 :Model(corpus, T, B, Q, eta), windowL(windowL) {
   xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
 }
@@ -64,18 +64,14 @@ ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool
 }
 
 //////// Model CRF Gibbs ///////////////////////////////
-ModelCRFGibbs::ModelCRFGibbs(const Corpus& corpus, int windowL, int T, int B, int Q, double eta)
+ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, int windowL, int T, int B, int Q, double eta)
 :ModelSimple(corpus, windowL, T, B, Q, eta) {
 }
 
-TagVector ModelCRFGibbs::sample(const Sentence& seq, int time) {
-  Tag tag(&seq, corpus, &rngs[0], param);
+void ModelCRFGibbs::sample(Tag& tag, int time) {
   for(int t = 0; t < time; t++) {
     this->sampleOneSweep(tag);  
   }
-  TagVector vec;
-  vec.push_back(shared_ptr<Tag>(new Tag(tag)));
-  return vec;
 }
 
 TagVector ModelCRFGibbs::sample(const Sentence& seq) { 
@@ -170,7 +166,7 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
 }
 
 ////////// Incremental Gibbs Sampling /////////////////////////
-ModelIncrGibbs::ModelIncrGibbs(const Corpus& corpus, int windowL, int T, int B, int Q, double eta)
+ModelIncrGibbs::ModelIncrGibbs(const Corpus* corpus, int windowL, int T, int B, int Q, double eta)
 :ModelCRFGibbs(corpus, windowL, T, B, Q, eta) {
 }
 
@@ -211,14 +207,14 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
 }
 
 ///////// Forward-Backward Algorithm ////////////////////////////
-ModelFwBw::ModelFwBw(const Corpus& corpus, int windowL, int T, int B, int Q, double eta) 
+ModelFwBw::ModelFwBw(const Corpus* corpus, int windowL, int T, int B, int Q, double eta) 
 :ModelCRFGibbs(corpus, windowL, T, B, Q, eta) { 
 }
 
 ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
   Tag tag(&seq, corpus, &rngs[0], param);
   Tag truth(seq, corpus, &rngs[0], param);
-  size_t seqlen = tag.size(), taglen = corpus.tags.size();
+  size_t seqlen = tag.size(), taglen = corpus->tags.size();
   // dp[i][j] is the multiplicative factor for the marginal 
   // of S_{i+1:end} starting with S_i being character j. (use log-space)
   double a[seqlen][taglen], b[seqlen][taglen], phi[seqlen][taglen][taglen];

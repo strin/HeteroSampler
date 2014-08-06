@@ -19,13 +19,25 @@ typedef std::vector<std::vector<double> > Vector2d;
 inline static ParamPointer makeParamPointer() {
   return ParamPointer(new std::unordered_map<std::string, double>());
 }
+
 inline static FeaturePointer makeFeaturePointer() {
   return makeParamPointer();
 }
+
 inline static Vector2d makeVector2d(size_t m, size_t n, double c = 0.0) {
   Vector2d vec(m);
   for(size_t mi = 0; mi < m; mi++) vec[mi].resize(n, c);
   return vec;
+}
+
+inline static double score(ParamPointer param, FeaturePointer feat) {
+  double ret = 0.0;
+  for(const std::pair<std::string, double>& pair : *feat) {
+    if(param->find(pair.first) != param->end()) {
+      ret += (*param)[pair.first] * pair.second;
+    }
+  }
+  return ret;
 }
 
 inline static void copyParamFeatures(ParamPointer param_from, std::string prefix_from,
@@ -44,7 +56,7 @@ inline static std::string str(FeaturePointer features);
 struct Tag {
 public:
   const Sentence* seq;
-  const Corpus& corpus;
+  const Corpus* corpus;
   
   objcokus* rng;
 
@@ -56,9 +68,9 @@ public:
   /* corpus should be training corpus, as its tag mapping would be used.
    * DO NOT use the test corpus, as it would confuse the tagging.
    */
-  Tag(const Sentence* seq, const Corpus& corpus, 
+  Tag(const Sentence* seq, const Corpus* corpus, 
      objcokus* rng, ParamPointer param); // random init tag.
-  Tag(const Sentence& seq, const Corpus& corpus, 
+  Tag(const Sentence& seq, const Corpus* corpus, 
      objcokus* rng, ParamPointer param); // copy tag from seq.
   inline size_t size() const {return this->tag.size(); }
   void randomInit();

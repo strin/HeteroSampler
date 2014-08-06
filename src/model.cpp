@@ -13,7 +13,7 @@ using namespace std;
 
 unordered_map<string, StringVector> Model::word_feat;
 
-Model::Model(const Corpus& corpus, int T, int B, int Q, double eta)
+Model::Model(const Corpus* corpus, int T, int B, int Q, double eta)
 :corpus(corpus), param(makeParamPointer()),
   G2(makeParamPointer()) , stepsize(makeParamPointer()), 
   T(T), B(B), K(5), Q(Q), Q0(1),  
@@ -86,11 +86,11 @@ StringVector Model::NLPfunc(const string word) {
 
 FeaturePointer Model::tagEntropySimple() const {
   FeaturePointer feat = makeFeaturePointer();
-  const size_t taglen = corpus.tags.size();
+  const size_t taglen = corpus->tags.size();
   double logweights[taglen];
-  for(const pair<string, int>& p : corpus.dic) {
-    auto count = corpus.word_tag_count.find(p.first);
-    if(count == corpus.word_tag_count.end()) {
+  for(const pair<string, int>& p : corpus->dic) {
+    auto count = corpus->word_tag_count.find(p.first);
+    if(count == corpus->word_tag_count.end()) {
       (*feat)[p.first] = log(taglen);
       continue;
     }
@@ -109,24 +109,24 @@ FeaturePointer Model::tagEntropySimple() const {
 
 FeaturePointer Model::wordFrequencies() const {
   FeaturePointer feat = makeFeaturePointer();
-  for(const pair<string, int>& p : corpus.dic_counts) {
-    (*feat)[p.first] = log(corpus.total_words)-log(p.second);
+  for(const pair<string, int>& p : corpus->dic_counts) {
+    (*feat)[p.first] = log(corpus->total_words)-log(p.second);
   }
   return feat;
 }
 
 pair<Vector2d, vector<double> > Model::tagBigram() const {
-  size_t taglen = corpus.tags.size();
+  size_t taglen = corpus->tags.size();
   Vector2d mat = makeVector2d(taglen, taglen, 1.0);
   vector<double> vec(taglen, 1.0);
-  for(const Sentence& seq : corpus.seqs) {
+  for(const Sentence& seq : corpus->seqs) {
     vec[seq.tag[0]]++;
     for(size_t t = 1; t < seq.size(); t++) {
       mat[seq.tag[t-1]][seq.tag[t]]++; 
     }
   }
   for(size_t i = 0; i < taglen; i++) {
-    vec[i] = log(vec[i])-log(taglen+corpus.seqs.size());
+    vec[i] = log(vec[i])-log(taglen+corpus->seqs.size());
     double sum_i = 0.0;
     for(size_t j = 0; j < taglen; j++) {
       sum_i += mat[i][j];
@@ -140,19 +140,19 @@ pair<Vector2d, vector<double> > Model::tagBigram() const {
 
 void Model::run(const Corpus& testCorpus, bool lets_test) {
   Corpus retagged(testCorpus);
-  retagged.retag(this->corpus); // use training taggs. 
-  int testLag = corpus.seqs.size()*testFrequency;
+  retagged.retag(*this->corpus); // use training taggs. 
+  int testLag = corpus->seqs.size()*testFrequency;
   num_ob = 0;
   xmllog.begin("Q"); xmllog << Q << endl; xmllog.end();
   xmllog.begin("T"); xmllog << T << endl; xmllog.end();
   xmllog.begin("B"); xmllog << B << endl; xmllog.end();
   xmllog.begin("eta"); xmllog << eta << endl; xmllog.end();
-  xmllog.begin("num_train"); xmllog << corpus.size() << endl; xmllog.end();
+  xmllog.begin("num_train"); xmllog << corpus->size() << endl; xmllog.end();
   xmllog.begin("num_test"); xmllog << testCorpus.size() << endl; xmllog.end();
   xmllog.begin("test_lag"); xmllog << testLag << endl; xmllog.end();
   for(int q = 0; q < Q; q++) {
     xmllog.begin("pass "+to_string(q));
-    for(const Sentence& seq : corpus.seqs) {
+    for(const Sentence& seq : corpus->seqs) {
       xmllog.begin("example_"+to_string(num_ob));
       ParamPointer gradient = this->gradient(seq);
       this->adagrad(gradient);
@@ -174,7 +174,8 @@ double Model::test(const Corpus& testCorpus, int time) {
   int ex = 0;
   XMLlog lg("error.xml");
   for(const Sentence& seq : testCorpus.seqs) {
-    shared_ptr<Tag> tag = this->sample(seq, time).back();
+    shared_ptr<Tag> tag = shared_ptr<Tag>(new Tag(&seq, corpus, &rngs[0], param));
+    this->sample(*tag, time);
     Tag truth(seq, corpus, &rngs[0], param);
     xmllog.begin("example_"+to_string(ex));
       xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
@@ -183,15 +184,15 @@ double Model::test(const Corpus& testCorpus, int time) {
     xmllog.end();
     bool pred_begin = false, truth_begin = false, hit_begin = false;
     for(int i = 0; i < seq.size(); i++) {
-      if(corpus.mode == Corpus::MODE_POS) {
+      if(corpus->mode == Corpus::MODE_POS) {
 	if(tag->tag[i] == seq.tag[i]) {
 	  hit_count++;
 	}
 	pred_count++;
-      }else if(corpus.mode == Corpus::MODE_NER) {
+      }else if(corpus->mode == Corpus::MODE_NER) {
 	auto check_chunk_begin = [&] (const Tag& tag, int pos) {
-	  string tg = corpus.invtags.find(tag.tag[pos])->second, 
-		 prev_tg = pos > 0 ? corpus.invtags.find(tag.tag[pos-1])->second : "O";
+	  string tg = corpus->invtags.find(tag.tag[pos])->second, 
+		 prev_tg = pos > 0 ? corpus->invtags.find(tag.tag[pos-1])->second : "O";
 	  string type = tag.seq->seq[pos].pos, 
 		 prev_type = pos > 0 ? tag.seq->seq[pos-1].pos : "";
 	  char tg_ch = tg[0], prev_tg_ch = prev_tg[0];  
@@ -207,8 +208,8 @@ double Model::test(const Corpus& testCorpus, int time) {
 		 (tg == "[") || (tg == "]");
 	};
 	auto check_chunk_end = [&] (const Tag& tag, int pos) { 
-	  string tg = corpus.invtags.find(tag.tag[pos])->second, 
-		 next_tg = pos < tag.size()-1 ? corpus.invtags.find(tag.tag[pos+1])->second : "O";
+	  string tg = corpus->invtags.find(tag.tag[pos])->second, 
+		 next_tg = pos < tag.size()-1 ? corpus->invtags.find(tag.tag[pos+1])->second : "O";
 	  string type = tag.seq->seq[pos].pos, 
 		 next_type = pos < tag.size()-1 ? tag.seq->seq[pos+1].pos : "";
 	  char tg_ch = tg[0], next_tg_ch = next_tg[0];
@@ -230,8 +231,8 @@ double Model::test(const Corpus& testCorpus, int time) {
 	if(tag->tag[i] != seq.tag[i]) {
 	  hit_begin = false;
 	  lg.begin("error");
-	  lg << corpus.invtags.find(truth.tag[i])->second << endl;
-	  lg << corpus.invtags.find(tag->tag[i])->second << endl;
+	  lg << corpus->invtags.find(truth.tag[i])->second << endl;
+	  lg << corpus->invtags.find(tag->tag[i])->second << endl;
 	  lg.end();
 	}
 	if(check_chunk_end(truth, i) && check_chunk_end(*tag, i)) { 
@@ -248,10 +249,10 @@ double Model::test(const Corpus& testCorpus, int time) {
   double accuracy = (double)hit_count/pred_count;
   double recall = (double)hit_count/truth_count;
   xmllog << "test precision = " << accuracy * 100 << " %" << endl; 
-  if(corpus.mode == Corpus::MODE_POS) {
+  if(corpus->mode == Corpus::MODE_POS) {
     xmllog.end();
     return accuracy;
-  }else if(corpus.mode == Corpus::MODE_NER) {  
+  }else if(corpus->mode == Corpus::MODE_NER) {  
     xmllog << "test recall = " << recall * 100 << " %" << endl;
     double f1 = 2 * accuracy * recall / (accuracy + recall);
     xmllog << "test f1 = " << f1 * 100 << " %" << endl;
@@ -261,8 +262,8 @@ double Model::test(const Corpus& testCorpus, int time) {
   return -1;
 }
 
-TagVector Model::sample(const Sentence& seq, int time) {
-  this->sample(seq);
+void Model::sample(Tag& tag, int time) {
+  tag = *this->sample(*tag.seq).back();
 }
 
 void Model::adagrad(ParamPointer gradient) {

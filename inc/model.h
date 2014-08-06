@@ -19,7 +19,7 @@ static StringVector makeStringVector() {
 
 struct Model {
 public:
-  Model(const Corpus& corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  Model(const Corpus* corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   virtual void run(const Corpus& testCorpus, bool lets_test = true);
   double test(const Corpus& testCorpus, int time);
 
@@ -27,8 +27,9 @@ public:
   virtual ParamPointer gradient(const Sentence& seq) = 0; 
   virtual TagVector sample(const Sentence& seq) = 0;
   // infer under computational constraints.
-  // default: use Model::sample(const Sentence& seq), i.e. time = T.
-  virtual TagVector sample(const Sentence& seq, int time);   
+  // emulate t-step transition of a markov chain.
+  // default: use Model::sample(*tag.seq), i.e. time = T.
+  virtual void sample(Tag& tag, int time);             // inplace.
 
   /* stats utils */
   FeaturePointer tagEntropySimple() const;
@@ -41,7 +42,7 @@ public:
   double testFrequency;
   double eta;
   std::vector<objcokus> rngs;
-  const Corpus& corpus;
+  const Corpus* corpus;
   ParamPointer param, G2, stepsize;   // model.
 
   /* IO */
@@ -59,9 +60,11 @@ protected:
   static std::unordered_map<std::string, StringVector> word_feat;
 };
 
+typedef std::shared_ptr<Model> ModelPtr;
+
 struct ModelSimple : public Model {
 public:
-  ModelSimple(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelSimple(const Corpus* corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq); 
@@ -73,11 +76,11 @@ protected:
 
 struct ModelCRFGibbs : public ModelSimple {
 public:
-  ModelCRFGibbs(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelCRFGibbs(const Corpus* corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
-  TagVector sample(const Sentence& seq, int time);
+  void sample(Tag& tag, int time);
   void addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   void addBigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   FeaturePointer extractFeatures(const Tag& tag, int pos);
@@ -89,7 +92,7 @@ private:
 
 struct ModelIncrGibbs : public ModelCRFGibbs {
 public:
-  ModelIncrGibbs(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelIncrGibbs(const Corpus* corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
@@ -98,7 +101,7 @@ public:
 /* using forward-backward inference for discriminative MRF */
 struct ModelFwBw : public ModelCRFGibbs {
 public:
-  ModelFwBw(const Corpus& corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelFwBw(const Corpus* corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   ParamPointer gradient(const Sentence& seq, TagVector* samples = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
@@ -106,7 +109,7 @@ public:
 
 struct ModelTreeUA : public ModelCRFGibbs {
 public:
-  ModelTreeUA(const Corpus& corpus, int windowL = 0, int K = 5, 
+  ModelTreeUA(const Corpus* corpus, int windowL = 0, int K = 5, 
 	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
 
   virtual void run(const Corpus& testCorpus);
@@ -137,7 +140,7 @@ protected:
 
 struct ModelAdaTree : public ModelTreeUA {
 public:
-  ModelAdaTree(const Corpus& corpus, int windowL = 0, int K = 5, 
+  ModelAdaTree(const Corpus* corpus, int windowL = 0, int K = 5, 
 	      double c = 1, double Tstar = 0, double etaT = 0.05, 
 	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
   /* implement components necessary */  
@@ -166,7 +169,7 @@ private:
 
 struct ModelPrune : public ModelAdaTree {
 public:
-  ModelPrune(const Corpus& corpus, int windowL = 0, int K = 5, int prune_mode = 1,  
+  ModelPrune(const Corpus* corpus, int windowL = 0, int K = 5, int prune_mode = 1,  
 	      size_t data_size = 100, double c = 1, double Tstar = 0, double etaT = 0.05, 
 	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
 
@@ -181,7 +184,7 @@ protected:
 
 struct ModelPruneInd : public ModelPrune {
 public: 
-  ModelPruneInd(const Corpus& corpus, int windowL = 0, int K = 5, int prune_mode = 1,  
+  ModelPruneInd(const Corpus* corpus, int windowL = 0, int K = 5, int prune_mode = 1,  
 	      size_t data_size = 100, double c = 1, double Tstar = 0, double etaT = 0.05, 
 	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
   

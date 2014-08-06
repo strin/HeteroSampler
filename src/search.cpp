@@ -12,7 +12,7 @@
 using namespace std;
 using namespace std::placeholders;
 
-ModelTreeUA::ModelTreeUA(const Corpus& corpus, int windowL, int K, int T, int B, int Q, 
+ModelTreeUA::ModelTreeUA(const Corpus* corpus, int windowL, int K, int T, int B, int Q, 
 			  int Q0, double eta) 
 :ModelCRFGibbs(corpus, windowL, T, B, Q, eta), eps(0), eps_split(0), Q0(Q0) {
   Model::K = K;
@@ -158,7 +158,7 @@ double ModelTreeUA::score(const Tag& tag) {
 }
 
 
-ModelAdaTree::ModelAdaTree(const Corpus& corpus, int windowL, int K, 
+ModelAdaTree::ModelAdaTree(const Corpus* corpus, int windowL, int K, 
 			    double c, double Tstar, double etaT, 
 			    int T, int B, int Q, int Q0, double eta)
 :ModelTreeUA(corpus, windowL, K, T, B, Q, Q0, eta), m_c(c), m_Tstar(Tstar), etaT(etaT) {
@@ -235,13 +235,13 @@ void ModelAdaTree::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag t
 FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag, int pos) {
   Tag mytag(tag);
   FeaturePointer feat = makeFeaturePointer();
-  size_t taglen = corpus.tags.size();
+  size_t taglen = corpus->tags.size();
   string word = seq.seq[pos].word;
   /* dataset statistics */
   (*feat)["ent"] = log(taglen);
   if(wordent->find(word) != wordent->end()) 
     (*feat)["ent"] = (*wordent)[word];
-  (*feat)["freq"] = log(corpus.total_words);
+  (*feat)["freq"] = log(corpus->total_words);
   if(wordfreq->find(word) != wordfreq->end()) 
     (*feat)["freq"] = (*wordfreq)[word];
   /* posterior statistics */
@@ -259,7 +259,7 @@ FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const S
 FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag) {
   FeaturePointer feat = makeFeaturePointer();
   size_t seqlen = tag.size();
-  size_t taglen = corpus.tags.size();
+  size_t taglen = corpus->tags.size();
   // feat: bias.
   (*feat)["bias-stopornot"] = 1.0;
   // feat: word len.
@@ -279,7 +279,7 @@ FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const S
     ave_ent += ent;
 
     if(wordfreq->find(word) == wordfreq->end())
-      freq = log(corpus.total_words);
+      freq = log(corpus->total_words);
     else
       freq = (*wordfreq)[word];
     if(freq > max_freq) max_freq = freq;
@@ -336,7 +336,7 @@ double ModelAdaTree::score(shared_ptr<MarkovTreeNode> node, const Tag& tag) {
   return score;
 }
 
-ModelPrune::ModelPrune(const Corpus& corpus, int windowL, int K, int prune_mode,  
+ModelPrune::ModelPrune(const Corpus* corpus, int windowL, int K, int prune_mode,  
 		       size_t data_size, double c, double Tstar, double etaT,
 			int T, int B, int Q, int Q0, double eta) 
 :ModelAdaTree(corpus, windowL, K, c, Tstar, etaT, T, B, Q, Q0, eta), 
@@ -424,7 +424,7 @@ shared_ptr<MarkovTree> ModelPrune::explore(const Sentence& seq) {
 }
 
 
-ModelPruneInd::ModelPruneInd(const Corpus& corpus, int windowL, int K, int prune_mode,  
+ModelPruneInd::ModelPruneInd(const Corpus* corpus, int windowL, int K, int prune_mode,  
 		       size_t data_size, double c, double Tstar, double etaT,
 			int T, int B, int Q, int Q0, double eta) 
 :ModelPrune(corpus, windowL, K, prune_mode, data_size, c, Tstar, etaT, T, B, Q, Q0, eta) {
@@ -460,7 +460,7 @@ void ModelPruneInd::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag 
 		*stop_data_log << tag.seq->seq[pos].word << endl;
 	      stop_data_log->end();
 	      stop_data_log->begin("tag");
-		*stop_data_log << corpus.invtags.find(tag.tag[pos])->second << endl;
+		*stop_data_log << corpus->invtags.find(tag.tag[pos])->second << endl;
 	      stop_data_log->end();
 	      stop_data_log->begin("feat");
 		*stop_data_log << *feat;

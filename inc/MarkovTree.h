@@ -25,8 +25,16 @@ public:
   bool compute_stop;
 };
 
+typedef std::shared_ptr<MarkovTreeNode> MarkovTreeNodePtr;
+
 static std::shared_ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent) {
   return std::shared_ptr<MarkovTreeNode>(new MarkovTreeNode(parent));
+}
+
+static std::shared_ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent, const Tag& tag) {
+  MarkovTreeNodePtr node = MarkovTreeNodePtr(new MarkovTreeNode(parent));
+  node->tag = std::shared_ptr<Tag>(new Tag(tag));
+  return node;
 }
 
 typedef std::list<FeaturePointer> StopDatasetKeyContainer;
@@ -37,7 +45,6 @@ typedef std::shared_ptr<StopDataset> StopDatasetPtr;
 inline static StopDatasetPtr makeStopDataset() {
   return StopDatasetPtr(new StopDataset());
 }
-typedef std::shared_ptr<MarkovTreeNode> MarkovTreeNodePtr;
 inline static void incrStopDataset(StopDatasetPtr data, FeaturePointer stop_feat, double R, double epR, TagVector seq) {
   std::get<0>(*data).push_back(stop_feat);
   std::get<1>(*data).push_back(R);

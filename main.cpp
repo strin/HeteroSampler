@@ -11,17 +11,23 @@ namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
   // parse args.
+  int T = 10;
+  int B = 0;
+  int Q = 10;
+  int Q0 = 1;
+  int K = 5;
+  double eta = 0.4;
   po::options_description desc("Allowed options");
   desc.add_options()
       ("help", "produce help message")
       ("inference", po::value<string>(), "inference method (Gibbs, TreeUA)")
-      ("eta", po::value<double>(), "step size")
+      ("eta", po::value<double>()->default_value(eta), "step size")
       ("etaT", po::value<double>(), "step size for time adaptation")
-      ("T", po::value<int>(), "number of transitions")
-      ("B", po::value<int>(), "number of burnin steps")
-      ("Q", po::value<int>(), "number of passes")
-      ("Q0", po::value<int>(), "number of passes for smart init")
-      ("K", po::value<int>(), "number of threads/particles")
+      ("T", po::value<int>()->default_value(T), "number of transitions")
+      ("B", po::value<int>()->default_value(B), "number of burnin steps")
+      ("Q", po::value<int>()->default_value(Q), "number of passes")
+      ("Q0", po::value<int>()->default_value(Q0), "number of passes for smart init")
+      ("K", po::value<int>()->default_value(K), "number of threads/particles")
       ("c", po::value<double>(), "extent of time regularization")
       ("windowL", po::value<int>(), "window size for node-wise features")
       ("Tstar", po::value<double>(), "time resource constraints")
@@ -33,6 +39,7 @@ int main(int argc, char* argv[]) {
       ("stopDataSize", po::value<int>(), "stopDataSize")
       ("pruneMode", po::value<int>(), "prune mode")
   ;
+  /* default value */
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);    
@@ -44,22 +51,16 @@ int main(int argc, char* argv[]) {
   if(vm.count("inference")) {
     inference = vm["inference"].as<string>();
   }
-  int T = 1;
   if(vm.count("T")) 
     T = vm["T"].as<int>();
-  int B = 0;
   if(vm.count("B"))
     B = vm["B"].as<int>();
-  int Q = 10;
   if(vm.count("Q"))
     Q = vm["Q"].as<int>();
-  int Q0 = 1;
   if(vm.count("Q0"))
     Q0 = vm["Q0"].as<int>();
-  int K = 5;
   if(vm.count("K"))
     K = vm["K"].as<int>();
-  double eta = 0.4;
   if(vm.count("eta"))
     eta = vm["eta"].as<double>();
   double etaT = 0.4;
@@ -98,37 +99,23 @@ int main(int argc, char* argv[]) {
     windowL = vm["windowL"].as<int>();
   try{
     if(inference == "Gibbs") {
-      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, windowL));
+      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, windowL));
       set_param(model);
       model->run(testCorpus);
-    }if(inference == "GibbsTime") { 
-      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, windowL));
-      set_param(model);
-      if(Q >= 0) {   // run model.
-	model->run(testCorpus);
-	ofstream file;
-	file.open("model/gibbs.model");
-	file << *model;
-	file.close();
-      }else{         // read model.
-	ifstream file; 
-	file.open("model/gibbs.model", ifstream::in);
-	file >> *model;
-	file.close();
-      }
-      for(int t = 0; t < T; t++) {  
-	model->test(testCorpus, t);
-      }
+      ofstream file;
+      file.open("model/gibbs.model");
+      file << *model;
+      file.close();
     }else if(inference == "Simple") {
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(corpus, windowL));
+      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(&corpus, windowL));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "FwBw") {
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelFwBw(corpus, windowL));
+      shared_ptr<Model> model = shared_ptr<Model>(new ModelFwBw(&corpus, windowL));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "TreeUA") {
-      shared_ptr<ModelTreeUA> model = shared_ptr<ModelTreeUA>(new ModelTreeUA(corpus, windowL, K, T, B, Q, Q0, eta));
+      shared_ptr<ModelTreeUA> model = shared_ptr<ModelTreeUA>(new ModelTreeUA(&corpus, windowL, K, T, B, Q, Q0, eta));
       if(vm.count("eps_split")) {
 	model->eps_split = vm["eps_split"].as<int>();
       }
@@ -138,7 +125,7 @@ int main(int argc, char* argv[]) {
       double m_c = 1.0;
       if(vm.count("c")) m_c = vm["c"].as<double>();
       double Tstar = T;
-      shared_ptr<ModelAdaTree> model = shared_ptr<ModelAdaTree>(new ModelAdaTree(corpus, windowL,
+      shared_ptr<ModelAdaTree> model = shared_ptr<ModelAdaTree>(new ModelAdaTree(&corpus, windowL,
 						  K, m_c, Tstar, T, B, Q, Q0));
       set_param(model);
       if(vm.count("eps_split")) {
@@ -150,22 +137,22 @@ int main(int argc, char* argv[]) {
       model->run(testCorpus);
     }else if(inference == "Prune") {
       double Tstar = T;
-      shared_ptr<ModelPrune> model = shared_ptr<ModelPrune>(new ModelPrune(corpus, windowL, K, prune_mode, stop_data_size,
+      shared_ptr<ModelPrune> model = shared_ptr<ModelPrune>(new ModelPrune(&corpus, windowL, K, prune_mode, stop_data_size,
 						    m_c, Tstar, etaT, T, B, Q, Q0));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "PruneInd") {
       double Tstar = T;
-      shared_ptr<ModelPruneInd> model = shared_ptr<ModelPruneInd>(new ModelPruneInd(corpus, windowL, K, prune_mode, stop_data_size,
+      shared_ptr<ModelPruneInd> model = shared_ptr<ModelPruneInd>(new ModelPruneInd(&corpus, windowL, K, prune_mode, stop_data_size,
 						    m_c, Tstar, etaT, T, B, Q, Q0));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "GibbsIncr") { 
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(corpus, windowL));
+      shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(&corpus, windowL));
       set_param(model);
       model->run(testCorpus);
     }else if(inference == "TagEntropySimple") {
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(corpus, windowL));
+      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(&corpus, windowL));
       set_param(model);
       model->run(testCorpus);
       FeaturePointer feat = model->tagEntropySimple();

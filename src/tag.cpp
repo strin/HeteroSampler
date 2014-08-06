@@ -6,13 +6,13 @@
 
 using namespace std;
 
-Tag::Tag(const Sentence* seq, const Corpus& corpus, 
+Tag::Tag(const Sentence* seq, const Corpus* corpus, 
 	objcokus* rng, ParamPointer param) 
 :seq(seq), corpus(corpus), rng(rng), param(param) {
   this->randomInit();
 }
 
-Tag::Tag(const Sentence& seq, const Corpus& corpus, 
+Tag::Tag(const Sentence& seq, const Corpus* corpus, 
         objcokus* rng, ParamPointer param)
 :seq(&seq), corpus(corpus), rng(rng), param(param) {
   this->tag = seq.tag;
@@ -20,7 +20,7 @@ Tag::Tag(const Sentence& seq, const Corpus& corpus,
 }
 
 void Tag::randomInit() {
-  int taglen = corpus.tags.size();
+  int taglen = corpus->tags.size();
   int seqlen = seq->seq.size();
   tag.resize(seqlen);
   for(int& t : tag) {
@@ -44,7 +44,7 @@ featExtract, bool grad_expect, bool grad_sample) {
   int seqlen = sen.size();
   if(pos >= seqlen) 
     throw "Gibbs sampling proposal out of bound.";
-  int taglen = corpus.tags.size();
+  int taglen = corpus->tags.size();
   double sc[taglen];
   vector<FeaturePointer> featvec;
   for(int t = 0; t < taglen; t++) {
@@ -92,7 +92,7 @@ string Tag::str() {
   stringstream ss;
   size_t seqlen = seq->seq.size();
   for(size_t i = 0; i < seqlen; i++) {
-    ss << seq->seq[i].word << "/" << corpus.invtags.find(tag[i])->second << "\t";
+    ss << seq->seq[i].word << "/" << corpus->invtags.find(tag[i])->second << "\t";
   }
   return ss.str();
 }

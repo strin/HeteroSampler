@@ -95,6 +95,7 @@ int main(int argc, char* argv[]) {
     model->testFrequency = testFrequency;
   };
   int windowL = 0;
+  system("mkdir model");
   if(vm.count("windowL"))
     windowL = vm["windowL"].as<int>();
   try{

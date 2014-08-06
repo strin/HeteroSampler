@@ -103,10 +103,10 @@ void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer fe
   int seqlen = tag.size();
   stringstream ss;
   ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
-  StringVector nlp = NLPfunc(sen[pos].word);
+  /* StringVector nlp = NLPfunc(sen[pos].word);
   for(const string& token : *nlp) {
     ss << "p2-" << tag.tag[pos-1] << "-" << tag.tag[pos] << "-" << token;
-  }
+  }*/
   (*features)[ss.str()] = 1;
 }
 

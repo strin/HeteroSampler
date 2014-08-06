@@ -13,6 +13,17 @@ ModelSimple::ModelSimple(const Corpus* corpus, int windowL, int T, int B, int Q,
   xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
 }
 
+void ModelSimple::sample(Tag& tag, int time) {
+  for(int t = 0; t < time; t++) {
+    for(size_t i = 0; i < tag.size(); i++) {
+      auto featExtract = [&] (const Tag& tag) -> FeaturePointer {
+			    return this->extractFeatures(tag, i); 
+			  };
+      tag.proposeGibbs(i, featExtract, false, false);
+    }
+  }
+}
+
 TagVector ModelSimple::sample(const Sentence& seq) {
   TagVector vec;
   gradient(seq, &vec, false);

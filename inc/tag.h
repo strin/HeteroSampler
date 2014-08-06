@@ -80,6 +80,14 @@ public:
   std::string str(); 
 };
 
-typedef std::vector<std::shared_ptr<Tag> > TagVector;
+typedef std::shared_ptr<Tag> TagPtr;
+typedef std::vector<TagPtr> TagVector;
+inline static TagPtr makeTagPtr(const Tag& tag) {
+  return std::shared_ptr<Tag>(new Tag(tag)); 
+}
+inline static TagPtr makeTagPtr(const Sentence* seq, const Corpus* corpus, objcokus* rng, ParamPointer param) {
+  return std::shared_ptr<Tag>(new Tag(seq, corpus, rng, param));
+}
+
 
 #endif

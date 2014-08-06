@@ -25,6 +25,8 @@ int main(int argc, char* argv[]) {
       ("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
       ("train", po::value<string>(), "training data")
       ("test", po::value<string>(), "test data")
+      ("name", po::value<string>()->default_value("name"), "name of the run")
+      ("numThreads", po::value<int>()->default_value(10), "number of threads to use")
   ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -46,6 +48,16 @@ int main(int argc, char* argv[]) {
       shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm["windowL"].as<int>()));
       ifstream file; 
       file.open("model/gibbs.model", ifstream::in);
+      if(!file.is_open()) 
+	throw "gibbs model not found.";
+      file >> *model;
+      file.close();
+      Stop stop(model, vm); 
+      stop.run(*model->corpus);
+    }else if(vm["inference"].as<string>() == "Simple") {
+      shared_ptr<Model> model = shared_ptr<ModelSimple>(new ModelSimple(&corpus, vm["windowL"].as<int>()));
+      ifstream file; 
+      file.open("model/simple.model", ifstream::in);
       if(!file.is_open()) 
 	throw "gibbs model not found.";
       file >> *model;

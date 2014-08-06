@@ -14,6 +14,7 @@
 #include <sstream>
 #include <fstream>
 #include "log.h"
+#include "stdlib.h"
 #include "objcokus.h"
 
 inline static double logisticFunc(double z) {

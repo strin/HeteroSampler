@@ -21,10 +21,10 @@ public:
   void waitFinish();
   std::function<void(int, const T&)> worker;
 
+  std::vector<objcokus> rngs;
 private:
   void initThreads(size_t num_threads);
   std::vector<std::shared_ptr<std::thread> > th;
-  std::vector<objcokus> rngs;
   std::list<T> th_work;
   size_t active_work;
   std::mutex th_mutex;
@@ -82,7 +82,6 @@ template<class T>
 void ThreadPool<T>::waitFinish() {
   std::unique_lock<std::mutex> lock(th_mutex);
   while(true) {
-    std::cout << active_work + th_work.size() << std::endl;
     if(active_work + th_work.size() == 0) break;
     th_finished.wait(lock);
   }

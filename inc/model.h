@@ -68,6 +68,7 @@ public:
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq); 
+  void sample(Tag& tag, int time);
   FeaturePointer extractFeatures(const Tag& tag, int pos);
 
 protected:

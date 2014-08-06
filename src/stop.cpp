@@ -12,6 +12,7 @@ Stop::Stop(ModelPtr model, const po::variables_map& vm)
 		      }),
   stop_data(makeStopDataset()), param(makeParamPointer()), 
   G2(makeParamPointer()), eta(eta) {
+  system(("mkdir "+name).c_str());
   rng.seedMT(time(0));
   // init const environment.
   wordent = model->tagEntropySimple();
@@ -22,8 +23,8 @@ Stop::Stop(ModelPtr model, const po::variables_map& vm)
 }
 
 StopDatasetPtr Stop::explore(const Sentence& seq) {    
-  Tag tag(&seq, model->corpus, &rng, param);
   MarkovTree tree;
+  tree.root->tag = makeTagPtr(&seq, model->corpus, &rng, param);
   thread_pool.addWork(tree.root);
   thread_pool.waitFinish();
   return tree.generateStopDataset(tree.root, 0);
@@ -31,6 +32,7 @@ StopDatasetPtr Stop::explore(const Sentence& seq) {
 
 void Stop::sample(int tid, MarkovTreeNodePtr node) {
   while(true) {
+    node->tag->rng = &thread_pool.rngs[tid];
     model->sample(*node->tag, 1);
     node->stop_feat = extractStopFeatures(node);
     node->log_weight = this->score(node);
@@ -124,10 +126,12 @@ void Stop::run(const Corpus& corpus) {
   Corpus retagged(corpus);
   retagged.retag(corpus); // use training taggs. 
   StopDatasetPtr stop_data = makeStopDataset();
-  for(const Sentence& seq : corpus.seqs) {
+  int count = 0;
+  for(const Sentence& seq : corpus.seqs) { 
+    cout << "count: " << count++ << endl;
     mergeStopDataset(stop_data, this->explore(seq)); 
   }
-  stop_data_log = shared_ptr<XMLlog>(new XMLlog("stopdata.xml"));
+  stop_data_log = shared_ptr<XMLlog>(new XMLlog(name+"/stopdata.xml"));
   logStopDataset(stop_data, *this->stop_data_log);
   stop_data_log->end(); 
   // train logistic regression. 

@@ -92,15 +92,6 @@ StopDatasetPtr MarkovTree::generateStopDataset(MarkovTreeNodePtr node, int mode)
       reward = logAdd(reward, aggregateReward(child, weight, max_level));
     }
     reward = reward-log(node->children.size());
-    if(isnan(reward)) {
-      cout << "reward nan " << endl;
-      reward = -DBL_MAX;
-      for(MarkovTreeNodePtr child : node->children) { 
-	double weight = logSumPriorWeights(child, max_level);
-	reward = logAdd(reward, aggregateReward(child, weight, max_level));
-      }
-      reward = reward-log(node->children.size());
-    }
     return reward;
   };
   TagVector child_vec, grandson_vec;

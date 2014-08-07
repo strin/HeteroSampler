@@ -25,8 +25,8 @@ int main(int argc, char* argv[]) {
       ("c", po::value<double>()->default_value(0.1), "extent of time regularization")
       ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
       ("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
-      ("train", po::value<string>(), "training data")
-      ("test", po::value<string>(), "test data")
+      ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
+      ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
       ("adaptive", po::value<bool>()->default_value(true), "use adaptive inference (stop) ? default: yes.")
       ("name", po::value<string>()->default_value("default"), "name of the run")
       ("numThreads", po::value<int>()->default_value(10), "number of threads to use")
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
   Corpus::Mode mode = Corpus::MODE_POS;
   if(vm["mode"].as<string>() == "NER")
     mode = Corpus::MODE_NER;
-  string train = "data/eng_ner/train", test = "data/eng_ner/test";
+  string train = vm["train"].as<string>(), test = vm["test"].as<string>();
   Corpus corpus(mode);
   corpus.read(train);
   Corpus testCorpus(mode);

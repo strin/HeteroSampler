@@ -13,8 +13,8 @@ if len(sys.argv[1]) < 2:
 if sys.argv[1] == "toy":
   for c in c_l:
     cmd = '''./stop --inference Gibbs --T 5 --K 3 --B 0 --eta 0.01 \
- --c %f --name gibbs_c%f --numThreads 3 --trainCount 100 \
---testCount 100''' % (c, c)
+ --c %f --name gibbs_c%f --numThreads 3 --trainCount 1000 \
+--testCount 1000''' % (c, c)
     print cmd
     os.system(cmd)  
     stop = StopResult('gibbs_c%f' % c)
@@ -22,7 +22,7 @@ if sys.argv[1] == "toy":
 elif sys.argv[1] == "toy0":
   for T in T_l:
     cmd = '''./stop --inference Gibbs --T %d --name gibbs0_T%d --numThreads 3 \
-    --trainCount 100 --testCount 100 --adaptive false''' % (T, T)
+    --trainCount 1000 --testCount 1000 --adaptive false''' % (T, T)
     print cmd
     os.system(cmd)  
     stop = StopResult('gibbs0_T%d' % T)

@@ -55,12 +55,12 @@ void ThreadPool<T>::initThreads(size_t num_threads) {
 	if(th_work.size() > 0) {
 	  T work = th_work.front();
 	  th_work.pop_front();
-	  active_work++;
+	  active_work = active_work+1;
 	  lock.unlock();
 	  th_stream[tid]->str("");
 	  worker(tid,  work);
 	  lock.lock();
-	  active_work--;
+	  active_work = active_work-1;
 	  th_finished.notify_all();
 	}else{
 	  th_cv.wait(lock);	

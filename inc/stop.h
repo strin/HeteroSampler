@@ -52,7 +52,7 @@ private:
   ModelPtr model;
   objcokus rng;
   size_t T, B, K;
-  double eta, c;
+  double eta, c, Tstar;
   std::string name;
   StopDatasetPtr stop_data;
   std::shared_ptr<XMLlog> stop_data_log;

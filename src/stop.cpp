@@ -19,7 +19,8 @@ G2(makeParamPointer()), eta(vm["eta"].as<double>()),
 c(vm["c"].as<double>()), train_count(vm["trainCount"].as<size_t>()),
 test_count(vm["testCount"].as<size_t>()),
 lets_adaptive(vm["adaptive"].as<bool>()), 
-iter(vm["iter"].as<size_t>()) {
+iter(vm["iter"].as<size_t>()),
+Tstar(vm["T*"].as<double>()){
   system(("mkdir "+name).c_str());
   lg = shared_ptr<XMLlog>(new XMLlog(name+"/stop.xml"));
   lg->begin("args");
@@ -194,6 +195,7 @@ void Stop::run(const Corpus& corpus) {
     mergeStopDataset(stop_data, this->explore(seq)); 
     count++;
   }
+  double N = (double)get<0>(*stop_data).size();
   // remove mean.
   StopDatasetKeyContainer::iterator key_iter;
   StopDatasetValueContainer::iterator R_iter;
@@ -203,7 +205,7 @@ void Stop::run(const Corpus& corpus) {
   for(key_iter = get<0>(*stop_data).begin(); key_iter != get<0>(*stop_data).end(); key_iter++) {
     mapUpdate(*mean_feat, **key_iter); 
   }
-  mapDivide(*mean_feat, (double)get<0>(*stop_data).size());
+  mapDivide(*mean_feat, N);
   (*mean_feat)["bias-stop"] = 0;  // do not substract mean.
   for(key_iter = get<0>(*stop_data).begin(); key_iter != get<0>(*stop_data).end(); key_iter++) {
     mapUpdate(**key_iter, *mean_feat, -1); 
@@ -215,7 +217,7 @@ void Stop::run(const Corpus& corpus) {
     }
   }
   for(const pair<string, double>& p : *std_feat) {
-    (*std_feat)[p.first] = sqrt(p.second/(double)((double)get<0>(*stop_data).size()));
+    (*std_feat)[p.first] = sqrt(p.second/(N-1));
   }
   (*std_feat)["bias-stop"] = 1.0;
   for(key_iter = get<0>(*stop_data).begin(); key_iter != get<0>(*stop_data).end(); key_iter++) {
@@ -223,9 +225,12 @@ void Stop::run(const Corpus& corpus) {
       (**key_iter)[p.first] /= (*std_feat)[p.first];
     }
   }
+  (*param)["bias-stop"] = -log(Tstar - 1);
   for(size_t it = 0; it < iter; it++) {
     count = 0;
     double sc = 0;
+    double nob_sum = -DBL_MAX;
+    double aveT = 0.0;
     for(key_iter = get<0>(*stop_data).begin(), R_iter = get<1>(*stop_data).begin(),
 	epR_iter = get<2>(*stop_data).begin(), seq_iter = get<3>(*stop_data).begin();
 	key_iter != get<0>(*stop_data).end() && R_iter != get<1>(*stop_data).end() 
@@ -235,6 +240,14 @@ void Stop::run(const Corpus& corpus) {
       lg->begin("example_"+to_string(count));
       *lg << **key_iter << endl;
       double resp = logisticFunc(::score(param, *key_iter));
+      cout << "logit " << resp << endl;
+      aveT += 1/resp/N;
+
+      (**key_iter)["bias-stop"] = 0;
+      double resp_nob = logisticFunc(::score(param, *key_iter));
+      (**key_iter)["bias-stop"] = 1;
+      nob_sum = logAdd(nob_sum, -resp_nob);
+
       double R_max = max(*R_iter, *epR_iter);
       // double sc = log(resp * exp(*R_iter - R_max) + (1 - resp) * exp(*epR_iter - R_max)) + R_max;
       sc += resp * (*R_iter) + (1 - resp) * (*epR_iter);
@@ -244,6 +257,7 @@ void Stop::run(const Corpus& corpus) {
       *lg << "score: " << sc << endl;
       // mapUpdate<double, double>(*gradient, **key_iter, resp * (1 - resp) * (exp(*R_iter - R_max) - exp(*epR_iter - R_max)) / (exp(sc - R_max)));
       ParamPointer gradient = makeParamPointer();
+      (*gradient)["bias-stop"] = 0.0;
       mapUpdate<double, double>(*gradient, **key_iter, resp * (1 - resp) * (*R_iter - *epR_iter));
       for(const pair<string, double>& p : *gradient) {
 	mapUpdate(*G2, p.first, p.second * p.second);
@@ -252,8 +266,8 @@ void Stop::run(const Corpus& corpus) {
       lg->end();
       count++;
     }
-    cout << "score = " << sc << endl;
-    
+    (*param)["bias-stop"] = -log(N * (Tstar - 1)) + nob_sum; 
+    cout << "score = " << sc << " , " << aveT << endl;
     /*for(const pair<string, double>& p : *gradient) {
       mapUpdate(*param, p.first, eta * p.second);
     }*/

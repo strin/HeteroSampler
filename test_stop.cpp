@@ -18,6 +18,7 @@ int main(int argc, char* argv[]) {
       ("inference", po::value<string>()->default_value("Gibbs"), "inference method (Gibbs)")
       ("eta", po::value<double>()->default_value(1), "step size")
       ("T", po::value<int>()->default_value(10), "number of transitions")
+      ("T*", po::value<double>()->default_value(1.5), "computational resource constraint")
       ("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
       ("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
       ("B", po::value<int>()->default_value(3), "number of burnin steps")

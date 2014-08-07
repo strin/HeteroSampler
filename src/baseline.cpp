@@ -147,7 +147,7 @@ void ModelCRFGibbs::sampleOneSweep(Tag& tag) {
   for(int i = 0; i < tag.tag.size(); i++) 
     tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
 			  return this->extractFeatures(tag, i); 
-			});
+			}, false, false);
 }
 
 ParamPointer ModelCRFGibbs::gradient(const Sentence& seq) {

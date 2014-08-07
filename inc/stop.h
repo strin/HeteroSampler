@@ -21,8 +21,11 @@ public:
   // explore example (Sentence). 
   StopDatasetPtr explore(const Sentence& seq);
 
-  // continue sample the Markov chain.
+  // sample the Markov chain, and gather reward information.
   void sample(int tid, MarkovTreeNodePtr node);
+
+  // sapmle test data using Markov chain with optimal stopping.
+  void sampleTest(int tid, MarkovTreeNodePtr node);
 
   // extract features for logistic regression.
   FeaturePointer extractStopFeatures(MarkovTreeNodePtr node);
@@ -32,7 +35,7 @@ public:
   void run(const Corpus& corpus);
 
   // test stop or not.
-  void test(const Corpus& testCorpus);
+  double test(const Corpus& testCorpus);
 
 private:
   // const environment. 
@@ -44,14 +47,14 @@ private:
   ModelPtr model;
   objcokus rng;
   size_t T, B, K;
-  double eta;
+  double eta, c;
   std::string name;
   StopDatasetPtr stop_data;
   std::shared_ptr<XMLlog> stop_data_log;
   ParamPointer param, G2;
 
   // parallel environment.
-  ThreadPool<MarkovTreeNodePtr> thread_pool;
+  ThreadPool<MarkovTreeNodePtr> thread_pool, test_thread_pool;
 };
 
 #endif

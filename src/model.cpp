@@ -169,11 +169,13 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
 }
 
 double Model::test(const Corpus& testCorpus, int time) {
+  Corpus retagged(testCorpus);
+  retagged.retag(*this->corpus);
   int pred_count = 0, truth_count = 0, hit_count = 0;
   xmllog.begin("test");
   int ex = 0;
   XMLlog lg("error.xml");
-  for(const Sentence& seq : testCorpus.seqs) {
+  for(const Sentence& seq : retagged.seqs) {
     shared_ptr<Tag> tag = shared_ptr<Tag>(new Tag(&seq, corpus, &rngs[0], param));
     this->sample(*tag, time);
     Tag truth(seq, corpus, &rngs[0], param);

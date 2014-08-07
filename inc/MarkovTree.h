@@ -23,6 +23,7 @@ public:
   std::vector<std::shared_ptr<MarkovTreeNode> > children;
   FeaturePointer stop_feat;            
   bool compute_stop;
+  double resp;             // response for stop or not prediction.
 };
 
 typedef std::shared_ptr<MarkovTreeNode> MarkovTreeNodePtr;

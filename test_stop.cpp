@@ -20,12 +20,12 @@ int main(int argc, char* argv[]) {
       ("T", po::value<int>()->default_value(10), "number of transitions")
       ("B", po::value<int>()->default_value(3), "number of burnin steps")
       ("K", po::value<int>()->default_value(10), "number of threads/particles")
-      ("c", po::value<double>(), "extent of time regularization")
+      ("c", po::value<double>()->default_value(0.1), "extent of time regularization")
       ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
       ("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
       ("train", po::value<string>(), "training data")
       ("test", po::value<string>(), "test data")
-      ("name", po::value<string>()->default_value("name"), "name of the run")
+      ("name", po::value<string>()->default_value("default"), "name of the run")
       ("numThreads", po::value<int>()->default_value(10), "number of threads to use")
   ;
   po::variables_map vm;
@@ -54,8 +54,9 @@ int main(int argc, char* argv[]) {
       file.close();
       Stop stop(model, vm); 
       stop.run(*model->corpus);
+      stop.test(testCorpus);
     }else if(vm["inference"].as<string>() == "Simple") {
-      shared_ptr<Model> model = shared_ptr<ModelSimple>(new ModelSimple(&corpus, vm["windowL"].as<int>()));
+      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm["windowL"].as<int>()));
       ifstream file; 
       file.open("model/simple.model", ifstream::in);
       if(!file.is_open()) 
@@ -64,6 +65,7 @@ int main(int argc, char* argv[]) {
       file.close();
       Stop stop(model, vm); 
       stop.run(*model->corpus);
+      stop.test(testCorpus);
     }
   }catch(char const* ee) {
     cout << "error: " << ee << endl;

@@ -6,18 +6,27 @@ using namespace std;
 Stop::Stop(ModelPtr model, const po::variables_map& vm) 
 :model(model), T(vm["T"].as<int>()), B(vm["B"].as<int>()), 
  K(vm["K"].as<int>()), name(vm["name"].as<string>()), 
-	thread_pool(vm["numThreads"].as<int>(), 
-		      [&] (int tid, MarkovTreeNodePtr node) {
-			this->sample(tid, node);
-		      }),
-	test_thread_pool(vm["numThreads"].as<int>(), 
-		      [&] (int tid, MarkovTreeNodePtr node) {
-			this->sampleTest(tid, node);
-		      }), 
-  stop_data(makeStopDataset()), param(makeParamPointer()), 
-  G2(makeParamPointer()), eta(vm["eta"].as<double>()),
-  c(vm["c"].as<double>()) {
+      thread_pool(vm["numThreads"].as<int>(), 
+		    [&] (int tid, MarkovTreeNodePtr node) {
+		      this->sample(tid, node);
+		    }),
+      test_thread_pool(vm["numThreads"].as<int>(), 
+		    [&] (int tid, MarkovTreeNodePtr node) {
+		      this->sampleTest(tid, node);
+		    }), 
+stop_data(makeStopDataset()), param(makeParamPointer()), 
+G2(makeParamPointer()), eta(vm["eta"].as<double>()),
+c(vm["c"].as<double>()), train_count(vm["trainCount"].as<size_t>()),
+test_count(vm["testCount"].as<size_t>()),
+lets_adaptive(vm["adaptive"].as<bool>()) {
   system(("mkdir "+name).c_str());
+  lg = shared_ptr<XMLlog>(new XMLlog(name+"/stop.xml"));
+  lg->begin("args");
+  lg->begin("c"); *lg << c << endl; lg->end();
+  lg->begin("T"); *lg << T << endl; lg->end();
+  lg->begin("B"); *lg << B << endl; lg->end();
+  lg->begin("K"); *lg << K << endl; lg->end();
+  lg->end();
   rng.seedMT(time(0));
   // init const environment.
   wordent = model->tagEntropySimple();
@@ -25,6 +34,11 @@ Stop::Stop(ModelPtr model, const po::variables_map& vm)
   auto tag_bigram_unigram = model->tagBigram();
   tag_bigram = tag_bigram_unigram.first;
   tag_unigram_start = tag_bigram_unigram.second;
+}
+
+Stop::~Stop() {
+  while(lg->depth() > 0)
+    lg->end();
 }
 
 StopDatasetPtr Stop::explore(const Sentence& seq) {    
@@ -66,8 +80,8 @@ void Stop::sampleTest(int tid, MarkovTreeNodePtr node) {
     model->sample(*node->tag, 1);
     node->stop_feat = extractStopFeatures(node);
     node->resp = logisticFunc(::score(param, node->stop_feat));
-    if(node->depth == T || 
-      test_thread_pool.rngs[tid].random01() < node->resp) { // stop.
+    if(node->depth == T || (lets_adaptive &&  
+      test_thread_pool.rngs[tid].random01() < node->resp)) { // stop.
       return;
     }else{
       node->children.push_back(makeMarkovTreeNode(node, *node->tag));
@@ -135,7 +149,7 @@ FeaturePointer Stop::extractStopFeatures(MarkovTreeNodePtr node) {
     p = pf;
   }
   if(l > 0) dist /= l;
-  (*feat)["len-sample-path"] = dist;
+  //(*feat)["len-sample-path"] = dist;
   // log probability of current sample in terms of marginal training stats.
   double logprob = tag_unigram_start[tag.tag[0]];
   for(size_t t = 1; t < seqlen; t++) 
@@ -145,15 +159,17 @@ FeaturePointer Stop::extractStopFeatures(MarkovTreeNodePtr node) {
 }
 
 void Stop::run(const Corpus& corpus) {
+  if(!lets_adaptive) return;
   cout << "> run " << endl;
   // aggregate dataset.
   Corpus retagged(corpus);
   retagged.retag(*model->corpus); // use training taggs. 
   StopDatasetPtr stop_data = makeStopDataset();
   int count = 0;
-  model->xmllog.begin("train");
+  lg->begin("train");
+  lg->begin("example");
   for(const Sentence& seq : corpus.seqs) { 
-    cout << "count: " << count++ << endl;
+    if(count >= train_count) break; 
     StopDatasetPtr dataset = this->explore(seq);
     mergeStopDataset(stop_data, this->explore(seq)); 
     // train logistic regression. 
@@ -161,19 +177,20 @@ void Stop::run(const Corpus& corpus) {
     StopDatasetValueContainer::iterator R_iter;
     StopDatasetValueContainer::iterator epR_iter;
     StopDatasetSeqContainer::iterator seq_iter;
+    lg->begin("example_"+to_string(count));
     for(key_iter = std::get<0>(*dataset).begin(), R_iter = std::get<1>(*dataset).begin(),
 	epR_iter = std::get<2>(*dataset).begin(), seq_iter = std::get<3>(*dataset).begin();
 	key_iter != std::get<0>(*dataset).end() && R_iter != std::get<1>(*dataset).end() 
 	&& epR_iter != std::get<2>(*dataset).end() && seq_iter != std::get<3>(*dataset).end(); 
 	key_iter++, R_iter++, epR_iter++, seq_iter++) {
-      model->xmllog << **key_iter << endl;
+      *lg << **key_iter << endl;
       double resp = logisticFunc(::score(param, *key_iter));
       double R_max = max(*R_iter, *epR_iter);
       double sc = log(resp * exp(*R_iter - R_max) + (1 - resp) * exp(*epR_iter - R_max)) + R_max;
-      model->xmllog << "R: " << *R_iter << endl;
-      model->xmllog << "epR: " << *epR_iter << endl;
-      model->xmllog << "resp: " << ::score(param, *key_iter) << endl;
-      model->xmllog << "score: " << sc << endl;
+      *lg << "R: " << *R_iter << endl;
+      *lg << "epR: " << *epR_iter << endl;
+      *lg << "resp: " << ::score(param, *key_iter) << endl;
+      *lg << "score: " << sc << endl;
       ParamPointer gradient = makeParamPointer();
       mapUpdate<double, double>(*gradient, **key_iter, resp * (1 - resp) * (exp(*R_iter - R_max) - exp(*epR_iter - R_max)) / (exp(sc - R_max)));
 
@@ -182,8 +199,11 @@ void Stop::run(const Corpus& corpus) {
 	mapUpdate(*param, p.first, eta * p.second/sqrt(1e-4 + (*G2)[p.first]));
       }
     }
+    lg->end();
+    count++;
   }
-  model->xmllog.end();
+  lg->end(); //</example> 
+  lg->end(); //</train>
   stop_data_log = shared_ptr<XMLlog>(new XMLlog(name+"/stopdata.xml"));
   logStopDataset(stop_data, *this->stop_data_log);
   stop_data_log->end(); 
@@ -196,7 +216,10 @@ double Stop::test(const Corpus& testCorpus) {
   retagged.retag(*model->corpus); // use training taggs. 
   vector<MarkovTreeNodePtr> result;
   int count = 0;
+  lg->begin("test");
   for(const Sentence& seq : retagged.seqs) {
+    if(count >= test_count) 
+       break;
     MarkovTreeNodePtr node = makeMarkovTreeNode(nullptr);
     node->tag = makeTagPtr(&seq, model->corpus, &rng, model->param);
     test_thread_pool.addWork(node);
@@ -206,33 +229,35 @@ double Stop::test(const Corpus& testCorpus) {
   test_thread_pool.waitFinish();
   int hit_count = 0, pred_count = 0;
   count = 0;
-  XMLlog& lg = model->xmllog;
-  lg.begin("param");
-    lg << *param << endl;
-  lg.end();
+  lg->begin("param");
+    *lg << *param << endl;
+  lg->end();
+  lg->begin("example");
   for(MarkovTreeNodePtr node : result) {
     while(node->children.size() > 0) node = node->children[0];
-    lg.begin("example_"+to_string(count));
-      lg.begin("time"); lg << node->depth+1 << endl; lg.end();
-      lg.begin("truth"); lg << node->tag->seq->str() << endl; lg.end();
-      lg.begin("tag"); lg << node->tag->str() << endl; lg.end();
-      lg.begin("resp"); lg << node->resp << endl; lg.end();
-      lg.begin("feat"); lg << *node->stop_feat << endl; lg.end();
+    lg->begin("example_"+to_string(count));
+      lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
+      lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
+      lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
+      lg->begin("resp"); *lg << node->resp << endl; lg->end();
+      lg->begin("feat"); *lg << *node->stop_feat << endl; lg->end();
       int hits = 0;
       for(size_t i = 0; i < node->tag->size(); i++) {
 	if(node->tag->tag[i] == node->tag->seq->tag[i]) {
 	  hits++;
 	}
       }
-      lg.begin("dist"); lg << node->tag->size()-hits << endl; lg.end();
+      lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
       hit_count += hits;
       pred_count += node->tag->size();
-      count++;
-    lg.end();
+    lg->end();
+    count++;
   }
+  lg->end(); //</example>
   double acc = (double)hit_count/pred_count;
-  lg.begin("accuracy");
-    lg << acc << endl;
-  lg.end();
+  lg->begin("accuracy");
+    *lg << acc << endl;
+  lg->end();
+  lg->end(); // </test>
   return acc;
 }

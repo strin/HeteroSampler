@@ -17,6 +17,7 @@ public:
   // B    : the number of first steps used to generate StopDataset.
   // T    : the overall number of steps. 
   Stop(ModelPtr model, const boost::program_options::variables_map& vm);
+  ~Stop();
 
   // explore example (Sentence). 
   StopDatasetPtr explore(const Sentence& seq);
@@ -42,6 +43,9 @@ private:
   FeaturePointer wordent, wordfreq;
   Vector2d tag_bigram;
   std::vector<double> tag_unigram_start;
+  size_t train_count, test_count;
+  std::shared_ptr<XMLlog> lg;
+  const bool lets_adaptive;
 
   // global environment.
   ModelPtr model;

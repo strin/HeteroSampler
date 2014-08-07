@@ -18,6 +18,8 @@ int main(int argc, char* argv[]) {
       ("inference", po::value<string>()->default_value("Gibbs"), "inference method (Gibbs)")
       ("eta", po::value<double>()->default_value(1), "step size")
       ("T", po::value<int>()->default_value(10), "number of transitions")
+      ("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
+      ("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
       ("B", po::value<int>()->default_value(3), "number of burnin steps")
       ("K", po::value<int>()->default_value(10), "number of threads/particles")
       ("c", po::value<double>()->default_value(0.1), "extent of time regularization")
@@ -25,6 +27,7 @@ int main(int argc, char* argv[]) {
       ("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
       ("train", po::value<string>(), "training data")
       ("test", po::value<string>(), "test data")
+      ("adaptive", po::value<bool>()->default_value(true), "use adaptive inference (stop) ? default: yes.")
       ("name", po::value<string>()->default_value("default"), "name of the run")
       ("numThreads", po::value<int>()->default_value(10), "number of threads to use")
   ;

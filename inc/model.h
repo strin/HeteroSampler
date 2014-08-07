@@ -36,6 +36,7 @@ public:
   FeaturePointer wordFrequencies() const;
   std::pair<Vector2d, std::vector<double> > tagBigram() const;
   static StringVector NLPfunc(const std::string word);
+  virtual double score(const Tag& tag);
 
   /* parameters */
   int T, B, Q, Q0;
@@ -86,7 +87,7 @@ public:
   void addBigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   FeaturePointer extractFeatures(const Tag& tag, int pos);
   FeaturePointer extractFeatures(const Tag& tag);
-
+  double score(const Tag& tag);
 private:
   void sampleOneSweep(Tag& tag);
 };

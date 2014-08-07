@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
       ("adaptive", po::value<bool>()->default_value(true), "use adaptive inference (stop) ? default: yes.")
       ("name", po::value<string>()->default_value("default"), "name of the run")
       ("numThreads", po::value<int>()->default_value(10), "number of threads to use")
+      ("iter", po::value<size_t>()->default_value(2), "number of iterations for gradient")
   ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -56,7 +57,7 @@ int main(int argc, char* argv[]) {
       file >> *model;
       file.close();
       Stop stop(model, vm); 
-      stop.run(*model->corpus);
+      stop.run(corpus);
       stop.test(testCorpus);
     }else if(vm["inference"].as<string>() == "Simple") {
       shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm["windowL"].as<int>()));
@@ -67,7 +68,7 @@ int main(int argc, char* argv[]) {
       file >> *model;
       file.close();
       Stop stop(model, vm); 
-      stop.run(*model->corpus);
+      stop.run(corpus);
       stop.test(testCorpus);
     }
   }catch(char const* ee) {

@@ -30,6 +30,10 @@ class StopResult:
         if attr.tag == 'dist' or attr.tag == 'time' \
           or attr.tag == 'resp':
           ex[attr.tag] = float(attr.text)
+        elif attr.tag == 'feat':
+          ex['feat'] = dict()
+          for entry in attr:
+            ex['feat'][entry.attrib['name']] = float(entry.attrib['value'])
         else:
           ex[attr.tag] = attr.text
       me.testex.append(ex)
@@ -38,8 +42,18 @@ class StopResult:
     time = list()
     for ex in me.testex:
       ex_len = len(ex['truth'].split('\t'))-1
-      time.append(ex['time'] * ex_len)
+      # time.append(ex['time'] * ex_len)
+      time.append(ex['time'])
+    # print time
     return np.mean(time)
+
+  def ave_feat(me):
+    keys = me.testex[0]['feat'].keys()
+    values = list()
+    for ex in me.testex:
+      values.append(ex['feat'].values())
+    return zip(keys, np.mean(values, 0))
+      
 
   def plot_param(me):
     plt.figure(num=None, figsize=(15, 6), dpi=80, facecolor='w', edgecolor='k')
@@ -54,8 +68,33 @@ class StopResult:
     plt.title('parameters')  
     plt.show()
 
+  # compare with you, see if you improve my inference.
+  def compare(me, you):
+    if len(me.testex) != len(you.testex): 
+      return None
+    hit = 0
+    allpred = 0
+    for (ex, ey) in zip(me.testex, you.testex):
+      ex_len = len(ex['truth'].split('\t'))-1
+      allpred += ex_len
+      if ex['dist'] <= ey['dist']: # inference not improved.
+        hit += ex_len-ex['dist']
+        print ex['truth']
+        print ex['tag']
+        print
+      else:
+        hit += ex_len-ey['dist']
+    return hit/float(allpred) 
+
 if __name__ == '__main__':
   name = sys.argv[1]
-  stop = StopResult(name)
-  print stop.ave_time()
-  stop.plot_param()
+  if name == '__compare__':
+    stop0 = StopResult('gibbs0_T0')
+    stop1 = StopResult('gibbs0_T1')
+    acc = stop0.compare(stop1)
+    print 'acc = ', acc
+  else:
+    stop = StopResult(name)
+    print stop.ave_time()
+    print stop.ave_feat()
+    stop.plot_param()

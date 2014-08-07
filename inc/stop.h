@@ -46,6 +46,7 @@ private:
   size_t train_count, test_count;
   std::shared_ptr<XMLlog> lg;
   const bool lets_adaptive;
+  const size_t iter;
 
   // global environment.
   ModelPtr model;
@@ -56,6 +57,7 @@ private:
   StopDatasetPtr stop_data;
   std::shared_ptr<XMLlog> stop_data_log;
   ParamPointer param, G2;
+  FeaturePointer mean_feat, std_feat;
 
   // parallel environment.
   ThreadPool<MarkovTreeNodePtr> thread_pool, test_thread_pool;

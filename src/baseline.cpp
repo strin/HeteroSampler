@@ -91,6 +91,11 @@ TagVector ModelCRFGibbs::sample(const Sentence& seq) {
   return vec;
 }
 
+double ModelCRFGibbs::score(const Tag& tag) {
+  FeaturePointer feat = this->extractFeatures(tag);
+  return ::score(this->param, feat);
+}
+
 void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features) {
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();

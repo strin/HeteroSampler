@@ -268,6 +268,10 @@ void Model::sample(Tag& tag, int time) {
   tag = *this->sample(*tag.seq).back();
 }
 
+double Model::score(const Tag& tag) {
+  return 0;
+}
+
 void Model::adagrad(ParamPointer gradient) {
   for(const pair<string, double>& p : *gradient) {
     mapUpdate(*G2, p.first, p.second * p.second);

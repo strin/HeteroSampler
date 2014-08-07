@@ -18,7 +18,8 @@ stop_data(makeStopDataset()), param(makeParamPointer()),
 G2(makeParamPointer()), eta(vm["eta"].as<double>()),
 c(vm["c"].as<double>()), train_count(vm["trainCount"].as<size_t>()),
 test_count(vm["testCount"].as<size_t>()),
-lets_adaptive(vm["adaptive"].as<bool>()) {
+lets_adaptive(vm["adaptive"].as<bool>()), 
+iter(vm["iter"].as<size_t>()) {
   system(("mkdir "+name).c_str());
   lg = shared_ptr<XMLlog>(new XMLlog(name+"/stop.xml"));
   lg->begin("args");
@@ -79,6 +80,10 @@ void Stop::sampleTest(int tid, MarkovTreeNodePtr node) {
     node->tag->rng = &test_thread_pool.rngs[tid];
     model->sample(*node->tag, 1);
     node->stop_feat = extractStopFeatures(node);
+    mapUpdate(*node->stop_feat, *mean_feat, -1);
+    for(const pair<string, double>& p : *node->stop_feat) {
+      (*node->stop_feat)[p.first] /= (*std_feat)[p.first];
+    }
     node->resp = logisticFunc(::score(param, node->stop_feat));
     if(node->depth == T || (lets_adaptive &&  
       test_thread_pool.rngs[tid].random01() < node->resp)) { // stop.
@@ -91,12 +96,15 @@ void Stop::sampleTest(int tid, MarkovTreeNodePtr node) {
 }
 
 double Stop::score(shared_ptr<MarkovTreeNode> node) {
+  // strategy 1. using distance w.r.t target.
   Tag& tag = *node->tag;
   const Sentence* seq = tag.seq;
   double score = 0.0;
   for(int i = 0; i < tag.size(); i++) {
     score -= (tag.tag[i] != seq->tag[i]);
   }
+  // strategy 2. use log-score.
+  //double score = model->score(*node->tag);
   return score;
 }
 
@@ -107,10 +115,22 @@ FeaturePointer Stop::extractStopFeatures(MarkovTreeNodePtr node) {
   size_t seqlen = tag.size();
   size_t taglen = model->corpus->tags.size();
   // feat: bias.
-  (*feat)["bias-stopornot"] = 1.0;
+  (*feat)["bias-stop"] = 1.0; 
+  // feat: # special symbols. (like CD , ;)
+  size_t num_cd = 0, num_sym = 0;
+  for(size_t t = 0; t < seqlen; t++) {
+    string tg_str = model->corpus->invtags.find(tag.tag[t])->second;
+    if(tg_str == "CD") 
+      num_cd++;
+    if(tg_str == ";" || tg_str == "." || tg_str == "," || tg_str == ":"
+      || tg_str == "\"") 
+      num_sym++;
+  }
+  (*feat)["per-cd"] = num_cd/(double)seqlen;
+  (*feat)["per-sym"] = num_sym/(double)seqlen;
   // feat: word len.
-  (*feat)["len-stopornot"] = (double)seqlen; 
-  (*feat)["len-inv-stopornot"] = 1/(double)seqlen;
+  (*feat)["len-stop"] = (double)seqlen; 
+  (*feat)["len-inv-stop"] = 1/(double)seqlen;
   // feat: entropy and frequency.
   double max_ent = -DBL_MAX, ave_ent = 0.0;
   double max_freq = -DBL_MAX, ave_freq = 0.0;
@@ -172,35 +192,71 @@ void Stop::run(const Corpus& corpus) {
     if(count >= train_count) break; 
     StopDatasetPtr dataset = this->explore(seq);
     mergeStopDataset(stop_data, this->explore(seq)); 
-    // train logistic regression. 
-    StopDatasetKeyContainer::iterator key_iter;
-    StopDatasetValueContainer::iterator R_iter;
-    StopDatasetValueContainer::iterator epR_iter;
-    StopDatasetSeqContainer::iterator seq_iter;
-    lg->begin("example_"+to_string(count));
-    for(key_iter = std::get<0>(*dataset).begin(), R_iter = std::get<1>(*dataset).begin(),
-	epR_iter = std::get<2>(*dataset).begin(), seq_iter = std::get<3>(*dataset).begin();
-	key_iter != std::get<0>(*dataset).end() && R_iter != std::get<1>(*dataset).end() 
-	&& epR_iter != std::get<2>(*dataset).end() && seq_iter != std::get<3>(*dataset).end(); 
+    count++;
+  }
+  // remove mean.
+  StopDatasetKeyContainer::iterator key_iter;
+  StopDatasetValueContainer::iterator R_iter;
+  StopDatasetValueContainer::iterator epR_iter;
+  StopDatasetSeqContainer::iterator seq_iter;
+  mean_feat = makeFeaturePointer();
+  for(key_iter = get<0>(*stop_data).begin(); key_iter != get<0>(*stop_data).end(); key_iter++) {
+    mapUpdate(*mean_feat, **key_iter); 
+  }
+  mapDivide(*mean_feat, (double)get<0>(*stop_data).size());
+  (*mean_feat)["bias-stop"] = 0;  // do not substract mean.
+  for(key_iter = get<0>(*stop_data).begin(); key_iter != get<0>(*stop_data).end(); key_iter++) {
+    mapUpdate(**key_iter, *mean_feat, -1); 
+  }
+  std_feat = makeFeaturePointer();
+  for(key_iter = get<0>(*stop_data).begin(); key_iter != get<0>(*stop_data).end(); key_iter++) {
+    for(const pair<string, double>& p : **key_iter) {
+      mapUpdate(*std_feat, p.first, p.second * p.second);
+    }
+  }
+  for(const pair<string, double>& p : *std_feat) {
+    (*std_feat)[p.first] = sqrt(p.second/(double)((double)get<0>(*stop_data).size()));
+  }
+  (*std_feat)["bias-stop"] = 1.0;
+  for(key_iter = get<0>(*stop_data).begin(); key_iter != get<0>(*stop_data).end(); key_iter++) {
+    for(const pair<string, double>& p : **key_iter) {
+      (**key_iter)[p.first] /= (*std_feat)[p.first];
+    }
+  }
+  for(size_t it = 0; it < iter; it++) {
+    count = 0;
+    double sc = 0;
+    for(key_iter = get<0>(*stop_data).begin(), R_iter = get<1>(*stop_data).begin(),
+	epR_iter = get<2>(*stop_data).begin(), seq_iter = get<3>(*stop_data).begin();
+	key_iter != get<0>(*stop_data).end() && R_iter != get<1>(*stop_data).end() 
+	&& epR_iter != get<2>(*stop_data).end() && seq_iter != get<3>(*stop_data).end(); 
 	key_iter++, R_iter++, epR_iter++, seq_iter++) {
+      // train logistic regression. 
+      lg->begin("example_"+to_string(count));
       *lg << **key_iter << endl;
       double resp = logisticFunc(::score(param, *key_iter));
       double R_max = max(*R_iter, *epR_iter);
-      double sc = log(resp * exp(*R_iter - R_max) + (1 - resp) * exp(*epR_iter - R_max)) + R_max;
+      // double sc = log(resp * exp(*R_iter - R_max) + (1 - resp) * exp(*epR_iter - R_max)) + R_max;
+      sc += resp * (*R_iter) + (1 - resp) * (*epR_iter);
       *lg << "R: " << *R_iter << endl;
       *lg << "epR: " << *epR_iter << endl;
       *lg << "resp: " << ::score(param, *key_iter) << endl;
       *lg << "score: " << sc << endl;
+      // mapUpdate<double, double>(*gradient, **key_iter, resp * (1 - resp) * (exp(*R_iter - R_max) - exp(*epR_iter - R_max)) / (exp(sc - R_max)));
       ParamPointer gradient = makeParamPointer();
-      mapUpdate<double, double>(*gradient, **key_iter, resp * (1 - resp) * (exp(*R_iter - R_max) - exp(*epR_iter - R_max)) / (exp(sc - R_max)));
-
+      mapUpdate<double, double>(*gradient, **key_iter, resp * (1 - resp) * (*R_iter - *epR_iter));
       for(const pair<string, double>& p : *gradient) {
 	mapUpdate(*G2, p.first, p.second * p.second);
 	mapUpdate(*param, p.first, eta * p.second/sqrt(1e-4 + (*G2)[p.first]));
       }
+      lg->end();
+      count++;
     }
-    lg->end();
-    count++;
+    cout << "score = " << sc << endl;
+    
+    /*for(const pair<string, double>& p : *gradient) {
+      mapUpdate(*param, p.first, eta * p.second);
+    }*/
   }
   lg->end(); //</example> 
   lg->end(); //</train>

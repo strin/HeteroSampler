@@ -28,11 +28,11 @@ void Model::configStepsize(ParamPointer gradient, double new_eta) {
 
 /* use standard NLP functions of word */
 StringVector Model::NLPfunc(const string word) {
+  StringVector nlp = makeStringVector();
+  nlp->push_back(word);
   /* unordered_map<std::string, StringVector>::iterator it = word_feat.find(word);
   if(it != word_feat.end())
     return it->second; */
-  StringVector nlp = makeStringVector();
-  nlp->push_back(word);
   size_t wordlen = word.length();
   if(wordlen >= 1) {
     nlp->push_back("p1-"+word.substr(0, 1));
@@ -82,6 +82,7 @@ StringVector Model::NLPfunc(const string word) {
     nlp->push_back("CAP-");
   // word_feat[word] = nlp;
   return nlp;
+
 }
 
 FeaturePointer Model::tagEntropySimple() const {

@@ -88,15 +88,68 @@ class StopResult:
         #print ey['truth']
         #print ey['tag']
         #print
-    return hit/float(allpred) 
+    return (hit/float(allpred), html)
+
+  # compare with you, and visualize the result.
+  def viscomp(me, you):
+    if len(me.testex) != len(you.testex):
+      return None
+    head = "<style>"
+    head += '''td {
+      background-color: #FFFFFF;
+      transition: background-color 0.3s, padding-top 0.1s;
+      padding-top: 5px;
+    }
+    td:hover{
+      background-color: #EDD861;
+      padding-top: 0px;
+    }'''
+    head += '</style>'
+    body = ""
+    count = 0
+    for (ex, ey) in zip(me.testex, you.testex):
+      token_truth = ex['truth'].replace('\n', '').split('\t')
+      token0 = ex['tag'].replace('\n', '').split('\t')
+      token1 = ey['tag'].replace('\n', '').split('\t')
+      words = [token.split('/')[0] for token in token_truth if token != '']
+      true_tag = [token.split('/')[1] for token in token_truth if token != '']
+      tag0 = [token.split('/')[1] for token in token0 if token != ''] 
+      tag1 = [token.split('/')[1] for token in token1 if token != '']
+      
+      body += "<p><table><tr>"
+      body += '''<td style='background-color: #000000; color: #ffffff'>%d</td>''' % count
+      body += '''<td style='text-align: center; color: #9C9C9C; font-size: 14'><b style='font-size: 16'> Words</b> <br>
+      Truth <br> Pass 0 <br> Pass 1 </td>'''
+      for (w, t, t0, t1) in zip(words, true_tag, tag0, tag1):
+        c0 = '#000000'
+        c1 = '#000000'
+        if t0 == t and t1 != t:
+          c0 = '11B502'
+          c1 = 'ED2143'
+        elif t0 != t and t1 == t:
+          c0 = 'ED2143'
+          c1 = '11B502'
+        elif t0 != t and t1 != t:
+          c0 = c1 = 'ED2143'
+          
+        body += '''<td style='text-align: center; font-size: 14'> <b style='font-size: 16'> %s </b> <br>  
+        %s <br> <span style='color: %s'> %s </span> <br> <span style='color: %s'> %s 
+        </span> </td>''' % (w, t, c0, t0, c1, t1)
+      body += "</tr></table></p>"
+      count += 1
+    return '''<html>\n<head>\n%s</head>\n<body>\n%s</body>\n</html>''' % (head, body)
 
 if __name__ == '__main__':
   name = sys.argv[1]
   if name == '__compare__':
-    stop0 = StopResult('gibbs0_T0')
-    stop1 = StopResult('gibbs0_T1')
+    stop0 = StopResult('test_stop/gibbs0_T0')
+    stop1 = StopResult('test_stop/gibbs0_T1')
     acc = stop0.compare(stop1)
     print 'acc = ', acc
+  elif name == '__viscomp__':
+    stop0 = StopResult('test_stop/gibbs0_T0')
+    stop1 = StopResult('test_stop/gibbs0_T1')
+    print stop0.viscomp(stop1)
   else:
     stop = StopResult(name)
     print stop.ave_time()

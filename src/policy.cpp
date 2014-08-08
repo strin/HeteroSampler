@@ -68,18 +68,13 @@ double Policy::test(const Corpus& testCorpus) {
   for(MarkovTreeNodePtr node : result) {
     while(node->children.size() > 0) node = node->children[0]; // take final sample.
     lg->begin("example_"+to_string(count));
-      lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
-      lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
-      lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
-      int hits = 0;
-      for(size_t i = 0; i < node->tag->size(); i++) {
-	if(node->tag->tag[i] == node->tag->seq->tag[i]) {
-	  hits++;
-	}
+    this->logNode(node);
+    for(size_t i = 0; i < node->tag->size(); i++) {
+      if(node->tag->tag[i] == node->tag->seq->tag[i]) {
+	hit_count++;
       }
-      lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
-      hit_count += hits;
-      pred_count += node->tag->size();
+      pred_count++;
+    }
     lg->end(); // </example_i>
     count++;
   }
@@ -92,6 +87,58 @@ double Policy::test(const Corpus& testCorpus) {
   return acc;
 }
 
+FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
+  FeaturePointer feat = makeFeaturePointer();
+  Tag& tag = *node->tag;
+  const Sentence& seq = *tag.seq;
+  size_t seqlen = tag.size();
+  size_t taglen = model->corpus->tags.size();
+  string word = seq.seq[pos].word;
+  // feat: entropy and frequency.
+  if(wordent->find("ent") == wordent->end())
+    (*feat)["ent"] = log(taglen);
+  else
+    (*feat)["ent"] = (*wordent)[word];
+  if(wordfreq->find(word) == wordfreq->end())
+    (*feat)["freq"] = log(model->corpus->total_words);
+  else
+    (*feat)["freq"] = (*wordfreq)[word];
+  return feat;
+}
+
+void Policy::logNode(MarkovTreeNodePtr node) {
+  lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
+  lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
+  lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
+  int hits = 0;
+  for(size_t i = 0; i < node->tag->size(); i++) {
+    lg->begin("feat"); 
+    *lg << *this->extractFeatures(node, i);
+    lg->end(); // </feat>
+    if(node->tag->tag[i] == node->tag->seq->tag[i]) {
+      hits++;
+    }
+  }
+  lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
+}
+/////////////////////////////////////////////////////////////////////////////
+////// Gibbs Policy   ///////////////////////////////////////////
+
+GibbsPolicy::GibbsPolicy(ModelPtr model, const po::variables_map& vm)
+:Policy(model, vm),  
+ T(vm["T"].as<size_t>())
+{
+}
+
+int GibbsPolicy::policy(MarkovTreeNodePtr node) {
+  if(node->depth == 0) node->time_stamp = 0;
+  if(node->depth < T * node->tag->size()) {
+    node->time_stamp++;
+    return node->depth % node->tag->size();
+  }
+  return -1; // stop.
+}
+
 
 /////////////////////////////////////////////////////////////////////////////
 ////// Entropy Policy ///////////////////////////////////////////
@@ -100,7 +147,6 @@ EntropyPolicy::EntropyPolicy(ModelPtr model, const po::variables_map& vm)
  threshold(vm["threshold"].as<double>())
 {
 }
-
 
 int EntropyPolicy::policy(MarkovTreeNodePtr node) {
   if(node->depth == 0) node->time_stamp = 0;
@@ -112,8 +158,13 @@ int EntropyPolicy::policy(MarkovTreeNodePtr node) {
     size_t i = node->time_stamp;
     for(; i < 2 * node->tag->size(); i++) {
       size_t pos = i % node->tag->size();
-      const string& word = node->tag->seq->seq[pos].word;
-      if((*wordent)[word] > log(threshold)) {
+      const string& word = node->tag->seq->seq[pos].word;  
+      double ent = 0;
+      if(wordent->find(word) == wordent->end()) 
+	ent = log(model->corpus->tags.size());
+      else
+	ent = (*wordent)[word];
+      if(ent > log(threshold)) {
 	node->time_stamp = i+1;
 	return pos;
       }
@@ -122,3 +173,5 @@ int EntropyPolicy::policy(MarkovTreeNodePtr node) {
     return -1; // stop. 
   }
 }
+
+

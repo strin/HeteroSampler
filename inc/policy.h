@@ -28,6 +28,12 @@ public:
   // return = -1 : stop the markov chain.
   // o.w. return a natural number representing a choice.
   virtual int policy(MarkovTreeNodePtr node) = 0;
+
+  // extract features from node.
+  virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+
+  // log information about node.
+  virtual void logNode(MarkovTreeNodePtr node);
 protected:
   // const environment. 
   FeaturePointer wordent, wordfreq;
@@ -45,15 +51,32 @@ protected:
   ThreadPool<MarkovTreeNodePtr> test_thread_pool;    
 };
 
+
+// baseline policy of selecting Gibbs sampling kernels 
+// just based on Gibbs sweeping.
+class GibbsPolicy : public Policy {
+public:
+  GibbsPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
+
+  // policy: first make an entire pass over the sequence. 
+  //	     second/third pass only update words with entropy exceeding threshold.
+  int policy(MarkovTreeNodePtr node);
+
+
+private:
+  size_t T; // how many sweeps.
+};
+
 // baseline policy of selecting Gibbs sampling kernels 
 // just based on thresholding entropy of tags for words.
-class EntropyPolicy : public Policy {
+class EntropyPolicy : public Policy   {
 public:
   EntropyPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
 
   // policy: first make an entire pass over the sequence. 
   //	     second/third pass only update words with entropy exceeding threshold.
   int policy(MarkovTreeNodePtr node);
+
 
 private:
   double threshold;   // entropy threshold = log(threshold).

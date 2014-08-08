@@ -36,7 +36,7 @@ elif sys.argv[1] == 'plot_toy':
     time = list()
     acc = list()
     for T in T_l:
-      stop = StopResult(path+'/gibbs0_T%d' % T)
+      stop = StopResult(path+'/test_policy/gibbs0_T%d' % T)
       time.append(stop.ave_time())
       acc.append(stop.accuracy)
     p2, = plt.plot(time, acc, 'b-')

@@ -42,7 +42,7 @@ EQUALS = =
 CMAKE_EDIT_COMMAND = /opt/local/bin/ccmake
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/strin/stanford/AdaMC/tagging
+CMAKE_SOURCE_DIR = /Users/strin/tagging
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /Users/strin/tagging

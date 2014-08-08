@@ -30,6 +30,7 @@ void Model::configStepsize(ParamPointer gradient, double new_eta) {
 StringVector Model::NLPfunc(const string word) {
   StringVector nlp = makeStringVector();
   nlp->push_back(word);
+  return nlp;
   /* unordered_map<std::string, StringVector>::iterator it = word_feat.find(word);
   if(it != word_feat.end())
     return it->second; */

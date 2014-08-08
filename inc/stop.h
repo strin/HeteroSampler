@@ -45,8 +45,8 @@ private:
   std::vector<double> tag_unigram_start;
   size_t train_count, test_count;
   std::shared_ptr<XMLlog> lg;
-  const bool lets_adaptive;
-  const size_t iter;
+  bool lets_adaptive;
+  size_t iter;
 
   // global environment.
   ModelPtr model;

@@ -30,6 +30,7 @@ public:
   // emulate t-step transition of a markov chain.
   // default: use Model::sample(*tag.seq), i.e. time = T.
   virtual void sample(Tag& tag, int time);             // inplace.
+  virtual void sampleOne(Tag& tag, int choice);           // sample using custom kernel choice.
 
   /* stats utils */
   FeaturePointer tagEntropySimple() const;
@@ -83,6 +84,7 @@ public:
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
   void sample(Tag& tag, int time);
+  void sampleOne(Tag& tag, int choice);
   void addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   void addBigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   FeaturePointer extractFeatures(const Tag& tag, int pos);

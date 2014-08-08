@@ -4,7 +4,7 @@ namespace po = boost::program_options;
 using namespace std;
 
 Stop::Stop(ModelPtr model, const po::variables_map& vm) 
-:model(model), T(vm["T"].as<int>()), B(vm["B"].as<int>()), 
+:model(model), T(vm["T"].as<int>()), B(vm["B"].as<int>()),
  K(vm["K"].as<int>()), name(vm["name"].as<string>()), 
       thread_pool(vm["numThreads"].as<int>(), 
 		    [&] (int tid, MarkovTreeNodePtr node) {
@@ -13,14 +13,14 @@ Stop::Stop(ModelPtr model, const po::variables_map& vm)
       test_thread_pool(vm["numThreads"].as<int>(), 
 		    [&] (int tid, MarkovTreeNodePtr node) {
 		      this->sampleTest(tid, node);
-		    }), 
+		    }),
 stop_data(makeStopDataset()), param(makeParamPointer()), 
 G2(makeParamPointer()), eta(vm["eta"].as<double>()),
 c(vm["c"].as<double>()), train_count(vm["trainCount"].as<size_t>()),
 test_count(vm["testCount"].as<size_t>()),
 lets_adaptive(vm["adaptive"].as<bool>()), 
 iter(vm["iter"].as<size_t>()),
-Tstar(vm["T*"].as<double>()){
+Tstar(vm["Tstar"].as<double>()) {
   system(("mkdir "+name).c_str());
   lg = shared_ptr<XMLlog>(new XMLlog(name+"/stop.xml"));
   lg->begin("args");
@@ -80,12 +80,14 @@ void Stop::sampleTest(int tid, MarkovTreeNodePtr node) {
   while(true) { // maximum level of inference = T.
     node->tag->rng = &test_thread_pool.rngs[tid];
     model->sample(*node->tag, 1);
-    node->stop_feat = extractStopFeatures(node);
-    mapUpdate(*node->stop_feat, *mean_feat, -1);
-    for(const pair<string, double>& p : *node->stop_feat) {
-      (*node->stop_feat)[p.first] /= (*std_feat)[p.first];
+    if(lets_adaptive) {
+      node->stop_feat = extractStopFeatures(node);
+      mapUpdate(*node->stop_feat, *mean_feat, -1);
+      for(const pair<string, double>& p : *node->stop_feat) {
+	(*node->stop_feat)[p.first] /= (*std_feat)[p.first];
+      }
+      node->resp = logisticFunc(::score(param, node->stop_feat));
     }
-    node->resp = logisticFunc(::score(param, node->stop_feat));
     if(node->depth == T || (lets_adaptive &&  
       test_thread_pool.rngs[tid].random01() < node->resp)) { // stop.
       return;
@@ -309,8 +311,10 @@ double Stop::test(const Corpus& testCorpus) {
       lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
       lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
       lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
-      lg->begin("resp"); *lg << node->resp << endl; lg->end();
-      lg->begin("feat"); *lg << *node->stop_feat << endl; lg->end();
+      if(lets_adaptive) {
+	lg->begin("resp"); *lg << node->resp << endl; lg->end();
+	lg->begin("feat"); *lg << *node->stop_feat << endl; lg->end();
+      }
       int hits = 0;
       for(size_t i = 0; i < node->tag->size(); i++) {
 	if(node->tag->tag[i] == node->tag->seq->tag[i]) {

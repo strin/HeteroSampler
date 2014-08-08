@@ -91,11 +91,15 @@ FeaturePointer Model::tagEntropySimple() const {
   for(const pair<string, int>& p : corpus->dic) {
     auto count = corpus->word_tag_count.find(p.first);
     if(count == corpus->word_tag_count.end()) {
+      cerr << "tagEntropy: word not found." << endl;
       (*feat)[p.first] = log(taglen);
       continue;
     }
     for(size_t t = 0; t < taglen; t++) {
-      logweights[t] = log(1.0+(count->second)[t]);
+      if(count->second[t] == 0)
+	logweights[t] = -DBL_MAX;
+      else
+	logweights[t] = log(count->second[t]);
     }
     logNormalize(logweights, taglen);
     double entropy = 0.0;
@@ -266,6 +270,10 @@ double Model::test(const Corpus& testCorpus, int time) {
 
 void Model::sample(Tag& tag, int time) {
   tag = *this->sample(*tag.seq).back();
+}
+
+void Model::sampleOne(Tag& tag, int choice) {
+  throw "custom kernel choice not implemented."; 
 }
 
 double Model::score(const Tag& tag) {

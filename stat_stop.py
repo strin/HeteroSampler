@@ -42,8 +42,8 @@ class StopResult:
     time = list()
     for ex in me.testex:
       ex_len = len(ex['truth'].split('\t'))-1
-      # time.append(ex['time'] * ex_len)
-      time.append(ex['time'])
+      time.append(ex['time'] * ex_len)
+      # time.append(ex['time'])
     # print time
     return np.mean(time)
 
@@ -81,9 +81,13 @@ class StopResult:
         hit += ex_len-ex['dist']
         print ex['truth']
         print ex['tag']
+        print ey['tag']
         print
       else:
         hit += ex_len-ey['dist']
+        #print ey['truth']
+        #print ey['tag']
+        #print
     return hit/float(allpred) 
 
 if __name__ == '__main__':

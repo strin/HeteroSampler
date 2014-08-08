@@ -4,8 +4,13 @@ using namespace std;
 
 MarkovTreeNode::MarkovTreeNode(shared_ptr<MarkovTreeNode> parent)
 :parent(parent), log_weight(-DBL_MAX) {
-  if(parent == nullptr) depth = 0;
-  else depth = parent->depth+1;
+  if(parent == nullptr) {
+    depth = 0;
+    time_stamp = 0;
+  }else{
+    depth = parent->depth+1;
+    time_stamp = parent->time_stamp;
+  }
   gradient = posgrad = neggrad = nullptr;
   tag = nullptr;
   compute_stop = false;

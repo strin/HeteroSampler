@@ -4,7 +4,8 @@
 #include "tag.h"
 #include "utils.h"
 
-/* represent A Markov Transition. */
+
+/* warning: this class is not thread safe */
 struct MarkovTreeNode {
 public:
   MarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent);
@@ -18,7 +19,9 @@ public:
   std::shared_ptr<Tag> tag; // tag after the transition.
   double log_weight;        // posterior weight for gradient.
   double log_prior_weight;  // prior weight from proposal.
-  int depth;
+  int depth;                // how many samples have been generated.
+  int choice;               // if using a policy, which choice is made?
+  size_t time_stamp;        // time stamp of this object.
   std::weak_ptr<MarkovTreeNode> parent; // weak_ptr: avoid cycle in reference count.
   std::vector<std::shared_ptr<MarkovTreeNode> > children;
   FeaturePointer stop_feat;            
@@ -36,6 +39,12 @@ static std::shared_ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<Markov
   MarkovTreeNodePtr node = MarkovTreeNodePtr(new MarkovTreeNode(parent));
   node->tag = std::shared_ptr<Tag>(new Tag(tag));
   return node;
+}
+
+/* add a child to the node */
+static MarkovTreeNodePtr addChild(MarkovTreeNodePtr node, const Tag& tag) {
+  node->children.push_back(makeMarkovTreeNode(node, tag));
+  return node->children.back();
 }
 
 typedef std::list<FeaturePointer> StopDatasetKeyContainer;

@@ -57,3 +57,24 @@ elif sys.argv[1] == 'plot_toy':
     p2, = plt.plot(time, acc, 'b-')
     plt.legend([p1, p2], ['Stop', 'Baseline'])
     plt.show()
+elif sys.argv[1] == 'plot_reg':
+    if len(sys.argv) > 2:
+      path = sys.argv[2]
+    else:
+      path = '.'
+    time = list()
+    acc = list()
+    for Tstar in Tstar_l:
+      stop = StopResult(path+'/gibbs_reg_T*%f' % Tstar)
+      time.append(stop.ave_time())
+      acc.append(stop.accuracy)
+    p1, = plt.plot(time, acc, 'rx') 
+    time = list()
+    acc = list()
+    for T in T_l:
+      stop = StopResult(path+'/gibbs0_T%d' % T)
+      time.append(stop.ave_time())
+      acc.append(stop.accuracy)
+    p2, = plt.plot(time, acc, 'b-')
+    plt.legend([p1, p2], ['Stop', 'Baseline'])
+    plt.show()

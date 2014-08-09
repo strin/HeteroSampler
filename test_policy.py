@@ -6,7 +6,7 @@ from stat_stop import *
 from stat_policy import *
 
 thres_l = [0.5, 1, 1.5, 2, 2.5, 3, 1000]
-c_l = [0.0, 0.01, 0.05, 0.07, 0.1, 0.3, 1]
+c_l = [0.0, 0.01, 0.1, 0.15, 0.20, 0.25, 0.3, 1]
 T_l = [1, 2, 3]
 
 if len(sys.argv) < 2:
@@ -58,7 +58,7 @@ elif sys.argv[1] == 'plot_toy':
     time = list()
     acc = list()
     for c in c_l:
-      stop = PolicyResult(path+'/test_policy/cyclic_%0.2f' % c)
+      stop = PolicyResult(path+'/test_policy/cyclic_%f' % c)
       time.append(stop.ave_time())
       acc.append(stop.accuracy)
     p3, = plt.plot(time, acc, 'go')

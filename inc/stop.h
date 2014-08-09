@@ -41,6 +41,7 @@ public:
 private:
   // const environment. 
   FeaturePointer wordent, wordfreq;
+  double wordent_mean, wordfreq_mean;
   Vector2d tag_bigram;
   std::vector<double> tag_unigram_start;
   size_t train_count, test_count;

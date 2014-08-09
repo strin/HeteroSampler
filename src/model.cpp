@@ -146,7 +146,6 @@ tuple<FeaturePointer, double> Model::wordFrequencies() const {
     (*feat)[p.first] -= mean_fre;
   }
   return make_tuple(feat, mean_fre);
-  return feat;
 }
 
 pair<Vector2d, vector<double> > Model::tagBigram() const {

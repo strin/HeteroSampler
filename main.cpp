@@ -152,33 +152,6 @@ int main(int argc, char* argv[]) {
       shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(&corpus, windowL));
       set_param(model);
       model->run(testCorpus);
-    }else if(inference == "TagEntropySimple") {
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(&corpus, windowL));
-      set_param(model);
-      model->run(testCorpus);
-      FeaturePointer feat = model->tagEntropySimple();
-      XMLlog log_entropy("tag_entropy.xml"); 
-      log_entropy << *feat;
-      feat = model->wordFrequencies();
-      XMLlog log_freq("word_freq.xml");
-      log_freq << *feat;
-      XMLlog log_tagbigram("tag_bigram.xml");
-      auto mat_vec = model->tagBigram();
-      Vector2d mat = mat_vec.first;
-      vector<double> vec = mat_vec.second;
-      log_tagbigram.begin("vector");
-      for(size_t i = 0; i < corpus.tags.size(); i++) 
-	log_tagbigram << vec[i] << " ";
-      log_tagbigram << endl;
-      log_tagbigram.end();
-      log_tagbigram.begin("matrix");
-      for(size_t i = 0; i < corpus.tags.size(); i++) {
-	for(size_t j = 0; j < corpus.tags.size(); j++) {
-	  log_tagbigram << mat[i][j] << " ";
-	}
-	log_tagbigram << endl;
-      }
-      log_tagbigram.end();
     }
   }catch(char const* exception) {
     cerr << "Exception: " << string(exception) << endl;

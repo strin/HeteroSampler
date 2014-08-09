@@ -31,8 +31,12 @@ Tstar(vm["Tstar"].as<double>()) {
   lg->end();
   rng.seedMT(time(0));
   // init const environment.
-  wordent = model->tagEntropySimple();
-  wordfreq = model->wordFrequencies();
+  auto wordent_meanent = model->tagEntropySimple();
+  wordent = get<0>(wordent_meanent);
+  wordent_mean = get<1>(wordent_meanent);
+  auto wordfreq_meanfreq = model->wordFrequencies();
+  wordfreq = get<0>(wordfreq_meanfreq);
+  wordfreq_mean = get<1>(wordfreq_meanfreq);
   auto tag_bigram_unigram = model->tagBigram();
   tag_bigram = tag_bigram_unigram.first;
   tag_unigram_start = tag_bigram_unigram.second;

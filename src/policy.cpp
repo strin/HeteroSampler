@@ -203,6 +203,12 @@ void Policy::logNode(MarkovTreeNodePtr node) {
   }
   *lg << endl;
   lg->end();
+  lg->begin("mask");
+  for(size_t i = 0; i < node->tag->size(); i++) {
+    *lg << node->tag->mask[i] << "\t";            
+  }
+  *lg << endl;
+  lg->end();
   lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
 }
 /////////////////////////////////////////////////////////////////////////////
@@ -285,10 +291,12 @@ int CyclicPolicy::policy(MarkovTreeNodePtr node) {
       double resp = logisticFunc(::score(param, feat));
       node->tag->resp[pos] = resp;
       if(rng->random01() < resp) {
+	node->tag->mask[pos] = 1;
 	mapUpdate(*node->gradient, *feat, (1-resp));
 	node->time_stamp = i+1;
 	return pos;
       }else{
+	node->tag->mask[pos] = 0;
 	mapUpdate(*node->gradient, *feat, -resp);	
       }
     }

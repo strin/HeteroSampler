@@ -112,7 +112,7 @@ void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer f
     for(const string& token : *nlp) {
       stringstream ss;
       ss << "w-" << to_string(l-pos) 
-	 << "-" << token << "-" << corpus->invtag(tag.tag[pos]);
+	 << "-" << token << "-" << tag.tag[pos]; //corpus->invtag(tag.tag[pos]);
       (*features)[ss.str()] = 1;
     }
   }
@@ -122,8 +122,9 @@ void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer fe
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();
   stringstream ss;
-  ss << "p-" << corpus->invtag(tag.tag[pos-1]) << "-" 
-	<< corpus->invtag(tag.tag[pos]);
+  //ss << "p-" << corpus->invtag(tag.tag[pos-1]) << "-" 
+  //	<< corpus->invtag(tag.tag[pos]);
+  ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
   /* StringVector nlp = NLPfunc(sen[pos].word);
   for(const string& token : *nlp) {
     ss << "p2-" << tag.tag[pos-1] << "-" << tag.tag[pos] << "-" << token;

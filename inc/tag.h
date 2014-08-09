@@ -62,6 +62,7 @@ public:
 
   std::vector<int> tag;
   std::vector<double> resp;
+  std::vector<int> mask;
 
   FeaturePointer features; 
   ParamPointer param;

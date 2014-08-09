@@ -61,6 +61,7 @@ public:
   objcokus* rng;
 
   std::vector<int> tag;
+  std::vector<double> resp;
 
   FeaturePointer features; 
   ParamPointer param;

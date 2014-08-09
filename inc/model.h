@@ -17,6 +17,13 @@ static StringVector makeStringVector() {
   return StringVector(new std::vector<std::string>());
 }
 
+inline static void adagrad(ParamPointer param, ParamPointer G2, ParamPointer gradient, double eta) {
+  for(const std::pair<std::string, double>& p : *gradient) {
+    mapUpdate(*G2, p.first, p.second * p.second);
+    mapUpdate(*param, p.first, eta * p.second/sqrt(1e-4 + (*G2)[p.first]));
+  }
+}
+
 struct Model {
 public:
   Model(const Corpus* corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);

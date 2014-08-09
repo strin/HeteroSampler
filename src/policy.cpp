@@ -10,8 +10,11 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
 		      this->sampleTest(tid, node);
 		    }), 
  name(vm["name"].as<string>()),
+ K(vm["K"].as<size_t>()),
+ eta(vm["eta"].as<double>()),
  train_count(vm["trainCount"].as<size_t>()), 
- test_count(vm["testCount"].as<size_t>()) {
+ test_count(vm["testCount"].as<size_t>()),
+ param(makeParamPointer()), G2(makeParamPointer()) {
  system(("mkdir -p "+name).c_str());
   lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
   lg->begin("args");
@@ -29,6 +32,16 @@ Policy::~Policy() {
     lg->end();
 }
 
+double Policy::reward(MarkovTreeNodePtr node) {
+  Tag& tag = *node->tag;
+  const Sentence* seq = tag.seq;
+  double score = 0.0;
+  for(int i = 0; i < tag.size(); i++) {
+    score -= (tag.tag[i] != seq->tag[i]);
+  }
+  return score;
+}
+
 void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
   node->depth = 0;
   try{
@@ -37,13 +50,76 @@ void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
 	throw "Policy Chain reaches maximum depth.";
       node->tag->rng = &test_thread_pool.rngs[tid];
       node->choice = this->policy(node);
-      if(node->choice == -1) break;
+      node->log_weight = -DBL_MAX; 
+      if(node->choice == -1) {
+	node->log_weight = this->reward(node); 
+	break;
+      }
       model->sampleOne(*node->tag, node->choice);
       node = addChild(node, *node->tag);
     }
   }catch(const char* ee) {
     cout << "error: " << ee << endl;
   }
+}
+
+void Policy::train(const Corpus& corpus) {
+  cout << "> train " << endl;
+  Corpus retagged(corpus);
+  retagged.retag(*model->corpus);
+  lg->begin("train");
+  size_t count = 0;
+  for(const Sentence& seq : retagged.seqs) {
+    if(count >= train_count) break;
+    lg->begin("example_"+to_string(count));
+    MarkovTree tree;
+    Tag tag(&seq, model->corpus, &rng, model->param);
+    tree.root->log_weight = -DBL_MAX;
+    for(size_t k = 0; k < K; k++) {
+      MarkovTreeNodePtr node = addChild(tree.root, tag);
+      this->test_thread_pool.addWork(node); 
+    }
+    test_thread_pool.waitFinish();
+    for(size_t k = 0; k < K; k++) {
+      MarkovTreeNodePtr node = tree.root->children[k];
+      ParamPointer g = makeParamPointer();
+      if(node->gradient != nullptr)
+	mapUpdate(*g, *node->gradient);
+      while(node->children.size() > 0) {
+	node = node->children[0]; // take final sample.
+	if(node->gradient != nullptr) {
+	  mapUpdate(*g, *node->gradient);
+	  *lg << (*g)["freq"] << " " << (*node->gradient)["freq"] << endl;
+	}
+      }
+      lg->begin("gradient");
+      *lg << *g << endl;
+      *lg << node->log_weight << endl;
+      lg->end();
+    }
+    pair<ParamPointer, double> grad_lgweight = tree.aggregateGradient(tree.root, 0);
+    ParamPointer gradient = grad_lgweight.first;
+    lg->begin("gradient_agg");
+    *lg << *gradient << endl;
+    lg->end();
+    ::adagrad(param, G2, gradient, eta);
+    for(size_t k = 0; k < K; k++) {
+      MarkovTreeNodePtr node = tree.root->children[k];
+      while(node->children.size() > 0) node = node->children[0]; // take final sample.
+      lg->begin("node");
+      this->logNode(node);
+      lg->end(); // </node>
+    }
+    lg->begin("param");
+    *lg << *param;
+    lg->end(); // </param>
+    lg->end(); // </example>
+    count++;
+  }
+  lg->begin("param");
+  *lg << *param;
+  lg->end();
+  lg->end(); // </train>
 }
 
 double Policy::test(const Corpus& testCorpus) {
@@ -94,8 +170,10 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   size_t seqlen = tag.size();
   size_t taglen = model->corpus->tags.size();
   string word = seq.seq[pos].word;
+  // bias.
+  (*feat)["b"] = 1;
   // feat: entropy and frequency.
-  if(wordent->find("ent") == wordent->end())
+  if(wordent->find(word) == wordent->end())
     (*feat)["ent"] = log(taglen);
   else
     (*feat)["ent"] = (*wordent)[word];
@@ -119,6 +197,12 @@ void Policy::logNode(MarkovTreeNodePtr node) {
       hits++;
     }
   }
+  lg->begin("resp");
+  for(size_t i = 0; i < node->tag->size(); i++) {
+    *lg << node->tag->resp[i] << "\t";            
+  }
+  *lg << endl;
+  lg->end();
   lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
 }
 /////////////////////////////////////////////////////////////////////////////
@@ -142,6 +226,7 @@ int GibbsPolicy::policy(MarkovTreeNodePtr node) {
 
 /////////////////////////////////////////////////////////////////////////////
 ////// Entropy Policy ///////////////////////////////////////////
+
 EntropyPolicy::EntropyPolicy(ModelPtr model, const po::variables_map& vm)
 :Policy(model, vm), 
  threshold(vm["threshold"].as<double>())
@@ -175,3 +260,43 @@ int EntropyPolicy::policy(MarkovTreeNodePtr node) {
 }
 
 
+
+/////////////////////////////////////////////////////////////////////////////
+////// Cyclic Policy ///////////////////////////////////////////
+CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
+:Policy(model, vm), 
+ c(vm["c"].as<double>())
+{
+}
+
+int CyclicPolicy::policy(MarkovTreeNodePtr node) {
+  if(node->depth == 0) node->time_stamp = 0;
+  if(node->depth < node->tag->size()) {
+    node->time_stamp++;
+    return node->depth;
+  }else{
+    objcokus* rng = node->tag->rng;
+    assert(!node->parent.expired());
+    size_t i = node->time_stamp;
+    node->gradient = makeParamPointer();
+    for(; i < 2 * node->tag->size(); i++) {      
+      size_t pos = i % node->tag->size();
+      FeaturePointer feat = this->extractFeatures(node, pos);
+      double resp = logisticFunc(::score(param, feat));
+      node->tag->resp[pos] = resp;
+      if(rng->random01() < resp) {
+	mapUpdate(*node->gradient, *feat, (1-resp));
+	node->time_stamp = i+1;
+	return pos;
+      }else{
+	mapUpdate(*node->gradient, *feat, -resp);	
+      }
+    }
+    node->time_stamp = i;
+    return -1;
+  }
+}
+
+double CyclicPolicy::reward(MarkovTreeNodePtr node) {
+  return Policy::reward(node) - this->c * (node->depth + 1);
+}

@@ -24,6 +24,9 @@ int main(int argc, char* argv[]) {
 	("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
 	("threshold", po::value<double>()->default_value(0.8), "theshold for entropy policy")
 	("T", po::value<size_t>()->default_value(1), "number of sweeps in Gibbs sampling")
+	("K", po::value<size_t>()->default_value(5), "number of samples in policy gradient")
+	("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
+	("c", po::value<double>()->default_value(0.1), "time regularization")
 	("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
 	("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
 	("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
@@ -61,6 +64,10 @@ int main(int argc, char* argv[]) {
     }else if(vm["policy"].as<string>() == "gibbs") {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm)));   
       policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "cyclic") {
+      policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicPolicy(model, vm)));
+      policy->train(corpus);
+      policy->test(corpus);
     }
   }catch(char const* ee) {
     cout << "error: " << ee << endl;

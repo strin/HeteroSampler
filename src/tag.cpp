@@ -23,6 +23,7 @@ void Tag::randomInit() {
   int taglen = corpus->tags.size();
   int seqlen = seq->seq.size();
   tag.resize(seqlen);
+  resp.resize(seqlen);
   for(int& t : tag) {
     t = rng->randomMT() % taglen;
   }

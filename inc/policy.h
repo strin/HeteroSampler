@@ -19,7 +19,10 @@ public:
 
   // run test on corpus.
   // return: accuracy on the test set.
-  double test(const Corpus& corpus);
+  double test(const Corpus& testCorpus);
+
+  // run training on corpus.
+  void train(const Corpus& corpus);
 
   // sample node, default uses Gibbs sampling.
   void sampleTest(int tid, MarkovTreeNodePtr node);
@@ -28,6 +31,9 @@ public:
   // return = -1 : stop the markov chain.
   // o.w. return a natural number representing a choice.
   virtual int policy(MarkovTreeNodePtr node) = 0;
+
+  // estimate the reward of a MarkovTree node (default: -dist).
+  virtual double reward(MarkovTreeNodePtr node);
 
   // extract features from node.
   virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
@@ -40,12 +46,15 @@ protected:
   Vector2d tag_bigram;
   std::vector<double> tag_unigram_start;
   const std::string name;
+  const size_t K;
   const size_t test_count, train_count;
+  const double eta;
 
   // global environment.
   ModelPtr model;
   objcokus rng;
   std::shared_ptr<XMLlog> lg;
+  ParamPointer param, G2;
 
   // parallel environment.
   ThreadPool<MarkovTreeNodePtr> test_thread_pool;    
@@ -77,8 +86,23 @@ public:
   //	     second/third pass only update words with entropy exceeding threshold.
   int policy(MarkovTreeNodePtr node);
 
-
 private:
   double threshold;   // entropy threshold = log(threshold).
+};
+
+// cyclic policy, 
+// first sweep samples everything. 
+// subsequent sweeps use logistic regression to predict whether to sample. 
+// at end of every sweep, predict stop or not.
+class CyclicPolicy : public Policy {
+public:
+  CyclicPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
+
+  int policy(MarkovTreeNodePtr node); 
+  
+  // reward = -dist - c * (depth+1).
+  double reward(MarkovTreeNodePtr node);
+private:
+  double c;          // regularization of computation.
 };
 #endif

@@ -28,8 +28,7 @@ class PolicyResult:
       ex = dict()
       ex['feat'] = list()
       for attr in row:
-        if attr.tag == 'dist' or attr.tag == 'time' \
-          or attr.tag == 'resp':
+        if attr.tag == 'dist' or attr.tag == 'time':
           ex[attr.tag] = float(attr.text)
         elif attr.tag == 'feat':
           feat = dict()

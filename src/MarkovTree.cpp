@@ -48,7 +48,9 @@ pair<ParamPointer, double> MarkovTree::aggregateGradient(shared_ptr<MarkovTreeNo
     mapUpdate(*gradient, *node->posgrad, exp(weight));
   if(node->neggrad != nullptr)
     mapUpdate(*gradient, *node->neggrad, exp(weight_descendant));
-  mapUpdate(*gradient, *node->gradient, exp(logAdd(weight, weight_descendant)));
+  weight = logAdd(weight, weight_descendant);
+  if(node->gradient != nullptr) 
+    mapUpdate(*gradient, *node->gradient, exp(weight));
   return pair<ParamPointer, double>(gradient, weight);
 }
 

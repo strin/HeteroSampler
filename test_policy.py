@@ -6,7 +6,7 @@ from stat_stop import *
 from stat_policy import *
 
 thres_l = [0.5, 1, 1.5, 2, 2.5, 3, 1000]
-c_l = [0.0, 0.01, 0.1, 0.15, 0.20, 0.25, 0.3, 1]
+c_l = [0.0, 0.01, 0.1, 0.20, 0.3, 1]
 T_l = [1, 2, 3]
 
 if len(sys.argv) < 2:
@@ -24,7 +24,7 @@ if sys.argv[1] == "toy_entropy":
 if sys.argv[1] == "toy_cyclic":
   for c in c_l:
       cmd = '''./policy --inference Gibbs --policy cyclic --name test_policy/cyclic_%f \
-      --trainCount 100 --testCount 100 --c %f --numThreads 10 --eta 10 --K 5''' % (c, c)
+      --trainCount 100 --testCount 100 --c %f --numThreads 10 --eta 1 --K 5''' % (c, c)
       print cmd
       os.system(cmd)  
       policy = PolicyResult('test_policy/cyclic_%f' % c)

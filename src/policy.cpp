@@ -20,8 +20,12 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
   lg->begin("args");
   lg->end();
   // init stats.
-  wordent = model->tagEntropySimple();
-  wordfreq = model->wordFrequencies();
+  auto wordent_meanent = model->tagEntropySimple();
+  wordent = get<0>(wordent_meanent);
+  wordent_mean = get<1>(wordent_meanent);
+  auto wordfreq_meanfreq = model->wordFrequencies();
+  wordfreq = get<0>(wordfreq_meanfreq);
+  wordfreq_mean = get<1>(wordfreq_meanfreq);
   auto tag_bigram_unigram = model->tagBigram();
   tag_bigram = tag_bigram_unigram.first;
   tag_unigram_start = tag_bigram_unigram.second;
@@ -174,13 +178,13 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   (*feat)["b"] = 1;
   // feat: entropy and frequency.
   if(wordent->find(word) == wordent->end())
-    (*feat)["ent"] = log(taglen);
+    (*feat)["ent"] = log(taglen)-wordent_mean;
   else
     (*feat)["ent"] = (*wordent)[word];
-  if(wordfreq->find(word) == wordfreq->end())
-    (*feat)["freq"] = log(model->corpus->total_words);
+  /*if(wordfreq->find(word) == wordfreq->end())
+    (*feat)["freq"] = log(model->corpus->total_words)-wordfreq_mean;
   else
-    (*feat)["freq"] = (*wordfreq)[word];
+    (*feat)["freq"] = (*wordfreq)[word];*/
   return feat;
 }
 
@@ -256,8 +260,11 @@ int EntropyPolicy::policy(MarkovTreeNodePtr node) {
       else
 	ent = (*wordent)[word];
       if(ent > log(threshold)) {
+	node->tag->mask[pos] = 1;
 	node->time_stamp = i+1;
 	return pos;
+      }else{
+	node->tag->mask[pos] = 0;
       }
     }
     node->time_stamp = i;

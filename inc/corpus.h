@@ -46,7 +46,7 @@ public:
   size_t total_words, total_tags;
   std::map<int, std::string> invtags;
   std::string invtag(int id) const {return invtags.find(id)->second; }
-  void read(const std::string& filename);
+  void read(const std::string& filename, bool lets_shuffle = true);
   void retag(const Corpus& corpus); // retag using corpus' tag.
   int size() const {return seqs.size(); }
 };

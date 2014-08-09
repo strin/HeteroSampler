@@ -44,9 +44,9 @@ int main(int argc, char* argv[]) {
       mode = Corpus::MODE_NER;
     string train = vm["train"].as<string>(), test = vm["test"].as<string>();
     Corpus corpus(mode);
-    corpus.read(train);
+    corpus.read(train, false);
     Corpus testCorpus(mode);
-    testCorpus.read(test);
+    testCorpus.read(test, false);
     shared_ptr<Model> model;
     if(vm["inference"].as<string>() == "Gibbs") {
       model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm["windowL"].as<int>()));
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     }else if(vm["policy"].as<string>() == "cyclic") {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicPolicy(model, vm)));
       policy->train(corpus);
-      policy->test(corpus);
+      policy->test(testCorpus);
     }
   }catch(char const* ee) {
     cout << "error: " << ee << endl;

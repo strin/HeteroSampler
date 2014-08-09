@@ -40,8 +40,8 @@ public:
   virtual void sampleOne(Tag& tag, int choice);           // sample using custom kernel choice.
 
   /* stats utils */
-  FeaturePointer tagEntropySimple() const;
-  FeaturePointer wordFrequencies() const;
+  std::tuple<FeaturePointer, double> tagEntropySimple() const;
+  std::tuple<FeaturePointer, double> wordFrequencies() const;
   std::pair<Vector2d, std::vector<double> > tagBigram() const;
   static StringVector NLPfunc(const std::string word);
   virtual double score(const Tag& tag);
@@ -173,6 +173,7 @@ public:
   double etaT;
 private:
   FeaturePointer wordent, wordfreq;
+  double wordent_mean, wordfreq_mean;
   Vector2d tag_bigram;
   std::vector<double> tag_unigram_start;
   double m_c, m_Tstar;

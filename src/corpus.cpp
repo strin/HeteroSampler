@@ -64,7 +64,7 @@ Corpus::Corpus(const string& filename, Mode mode)
   this->read(filename);
 }
 
-void Corpus::read(const string& filename) {
+void Corpus::read(const string& filename, bool lets_shuffle) {
   ifstream file;
   file.open(filename);
   if(!file.is_open()) 
@@ -128,7 +128,8 @@ void Corpus::read(const string& filename) {
     }
   }
   // shuffle corpus.
-  shuffle<Sentence>(seqs, cokus);
+  if(lets_shuffle)
+    shuffle<Sentence>(seqs, cokus);
 }
 
 void Corpus::retag(const Corpus& corpus) {

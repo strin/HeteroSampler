@@ -85,10 +85,11 @@ StringVector Model::NLPfunc(const string word) {
 
 }
 
-FeaturePointer Model::tagEntropySimple() const {
+tuple<FeaturePointer, double> Model::tagEntropySimple() const {
   FeaturePointer feat = makeFeaturePointer();
   const size_t taglen = corpus->tags.size();
   double logweights[taglen];
+  // compute raw entropy.
   for(const pair<string, int>& p : corpus->dic) {
     auto count = corpus->word_tag_count.find(p.first);
     if(count == corpus->word_tag_count.end()) {
@@ -109,14 +110,42 @@ FeaturePointer Model::tagEntropySimple() const {
     }
     (*feat)[p.first] = entropy;
   }
-  return feat;
+  // compute feature mean.
+  double mean_ent = 0.0, count = 0;
+  for(const Sentence& seq : corpus->seqs) {
+    for(size_t i = 0; i < seq.seq.size(); i++) {
+      mean_ent += (*feat)[seq.seq[i].word]; 
+      count++;
+    }
+  }
+  mean_ent /= count;
+  // substract the mean.
+  for(const pair<string, int>& p : corpus->dic) {
+    (*feat)[p.first] -= mean_ent; 
+  }
+  return make_tuple(feat, mean_ent);
 }
 
-FeaturePointer Model::wordFrequencies() const {
+tuple<FeaturePointer, double> Model::wordFrequencies() const {
   FeaturePointer feat = makeFeaturePointer();
+  // compute raw feature.
   for(const pair<string, int>& p : corpus->dic_counts) {
     (*feat)[p.first] = log(corpus->total_words)-log(p.second);
   }
+  // compute feature mean.
+  double mean_fre = 0, count = 0;
+  for(const Sentence& seq : corpus->seqs) {
+    for(size_t i = 0; i < seq.seq.size(); i++) {
+      mean_fre += (*feat)[seq.seq[i].word];
+      count++;
+    }
+  }
+  mean_fre /= count;
+  // substract the mean.
+  for(const pair<string, int>& p : corpus->dic) {
+    (*feat)[p.first] -= mean_fre;
+  }
+  return make_tuple(feat, mean_fre);
   return feat;
 }
 

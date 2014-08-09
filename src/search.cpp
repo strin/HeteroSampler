@@ -163,8 +163,12 @@ ModelAdaTree::ModelAdaTree(const Corpus* corpus, int windowL, int K,
 			    int T, int B, int Q, int Q0, double eta)
 :ModelTreeUA(corpus, windowL, K, T, B, Q, Q0, eta), m_c(c), m_Tstar(Tstar), etaT(etaT) {
   // aggregate stats. 
-  wordent = tagEntropySimple();
-  wordfreq = wordFrequencies();
+  auto wordent_meanent = tagEntropySimple();
+  wordent = get<0>(wordent_meanent);
+  wordent_mean = get<1>(wordent_meanent);
+  auto wordfreq_meanfreq = wordFrequencies();
+  wordfreq = get<0>(wordfreq_meanfreq);
+  wordfreq_mean = get<1>(wordfreq_meanfreq);
   auto tag_bigram_unigram = tagBigram();
   tag_bigram = tag_bigram_unigram.first;
   tag_unigram_start = tag_bigram_unigram.second;

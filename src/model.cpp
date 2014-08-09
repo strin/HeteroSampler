@@ -34,18 +34,13 @@ StringVector Model::NLPfunc(const string word) {
   if(it != word_feat.end())
     return it->second; */
   size_t wordlen = word.length();
-  if(wordlen >= 1) {
-    nlp->push_back("p1-"+word.substr(0, 1));
-    nlp->push_back("s1-"+word.substr(wordlen-1, 1));
+  for(size_t k = 1; k <= 3; k++) {
+    if(wordlen >= k) {
+      nlp->push_back("p"+to_string(k)+"-"+word.substr(0, k));
+      nlp->push_back("s"+to_string(k)+"-"+word.substr(wordlen-k, k));
+    }
   }
-  if(wordlen >= 2) {
-    nlp->push_back("p2-"+word.substr(0, 2));
-    nlp->push_back("s2-"+word.substr(wordlen-2, 2));
-  }
-  if(wordlen >= 3) {
-    nlp->push_back("p3-"+word.substr(0, 3));
-    nlp->push_back("s3-"+word.substr(wordlen-3, 3));
-  }
+  return nlp;
   if(std::find_if(word.begin(), word.end(), 
 	  [](char c) { return std::isdigit(c); }) != word.end()) {
       nlp->push_back("00-");  // number

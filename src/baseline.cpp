@@ -121,9 +121,17 @@ void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer f
       else
 	(*features)[ss.str()] = 1;
     }
+    if(corpus->mode == Corpus::MODE_NER) { // add pos tags for NER task.
+      stringstream ss;
+      ss << "t-" << to_string(l-pos)
+         << "-" << sen[l].pos << "-" << corpus->invtag(tag.tag[pos]);
+      (*features)[ss.str()] = 1;
+      ss.clear();
+      ss << "t2-" << to_string(l-pos)
+         << "-" << sen[l].pos2 << "-" << corpus->invtag(tag.tag[pos]);
+      (*features)[ss.str()] = 1;
+    }
   }
-  // tag potential.
-  (*features)[corpus->invtag(tag.tag[pos])] = 1;
 }
 
 void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer features) {

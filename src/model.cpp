@@ -34,13 +34,12 @@ StringVector Model::NLPfunc(const string word) {
   if(it != word_feat.end())
     return it->second; */
   size_t wordlen = word.length();
-  for(size_t k = 1; k <= 6; k++) {
+  for(size_t k = 1; k <= 3; k++) {
     if(wordlen > k) {
       nlp->push_back("p"+to_string(k)+"-"+word.substr(0, k));
       nlp->push_back("s"+to_string(k)+"-"+word.substr(wordlen-k, k));
     }
   }
-  return nlp;
   if(std::find_if(word.begin(), word.end(), 
 	  [](char c) { return std::isdigit(c); }) != word.end()) {
       nlp->push_back("00-");  // number

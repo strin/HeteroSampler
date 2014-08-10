@@ -34,8 +34,8 @@ StringVector Model::NLPfunc(const string word) {
   if(it != word_feat.end())
     return it->second; */
   size_t wordlen = word.length();
-  for(size_t k = 1; k <= 3; k++) {
-    if(wordlen >= k) {
+  for(size_t k = 1; k <= 6; k++) {
+    if(wordlen > k) {
       nlp->push_back("p"+to_string(k)+"-"+word.substr(0, k));
       nlp->push_back("s"+to_string(k)+"-"+word.substr(wordlen-k, k));
     }
@@ -188,7 +188,7 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
       num_ob++;
       if(lets_test) {
 	if(num_ob % testLag == 0) {
-	  test(retagged, T);
+	  test(retagged);
 	}
       }
     }
@@ -196,7 +196,7 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
   }
 }
 
-double Model::test(const Corpus& testCorpus, int time) {
+double Model::test(const Corpus& testCorpus) {
   Corpus retagged(testCorpus);
   retagged.retag(*this->corpus);
   int pred_count = 0, truth_count = 0, hit_count = 0;
@@ -204,8 +204,7 @@ double Model::test(const Corpus& testCorpus, int time) {
   int ex = 0;
   XMLlog lg("error.xml");
   for(const Sentence& seq : retagged.seqs) {
-    shared_ptr<Tag> tag = shared_ptr<Tag>(new Tag(&seq, corpus, &rngs[0], param));
-    this->sample(*tag, time);
+    shared_ptr<Tag> tag = this->sample(seq).back();
     Tag truth(seq, corpus, &rngs[0], param);
     xmllog.begin("example_"+to_string(ex));
       xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();

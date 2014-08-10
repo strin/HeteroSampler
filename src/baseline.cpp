@@ -95,7 +95,9 @@ void ModelCRFGibbs::sampleOne(Tag& tag, int choice) {
 
 TagVector ModelCRFGibbs::sample(const Sentence& seq) { 
   TagVector vec;
-  gradient(seq, &vec, false); 
+  TagPtr tag = makeTagPtr(&seq, corpus, &rngs[0], param);
+  this->sample(*tag, T);
+  vec.push_back(tag);
   return vec;
 }
 
@@ -107,27 +109,30 @@ double ModelCRFGibbs::score(const Tag& tag) {
 void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features) {
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();
+  // word-tag potential.
   for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
     StringVector nlp = NLPfunc(sen[l].word);
     for(const string& token : *nlp) {
       stringstream ss;
       ss << "w-" << to_string(l-pos) 
-	 << "-" << token << "-" << tag.tag[pos]; //corpus->invtag(tag.tag[pos]);
+	 << "-" << token << "-" << corpus->invtag(tag.tag[pos]);
       if(token == sen[l].word)
 	(*features)[ss.str()] = 1;
       else
 	(*features)[ss.str()] = 1;
     }
   }
+  // tag potential.
+  (*features)[corpus->invtag(tag.tag[pos])] = 1;
 }
 
 void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer features) {
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();
   stringstream ss;
-  //ss << "p-" << corpus->invtag(tag.tag[pos-1]) << "-" 
-  //	<< corpus->invtag(tag.tag[pos]);
-  ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
+  ss << "p-" << corpus->invtag(tag.tag[pos-1]) << "-" 
+  	<< corpus->invtag(tag.tag[pos]);
+  // ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
   /* StringVector nlp = NLPfunc(sen[pos].word);
   for(const string& token : *nlp) {
     ss << "p2-" << tag.tag[pos-1] << "-" << tag.tag[pos] << "-" << token;
@@ -178,8 +183,8 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
   FeaturePointer feat = this->extractFeatures(truth);
   ParamPointer gradient = makeFeaturePointer();
   for(int t = 0; t < T; t++) {
-    if(t < B) continue;
     this->sampleOneSweep(tag);
+    if(t < B) continue;
     if(update_grad)
       mapUpdate<double, double>(*gradient, *this->extractFeatures(tag));
   }

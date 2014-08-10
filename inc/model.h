@@ -28,7 +28,7 @@ struct Model {
 public:
   Model(const Corpus* corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
   virtual void run(const Corpus& testCorpus, bool lets_test = true);
-  double test(const Corpus& testCorpus, int time);
+  double test(const Corpus& testCorpus);
 
   /* gradient interface */
   virtual ParamPointer gradient(const Sentence& seq) = 0; 

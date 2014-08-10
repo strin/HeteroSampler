@@ -38,6 +38,7 @@ int main(int argc, char* argv[]) {
       ("testFrequency", po::value<double>(), "frequency of testing")
       ("stopDataSize", po::value<int>(), "stopDataSize")
       ("pruneMode", po::value<int>(), "prune mode")
+      ("output", po::value<string>()->default_value("model/gibbs.model"), "output model file")
   ;
   /* default value */
   po::variables_map vm;
@@ -104,7 +105,7 @@ int main(int argc, char* argv[]) {
       set_param(model);
       model->run(testCorpus);
       ofstream file;
-      file.open("model/gibbs.model");
+      file.open(vm["output"].as<string>());
       file << *model;
       file.close();
     }else if(inference == "Simple") {

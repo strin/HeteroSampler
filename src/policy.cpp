@@ -18,6 +18,9 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
  system(("mkdir -p "+name).c_str());
   lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
   lg->begin("args");
+    lg->begin("corpus");
+      *lg << vm["train"].as<string>() << endl;
+    lg->end();
   lg->end();
   // init stats.
   auto wordent_meanent = model->tagEntropySimple();

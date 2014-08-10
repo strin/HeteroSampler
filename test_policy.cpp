@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
     desc.add_options()
 	("help", "produce help message")
 	("inference", po::value<string>()->default_value("Gibbs"), "inference method (Gibbs)")
+	("model", po::value<string>()->default_value("model/gibbs.model"), "use saved model to do the inference")
 	("policy", po::value<string>()->default_value("entropy"), "sampling policy")
 	("name", po::value<string>()->default_value("default"), "name of the run")
 	("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
@@ -51,7 +52,7 @@ int main(int argc, char* argv[]) {
     if(vm["inference"].as<string>() == "Gibbs") {
       model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm["windowL"].as<int>()));
       ifstream file; 
-      file.open("model/gibbs.model", ifstream::in);
+      file.open(vm["model"].as<string>(), ifstream::in);
       if(!file.is_open()) 
 	throw "gibbs model not found.";
       file >> *model;

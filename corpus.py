@@ -25,6 +25,7 @@ def read_tagposterior(filename, mode="POS"):
     vsum = sum(tagcount[key].values())
     for tagkey in tagcount[key].keys():
       tagcount[key][tagkey] /= float(vsum)
+      tagcount[key][tagkey] = float('%0.4f' % tagcount[key][tagkey])
   return tagcount
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@ import numpy as np
 import os, sys
 import numpy.random as npr
 import matplotlib.pyplot as plt
+import corpus
 
 class PolicyResult:
   def __init__(me, name):
@@ -10,6 +11,10 @@ class PolicyResult:
     me.tree = ElementTree.parse(me.name+'/policy.xml')
     me.root = me.tree.getroot()
     for data in me.root:
+      if data.tag == 'args':
+        for item in data:
+          if item.tag == 'corpus':
+            me.corpus = item.text.replace('\n', '')
       if data.tag == 'test':
         for item in data:
           if item.tag == 'accuracy':
@@ -51,6 +56,7 @@ class PolicyResult:
   # compare with you, and visualize the result.
   @staticmethod
   def viscomp(policy_l, name_l):
+    tagprob = corpus.read_tagposterior(policy_l[0].corpus)
     BG_HIGHLIGHT = '#D4E6FA'
     BG_SELECT = '#EDD861'
     for policy in policy_l:
@@ -104,6 +110,10 @@ class PolicyResult:
         for j in range(len(token)):
           if token[j] != tag:
             all_same = False
+          if tagprob.has_key(words[i]):
+            ex_l[j]['feat'][i]['prob'] = tagprob[words[i]]
+          else:
+            ex_l[j]['feat'][i]['prob'] = 'not seen'
           f.append(ex_l[j]['feat'][i])
         if all_same:
           c = ['#000000'] * len(token)

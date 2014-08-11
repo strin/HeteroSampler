@@ -2,7 +2,6 @@ import xml.etree.ElementTree as ElementTree
 import numpy as np
 import os, sys
 import numpy.random as npr
-import matplotlib.pyplot as plt
 import corpus
 
 class PolicyResult:

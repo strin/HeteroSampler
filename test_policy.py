@@ -1,7 +1,6 @@
 import numpy as np
 import os, sys
 import numpy.random as npr
-import matplotlib.pyplot as plt
 from stat_stop import *
 from stat_policy import *
 
@@ -36,34 +35,35 @@ elif sys.argv[1] == "toy_gibbs":
     os.system(cmd)  
     policy = PolicyResult('test_policy/gibbs_T%d' % T)
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
-elif sys.argv[1] == 'plot_toy':
-    if len(sys.argv) > 2:
-      path = sys.argv[2]
-    else:
-      path = '.'
-    time = list()
-    acc = list()
+if sys.argv[1] == "wsj_entropy":
     for thres in thres_l:
-      policy = PolicyResult(path+'/test_policy/entropy_%0.2f' % thres)
-      time.append(policy.ave_time())
-      acc.append(policy.accuracy)
-    p1, = plt.plot(time, acc, 'rx') 
-    time = list()
-    acc = list()
-    for T in T_l:
-      stop = PolicyResult(path+'/test_policy/gibbs_T%d' % T)
-      time.append(stop.ave_time())
-      acc.append(stop.accuracy)
-    p2, = plt.plot(time, acc, 'b-')
-    time = list()
-    acc = list()
-    for c in c_l:
-      stop = PolicyResult(path+'/test_policy/cyclic_%f' % c)
-      time.append(stop.ave_time())
-      acc.append(stop.accuracy)
-    p3, = plt.plot(time, acc, 'go')
-    plt.legend([p1, p2, p3], ['Threshold', 'Baseline', 'Policy'])
-    plt.show()
+      cmd = '''./policy --inference Gibbs --policy entropy \
+      --name test_policy/wsj_entropy_%0.2f --train data/wsj/wsj-pos.train \
+      --test data/wsj/wsj-pos.test --threshold %0.2f --numThreads 10 \
+      --model model/wsj_gibbs.model ''' % (thres, thres)
+      print cmd
+      os.system(cmd)  
+      policy = PolicyResult('test_policy/wsj_entropy_%0.2f' % thres)
+      print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
+if sys.argv[1] == "wsj_cyclic":
+  for c in c_l:
+      cmd = '''./policy --inference Gibbs --policy cyclic \
+      --name test_policy/wsj_cyclic_%f --train data/wsj/wsj-pos.train \
+      --test data/wsj/wsj-pos.test --c %f --numThreads 10 --eta 1 --K 10 \
+      --model model/wsj_gibbs.model''' % (c, c)
+      print cmd
+      os.system(cmd)  
+      policy = PolicyResult('test_policy/wsj_cyclic_%f' % c)
+      print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
+elif sys.argv[1] == "wsj_gibbs":
+  for T in T_l:
+    cmd = '''./policy --inference Gibbs --policy gibbs --name test_policy/wsj_gibbs_T%d \
+    --T %d --numThreads 10 --train data/wsj/wsj-pos.train \
+    --test data/wsj/wsj-pos.test --model model/wsj_gibbs.model ''' % (T, T)
+    print cmd
+    os.system(cmd)  
+    policy = PolicyResult('test_policy/wsj_gibbs_T%d' % T)
+    print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 elif sys.argv[1] == "toy0":
   for T in T_l:
     cmd = '''./stop --inference Gibbs --T %d --name gibbs0_T%d --numThreads 10 \

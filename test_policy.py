@@ -63,6 +63,32 @@ elif sys.argv[1] == "wsj_gibbs":
     os.system(cmd)  
     policy = PolicyResult('test_policy/wsj_gibbs_T%d' % T)
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
+if sys.argv[1] == "ner_entropy":
+    for thres in thres_l:
+      cmd = '''./policy --inference Gibbs --windowL 2 --policy entropy \
+      --name test_policy/ner_entropy_%0.2f --threshold %0.2f --numThreads 10 \
+      --model model/ner_gibbs.model ''' % (thres, thres)
+      print cmd
+      os.system(cmd)  
+      policy = PolicyResult('test_policy/ner_entropy_%0.2f' % thres)
+      print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
+if sys.argv[1] == "ner_cyclic":
+  for c in c_l:
+      cmd = '''./policy --inference Gibbs --policy cyclic \
+      --name test_policy/ner_cyclic_%f --c %f --numThreads 10 --eta 1 --K 10 \
+      --model model/ner_gibbs.model --windowL 2''' % (c, c)
+      print cmd
+      os.system(cmd)  
+      policy = PolicyResult('test_policy/ner_cyclic_%f' % c)
+      print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
+elif sys.argv[1] == "ner_gibbs":
+  for T in T_l:
+    cmd = '''./policy --inference Gibbs --policy gibbs --name test_policy/ner_gibbs_T%d \
+    --T %d --numThreads 10 --model model/ner_gibbs.model --windowL 2''' % (T, T)
+    print cmd
+    os.system(cmd)  
+    policy = PolicyResult('test_policy/ner_gibbs_T%d' % T)
+    print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 elif sys.argv[1] == "toy0":
   for T in T_l:
     cmd = '''./stop --inference Gibbs --T %d --name gibbs0_T%d --numThreads 10 \

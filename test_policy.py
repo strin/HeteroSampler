@@ -1,7 +1,6 @@
 import numpy as np
 import os, sys
 import numpy.random as npr
-from stat_stop import *
 from stat_policy import *
 
 thres_l = [0.5, 1, 1.5, 2, 2.5, 3, 1000]

@@ -69,6 +69,10 @@ int main(int argc, char* argv[]) {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicPolicy(model, vm)));
       policy->train(corpus);
       policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "cyclic_value") {
+      policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicValuePolicy(model, vm)));
+      policy->train(corpus);
+      policy->test(testCorpus);
     }
   }catch(char const* ee) {
     cout << "error: " << ee << endl;

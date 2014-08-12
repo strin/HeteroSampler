@@ -61,6 +61,7 @@ public:
   objcokus* rng;
 
   std::vector<int> tag;
+  std::vector<double> entropy; // current entropy when sampled.
   std::vector<double> resp;
   std::vector<int> mask;
 

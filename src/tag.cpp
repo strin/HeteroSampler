@@ -25,6 +25,7 @@ void Tag::randomInit() {
   tag.resize(seqlen);
   resp.resize(seqlen);
   mask.resize(seqlen);
+  entropy.resize(seqlen);
   for(int& t : tag) {
     t = rng->randomMT() % taglen;
   }
@@ -56,6 +57,7 @@ featExtract, bool grad_expect, bool grad_sample) {
     sc[t] = this->score(features);
   }
   logNormalize(sc, taglen);
+  this->entropy[pos] = logEntropy(sc, taglen);
   int val = rng->sampleCategorical(sc, taglen);
   if(val == taglen) throw "Gibbs sample out of bound.";
   tag[pos] = val;

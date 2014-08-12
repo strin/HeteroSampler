@@ -77,6 +77,7 @@ ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool
 //////// Model CRF Gibbs ///////////////////////////////
 ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, int windowL, int T, int B, int Q, double eta)
 :ModelSimple(corpus, windowL, T, B, Q, eta) {
+  this->computeWordFeat(*corpus);
 }
 
 void ModelCRFGibbs::sample(Tag& tag, int time) {

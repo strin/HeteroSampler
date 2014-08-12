@@ -67,8 +67,8 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const Model& model);
   friend std::istream& operator>>(std::istream& os, Model& model);
 
-
   XMLlog xmllog;
+  
 protected:
   void adagrad(ParamPointer gradient);
   void configStepsize(ParamPointer gradient, double new_eta);
@@ -76,7 +76,9 @@ protected:
   int K;          // num of particle. 
   int num_ob;     // current number of observations.
 
+  static void computeWordFeat(const Corpus& corpus); // pre-compute word features.
   static std::unordered_map<std::string, StringVector> word_feat;
+  static bool is_word_feat_computed;
 };
 
 typedef std::shared_ptr<Model> ModelPtr;

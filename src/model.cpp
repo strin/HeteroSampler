@@ -12,6 +12,7 @@
 using namespace std;
 
 unordered_map<string, StringVector> Model::word_feat;
+bool Model::is_word_feat_computed = false;
 
 Model::Model(const Corpus* corpus, int T, int B, int Q, double eta)
 :corpus(corpus), param(makeParamPointer()),
@@ -19,6 +20,7 @@ Model::Model(const Corpus* corpus, int T, int B, int Q, double eta)
   T(T), B(B), K(5), Q(Q), Q0(1),  
   testFrequency(0.3), eta(eta) {
   rngs.resize(K);
+  word_feat.clear();
 }
 
 void Model::configStepsize(ParamPointer gradient, double new_eta) {
@@ -28,6 +30,8 @@ void Model::configStepsize(ParamPointer gradient, double new_eta) {
 
 /* use standard NLP functions of word */
 StringVector Model::NLPfunc(const string word) {
+  if(is_word_feat_computed and word_feat.find(word) != word_feat.end())
+    return word_feat[word];
   StringVector nlp = makeStringVector();
   nlp->push_back(word);
   /* unordered_map<std::string, StringVector>::iterator it = word_feat.find(word);
@@ -77,6 +81,13 @@ StringVector Model::NLPfunc(const string word) {
   // word_feat[word] = nlp;
   return nlp;
 
+}
+
+void Model::computeWordFeat(const Corpus& corpus) {
+  for(const pair<string, int>& p : corpus.dic) {
+    word_feat[p.first] = NLPfunc(p.first);    
+  }
+  is_word_feat_computed = true;
 }
 
 tuple<FeaturePointer, double> Model::tagEntropySimple() const {

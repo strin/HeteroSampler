@@ -9,6 +9,10 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
 		    [&] (int tid, MarkovTreeNodePtr node) {
 		      this->sampleTest(tid, node);
 		    }), 
+	       thread_pool(vm["numThreads"].as<size_t>(), 
+		   [&] (int tid, MarkovTreeNodePtr node) {
+		    this->sample(tid, node);
+		   }),
  name(vm["name"].as<string>()),
  K(vm["K"].as<size_t>()),
  eta(vm["eta"].as<double>()),
@@ -55,6 +59,10 @@ double Policy::reward(MarkovTreeNodePtr node) {
   return score;
 }
 
+void Policy::sample(int tid, MarkovTreeNodePtr node) {
+  this->sampleTest(tid, node);
+}
+
 void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
   node->depth = 0;
   try{
@@ -84,15 +92,17 @@ void Policy::train(const Corpus& corpus) {
   size_t count = 0;
   for(const Sentence& seq : retagged.seqs) {
     if(count >= train_count) break;
+    if(count % 1000 == 0) 
+      cout << "\t " << (double)count/retagged.seqs.size()*100 << " %" << endl;
     lg->begin("example_"+to_string(count));
     MarkovTree tree;
     Tag tag(&seq, model->corpus, &rng, model->param);
     tree.root->log_weight = -DBL_MAX;
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = addChild(tree.root, tag);
-      this->test_thread_pool.addWork(node); 
+      this->thread_pool.addWork(node); 
     }
-    test_thread_pool.waitFinish();
+    thread_pool.waitFinish();
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = tree.root->children[k];
       ParamPointer g = makeParamPointer();
@@ -102,7 +112,6 @@ void Policy::train(const Corpus& corpus) {
 	node = node->children[0]; // take final sample.
 	if(node->gradient != nullptr) {
 	  mapUpdate(*g, *node->gradient);
-	  *lg << (*g)["freq"] << " " << (*node->gradient)["freq"] << endl;
 	}
       }
       lg->begin("gradient");
@@ -110,7 +119,8 @@ void Policy::train(const Corpus& corpus) {
       *lg << node->log_weight << endl;
       lg->end();
     }
-    pair<ParamPointer, double> grad_lgweight = tree.aggregateGradient(tree.root, 0);
+    double log_sum_w = tree.logSumWeights(tree.root); // norm grad, avoid overflow.
+    pair<ParamPointer, double> grad_lgweight = tree.aggregateGradient(tree.root, log_sum_w);
     ParamPointer gradient = grad_lgweight.first;
     lg->begin("gradient_agg");
     *lg << *gradient << endl;
@@ -154,8 +164,10 @@ double Policy::test(const Corpus& testCorpus) {
   lg->begin("example");
   count = 0;
   size_t hit_count = 0, pred_count = 0, truth_count = 0; 
+  size_t ave_time = 0;
   for(MarkovTreeNodePtr node : result) {
     while(node->children.size() > 0) node = node->children[0]; // take final sample.
+    ave_time += node->depth+1;
     lg->begin("example_"+to_string(count));
     this->logNode(node);
     if(model->corpus->mode == Corpus::MODE_POS) {
@@ -172,18 +184,29 @@ double Policy::test(const Corpus& testCorpus) {
     count++;
   }
   lg->end(); // </example>
-  lg->begin("accuracy");
   double accuracy = (double)hit_count/pred_count;
   double recall = (double)hit_count/truth_count;
+  double time = (double)ave_time/count;
+  cout << "time: " << time << endl;
   if(model->corpus->mode == Corpus::MODE_POS) {
+    lg->begin("accuracy");
     *lg << accuracy << endl;
+    cout << "acc: " << accuracy << endl;
     lg->end(); // </accuracy>
+    lg->begin("time");
+    *lg << time << endl;
+    lg->end(); // </time>
     lg->end(); // </test>
     return accuracy;
   }else if(model->corpus->mode == Corpus::MODE_NER) {
     double f1 = 2 * accuracy * recall / (accuracy + recall);
+    lg->begin("accuracy");
     *lg << f1 << endl;
+    cout << "f1: " << f1 << endl;
     lg->end(); // </accuracy>
+    lg->begin("time");
+    *lg << time << endl;
+    lg->end(); // </time>
     lg->end(); // </test>
     return f1;
   }
@@ -204,10 +227,20 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     (*feat)["ent"] = log(taglen)-wordent_mean;
   else
     (*feat)["ent"] = (*wordent)[word];
-  /*if(wordfreq->find(word) == wordfreq->end())
+  if(wordfreq->find(word) == wordfreq->end())
     (*feat)["freq"] = log(model->corpus->total_words)-wordfreq_mean;
   else
-    (*feat)["freq"] = (*wordfreq)[word];*/
+    (*feat)["freq"] = (*wordfreq)[word];
+  StringVector nlp = Model::NLPfunc(word);
+  for(const string wordfeat : *nlp) {
+    if(wordfeat == word) continue; 
+    string lowercase = word;
+    transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
+    if(wordfeat == lowercase) continue;
+    if(wordfeat[0] == 'p' or wordfeat[0] == 's') continue;
+    (*feat)[wordfeat] = 1;
+    // (*feat)[wordfeat+"-ent"] = (*wordent)[word]; 
+  }
   return feat;
 }
 
@@ -305,6 +338,25 @@ CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
 {
 }
 
+FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
+  FeaturePointer feat = Policy::extractFeatures(node, pos);
+  (*feat)["model-ent"] = node->tag->entropy[pos];
+  if(model->corpus->mode == Corpus::MODE_NER) { // tag inconsistency, such as B-PER I-LOC
+    string tg = model->corpus->invtags.find(node->tag->tag[pos])->second;
+    if(pos >= 1) {
+      string prev_tg = model->corpus->invtags.find(node->tag->tag[pos-1])->second;
+      if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
+	(*feat)["bad"] = 1;
+    }
+    if(pos < node->tag->size()-1) {
+      string next_tg = model->corpus->invtags.find(node->tag->tag[pos+1])->second;
+      if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
+	(*feat)["bad"] = 1;
+    }
+  }
+  return feat;
+}
+
 int CyclicPolicy::policy(MarkovTreeNodePtr node) {
   if(node->depth == 0) node->time_stamp = 0;
   if(node->depth < node->tag->size()) {
@@ -315,7 +367,7 @@ int CyclicPolicy::policy(MarkovTreeNodePtr node) {
     assert(!node->parent.expired());
     size_t i = node->time_stamp;
     node->gradient = makeParamPointer();
-    for(; i < 2 * node->tag->size(); i++) {      
+    for( ; i < 2 * node->tag->size(); i++) {      
       size_t pos = i % node->tag->size();
       FeaturePointer feat = this->extractFeatures(node, pos);
       double resp = logisticFunc(::score(param, feat));
@@ -337,4 +389,71 @@ int CyclicPolicy::policy(MarkovTreeNodePtr node) {
 
 double CyclicPolicy::reward(MarkovTreeNodePtr node) {
   return Policy::reward(node) - this->c * (node->depth + 1);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//////// Cyclic Value Policy /////////////////////////////////////////////////////////////
+CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
+:CyclicPolicy(model, vm) { 
+}
+
+void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
+  node->depth = 0;
+  node->choice = -1;
+  try{
+    node->tag->rng = &thread_pool.rngs[tid];
+    for(size_t i = 0; i < node->tag->size(); i++) {
+      model->sampleOne(*node->tag, i);
+    }
+    node->gradient = makeParamPointer();
+    Tag old_tag(*node->tag);
+    for(size_t i = 0; i < node->tag->size(); i++) {
+      auto is_equal = [&] () {
+	return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
+      };
+      double reward_baseline = is_equal();
+      model->sampleOne(*node->tag, i);
+      double reward = is_equal();
+      double logR = reward - c - reward_baseline; 
+      ParamPointer feat = this->extractFeatures(node, i);   
+      double resp = ::score(param, feat);
+//      cout << "logR: " << logR << ", resp: " << resp << endl;
+      mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+    }
+    // cout << "tag0: " << old_tag.str() << endl;
+    // cout << "tag1: " << node->tag->str() << endl;
+    node->log_weight = 0;
+  }catch(const char* ee) {
+    cout << "error: " << ee << endl;
+  }
+}
+
+int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {
+  if(node->depth == 0) node->time_stamp = 0;
+  if(node->depth < node->tag->size()) {
+    node->time_stamp++;
+    return node->depth;
+  }else{
+    objcokus* rng = node->tag->rng;
+    assert(!node->parent.expired());
+    size_t i = node->time_stamp;
+    node->gradient = makeParamPointer();
+    for(; i < 2 * node->tag->size(); i++) {      
+      size_t pos = i % node->tag->size();
+      FeaturePointer feat = this->extractFeatures(node, pos);
+      double resp = ::score(param, feat);
+      node->tag->resp[pos] = resp;
+      // if(rng->random01() < resp) { // strategy 1. randomized test.
+      if(resp > 0) { // strategy 2. deterministic test.
+	node->tag->mask[pos] = 1;
+	node->time_stamp = i+1;
+	return pos;
+      }else{
+	node->tag->mask[pos] = 0;
+      }
+    }
+    node->time_stamp = i;
+    return -1;
+  }
 }

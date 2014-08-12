@@ -22,11 +22,14 @@ public:
   double test(const Corpus& testCorpus);
 
   // run training on corpus.
-  void train(const Corpus& corpus);
+  virtual void train(const Corpus& corpus);
 
   // sample node, default uses Gibbs sampling.
-  void sampleTest(int tid, MarkovTreeNodePtr node);
+  virtual void sampleTest(int tid, MarkovTreeNodePtr node);
 
+  // sample node, for training. default: call sampleTest.
+  virtual void sample(int tid, MarkovTreeNodePtr node);
+  
   // return a number referring to the transition kernel to use.
   // return = -1 : stop the markov chain.
   // o.w. return a natural number representing a choice.
@@ -58,7 +61,7 @@ protected:
   ParamPointer param, G2;
 
   // parallel environment.
-  ThreadPool<MarkovTreeNodePtr> test_thread_pool;    
+  ThreadPool<MarkovTreeNodePtr> thread_pool, test_thread_pool;    
 };
 
 
@@ -103,7 +106,22 @@ public:
   
   // reward = -dist - c * (depth+1).
   double reward(MarkovTreeNodePtr node);
-private:
+  
+  // extract features from node.
+  virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+protected:
   double c;          // regularization of computation.
+};
+
+// policy based on learning value function.
+// virtual class that overwrites the training function.
+class CyclicValuePolicy : public CyclicPolicy {
+public:
+  CyclicValuePolicy(ModelPtr model, const boost::program_options::variables_map& vm);
+
+  int policy(MarkovTreeNodePtr node);
+
+  // sample for training.
+  void sample(int tid, MarkovTreeNodePtr node);
 };
 #endif

@@ -196,7 +196,7 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
 }
 
 tuple<int, int> Model::evalPOS(const Tag& tag) {
-  Tag truth(tag.seq, corpus, &rngs[0], param);
+  Tag truth(*tag.seq, corpus, &rngs[0], param);
   int hit_count = 0, pred_count = 0;
   for(int i = 0; i < truth.size(); i++) {
     if(tag.tag[i] == truth.tag[i]) {

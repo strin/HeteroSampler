@@ -15,13 +15,6 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
  train_count(vm["trainCount"].as<size_t>()), 
  test_count(vm["testCount"].as<size_t>()),
  param(makeParamPointer()), G2(makeParamPointer()) {
- system(("mkdir -p "+name).c_str());
-  lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
-  lg->begin("args");
-    lg->begin("corpus");
-      *lg << vm["train"].as<string>() << endl;
-    lg->end();
-  lg->end();
   // init stats.
   auto wordent_meanent = model->tagEntropySimple();
   wordent = get<0>(wordent_meanent);
@@ -32,6 +25,19 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
   auto tag_bigram_unigram = model->tagBigram();
   tag_bigram = tag_bigram_unigram.first;
   tag_unigram_start = tag_bigram_unigram.second;
+  system(("mkdir -p "+name).c_str());
+  lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
+  lg->begin("args");
+    lg->begin("corpus");
+      *lg << vm["train"].as<string>() << endl;
+    lg->end();
+    lg->begin("wordent_mean");
+      *lg << wordent_mean << endl;
+    lg->end();
+    lg->begin("wordfreq_mean");
+      *lg << wordfreq_mean << endl;
+    lg->end();
+  lg->end();
 }
 
 Policy::~Policy() {
@@ -275,7 +281,7 @@ int EntropyPolicy::policy(MarkovTreeNodePtr node) {
       if(wordent->find(word) == wordent->end()) 
 	ent = log(model->corpus->tags.size());
       else
-	ent = (*wordent)[word];
+	ent = (*wordent)[word]+wordent_mean;
       if(ent > log(threshold)) {
 	node->tag->mask[pos] = 1;
 	node->time_stamp = i+1;

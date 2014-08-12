@@ -54,8 +54,8 @@ class PolicyResult:
 
   # compare with you, and visualize the result.
   @staticmethod
-  def viscomp(policy_l, name_l):
-    tagprob = corpus.read_tagposterior(policy_l[0].corpus)
+  def viscomp(policy_l, name_l, mode='POS'):
+    tagprob = corpus.read_tagposterior(policy_l[0].corpus, mode)
     BG_HIGHLIGHT = '#D4E6FA'
     BG_SELECT = '#EDD861'
     for policy in policy_l:

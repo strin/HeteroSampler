@@ -5,7 +5,7 @@ from stat_policy import *
 
 thres_l = [0.5, 1, 1.5, 2, 2.5, 3, 1000]
 c_l = [0.0, 0.01, 0.1, 0.20, 0.3, 1]
-T_l = [1, 2, 3]
+T_l = [1, 2, 3, 4]
 
 if len(sys.argv) < 2:
   print 'toy', 'toy0', 'plot_toy'

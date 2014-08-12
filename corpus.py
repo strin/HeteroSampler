@@ -1,13 +1,13 @@
 import os, sys
 
-def read_tagcounts(filename):
+def read_tagcounts(filename, mode='POS'):
   f = file(filename).readlines()
   tagcount = dict()
   for line in f:
     tokens = line.replace('\n', '').split(' ')
     if len(tokens) < 2:
       continue
-    if len(tokens) == 2:
+    if mode == 'POS':
       [word, pos] = tokens[:2]
       tag = pos
     else:
@@ -20,8 +20,8 @@ def read_tagcounts(filename):
     tagcount[word][tag] += 1
   return tagcount
 
-def read_tagposterior(filename):
-  tagcount = read_tagcounts(filename)
+def read_tagposterior(filename, mode='POS'):
+  tagcount = read_tagcounts(filename, mode)
   for key in tagcount.keys():
     vsum = sum(tagcount[key].values())
     for tagkey in tagcount[key].keys():
@@ -31,6 +31,6 @@ def read_tagposterior(filename):
 
 if __name__ == '__main__':
   filename = sys.argv[1]
-  tagcount = read_tagposterior(filename)
+  tagcount = read_tagposterior(filename, 'NER')
   print tagcount
 

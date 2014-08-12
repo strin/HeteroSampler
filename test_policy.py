@@ -81,6 +81,15 @@ if sys.argv[1] == "ner_cyclic":
       os.system(cmd)  
       policy = PolicyResult('test_policy/ner_cyclic_%f' % c)
       print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
+if sys.argv[1] == "ner_cyclic_value":
+  for c in c_l:
+      cmd = '''./policy --inference Gibbs --policy cyclic_value \
+      --name test_policy/ner_cyclic_value_%f --c %f --numThreads 10 --eta 1 --K 10 \
+      --model model/ner_gibbs.model --windowL 2 --mode NER ''' % (c, c)
+      print cmd
+      os.system(cmd)  
+      policy = PolicyResult('test_policy/ner_cyclic_value_%f' % c)
+      print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 elif sys.argv[1] == "ner_gibbs":
   for T in T_l:
     cmd = '''./policy --inference Gibbs --policy gibbs --name test_policy/ner_gibbs_T%d \

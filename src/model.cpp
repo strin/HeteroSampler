@@ -195,13 +195,77 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
   }
 }
 
+tuple<int, int> Model::evalPOS(const Tag& tag) {
+  Tag truth(tag.seq, corpus, &rngs[0], param);
+  int hit_count = 0, pred_count = 0;
+  for(int i = 0; i < truth.size(); i++) {
+    if(tag.tag[i] == truth.tag[i]) {
+      hit_count++;
+    }
+    pred_count++;
+  }
+  return make_tuple(hit_count, pred_count);
+}
+
+tuple<int, int, int> Model::evalNER(const Tag& tag) {
+  Tag truth(*tag.seq, corpus, &rngs[0], param);
+  int hit_count = 0, pred_count = 0, truth_count = 0;
+  auto check_chunk_begin = [&] (const Tag& tag, int pos) {
+    string tg = corpus->invtags.find(tag.tag[pos])->second, 
+	   prev_tg = pos > 0 ? corpus->invtags.find(tag.tag[pos-1])->second : "O";
+    string type = tag.seq->seq[pos].pos, 
+	   prev_type = pos > 0 ? tag.seq->seq[pos-1].pos : "";
+    char tg_ch = tg[0], prev_tg_ch = prev_tg[0];  
+    return (prev_tg_ch == 'B' && tg_ch == 'B') ||
+	   (prev_tg_ch == 'I' && tg_ch == 'B') ||
+	   (prev_tg_ch == 'O' && tg_ch == 'B') ||
+	   (prev_tg_ch == 'O' && tg_ch == 'I') ||
+	   (prev_tg_ch == 'E' && tg_ch == 'E') ||
+	   (prev_tg_ch == 'E' && tg_ch == 'I') ||
+	   (prev_tg_ch == 'O' && tg_ch == 'E') ||
+	   (prev_tg_ch == 'O' && tg_ch == 'I') ||
+	   (tg != "O" && tg != "." && type != prev_type) ||
+	   (tg == "[") || (tg == "]");
+  };
+  auto check_chunk_end = [&] (const Tag& tag, int pos) { 
+    string tg = corpus->invtags.find(tag.tag[pos])->second, 
+	   next_tg = pos < tag.size()-1 ? corpus->invtags.find(tag.tag[pos+1])->second : "O";
+    string type = tag.seq->seq[pos].pos, 
+	   next_type = pos < tag.size()-1 ? tag.seq->seq[pos+1].pos : "";
+    char tg_ch = tg[0], next_tg_ch = next_tg[0];
+    return (tg_ch == 'B' && next_tg_ch == 'B') ||
+	   (tg_ch == 'B' && next_tg_ch == 'O') ||
+	   (tg_ch == 'I' && next_tg_ch == 'B') ||
+	   (tg_ch == 'I' && next_tg_ch == 'O') ||
+	   (tg_ch == 'E' && next_tg_ch == 'E') ||
+	   (tg_ch == 'E' && next_tg_ch == 'I') ||
+	   (tg_ch == 'E' && next_tg_ch == 'O') ||
+	   (tg != "O" && tg != "." && type != next_type) ||
+	   (tg == "[") || (tg == "]");
+
+  };
+  bool hit_begin = true;
+  for(int i = 0; i < truth.size(); i++) {
+    truth_count += (int)check_chunk_begin(truth, i);
+    pred_count += (int)check_chunk_begin(tag, i);
+    if(check_chunk_begin(truth, i) && check_chunk_begin(tag, i)) 
+      hit_begin = true;
+    if(tag.tag[i] != truth.tag[i]) {
+      hit_begin = false;
+    }
+    if(check_chunk_end(truth, i) && check_chunk_end(tag, i)) { 
+      hit_count += (int)hit_begin;
+    }
+  }
+  return make_tuple(hit_count, pred_count, truth_count);
+}
+
 double Model::test(const Corpus& testCorpus) {
   Corpus retagged(testCorpus);
   retagged.retag(*this->corpus);
   int pred_count = 0, truth_count = 0, hit_count = 0;
   xmllog.begin("test");
   int ex = 0;
-  XMLlog lg("error.xml");
   for(const Sentence& seq : retagged.seqs) {
     shared_ptr<Tag> tag = this->sample(seq).back();
     Tag truth(seq, corpus, &rngs[0], param);
@@ -210,67 +274,18 @@ double Model::test(const Corpus& testCorpus) {
       xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
       xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
     xmllog.end();
-    bool pred_begin = false, truth_begin = false, hit_begin = false;
-    for(int i = 0; i < seq.size(); i++) {
-      if(corpus->mode == Corpus::MODE_POS) {
-	if(tag->tag[i] == seq.tag[i]) {
-	  hit_count++;
-	}
-	pred_count++;
-      }else if(corpus->mode == Corpus::MODE_NER) {
-	auto check_chunk_begin = [&] (const Tag& tag, int pos) {
-	  string tg = corpus->invtags.find(tag.tag[pos])->second, 
-		 prev_tg = pos > 0 ? corpus->invtags.find(tag.tag[pos-1])->second : "O";
-	  string type = tag.seq->seq[pos].pos, 
-		 prev_type = pos > 0 ? tag.seq->seq[pos-1].pos : "";
-	  char tg_ch = tg[0], prev_tg_ch = prev_tg[0];  
-	  return (prev_tg_ch == 'B' && tg_ch == 'B') ||
-		 (prev_tg_ch == 'I' && tg_ch == 'B') ||
-		 (prev_tg_ch == 'O' && tg_ch == 'B') ||
-		 (prev_tg_ch == 'O' && tg_ch == 'I') ||
-		 (prev_tg_ch == 'E' && tg_ch == 'E') ||
-		 (prev_tg_ch == 'E' && tg_ch == 'I') ||
-		 (prev_tg_ch == 'O' && tg_ch == 'E') ||
-		 (prev_tg_ch == 'O' && tg_ch == 'I') ||
-		 (tg != "O" && tg != "." && type != prev_type) ||
-		 (tg == "[") || (tg == "]");
-	};
-	auto check_chunk_end = [&] (const Tag& tag, int pos) { 
-	  string tg = corpus->invtags.find(tag.tag[pos])->second, 
-		 next_tg = pos < tag.size()-1 ? corpus->invtags.find(tag.tag[pos+1])->second : "O";
-	  string type = tag.seq->seq[pos].pos, 
-		 next_type = pos < tag.size()-1 ? tag.seq->seq[pos+1].pos : "";
-	  char tg_ch = tg[0], next_tg_ch = next_tg[0];
-	  return (tg_ch == 'B' && next_tg_ch == 'B') ||
-		 (tg_ch == 'B' && next_tg_ch == 'O') ||
-		 (tg_ch == 'I' && next_tg_ch == 'B') ||
-		 (tg_ch == 'I' && next_tg_ch == 'O') ||
-		 (tg_ch == 'E' && next_tg_ch == 'E') ||
-		 (tg_ch == 'E' && next_tg_ch == 'I') ||
-		 (tg_ch == 'E' && next_tg_ch == 'O') ||
-		 (tg != "O" && tg != "." && type != next_type) ||
-		 (tg == "[") || (tg == "]");
-
-	};
-	truth_count += (int)check_chunk_begin(truth, i);
-	pred_count += (int)check_chunk_begin(*tag, i);
-	if(check_chunk_begin(truth, i) && check_chunk_begin(*tag, i)) 
-	  hit_begin = true;
-	if(tag->tag[i] != seq.tag[i]) {
-	  hit_begin = false;
-	  lg.begin("error");
-	  lg << corpus->invtags.find(truth.tag[i])->second << endl;
-	  lg << corpus->invtags.find(tag->tag[i])->second << endl;
-	  lg.end();
-	}
-	if(check_chunk_end(truth, i) && check_chunk_end(*tag, i)) { 
-	  hit_count += (int)hit_begin;
-	}
-      }
+    if(corpus->mode == Corpus::MODE_POS) {
+      tuple<int, int> hit_pred = this->evalPOS(*tag);
+      hit_count += get<0>(hit_pred);
+      pred_count += get<1>(hit_pred);
+    }else if(corpus->mode == Corpus::MODE_NER) {
+      tuple<int, int, int> hit_pred_truth = this->evalNER(*tag);
+      hit_count += get<0>(hit_pred_truth);
+      pred_count += get<1>(hit_pred_truth);
+      truth_count += get<2>(hit_pred_truth);
     }
     ex++;
   }
-  lg.end();
   xmllog.end();
 
   xmllog.begin("score"); 

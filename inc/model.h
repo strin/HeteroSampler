@@ -45,6 +45,15 @@ public:
   std::pair<Vector2d, std::vector<double> > tagBigram() const;
   static StringVector NLPfunc(const std::string word);
   virtual double score(const Tag& tag);
+  // evaluate the accuracy for POS tag aginst truth.
+  // return 0: hit count.
+  // return 1: pred count.
+  std::tuple<int, int> evalPOS(const Tag& tag);
+  // evaulate the F1 score for NER tag aginst truth.
+  // return 0: hit count.
+  // return 1: pred count.
+  // return 2: truth count.
+  std::tuple<int, int, int> evalNER(const Tag& tag);
 
   /* parameters */
   int T, B, Q, Q0;
@@ -57,6 +66,7 @@ public:
   /* IO */
   friend std::ostream& operator<<(std::ostream& os, const Model& model);
   friend std::istream& operator>>(std::istream& os, Model& model);
+
 
   XMLlog xmllog;
 protected:

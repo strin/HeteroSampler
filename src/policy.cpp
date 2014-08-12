@@ -147,27 +147,41 @@ double Policy::test(const Corpus& testCorpus) {
   test_thread_pool.waitFinish();
   lg->begin("example");
   count = 0;
-  size_t hit_count = 0, pred_count = 0; 
+  size_t hit_count = 0, pred_count = 0, truth_count = 0; 
   for(MarkovTreeNodePtr node : result) {
     while(node->children.size() > 0) node = node->children[0]; // take final sample.
     lg->begin("example_"+to_string(count));
     this->logNode(node);
-    for(size_t i = 0; i < node->tag->size(); i++) {
-      if(node->tag->tag[i] == node->tag->seq->tag[i]) {
-	hit_count++;
-      }
-      pred_count++;
+    if(model->corpus->mode == Corpus::MODE_POS) {
+      tuple<int, int> hit_pred = model->evalPOS(*node->tag);
+      hit_count += get<0>(hit_pred);
+      pred_count += get<1>(hit_pred);
+    }else if(model->corpus->mode == Corpus::MODE_NER) {
+      tuple<int, int, int> hit_pred_truth = model->evalNER(*node->tag);
+      hit_count += get<0>(hit_pred_truth);
+      pred_count += get<1>(hit_pred_truth);
+      truth_count += get<2>(hit_pred_truth);
     }
     lg->end(); // </example_i>
     count++;
   }
   lg->end(); // </example>
-  double acc = (double)hit_count/pred_count;
   lg->begin("accuracy");
-    *lg << acc << endl;
-  lg->end(); // </accuracy>
-  lg->end(); // </test>
-  return acc;
+  double accuracy = (double)hit_count/pred_count;
+  double recall = (double)hit_count/truth_count;
+  if(model->corpus->mode == Corpus::MODE_POS) {
+    *lg << accuracy << endl;
+    lg->end(); // </accuracy>
+    lg->end(); // </test>
+    return accuracy;
+  }else if(model->corpus->mode == Corpus::MODE_NER) {
+    double f1 = 2 * accuracy * recall / (accuracy + recall);
+    *lg << f1 << endl;
+    lg->end(); // </accuracy>
+    lg->end(); // </test>
+    return f1;
+  }
+  return -1;
 }
 
 FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {

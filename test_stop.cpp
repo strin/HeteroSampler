@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
       std::ifstream file; 
       file.open("model/gibbs.model", std::fstream::in);
       if(!file.is_open()) 
-	throw ("Gibbs model not found.").c_str();
+	throw "Gibbs model not found.";
       file >> *model;
       file.close();
       Stop stop(model, vm); 
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
       std::ifstream file; 
       file.open("model/simple.model", std::fstream::in);
       if(!file.is_open()) 
-	throw ("Simple model not found.").c_str();
+	throw "Simple model not found.";
       file >> *model;
       file.close();
       Stop stop(model, vm); 

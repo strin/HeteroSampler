@@ -58,6 +58,7 @@ int main(int argc, char* argv[]) {
     testCorpus.read(test);
 
     /* run. */
+    corpus.computeWordFeat();
     string output = vm["output"].as<string>();
     size_t pos = output.find_last_of("/");
     if(pos == string::npos) throw "invalid model output dir."; 

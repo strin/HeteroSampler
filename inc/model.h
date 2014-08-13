@@ -68,7 +68,7 @@ public:
   XMLlog xmllog;
  
   /* const environment */
-  enum Scoring {SCORE_F1, SCORE_ACCURACY };
+  enum Scoring {SCORING_NER, SCORING_ACCURACY };
   Scoring scoring;
   const boost::program_options::variables_map& vm;
 

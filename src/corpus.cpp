@@ -62,13 +62,13 @@ string Sentence::str() const {
 }
 
 // implement Corpus.
-Corpus::Corpus(Mode mode) 
-: mode(mode), is_word_feat_computed(false) {
+Corpus::Corpus() 
+:is_word_feat_computed(false) {
   word_feat.clear();
 }
 
-Corpus::Corpus(const string& filename, Mode mode)
-:mode(mode), is_word_feat_computed(false) {
+Corpus::Corpus(const string& filename)
+:is_word_feat_computed(false) {
   this->read(filename);
   word_feat.clear();
 }
@@ -94,8 +94,7 @@ void Corpus::read(const string& filename, bool lets_shuffle) {
       }else continue;
       BOOST_FOREACH(const Token& token, seqs.back().seq) {
 	string tg;
-	if(mode == MODE_POS) tg = token.pos;
-	else if(mode == MODE_NER) tg = token.ner;
+	tg = token.tag;
 	if(tags.find(tg) == tags.end()) {
 	  tags[tg] =  tagid++;
 	  tagcounts[tg] = 0;
@@ -112,21 +111,21 @@ void Corpus::read(const string& filename, bool lets_shuffle) {
       lines.push_back(line);
   }
   // count tags.
+  /*
   if(mode == MODE_POS) total_tags = total_words; 
   else{
     total_tags = 0;
     for(const pair<string, int>& p : tagcounts) {
       if(p.first != "O") total_tags += p.second; 
     }
-  }
+  }*/
   // convert raw tag into integer tag.
   invtags.clear();
   word_tag_count.clear();
   for(Sentence& seq : seqs) {
     for(const Token& token : seq.seq) {
       string tg;
-      if(mode == MODE_POS) tg = token.pos;
-      else if(mode == MODE_NER) tg = token.ner;
+      tg = token.tag;
       int itg = tags[tg];
       seq.tag.push_back(itg); 
       invtags[itg] = tg;
@@ -146,10 +145,7 @@ void Corpus::retag(const Corpus& corpus) {
   this->invtags = corpus.invtags;
   for(Sentence& sen : seqs) {
     for(int i = 0; i < sen.size(); i++) {
-      if(mode == MODE_POS)
-	sen.tag[i] = this->tags[sen.seq[i].pos];
-      else if(mode == MODE_NER)
-	sen.tag[i] = this->tags[sen.seq[i].ner];
+      sen.tag[i] = this->tags[sen.seq[i].tag];
     }
   }
 }

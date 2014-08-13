@@ -171,11 +171,11 @@ double Policy::test(const Corpus& testCorpus) {
     ave_time += node->depth+1;
     lg->begin("example_"+to_string(count));
     this->logNode(node);
-    if(model->corpus->mode == Corpus::MODE_POS) {
+    if(model->scoring == Model::SCORING_ACCURACY) {
       tuple<int, int> hit_pred = model->evalPOS(*node->tag);
       hit_count += get<0>(hit_pred);
       pred_count += get<1>(hit_pred);
-    }else if(model->corpus->mode == Corpus::MODE_NER) {
+    }else if(model->scoring == Model::SCORING_NER) {
       tuple<int, int, int> hit_pred_truth = model->evalNER(*node->tag);
       hit_count += get<0>(hit_pred_truth);
       pred_count += get<1>(hit_pred_truth);
@@ -189,7 +189,7 @@ double Policy::test(const Corpus& testCorpus) {
   double recall = (double)hit_count/truth_count;
   double time = (double)ave_time/count;
   cout << "time: " << time << endl;
-  if(model->corpus->mode == Corpus::MODE_POS) {
+  if(model->scoring == Model::SCORING_ACCURACY) {
     lg->begin("accuracy");
     *lg << accuracy << endl;
     cout << "acc: " << accuracy << endl;
@@ -199,7 +199,7 @@ double Policy::test(const Corpus& testCorpus) {
     lg->end(); // </time>
     lg->end(); // </test>
     return accuracy;
-  }else if(model->corpus->mode == Corpus::MODE_NER) {
+  }else if(model->scoring == Model::SCORING_NER) {
     double f1 = 2 * accuracy * recall / (accuracy + recall);
     lg->begin("accuracy");
     *lg << f1 << endl;
@@ -343,7 +343,7 @@ CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
 FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   FeaturePointer feat = Policy::extractFeatures(node, pos);
   (*feat)["model-ent"] = node->tag->entropy[pos];
-  if(model->corpus->mode == Corpus::MODE_NER) { // tag inconsistency, such as B-PER I-LOC
+  if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
     string tg = model->corpus->invtags.find(node->tag->tag[pos])->second;
     if(pos >= 1) {
       string prev_tg = model->corpus->invtags.find(node->tag->tag[pos-1])->second;

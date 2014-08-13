@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
       ("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
       ("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
       ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
-      ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
+      ("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")
       ("adaptive", po::value<bool>()->default_value(true), "use adaptive inference (stop) ? default: yes.")
       ("name", po::value<string>()->default_value("default"), "name of the run")
       ("numThreads", po::value<int>()->default_value(10), "number of threads to use")
@@ -41,13 +41,10 @@ int main(int argc, char* argv[]) {
       cout << desc << "\n";
       return 1;
   }
-  Corpus::Mode mode = Corpus::MODE_POS;
-  if(vm["mode"].as<string>() == "NER")
-    mode = Corpus::MODE_NER;
   string train = vm["train"].as<string>(), test = vm["test"].as<string>();
-  Corpus corpus(mode);
+  Corpus corpus;
   corpus.read(train);
-  Corpus testCorpus(mode);
+  Corpus testCorpus;
   testCorpus.read(test);
   try{
     shared_ptr<Model> model = nullptr;

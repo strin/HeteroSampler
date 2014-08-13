@@ -138,7 +138,7 @@ void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer f
       else
 	(*features)[ss.str()] = 1;
     }
-    if(corpus->mode == Corpus::MODE_NER) { // add pos tags for NER task.
+    /*if(corpus->mode == Corpus::MODE_NER) { // add pos tags for NER task.
       stringstream ss;
       ss << "t-" << to_string(l-pos)
          << "-" << sen[l].pos << "-" << tag.getTag(pos);
@@ -147,7 +147,7 @@ void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer f
       ss << "t2-" << to_string(l-pos)
          << "-" << sen[l].pos2 << "-" << tag.getTag(pos);
       (*features)[ss.str()] = 1;
-    }
+    }*/
   }
 }
 

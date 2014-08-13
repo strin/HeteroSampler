@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 	("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
 	("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
 	("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
-	("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
+	("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")
 	("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
     ;
     po::variables_map vm;
@@ -45,13 +45,10 @@ int main(int argc, char* argv[]) {
 	cout << desc << "\n";
 	return 1;
     }
-    Corpus::Mode mode = Corpus::MODE_POS;
-    if(vm["mode"].as<string>() == "NER")
-      mode = Corpus::MODE_NER;
     string train = vm["train"].as<string>(), test = vm["test"].as<string>();
-    Corpus corpus(mode);
+    Corpus corpus;
     corpus.read(train, false);
-    Corpus testCorpus(mode);
+    Corpus testCorpus;
     testCorpus.read(test, false);
     shared_ptr<Model> model;
     if(vm["inference"].as<string>() == "Gibbs") {

@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
       ("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
       ("Tstar", po::value<double>()->default_value(T), "time resource constraints")
       ("eps_split", po::value<double>()->default_value(0.0), "prob of split in MarkovTree")
-      ("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
+      ("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")
       ("train", po::value<string>(), "training data")
       ("test", po::value<string>(), "test data")
       ("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
@@ -49,15 +49,12 @@ int main(int argc, char* argv[]) {
   }
   try{
     /* load corpus. */
-    Corpus::Mode mode = Corpus::MODE_POS;
-    if(vm.count("mode") && vm["mode"].as<string>() == "NER")
-      mode = Corpus::MODE_NER;
     string train = "data/eng_ner/train", test = "data/eng_ner/test";
     if(vm.count("train")) train = vm["train"].as<string>();
     if(vm.count("test")) test = vm["test"].as<string>();  
-    Corpus corpus(mode);
+    Corpus corpus;
     corpus.read(train);
-    Corpus testCorpus(mode);
+    Corpus testCorpus;
     testCorpus.read(test);
 
     /* run. */

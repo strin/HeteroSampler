@@ -44,16 +44,15 @@ static StringVector makeStringVector() {
 
 struct Corpus {
 public:
-  enum Mode {MODE_POS, MODE_NER};
-  Mode mode;
-  Corpus(Mode mode = MODE_POS);
-  Corpus(const std::string& filename, Mode mode = MODE_POS);
+  Corpus();
+  Corpus(const std::string& filename);
   std::vector<Sentence> seqs;
   objcokus cokus;
   std::map<std::string, int> tags, tagcounts;
   std::map<std::string, int> dic, dic_counts;
   std::map<std::string, std::vector<int> > word_tag_count;
-  size_t total_words, total_tags;
+  size_t total_words;
+  // total_tags;
   std::map<int, std::string> invtags;
   std::string invtag(int id) const {return invtags.find(id)->second; }
   void read(const std::string& filename, bool lets_shuffle = true);

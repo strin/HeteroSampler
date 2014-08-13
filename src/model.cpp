@@ -19,6 +19,19 @@ Model::Model(const Corpus* corpus, const po::variables_map& vm)
  Q(vm["Q"].as<size_t>()), eta(vm["eta"].as<double>()), 
  K(vm["K"].as<size_t>()), Q0(vm["Q0"].as<int>()),  
  testFrequency(vm["testFrequency"].as<double>()) {
+  try {
+    if(vm.count("scoring") == 0) {
+      throw "no scoring specified";
+    }else{
+      string scoring_str = vm["scoring"].as<string>();
+      if(scoring_str == "Acc") scoring = SCORING_ACCURACY;
+      else if(scoring_str == "NER") scoring = SCORING_NER;
+      else throw "scoring method invalid";
+    }
+  }catch(char const* warn) {
+    cout << warn << " - use accuracy" << endl;
+    scoring = SCORING_ACCURACY;
+  }
   rngs.resize(K);
 }
 
@@ -222,11 +235,11 @@ double Model::test(const Corpus& testCorpus) {
       xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
       xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
     xmllog.end();
-    if(corpus->mode == Corpus::MODE_POS) {
+    if(this->scoring == SCORING_ACCURACY) {
       tuple<int, int> hit_pred = this->evalPOS(*tag);
       hit_count += get<0>(hit_pred);
       pred_count += get<1>(hit_pred);
-    }else if(corpus->mode == Corpus::MODE_NER) {
+    }else if(this->scoring == SCORING_NER) {
       tuple<int, int, int> hit_pred_truth = this->evalNER(*tag);
       hit_count += get<0>(hit_pred_truth);
       pred_count += get<1>(hit_pred_truth);
@@ -240,10 +253,10 @@ double Model::test(const Corpus& testCorpus) {
   double accuracy = (double)hit_count/pred_count;
   double recall = (double)hit_count/truth_count;
   xmllog << "test precision = " << accuracy * 100 << " %" << endl; 
-  if(corpus->mode == Corpus::MODE_POS) {
+  if(this->scoring  == SCORING_ACCURACY) {
     xmllog.end();
     return accuracy;
-  }else if(corpus->mode == Corpus::MODE_NER) {  
+  }else if(this->scoring == SCORING_NER) {  
     xmllog << "test recall = " << recall * 100 << " %" << endl;
     double f1 = 2 * accuracy * recall / (accuracy + recall);
     xmllog << "test f1 = " << f1 * 100 << " %" << endl;

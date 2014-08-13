@@ -12,9 +12,6 @@
 using namespace std;
 namespace po = boost::program_options;
 
-unordered_map<string, StringVector> Model::word_feat;
-bool Model::is_word_feat_computed = false;
-
 Model::Model(const Corpus* corpus, const po::variables_map& vm)
 :corpus(corpus), param(makeParamPointer()), vm(vm),
  G2(makeParamPointer()) , stepsize(makeParamPointer()), 
@@ -23,74 +20,11 @@ Model::Model(const Corpus* corpus, const po::variables_map& vm)
  K(vm["K"].as<size_t>()), Q0(vm["Q0"].as<int>()),  
  testFrequency(vm["testFrequency"].as<double>()) {
   rngs.resize(K);
-  word_feat.clear();
 }
 
 void Model::configStepsize(ParamPointer gradient, double new_eta) {
   for(const pair<string, double>& p : *gradient) 
     (*stepsize)[p.first] = new_eta;
-}
-
-/* use standard NLP functions of word */
-StringVector Model::NLPfunc(const string word) {
-  if(is_word_feat_computed and word_feat.find(word) != word_feat.end())
-    return word_feat[word];
-  StringVector nlp = makeStringVector();
-  nlp->push_back(word);
-  /* unordered_map<std::string, StringVector>::iterator it = word_feat.find(word);
-  if(it != word_feat.end())
-    return it->second; */
-  size_t wordlen = word.length();
-  for(size_t k = 1; k <= 3; k++) {
-    if(wordlen > k) {
-      nlp->push_back("p"+to_string(k)+"-"+word.substr(0, k));
-      nlp->push_back("s"+to_string(k)+"-"+word.substr(wordlen-k, k));
-    }
-  }
-  if(std::find_if(word.begin(), word.end(), 
-	  [](char c) { return std::isdigit(c); }) != word.end()) {
-      nlp->push_back("00-");  // number
-  }
-  // word signature.
-  stringstream sig0;
-  string sig1(word);
-  string lowercase = word;
-  transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
-  nlp->push_back(lowercase);
-  char prev = '0';
-  bool capitalized = true;
-  for(size_t i = 0; i < wordlen; i++) {
-    if(word[i] <= 'Z' && word[i] >= 'A') {
-      if(prev != 'A') 
-	sig0 << "A";
-      sig1[i] = 'A';
-      prev = 'A';
-    }else if(word[i] <= 'z' && word[i] >= 'a') {
-      if(prev != 'a')
-	sig0 << "a";
-      sig1[i] = 'a';
-      prev = 'a';
-      capitalized = false;
-    }else{
-      sig1[i] = 'x';
-      prev = 'x';
-      capitalized = false;
-    }
-  }
-  nlp->push_back("SG-"+sig0.str());
-  nlp->push_back("sg-"+sig1);
-  if(capitalized) 
-    nlp->push_back("CAP-");
-  // word_feat[word] = nlp;
-  return nlp;
-
-}
-
-void Model::computeWordFeat(const Corpus& corpus) {
-  for(const pair<string, int>& p : corpus.dic) {
-    word_feat[p.first] = NLPfunc(p.first);    
-  }
-  is_word_feat_computed = true;
 }
 
 tuple<FeaturePointer, double> Model::tagEntropySimple() const {

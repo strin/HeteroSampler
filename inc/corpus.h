@@ -1,17 +1,22 @@
-#ifndef POS_SENTENCE_H
-#define POS_SENTENCE_H
-
 #include <iostream>
 #include <string>
 #include <vector>
 #include <map>
 #include "utils.h"
 
+#ifndef POS_SENTENCE_H
+#define POS_SENTENCE_H
+
 struct Token {
 public:
+  // old convention, kept for compatibility.
   std::string word,  // word. use lower case, B-S means beginning of sentence. 
 	      pos, pos2, 
 	      ner;   // name entity.
+  // new, more general convention.
+  std::vector<std::string> token; // input.
+  std::string tag;                // output.
+  size_t depth() const {return token.size(); }    // return input depth.
   bool is_doc_start;
   Token();
   Token(const std::string& line);
@@ -32,6 +37,11 @@ public:
   size_t size() const {return this->seq.size(); }
 };
 
+typedef std::shared_ptr<std::vector<std::string> > StringVector;
+static StringVector makeStringVector() {
+  return StringVector(new std::vector<std::string>());
+}
+
 struct Corpus {
 public:
   enum Mode {MODE_POS, MODE_NER};
@@ -49,6 +59,12 @@ public:
   void read(const std::string& filename, bool lets_shuffle = true);
   void retag(const Corpus& corpus); // retag using corpus' tag.
   int size() const {return seqs.size(); }
+  void computeWordFeat();  // compute and cache word features.
+  StringVector getWordFeat(std::string word) const;
+
+private:
+  std::unordered_map<std::string, StringVector> word_feat;
+  bool is_word_feat_computed;
 };
 
 #endif

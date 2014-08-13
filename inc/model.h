@@ -14,10 +14,6 @@
 
 #include <boost/program_options.hpp>
 
-typedef std::shared_ptr<std::vector<std::string> > StringVector;
-static StringVector makeStringVector() {
-  return StringVector(new std::vector<std::string>());
-}
 
 inline static void adagrad(ParamPointer param, ParamPointer G2, ParamPointer gradient, double eta) {
   for(const std::pair<std::string, double>& p : *gradient) {
@@ -45,7 +41,6 @@ public:
   std::tuple<FeaturePointer, double> tagEntropySimple() const;
   std::tuple<FeaturePointer, double> wordFrequencies() const;
   std::pair<Vector2d, std::vector<double> > tagBigram() const;
-  static StringVector NLPfunc(const std::string word);
   virtual double score(const Tag& tag);
   // evaluate the accuracy for POS tag aginst truth.
   // return 0: hit count.
@@ -83,10 +78,6 @@ protected:
 
   int K;          // num of particle. 
   int num_ob;     // current number of observations.
-
-  static void computeWordFeat(const Corpus& corpus); // pre-compute word features.
-  static std::unordered_map<std::string, StringVector> word_feat;
-  static bool is_word_feat_computed;
 };
 
 typedef std::shared_ptr<Model> ModelPtr;

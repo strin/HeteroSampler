@@ -25,6 +25,9 @@ int main(int argc, char* argv[]) {
 	("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
 	("threshold", po::value<double>()->default_value(0.8), "theshold for entropy policy")
 	("T", po::value<size_t>()->default_value(1), "number of sweeps in Gibbs sampling")
+	("B", po::value<size_t>()->default_value(0), "number of burnin steps")
+	("Q", po::value<size_t>()->default_value(10), "number of passes")
+	("Q0", po::value<int>()->default_value(1), "number of passes for smart init")
 	("K", po::value<size_t>()->default_value(5), "number of samples in policy gradient")
 	("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
 	("c", po::value<double>()->default_value(0.1), "time regularization")
@@ -32,6 +35,7 @@ int main(int argc, char* argv[]) {
 	("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
 	("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
 	("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
+	("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -55,6 +59,7 @@ int main(int argc, char* argv[]) {
       file >> *model;
       file.close();
     }
+    corpus.computeWordFeat();
     shared_ptr<Policy> policy;
     if(vm["policy"].as<string>() == "entropy") {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<EntropyPolicy>(new EntropyPolicy(model, vm)));   

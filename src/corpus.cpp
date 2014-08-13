@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "feature.h"
 
 using namespace std;
 using namespace boost;
@@ -18,7 +19,14 @@ Token::Token(const string& line) : is_doc_start(false) {
 void Token::parseline(const string& line) {
   vector<string> parts;
   split(parts, line, is_any_of(" "));
+  // new convention.
+  if(parts.size() < 2) throw ("invalid token - "+line).c_str();
+  token.clear();
   word = parts[0];
+  for(size_t d = 0; d < parts.size()-1; d++) 
+    token.push_back(parts[d]);
+  tag = parts[parts.size()-1];
+  // old convention.
   pos = parts[1];
   if(parts.size() >= 3)
     pos2 = parts[2];
@@ -57,11 +65,15 @@ string Sentence::str() const {
 }
 
 // implement Corpus.
-Corpus::Corpus(Mode mode) : mode(mode) {}
+Corpus::Corpus(Mode mode) 
+: mode(mode), is_word_feat_computed(false) {
+  word_feat.clear();
+}
 
 Corpus::Corpus(const string& filename, Mode mode)
-:mode(mode) {
+:mode(mode), is_word_feat_computed(false) {
   this->read(filename);
+  word_feat.clear();
 }
 
 void Corpus::read(const string& filename, bool lets_shuffle) {
@@ -144,3 +156,17 @@ void Corpus::retag(const Corpus& corpus) {
     }
   }
 }
+
+void Corpus::computeWordFeat() {
+  for(const pair<string, int>& p : this->dic) {
+    word_feat[p.first] = NLPfunc(p.first);    
+  }
+  is_word_feat_computed = true;
+}
+
+StringVector Corpus::getWordFeat(string word) const {
+  if(is_word_feat_computed and word_feat.find(word) != word_feat.end())
+    return word_feat.find(word)->second;
+  return NLPfunc(word);
+}
+

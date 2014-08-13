@@ -3,6 +3,7 @@
  * > CRF with Gibbs sampling. 
  */
 #include "model.h"
+#include "feature.h"
 #include <boost/program_options.hpp>
 
 using namespace std;
@@ -79,7 +80,6 @@ ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool
 //////// Model CRF Gibbs ///////////////////////////////
 ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
 :ModelSimple(corpus, vm) {
-  this->computeWordFeat(*corpus);
 }
 
 void ModelCRFGibbs::sample(Tag& tag, int time) {
@@ -156,13 +156,24 @@ FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
   int seqlen = tag.size();
   // extract word features. 
   FeaturePointer features = makeFeaturePointer();
-  this->addUnigramFeatures(tag, pos, features);
+  
+  /* this->addUnigramFeatures(tag, pos, features);
   // extract bigram features.
   if(pos >= 1) {
     addBigramFeatures(tag, pos, features); 
   }
   if(pos < seqlen-1) {
     addBigramFeatures(tag, pos+1, features);
+  }*/
+  int depth = 0;
+  if(corpus->mode == Corpus::MODE_NER) 
+    depth = 2;
+  extractUnigramFeature(tag, pos, windowL, depth, features);
+  if(pos >= 1) {
+    extractBigramFeature(tag, pos, features);
+  }
+  if(pos < seqlen-1) {
+    extractBigramFeature(tag, pos+1, features);
   }
   return features;
 }

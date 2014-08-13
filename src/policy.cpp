@@ -1,4 +1,5 @@
 #include "policy.h"
+#include "feature.h"
 
 namespace po = boost::program_options;
 
@@ -231,7 +232,7 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     (*feat)["freq"] = log(model->corpus->total_words)-wordfreq_mean;
   else
     (*feat)["freq"] = (*wordfreq)[word];
-  StringVector nlp = Model::NLPfunc(word);
+  StringVector nlp = NLPfunc(word);
   for(const string wordfeat : *nlp) {
     if(wordfeat == word) continue; 
     string lowercase = word;

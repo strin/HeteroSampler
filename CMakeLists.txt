@@ -48,6 +48,7 @@ ELSE()
 ENDIF()
 
 add_executable(pos main.cpp
+src/feature.cpp
 src/corpus.cpp
 src/tag.cpp
 src/MarkovTree.cpp
@@ -68,6 +69,7 @@ target_link_libraries(pos
 )
 
 add_executable(stop test_stop.cpp
+src/feature.cpp
 src/corpus.cpp
 src/tag.cpp
 src/MarkovTree.cpp
@@ -88,6 +90,7 @@ target_link_libraries(stop
 )
 
 add_executable(policy test_policy.cpp
+src/feature.cpp
 src/corpus.cpp
 src/tag.cpp
 src/MarkovTree.cpp

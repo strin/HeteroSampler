@@ -11,17 +11,19 @@
 
 using namespace std;
 using namespace std::placeholders;
+namespace po = boost::program_options;
 
-ModelTreeUA::ModelTreeUA(const Corpus* corpus, int windowL, int K, int T, int B, int Q, 
-			  int Q0, double eta) 
-:ModelCRFGibbs(corpus, windowL, T, B, Q, eta), eps(0), eps_split(0), Q0(Q0) {
+ModelTreeUA::ModelTreeUA(const Corpus* corpus, const po::variables_map& vm) 
+:ModelCRFGibbs(corpus, vm), eps(0), 
+ eps_split(vm["eps_split"].as<double>()), 
+ Q0(vm["Q0"].as<int>()) {
   Model::K = K;
   this->initThreads(K);
 }
 
 void ModelTreeUA::run(const Corpus& testCorpus) {
   auto init_simple = [&] () {
-    ModelSimple simple_model(this->corpus, windowL, T, B, Q0, eta);
+    ModelSimple simple_model(this->corpus, vm);
     simple_model.run(testCorpus, true);
     copyParamFeatures(simple_model.param, "simple-", this->param, "");
   };
@@ -158,10 +160,10 @@ double ModelTreeUA::score(const Tag& tag) {
 }
 
 
-ModelAdaTree::ModelAdaTree(const Corpus* corpus, int windowL, int K, 
-			    double c, double Tstar, double etaT, 
-			    int T, int B, int Q, int Q0, double eta)
-:ModelTreeUA(corpus, windowL, K, T, B, Q, Q0, eta), m_c(c), m_Tstar(Tstar), etaT(etaT) {
+ModelAdaTree::ModelAdaTree(const Corpus* corpus, const po::variables_map& vm) 
+:ModelTreeUA(corpus, vm), 
+ m_c(vm["c"].as<double>()),m_Tstar(vm["Tstar"].as<double>()), 
+ etaT(vm["etaT"].as<double>()) {
   // aggregate stats. 
   auto wordent_meanent = tagEntropySimple();
   wordent = get<0>(wordent_meanent);
@@ -339,191 +341,3 @@ double ModelAdaTree::score(shared_ptr<MarkovTreeNode> node, const Tag& tag) {
   score -= m_c * max(0.0, node->depth-m_Tstar);
   return score;
 }
-
-ModelPrune::ModelPrune(const Corpus* corpus, int windowL, int K, int prune_mode,  
-		       size_t data_size, double c, double Tstar, double etaT,
-			int T, int B, int Q, int Q0, double eta) 
-:ModelAdaTree(corpus, windowL, K, c, Tstar, etaT, T, B, Q, Q0, eta), 
-	  data_size(data_size), stop_data_log(nullptr), prune_mode(prune_mode) {
-  stop_data = makeStopDataset();
-}
-
-void ModelPrune::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag) {
-    XMLlog& lg = *th_log[tid];
-    while(true) {
-      node->gradient = makeParamPointer();
-      tag.rng = &rngs[tid];
-      for(size_t pos = 0; pos < tag.size(); pos++) { // propose a sweep.
-	 mapUpdate(*node->gradient, *tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
-					  return this->extractFeatures(tag, pos);  
-					}, true));
-      }
-      node->tag = shared_ptr<Tag>(new Tag(tag));
-      auto predT = this->logisticStop(node, *tag.seq, tag); 
-      double prob = get<0>(predT);
-      FeaturePointer feat = get<3>(predT); 
-      node->log_weight = this->score(node, tag); 
-      node->log_prior_weight = log(this->eps);
-      if(node->depth == 0) {
-	node->compute_stop = true;
-      }
-
-      if(node->depth <= B) { // multithread split.
-	node->stop_feat = feat;
-	unique_lock<mutex> lock(th_mutex);
-	active_work--;
-	for(int k = 0; k < K; k++) {
-	  node->children.push_back(makeMarkovTreeNode(node));
-	  th_work.push_back(make_tuple(node->children.back(), tag));
-	}
-	th_cv.notify_all();
-	lock.unlock();
-	return;
-      }else if(node->depth > B && log(rngs[tid].random01()) < log(this->eps)) { // stop.
-	lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
-	lg.begin("weight"); lg << node->log_weight << endl; lg.end();
-	lg.begin("time"); lg << node->depth << endl; lg.end();
-	node->tag = shared_ptr<Tag>(new Tag(tag));
-	unique_lock<mutex> lock(th_mutex);
-	active_work--;
-	lock.unlock();
-	return;
-      }else{                             // proceed as chain.
-	node->children.push_back(makeMarkovTreeNode(node));
-	node = node->children.back();
-      }
-    }
-}
-
-shared_ptr<MarkovTree> ModelPrune::explore(const Sentence& seq) {
-  this->eps = 1.0/T;
-  shared_ptr<MarkovTree> tree = shared_ptr<MarkovTree>(new MarkovTree());
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  Tag tag(&seq, corpus, &rngs[0], param);
-  objcokus cokus; // cokus is not re-entrant.
-  cokus.seedMT(0);
-  unique_lock<mutex> lock(th_mutex);
-  th_work.push_back(make_tuple(tree->root, tag));
-  th_cv.notify_one();
-  while(true) {
-    th_finished.wait(lock);
-    if(active_work + th_work.size() == 0) break;
-  }
-  lock.unlock();
-  for(int k = 0; k < K; k++) {
-    xmllog.begin("thread_"+to_string(k));
-    xmllog.logRaw(th_stream[k]->str());
-    xmllog << endl;
-    xmllog.end();
-  }
-  mergeStopDataset(stop_data, tree->generateStopDataset(tree->root, prune_mode));
-  if(num_ob % data_size == 0) {
-    truncateStopDataset(stop_data, data_size);
-    stop_data_log = shared_ptr<XMLlog>(new XMLlog("stopdata.xml"));
-    logStopDataset(stop_data, *this->stop_data_log);
-    stop_data_log->end(); 
-    stop_data_log = nullptr;
-  }
-  return tree;
-}
-
-
-ModelPruneInd::ModelPruneInd(const Corpus* corpus, int windowL, int K, int prune_mode,  
-		       size_t data_size, double c, double Tstar, double etaT,
-			int T, int B, int Q, int Q0, double eta) 
-:ModelPrune(corpus, windowL, K, prune_mode, data_size, c, Tstar, etaT, T, B, Q, Q0, eta) {
-  stop_data = makeStopDataset();
-  stop_data_log = shared_ptr<XMLlog>(new XMLlog("stopdata_ind.xml"));
-}
-
-void ModelPruneInd::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag) {
-    XMLlog& lg = *th_log[tid];
-    while(true) {
-      node->gradient = makeParamPointer();
-      tag.rng = &rngs[tid];
-      for(size_t pos = 0; pos < tag.size(); pos++) { // propose a sweep.
-	 mapUpdate(*node->gradient, *tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
-					  return this->extractFeatures(tag, pos);  
-					}, true));
-      }
-      node->tag = shared_ptr<Tag>(new Tag(tag));
-      auto predT = this->logisticStop(node, *tag.seq, tag); 
-      double prob = get<0>(predT);
-      FeaturePointer feat = get<3>(predT); 
-      node->log_weight = this->score(node, tag); 
-      node->log_prior_weight = log(this->eps);
-
-      if(node->depth == B) { // multithread split.	
-	// collect ind datasets.
-	unique_lock<mutex> lock(th_mutex);
-	try{
-	  for(size_t pos = 0; pos < tag.size(); pos++) {
-	    FeaturePointer feat = this->extractStopFeatures(node, *tag.seq, tag, pos);
-	    stop_data_log->begin("example");
-	      stop_data_log->begin("word");
-		*stop_data_log << tag.seq->seq[pos].word << endl;
-	      stop_data_log->end();
-	      stop_data_log->begin("tag");
-		*stop_data_log << corpus->invtags.find(tag.tag[pos])->second << endl;
-	      stop_data_log->end();
-	      stop_data_log->begin("feat");
-		*stop_data_log << *feat;
-	      stop_data_log->end();
-	      stop_data_log->begin("RNow");
-		*stop_data_log << -(tag.tag[pos] != tag.seq->tag[pos]) << endl;
-	      stop_data_log->end();
-	    stop_data_log->end();
-	  }
-	  throw "";
-	  node->stop_feat = feat;
-	  for(int k = 0; k < K; k++) {
-	    node->children.push_back(makeMarkovTreeNode(node));
-	    th_work.push_back(make_tuple(node->children.back(), tag));
-	  }
-	}catch(char const* ee) {
-	  active_work--;
-	  th_cv.notify_all();
-	  lock.unlock();
-	  return;
-	}
-      }else if(node->depth > B && log(rngs[tid].random01()) < log(this->eps)) { // stop.
-	lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
-	lg.begin("weight"); lg << node->log_weight << endl; lg.end();
-	lg.begin("time"); lg << node->depth << endl; lg.end();
-	node->tag = shared_ptr<Tag>(new Tag(tag));
-	unique_lock<mutex> lock(th_mutex);
-	active_work--;
-	lock.unlock();
-	return;
-      }else{                             // proceed as chain.
-	node->children.push_back(makeMarkovTreeNode(node));
-	node = node->children.back();
-      }
-    }
-}
-
-shared_ptr<MarkovTree> ModelPruneInd::explore(const Sentence& seq) {
-  this->eps = 1.0/T;
-  shared_ptr<MarkovTree> tree = shared_ptr<MarkovTree>(new MarkovTree());
-  xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-  Tag tag(&seq, corpus, &rngs[0], param);
-  objcokus cokus; // cokus is not re-entrant.
-  cokus.seedMT(0);
-  unique_lock<mutex> lock(th_mutex);
-  th_work.push_back(make_tuple(tree->root, tag));
-  th_cv.notify_one();
-  while(true) {
-    th_finished.wait(lock);
-    if(active_work + th_work.size() == 0) break;
-  }
-  lock.unlock();
-  for(int k = 0; k < K; k++) {
-    xmllog.begin("thread_"+to_string(k));
-    xmllog.logRaw(th_stream[k]->str());
-    xmllog << endl;
-    xmllog.end();
-  }
-  return tree;
-}
-
-

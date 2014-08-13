@@ -110,5 +110,12 @@ static void shuffle(std::vector<T>& vec, objcokus& cokus) {
   }
 }
 
-
+///////////// IO Utils ///////////////////////////////////////////////////
+inline static std::fstream openFile(std::string path) {
+  std::fstream file; 
+  file.open(path, std::fstream::in | std::fstream::out);
+  if(!file.is_open()) 
+    throw (path+" not found.").c_str();
+  return file;
+}
 #endif

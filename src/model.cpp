@@ -10,15 +10,18 @@
 #include <chrono>
 
 using namespace std;
+namespace po = boost::program_options;
 
 unordered_map<string, StringVector> Model::word_feat;
 bool Model::is_word_feat_computed = false;
 
-Model::Model(const Corpus* corpus, int T, int B, int Q, double eta)
-:corpus(corpus), param(makeParamPointer()),
-  G2(makeParamPointer()) , stepsize(makeParamPointer()), 
-  T(T), B(B), K(5), Q(Q), Q0(1),  
-  testFrequency(0.3), eta(eta) {
+Model::Model(const Corpus* corpus, const po::variables_map& vm)
+:corpus(corpus), param(makeParamPointer()), vm(vm),
+ G2(makeParamPointer()) , stepsize(makeParamPointer()), 
+ T(vm["T"].as<size_t>()), B(vm["B"].as<size_t>()), 
+ Q(vm["Q"].as<size_t>()), eta(vm["eta"].as<double>()), 
+ K(vm["K"].as<size_t>()), Q0(vm["Q0"].as<int>()),  
+ testFrequency(vm["testFrequency"].as<double>()) {
   rngs.resize(K);
   word_feat.clear();
 }

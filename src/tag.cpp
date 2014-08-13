@@ -83,6 +83,10 @@ double Tag::distance(const Tag& tag) {
   return dist;
 }
 
+string Tag::getTag(size_t pos) const {
+  return this->corpus->invtags.find(tag[pos])->second;
+}
+
 double Tag::score(FeaturePointer features) const {
   double score = 0;
   for(const pair<string, double>& feat : *features) {

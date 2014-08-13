@@ -12,6 +12,8 @@
 #include <thread>
 #include <condition_variable>
 
+#include <boost/program_options.hpp>
+
 typedef std::shared_ptr<std::vector<std::string> > StringVector;
 static StringVector makeStringVector() {
   return StringVector(new std::vector<std::string>());
@@ -26,7 +28,7 @@ inline static void adagrad(ParamPointer param, ParamPointer G2, ParamPointer gra
 
 struct Model {
 public:
-  Model(const Corpus* corpus, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  Model(const Corpus* corpus, const boost::program_options::variables_map& vm);
   virtual void run(const Corpus& testCorpus, bool lets_test = true);
   double test(const Corpus& testCorpus);
 
@@ -56,7 +58,8 @@ public:
   std::tuple<int, int, int> evalNER(const Tag& tag);
 
   /* parameters */
-  int T, B, Q, Q0;
+  size_t T, B, Q;
+  int Q0;
   double testFrequency;
   double eta;
   std::vector<objcokus> rngs;
@@ -68,7 +71,12 @@ public:
   friend std::istream& operator>>(std::istream& os, Model& model);
 
   XMLlog xmllog;
-  
+ 
+  /* const environment */
+  enum Scoring {SCORE_F1, SCORE_ACCURACY };
+  Scoring scoring;
+  const boost::program_options::variables_map& vm;
+
 protected:
   void adagrad(ParamPointer gradient);
   void configStepsize(ParamPointer gradient, double new_eta);
@@ -85,7 +93,7 @@ typedef std::shared_ptr<Model> ModelPtr;
 
 struct ModelSimple : public Model {
 public:
-  ModelSimple(const Corpus* corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelSimple(const Corpus* corpus, const boost::program_options::variables_map& vm);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq); 
@@ -98,7 +106,7 @@ protected:
 
 struct ModelCRFGibbs : public ModelSimple {
 public:
-  ModelCRFGibbs(const Corpus* corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelCRFGibbs(const Corpus* corpus, const boost::program_options::variables_map& vm);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
@@ -115,7 +123,7 @@ private:
 
 struct ModelIncrGibbs : public ModelCRFGibbs {
 public:
-  ModelIncrGibbs(const Corpus* corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelIncrGibbs(const Corpus* corpus, const boost::program_options::variables_map& vm);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
@@ -124,7 +132,7 @@ public:
 /* using forward-backward inference for discriminative MRF */
 struct ModelFwBw : public ModelCRFGibbs {
 public:
-  ModelFwBw(const Corpus* corpus, int windowL = 0, int T = 1, int B = 0, int Q = 10, double eta = 0.5);
+  ModelFwBw(const Corpus* corpus, const boost::program_options::variables_map& vm);
   ParamPointer gradient(const Sentence& seq, TagVector* samples = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
   TagVector sample(const Sentence& seq);
@@ -132,8 +140,7 @@ public:
 
 struct ModelTreeUA : public ModelCRFGibbs {
 public:
-  ModelTreeUA(const Corpus* corpus, int windowL = 0, int K = 5, 
-	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
+  ModelTreeUA(const Corpus* corpus, const boost::program_options::variables_map& vm);
 
   virtual void run(const Corpus& testCorpus);
 
@@ -163,9 +170,7 @@ protected:
 
 struct ModelAdaTree : public ModelTreeUA {
 public:
-  ModelAdaTree(const Corpus* corpus, int windowL = 0, int K = 5, 
-	      double c = 1, double Tstar = 0, double etaT = 0.05, 
-	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
+  ModelAdaTree(const Corpus* corpus, const boost::program_options::variables_map& vm);
   /* implement components necessary */  
   void workerThreads(int tid, MarkovTreeNodePtr node, Tag tag);
   /* extract posgrad and neggrad for stop-or-not logistic regression */
@@ -191,28 +196,4 @@ private:
   double m_c, m_Tstar;
 };
 
-struct ModelPrune : public ModelAdaTree {
-public:
-  ModelPrune(const Corpus* corpus, int windowL = 0, int K = 5, int prune_mode = 1,  
-	      size_t data_size = 100, double c = 1, double Tstar = 0, double etaT = 0.05, 
-	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
-
-  void workerThreads(int td, std::shared_ptr<MarkovTreeNode> node, Tag tag);
-  std::shared_ptr<MarkovTree> explore(const Sentence& seq);
-protected:
-  StopDatasetPtr stop_data;
-  std::shared_ptr<XMLlog> stop_data_log;
-  size_t data_size;
-  int prune_mode;
-};
-
-struct ModelPruneInd : public ModelPrune {
-public: 
-  ModelPruneInd(const Corpus* corpus, int windowL = 0, int K = 5, int prune_mode = 1,  
-	      size_t data_size = 100, double c = 1, double Tstar = 0, double etaT = 0.05, 
-	      int T = 1, int B = 0, int Q = 10, int Q0 = 1, double eta = 0.5);
-  
-  void workerThreads(int td, std::shared_ptr<MarkovTreeNode> node, Tag tag);
-  std::shared_ptr<MarkovTree> explore(const Sentence& seq);
-};
 #endif

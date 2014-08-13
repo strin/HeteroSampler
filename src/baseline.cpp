@@ -3,13 +3,15 @@
  * > CRF with Gibbs sampling. 
  */
 #include "model.h"
+#include <boost/program_options.hpp>
 
 using namespace std;
 using namespace std::placeholders;
+namespace po = boost::program_options;
 
 ////////// Simple Model (Independent Logit) ////////////
-ModelSimple::ModelSimple(const Corpus* corpus, int windowL, int T, int B, int Q, double eta)
-:Model(corpus, T, B, Q, eta), windowL(windowL) {
+ModelSimple::ModelSimple(const Corpus* corpus, const po::variables_map& vm) 
+:Model(corpus, vm), windowL(vm["windowL"].as<int>()) {
   xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
 }
 
@@ -75,8 +77,8 @@ ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool
 }
 
 //////// Model CRF Gibbs ///////////////////////////////
-ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, int windowL, int T, int B, int Q, double eta)
-:ModelSimple(corpus, windowL, T, B, Q, eta) {
+ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
+:ModelSimple(corpus, vm) {
   this->computeWordFeat(*corpus);
 }
 
@@ -125,11 +127,11 @@ void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer f
     if(corpus->mode == Corpus::MODE_NER) { // add pos tags for NER task.
       stringstream ss;
       ss << "t-" << to_string(l-pos)
-         << "-" << sen[l].pos << "-" << corpus->invtag(tag.tag[pos]);
+         << "-" << sen[l].pos << "-" << tag.getTag(pos);
       (*features)[ss.str()] = 1;
       ss.clear();
       ss << "t2-" << to_string(l-pos)
-         << "-" << sen[l].pos2 << "-" << corpus->invtag(tag.tag[pos]);
+         << "-" << sen[l].pos2 << "-" << tag.getTag(pos);
       (*features)[ss.str()] = 1;
     }
   }
@@ -139,8 +141,8 @@ void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer fe
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();
   stringstream ss;
-  ss << "p-" << corpus->invtag(tag.tag[pos-1]) << "-" 
-  	<< corpus->invtag(tag.tag[pos]);
+  ss << "p-" << tag.getTag(pos-1) << "-" 
+  	<< tag.getTag(pos);
   // ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
   /* StringVector nlp = NLPfunc(sen[pos].word);
   for(const string& token : *nlp) {
@@ -209,8 +211,8 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
 }
 
 ////////// Incremental Gibbs Sampling /////////////////////////
-ModelIncrGibbs::ModelIncrGibbs(const Corpus* corpus, int windowL, int T, int B, int Q, double eta)
-:ModelCRFGibbs(corpus, windowL, T, B, Q, eta) {
+ModelIncrGibbs::ModelIncrGibbs(const Corpus* corpus, const po::variables_map& vm)
+:ModelCRFGibbs(corpus, vm) {
 }
 
 TagVector ModelIncrGibbs::sample(const Sentence& seq) {
@@ -250,8 +252,8 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
 }
 
 ///////// Forward-Backward Algorithm ////////////////////////////
-ModelFwBw::ModelFwBw(const Corpus* corpus, int windowL, int T, int B, int Q, double eta) 
-:ModelCRFGibbs(corpus, windowL, T, B, Q, eta) { 
+ModelFwBw::ModelFwBw(const Corpus* corpus, const po::variables_map& vm) 
+:ModelCRFGibbs(corpus, vm) { 
 }
 
 ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {

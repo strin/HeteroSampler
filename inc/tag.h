@@ -75,11 +75,21 @@ public:
      objcokus* rng, ParamPointer param); // random init tag.
   Tag(const Sentence& seq, const Corpus* corpus, 
      objcokus* rng, ParamPointer param); // copy tag from seq.
+  // length of sequence.
   inline size_t size() const {return this->tag.size(); }
+  // initialize the sequence tags uniformly at random.
   void randomInit();
+  // propose Gibbs-style modification to *pos*
+  // return: gradient induced by Gibbs kernel.
   ParamPointer proposeGibbs(int pos, std::function<FeaturePointer(const Tag& tag)> featExtract, bool grad_expect = false, bool grad_sample = true);
-  double score(FeaturePointer features) const; // return un-normalized log-score.
-  double distance(const Tag& tag); // warning: both tags should have same anchor dict.  
+   // return un-normalized log-score.
+  double score(FeaturePointer features) const; 
+  // distance to another tag.
+  // warning: both tags should have same length and dict. 
+  double distance(const Tag& tag);  
+  // return the string of a tag.
+  std::string getTag(size_t pos) const;
+  // to string. 
   std::string str(); 
 };
 

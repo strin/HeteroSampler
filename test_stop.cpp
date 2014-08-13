@@ -49,23 +49,18 @@ int main(int argc, char* argv[]) {
   Corpus testCorpus(mode);
   testCorpus.read(test);
   try{
+    shared_ptr<Model> model = nullptr;
     if(vm["inference"].as<string>() == "Gibbs") {
-      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm["windowL"].as<int>()));
-      ifstream file; 
-      file.open("model/gibbs.model", ifstream::in);
-      if(!file.is_open()) 
-	throw "gibbs model not found.";
+      model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm));
+      auto file = openFile("model/gibbs.model");
       file >> *model;
       file.close();
       Stop stop(model, vm); 
       stop.run(corpus);
       stop.test(testCorpus);
     }else if(vm["inference"].as<string>() == "Simple") {
-      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm["windowL"].as<int>()));
-      ifstream file; 
-      file.open("model/simple.model", ifstream::in);
-      if(!file.is_open()) 
-	throw "gibbs model not found.";
+      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm));
+      auto file = openFile("model/simple.model");
       file >> *model;
       file.close();
       Stop stop(model, vm); 

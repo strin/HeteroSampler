@@ -10,37 +10,31 @@ using namespace std;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
-  // parse args.
-  int T = 10;
-  int B = 0;
-  int Q = 10;
-  int Q0 = 1;
-  int K = 5;
-  double eta = 0.4;
+  /* parse args. */
+  const int T = 10, B = 0, Q = 10, 
+	    Q0 = 1, K = 5;  
+  const double eta = 0.4;    // default args.
   po::options_description desc("Allowed options");
   desc.add_options()
       ("help", "produce help message")
       ("inference", po::value<string>(), "inference method (Gibbs, TreeUA)")
       ("eta", po::value<double>()->default_value(eta), "step size")
-      ("etaT", po::value<double>(), "step size for time adaptation")
-      ("T", po::value<int>()->default_value(T), "number of transitions")
-      ("B", po::value<int>()->default_value(B), "number of burnin steps")
-      ("Q", po::value<int>()->default_value(Q), "number of passes")
+      ("etaT", po::value<double>()->default_value(eta), "step size for time adaptation")
+      ("T", po::value<size_t>()->default_value(T), "number of transitions")
+      ("B", po::value<size_t>()->default_value(B), "number of burnin steps")
+      ("Q", po::value<size_t>()->default_value(Q), "number of passes")
       ("Q0", po::value<int>()->default_value(Q0), "number of passes for smart init")
-      ("K", po::value<int>()->default_value(K), "number of threads/particles")
-      ("c", po::value<double>(), "extent of time regularization")
-      ("windowL", po::value<int>(), "window size for node-wise features")
-      ("Tstar", po::value<double>(), "time resource constraints")
-      ("eps_split", po::value<int>(), "prob of split in MarkovTree")
-      ("mode", po::value<string>(), "mode (POS / NER)")
+      ("K", po::value<size_t>()->default_value(K), "number of threads/particles")
+      ("c", po::value<double>()->default_value(0), "extent of time regularization")
+      ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
+      ("Tstar", po::value<double>()->default_value(T), "time resource constraints")
+      ("eps_split", po::value<double>()->default_value(0.0), "prob of split in MarkovTree")
+      ("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
       ("train", po::value<string>(), "training data")
       ("test", po::value<string>(), "test data")
-      ("testFrequency", po::value<double>(), "frequency of testing")
-      ("stopDataSize", po::value<int>(), "stopDataSize")
-      ("pruneMode", po::value<int>(), "prune mode")
-      ("output", po::value<string>()->default_value("model/gibbs.model"), "output model file")
+      ("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
+      ("output", po::value<string>()->default_value("model/default.model"), "output model file")
   ;
-  /* default value */
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);    
@@ -52,108 +46,48 @@ int main(int argc, char* argv[]) {
   if(vm.count("inference")) {
     inference = vm["inference"].as<string>();
   }
-  if(vm.count("T")) 
-    T = vm["T"].as<int>();
-  if(vm.count("B"))
-    B = vm["B"].as<int>();
-  if(vm.count("Q"))
-    Q = vm["Q"].as<int>();
-  if(vm.count("Q0"))
-    Q0 = vm["Q0"].as<int>();
-  if(vm.count("K"))
-    K = vm["K"].as<int>();
-  if(vm.count("eta"))
-    eta = vm["eta"].as<double>();
-  double etaT = 0.4;
-  if(vm.count("etaT"))
-    etaT = vm["etaT"].as<double>();
-  double testFrequency = 0.3;
-  if(vm.count("testFrequency"))
-    testFrequency = vm["testFrequency"].as<double>();
-
-  // run.
-  Corpus::Mode mode = Corpus::MODE_POS;
-  if(vm.count("mode") && vm["mode"].as<string>() == "NER")
-    mode = Corpus::MODE_NER;
-  string train = "data/eng_ner/train", test = "data/eng_ner/test";
-  if(vm.count("train")) train = vm["train"].as<string>();
-  if(vm.count("test")) test = vm["test"].as<string>();
-  double m_c = 1.0;
-  if(vm.count("c")) m_c = vm["c"].as<double>();
-  int stop_data_size = 100;
-  if(vm.count("stopDataSize")) stop_data_size = vm["stopDataSize"].as<int>();
-  int prune_mode = 0;
-  if(vm.count("pruneMode")) prune_mode = vm["pruneMode"].as<int>();
-  Corpus corpus(mode);
-  corpus.read(train);
-  Corpus testCorpus(mode);
-  testCorpus.read(test);
-  auto set_param = [&] (shared_ptr<Model> model) {
-    model->T = T;
-    model->Q = Q;
-    model->B = B;
-    model->eta = eta;
-    model->testFrequency = testFrequency;
-  };
-  int windowL = 0;
-  system("mkdir model");
-  if(vm.count("windowL"))
-    windowL = vm["windowL"].as<int>();
   try{
+    /* load corpus. */
+    Corpus::Mode mode = Corpus::MODE_POS;
+    if(vm.count("mode") && vm["mode"].as<string>() == "NER")
+      mode = Corpus::MODE_NER;
+    string train = "data/eng_ner/train", test = "data/eng_ner/test";
+    if(vm.count("train")) train = vm["train"].as<string>();
+    if(vm.count("test")) test = vm["test"].as<string>();  
+    Corpus corpus(mode);
+    corpus.read(train);
+    Corpus testCorpus(mode);
+    testCorpus.read(test);
+
+    /* run. */
+    string output = vm["output"].as<string>();
+    size_t pos = output.find_last_of("/");
+    if(pos == string::npos) throw "invalid model output dir."; 
+    system(("mkdir -p "+output.substr(0, pos)).c_str());
+    shared_ptr<Model> model = nullptr;
     if(inference == "Gibbs") {
-      shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, windowL));
-      set_param(model);
+      model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm));
       model->run(testCorpus);
-      ofstream file;
-      file.open(vm["output"].as<string>());
-      file << *model;
-      file.close();
     }else if(inference == "Simple") {
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelSimple(&corpus, windowL));
-      set_param(model);
+      model = shared_ptr<Model>(new ModelSimple(&corpus, vm));
       model->run(testCorpus);
     }else if(inference == "FwBw") {
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelFwBw(&corpus, windowL));
-      set_param(model);
+      model = shared_ptr<Model>(new ModelFwBw(&corpus, vm));
       model->run(testCorpus);
     }else if(inference == "TreeUA") {
-      shared_ptr<ModelTreeUA> model = shared_ptr<ModelTreeUA>(new ModelTreeUA(&corpus, windowL, K, T, B, Q, Q0, eta));
-      if(vm.count("eps_split")) {
-	model->eps_split = vm["eps_split"].as<int>();
-      }
-      set_param(model);
+      model = shared_ptr<ModelTreeUA>(new ModelTreeUA(&corpus, vm));
       model->run(testCorpus);
     }else if(inference == "AdaTree") {
-      double m_c = 1.0;
-      if(vm.count("c")) m_c = vm["c"].as<double>();
-      double Tstar = T;
-      shared_ptr<ModelAdaTree> model = shared_ptr<ModelAdaTree>(new ModelAdaTree(&corpus, windowL,
-						  K, m_c, Tstar, T, B, Q, Q0));
-      set_param(model);
-      if(vm.count("eps_split")) {
-	model->eps_split = vm["eps_split"].as<int>();
-      }
-      if(vm.count("etaT")) {
-	model->etaT = vm["etaT"].as<double>();
-      }
-      model->run(testCorpus);
-    }else if(inference == "Prune") {
-      double Tstar = T;
-      shared_ptr<ModelPrune> model = shared_ptr<ModelPrune>(new ModelPrune(&corpus, windowL, K, prune_mode, stop_data_size,
-						    m_c, Tstar, etaT, T, B, Q, Q0));
-      set_param(model);
-      model->run(testCorpus);
-    }else if(inference == "PruneInd") {
-      double Tstar = T;
-      shared_ptr<ModelPruneInd> model = shared_ptr<ModelPruneInd>(new ModelPruneInd(&corpus, windowL, K, prune_mode, stop_data_size,
-						    m_c, Tstar, etaT, T, B, Q, Q0));
-      set_param(model);
+      model = shared_ptr<ModelAdaTree>(new ModelAdaTree(&corpus, vm));
       model->run(testCorpus);
     }else if(inference == "GibbsIncr") { 
-      shared_ptr<Model> model = shared_ptr<Model>(new ModelIncrGibbs(&corpus, windowL));
-      set_param(model);
+      model = shared_ptr<Model>(new ModelIncrGibbs(&corpus, vm));
       model->run(testCorpus);
     }
+    ofstream file;
+    file.open(vm["output"].as<string>());
+    file << *model;
+    file.close();
   }catch(char const* exception) {
     cerr << "Exception: " << string(exception) << endl;
   }

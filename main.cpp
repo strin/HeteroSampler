@@ -27,6 +27,7 @@ int main(int argc, char* argv[]) {
       ("K", po::value<size_t>()->default_value(K), "number of threads/particles")
       ("c", po::value<double>()->default_value(0), "extent of time regularization")
       ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
+      ("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
       ("Tstar", po::value<double>()->default_value(T), "time resource constraints")
       ("eps_split", po::value<double>()->default_value(0.0), "prob of split in MarkovTree")
       ("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")

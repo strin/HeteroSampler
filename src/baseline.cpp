@@ -12,7 +12,8 @@ namespace po = boost::program_options;
 
 ////////// Simple Model (Independent Logit) ////////////
 ModelSimple::ModelSimple(const Corpus* corpus, const po::variables_map& vm) 
-:Model(corpus, vm), windowL(vm["windowL"].as<int>()) {
+:Model(corpus, vm), windowL(vm["windowL"].as<int>()),
+ depthL(vm["depthL"].as<int>()) {
   xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
 }
 
@@ -79,8 +80,21 @@ ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool
 
 //////// Model CRF Gibbs ///////////////////////////////
 ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
-:ModelSimple(corpus, vm) {
-}
+:ModelSimple(corpus, vm), 
+ extractFeatures([&] (const Tag& tag, int pos) {
+   const vector<Token>& sen = tag.seq->seq;
+   int seqlen = tag.size();
+   // extract word features. 
+   FeaturePointer features = makeFeaturePointer();
+   extractUnigramFeature(tag, pos, windowL, depthL, features);
+   if(pos >= 1) {
+     extractBigramFeature(tag, pos, features);
+   }
+   if(pos < seqlen-1) {
+     extractBigramFeature(tag, pos+1, features);
+   }
+   return features;
+ }) {}
 
 void ModelCRFGibbs::sample(Tag& tag, int time) {
   for(int t = 0; t < time; t++) {
@@ -105,7 +119,7 @@ TagVector ModelCRFGibbs::sample(const Sentence& seq) {
 }
 
 double ModelCRFGibbs::score(const Tag& tag) {
-  FeaturePointer feat = this->extractFeatures(tag);
+  FeaturePointer feat = this->extractFeaturesAll(tag);
   return ::score(this->param, feat);
 }
 
@@ -151,20 +165,20 @@ void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer fe
   (*features)[ss.str()] = 1;
 }
 
-FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
+/* FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();
   // extract word features. 
   FeaturePointer features = makeFeaturePointer();
   
-  /* this->addUnigramFeatures(tag, pos, features);
+  // this->addUnigramFeatures(tag, pos, features);
   // extract bigram features.
-  if(pos >= 1) {
-    addBigramFeatures(tag, pos, features); 
-  }
-  if(pos < seqlen-1) {
-    addBigramFeatures(tag, pos+1, features);
-  }*/
+  // if(pos >= 1) {
+  //   addBigramFeatures(tag, pos, features); 
+  // }
+  // if(pos < seqlen-1) {
+  //   addBigramFeatures(tag, pos+1, features);
+  // }
   int depth = 0;
   if(corpus->mode == Corpus::MODE_NER) 
     depth = 2;
@@ -176,9 +190,9 @@ FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
     extractBigramFeature(tag, pos+1, features);
   }
   return features;
-}
+}*/
 
-FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag) {
+FeaturePointer ModelCRFGibbs::extractFeaturesAll(const Tag& tag) {
   FeaturePointer features = makeFeaturePointer();
   size_t seqlen = tag.size();
   for(size_t t = 0; t < seqlen; t++) {
@@ -202,13 +216,13 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq) {
 ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
   Tag tag(&seq, corpus, &rngs[0], param);
   Tag truth(seq, corpus, &rngs[0], param);
-  FeaturePointer feat = this->extractFeatures(truth);
+  FeaturePointer feat = this->extractFeaturesAll(truth);
   ParamPointer gradient = makeFeaturePointer();
   for(int t = 0; t < T; t++) {
     this->sampleOneSweep(tag);
     if(t < B) continue;
     if(update_grad)
-      mapUpdate<double, double>(*gradient, *this->extractFeatures(tag));
+      mapUpdate<double, double>(*gradient, *this->extractFeaturesAll(tag));
   }
   if(samples)
     samples->push_back(shared_ptr<Tag>(new Tag(tag)));
@@ -240,7 +254,7 @@ ParamPointer ModelIncrGibbs::gradient(const Sentence& seq, TagVector* samples, b
   Tag tag(&seq, corpus, &rngs[0], param);
   Tag mytag(tag);
   Tag truth(seq, corpus, &rngs[0], param);
-  FeaturePointer feat = this->extractFeatures(truth);
+  FeaturePointer feat = this->extractFeaturesAll(truth);
   ParamPointer gradient = makeFeaturePointer();
   for(int i = 0; i < seq.tag.size(); i++) {
     ParamPointer g = tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
@@ -337,7 +351,7 @@ ParamPointer ModelFwBw::gradient(const Sentence& seq, TagVector* samples, bool u
       // this->addUnigramFeatures(tag, pos, features);
     }
     FeaturePointer truth_feat = makeFeaturePointer();
-    mapUpdate(*gradient, *this->extractFeatures(truth));
+    mapUpdate(*gradient, *this->extractFeaturesAll(truth));
     mapUpdate(*gradient, *truth_feat);
   }
   // sample backward (DO NOT sample from marginal!).

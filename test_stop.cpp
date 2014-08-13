@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
       ("K", po::value<int>()->default_value(10), "number of threads/particles")
       ("c", po::value<double>()->default_value(0.1), "extent of time regularization")
       ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
+      ("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
       ("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")
       ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
       ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")

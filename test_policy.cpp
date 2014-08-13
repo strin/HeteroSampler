@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
 	("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
 	("c", po::value<double>()->default_value(0.1), "time regularization")
 	("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
+	("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
 	("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
 	("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
 	("mode", po::value<string>()->default_value("POS"), "mode (POS / NER)")

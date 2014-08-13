@@ -92,7 +92,7 @@ public:
   FeaturePointer extractFeatures(const Tag& tag, int pos);
 
 protected:
-  int windowL;
+  int windowL, depthL; // range of unigram features.
 };
 
 struct ModelCRFGibbs : public ModelSimple {
@@ -105,8 +105,9 @@ public:
   void sampleOne(Tag& tag, int choice);
   void addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   void addBigramFeatures(const Tag& tag, int pos, FeaturePointer features);
-  FeaturePointer extractFeatures(const Tag& tag, int pos);
-  FeaturePointer extractFeatures(const Tag& tag);
+  std::function<FeaturePointer(const Tag& tag, int pos)> extractFeatures;
+  // FeaturePointer extractFeatures(const Tag& tag, int pos);
+  FeaturePointer extractFeaturesAll(const Tag& tag);
   double score(const Tag& tag);
 private:
   void sampleOneSweep(Tag& tag);

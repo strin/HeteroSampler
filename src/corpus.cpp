@@ -56,10 +56,7 @@ void Sentence::parselines(const vector<string>& lines) {
 string Sentence::str() const {
   stringstream ss;
   for(const Token& token : seq) {
-    if(corpus->mode == Corpus::MODE_POS)
-      ss << token.word << "/" << token.pos << "\t";
-    else if(corpus->mode == Corpus::MODE_NER)
-      ss << token.word << "/" << token.ner << "\t";
+    ss << token.word << "/" << token.tag << "\t";
   }
   return ss.str();
 }

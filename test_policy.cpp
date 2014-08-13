@@ -53,7 +53,10 @@ int main(int argc, char* argv[]) {
     shared_ptr<Model> model;
     if(vm["inference"].as<string>() == "Gibbs") {
       model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm));
-      auto file = openFile(vm["model"].as<string>());
+      std::ifstream file; 
+      file.open(vm["model"].as<string>(), std::fstream::in);
+      if(!file.is_open()) 
+	throw (vm["model"].as<string>()+" not found.").c_str();
       file >> *model;
       file.close();
     }

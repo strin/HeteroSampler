@@ -8,7 +8,7 @@ mpl.use('Agg')
 from stat_policy import *
 
 def plot(path_l, legend_l, output, color_l=['r','g','b','k'], \
-        marker_l=['-','x','o','s']):
+        marker_l=['-','-','-','s']):
   plot_l = list()
   policy_l = list()
   for (pathi, path) in enumerate(path_l):
@@ -23,6 +23,10 @@ def plot(path_l, legend_l, output, color_l=['r','g','b','k'], \
       acc.append(policy.accuracy)
     p, = plt.plot(time, acc, '%s%s' % (color_l[pathi], marker_l[pathi]))
     plot_l.append(p)
+    [time, acc] = zip(*sorted(zip(time,acc), key=lambda ta : ta[0]))
+    print time, acc
+    (time, acc) = (list(time), list(acc))
+    plt.plot(time, acc, '%s-' % (color_l[pathi]))
   plt.legend(plot_l, legend_l, loc=4)
   plt.savefig(output)
   return policy_l

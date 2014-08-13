@@ -114,10 +114,10 @@ void Policy::train(const Corpus& corpus) {
 	  mapUpdate(*g, *node->gradient);
 	}
       }
-      lg->begin("gradient");
+    /*  lg->begin("gradient");
       *lg << *g << endl;
       *lg << node->log_weight << endl;
-      lg->end();
+      lg->end(); */
     }
     double log_sum_w = tree.logSumWeights(tree.root); // norm grad, avoid overflow.
     pair<ParamPointer, double> grad_lgweight = tree.aggregateGradient(tree.root, log_sum_w);
@@ -250,9 +250,10 @@ void Policy::logNode(MarkovTreeNodePtr node) {
   lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
   int hits = 0;
   for(size_t i = 0; i < node->tag->size(); i++) {
+  /*
     lg->begin("feat"); 
     *lg << *this->extractFeatures(node, i);
-    lg->end(); // </feat>
+    lg->end(); // </feat> */
     if(node->tag->tag[i] == node->tag->seq->tag[i]) {
       hits++;
     }

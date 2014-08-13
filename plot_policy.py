@@ -66,7 +66,10 @@ if __name__ == '__main__':
     path_l.append(list())
     for thres in [0.5,1.0,1.5,2.0,2.5,3.0]:
       path_l[-1].append(path_in+'/test_policy/ner_entropy_%0.2f' % thres)
-    policy_l = plot(path_l, ['Gibbs', 'Entropy'], path_out+'/ner.png')
+    path_l.append(list())
+    for c in [0, 0.05, 0.1, 0.2, 0.3, 1]:
+      path_l[-1].append(path_in+'/test_policy/ner_cyclic_value_%f' % c)
+    policy_l = plot(path_l, ['Gibbs', 'Entropy', 'Policy'], path_out+'/ner.png')
     name_l = [[p.split('/')[-1] for p in path] for path in path_l]
     html = open(path_out+'/ner.html', 'w')
     html.write(PolicyResult.viscomp(list(itertools.chain(*policy_l)), \

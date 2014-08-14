@@ -20,9 +20,9 @@ elif [ $1 == "Czech" ]; then
   for windowL in `seq 0 2`
   do
     cmd="./pos --inference $2 --T 10 --B 3 --train data/czech_ner/train --test data/czech_ner/test --eta 1 --windowL "$windowL" \
-      --output model/ner_pos_gibbs_w"$windowL".model --scoring NER --Q 3 "
+      --output model/czech_gibbs_w"$windowL".model --scoring Acc --Q 3 "
     echo $cmd
-    ($cmd) > czech_gibbs_$windowL.xml &
+    ($cmd) > czech_gibbs_w$windowL.xml &
   done
 fi
 

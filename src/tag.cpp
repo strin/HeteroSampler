@@ -97,10 +97,13 @@ double Tag::score(FeaturePointer features) const {
 }
 
 string Tag::str() {
-  stringstream ss;
+  string ss;
   size_t seqlen = seq->seq.size();
   for(size_t i = 0; i < seqlen; i++) {
-    ss << seq->seq[i].word << "/" << this->getTag(i) << "\t";
+    ss += seq->seq[i].word;
+    ss += "/";
+    ss += this->getTag(i);
+    ss += "\t";
   }
-  return ss.str();
+  return ss;
 }

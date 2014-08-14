@@ -93,14 +93,14 @@ ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
    // extract word features. 
    FeaturePointer features = makeFeaturePointer();
    extractUnigramFeature(tag, pos, windowL, depthL, features);
-   /*
-   // extract word bigram.
+   // extract word bigram. (only for compatiblility, should be deleted).
    if(pos >= 1) {
      extractBigramFeature(tag, pos, features);
    }
    if(pos < seqlen-1) {
      extractBigramFeature(tag, pos+1, features);
-   }*/
+   }
+   // extract higher-order grams.
    for(int factor = 1; factor <= factorL; factor++) {
     for(int p = pos; p < pos+factor; p++) {
       if(p-factor+1 >= 0 && p < seqlen) {

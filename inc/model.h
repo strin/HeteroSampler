@@ -112,9 +112,11 @@ public:
   double score(const Tag& tag);
 
   virtual void logArgs();
+protected:
+  int factorL;
+  
 private:
   void sampleOneSweep(Tag& tag);
-  int factorL;
 };
 
 struct ModelIncrGibbs : public ModelCRFGibbs {

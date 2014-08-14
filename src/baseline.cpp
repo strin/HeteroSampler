@@ -230,7 +230,7 @@ void ModelCRFGibbs::sampleOneSweep(Tag& tag) {
 
 void ModelCRFGibbs::logArgs() {
   ModelSimple::logArgs();
-  xmllog.begin("factorL"); xmllog << windowL << endl; xmllog.end();
+  xmllog.begin("factorL"); xmllog << factorL << endl; xmllog.end();
 }
 
 ParamPointer ModelCRFGibbs::gradient(const Sentence& seq) {

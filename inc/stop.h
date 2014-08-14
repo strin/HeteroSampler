@@ -40,7 +40,7 @@ public:
 
 private:
   // const environment. 
-  FeaturePointer wordent, wordfreq;
+  ParamPointer wordent, wordfreq;
   double wordent_mean, wordfreq_mean;
   Vector2d tag_bigram;
   std::vector<double> tag_unigram_start;
@@ -58,7 +58,7 @@ private:
   StopDatasetPtr stop_data;
   std::shared_ptr<XMLlog> stop_data_log;
   ParamPointer param, G2;
-  FeaturePointer mean_feat, std_feat;
+  ParamPointer mean_feat, std_feat;
 
   // parallel environment.
   ThreadPool<MarkovTreeNodePtr> thread_pool, test_thread_pool;

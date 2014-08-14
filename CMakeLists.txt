@@ -42,7 +42,7 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
   ADD_DEFINITIONS("-std=c++0x" "-Wall" "-O2"  "-fPIC")
 ELSE("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	message("Found clang++ version" ${CMAKE_CXX_COMPILER_VERSION})
-	ADD_DEFINITIONS("-std=c++11" "-O0" "-g" "-fPIC" "-Wno-deprecated-register" "-Wno-overloaded-virtual")
+	ADD_DEFINITIONS("-std=c++11" "-O3" "-fPIC" "-Wno-deprecated-register" "-Wno-overloaded-virtual")
 ELSE()
   MESSAGE(FATAL_ERROR "CMakeLists.txt has not been tested/written for your compiler.")
 ENDIF()
@@ -57,7 +57,6 @@ src/baseline.cpp
 src/search.cpp
 src/objcokus.cpp
 src/ThreadPool.cpp
-src/stop.cpp
 )
 
 target_link_libraries(pos
@@ -68,26 +67,6 @@ target_link_libraries(pos
   ${PYTHON_LIBRARIES}
 )
 
-add_executable(stop test_stop.cpp
-src/feature.cpp
-src/corpus.cpp
-src/tag.cpp
-src/MarkovTree.cpp
-src/model.cpp
-src/baseline.cpp
-src/search.cpp
-src/objcokus.cpp
-src/ThreadPool.cpp
-src/stop.cpp
-)
-
-target_link_libraries(stop
-  scilog
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${LIBS}
-  ${Boost_LIBRARIES}
-  ${PYTHON_LIBRARIES}
-)
 
 add_executable(policy test_policy.cpp
 src/feature.cpp

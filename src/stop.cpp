@@ -86,10 +86,10 @@ void Stop::sampleTest(int tid, MarkovTreeNodePtr node) {
     model->sample(*node->tag, 1);
     if(lets_adaptive) {
       node->stop_feat = extractStopFeatures(node);
-      mapUpdate(*node->stop_feat, *mean_feat, -1);
+      /*mapUpdate(*node->stop_feat, *mean_feat, -1);
       for(const pair<string, double>& p : *node->stop_feat) {
 	(*node->stop_feat)[p.first] /= (*std_feat)[p.first];
-      }
+      }*/
       node->resp = logisticFunc(::score(param, node->stop_feat));
     }
     if(node->depth == T || (lets_adaptive &&  
@@ -122,7 +122,7 @@ FeaturePointer Stop::extractStopFeatures(MarkovTreeNodePtr node) {
   size_t seqlen = tag.size();
   size_t taglen = model->corpus->tags.size();
   // feat: bias.
-  (*feat)["bias-stop"] = 1.0; 
+  insertFeature(feat, "bias-stop");
   // feat: # special symbols. (like CD , ;)
   size_t num_cd = 0, num_sym = 0;
   for(size_t t = 0; t < seqlen; t++) {
@@ -133,11 +133,18 @@ FeaturePointer Stop::extractStopFeatures(MarkovTreeNodePtr node) {
       || tg_str == "\"") 
       num_sym++;
   }
-  (*feat)["per-cd"] = num_cd/(double)seqlen;
-  (*feat)["per-sym"] = num_sym/(double)seqlen;
+
+  insertFeature(feat, "per-cd", num_cd/(double)seqlen);
+  insertFeature(feat, "per-sym", num_sym/(double)seqlen);
   // feat: word len.
-  (*feat)["len-stop"] = (double)seqlen; 
-  (*feat)["len-inv-stop"] = 1/(double)seqlen;
+  insertFeature(feat, "len-stop", (double)seqlen);
+  insertFeature(feat, "len-inv-stop", 1/(double)seqlen);
+
+  insertFeature(feat, "per-cd", num_cd/(double)seqlen);
+  insertFeature(feat, "per-sym", num_sym/(double)seqlen);
+  // feat: word len.
+  insertFeature(feat, "len-stop", (double)seqlen);
+  insertFeature(feat, "len-inv-stop", 1/(double)seqlen);
   // feat: entropy and frequency.
   double max_ent = -DBL_MAX, ave_ent = 0.0;
   double max_freq = -DBL_MAX, ave_freq = 0.0;
@@ -160,10 +167,10 @@ FeaturePointer Stop::extractStopFeatures(MarkovTreeNodePtr node) {
   }
   ave_ent /= seqlen;
   ave_freq /= seqlen;
-  (*feat)["max-ent"] = max_ent;
-  (*feat)["max-freq"] = max_freq;
-  (*feat)["ave-ent"] = ave_ent;
-  (*feat)["ave-freq"] = ave_freq;
+  insertFeature(feat, "max-ent", max_ent);
+  insertFeature(feat, "max-freq", max_freq);
+  insertFeature(feat, "ave-ent", ave_ent);
+  insertFeature(feat, "ave-freq", ave_freq);
   // feat: avg sample path length.
   int L = 3, l = 0;
   double dist = 0.0;
@@ -176,12 +183,12 @@ FeaturePointer Stop::extractStopFeatures(MarkovTreeNodePtr node) {
     p = pf;
   }
   if(l > 0) dist /= l;
-  //(*feat)["len-sample-path"] = dist;
+  //insertFeature(feat, "len-sample-path"] = dist;
   // log probability of current sample in terms of marginal training stats.
   double logprob = tag_unigram_start[tag.tag[0]];
   for(size_t t = 1; t < seqlen; t++) 
     logprob += tag_bigram[tag.tag[t-1]][tag.tag[t]];
-  (*feat)["log-prob-tag-bigram"] = logprob;
+  insertFeature(feat, "log-prob-tag-bigram", logprob);
   return feat;
 }
 

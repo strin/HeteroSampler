@@ -67,6 +67,22 @@ static void mapUpdate(std::unordered_map<std::string, K>& g, const std::unordere
   }
 }
 
+template<class K, class T>
+static void mapUpdate(std::unordered_map<std::string, K>& g, const std::list<std::pair<std::string, T> >& u, double eta = 1.0) {
+  for(const std::pair<std::string, T>& p : u) {
+    if(g.find(p.first) == g.end())
+      g[p.first] = (K)0.0;
+    g[p.first] += (K)p.second * eta;
+  }
+}
+
+template<class K>
+static void mapUpdate(std::unordered_map<std::string, K>& g, std::string key, K val) {
+  if(g.find(key) == g.end())
+    g[key] = (K)0.0;
+  g[key] += val;
+}
+
 template<class K>
 static void mapCopy(std::unordered_map<std::string, K>& g, const std::unordered_map<std::string, K>& u) {
   for(const std::pair<std::string, K>& p : u) {
@@ -81,12 +97,6 @@ static void mapRemove(std::unordered_map<std::string, K>& g, const std::unordere
   }
 }
 
-template<class K>
-static void mapUpdate(std::unordered_map<std::string, K>& g, std::string key, K val) {
-  if(g.find(key) == g.end())
-    g[key] = (K)0.0;
-  g[key] += val;
-}
 
 template<class K>
 static void mapDivide(std::unordered_map<std::string, K>& g, double eta) {

@@ -1,4 +1,5 @@
 #include "feature.h"
+#include "boost/lexical_cast.hpp"
 
 using namespace std;
 
@@ -54,25 +55,32 @@ void extractUnigramFeature(const Tag& tag, int pos, int breadth, int depth, Feat
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();
   // word-tag potential.
+  list<pair<string, int>> vp;
   for(int l = max(0, pos - breadth); l <= min(pos + breadth, seqlen-1); l++) {
     StringVector nlp = tag.corpus->getWordFeat(sen[l].word);
+    string lpos = boost::lexical_cast<string>(l-pos);
     for(const string& token : *nlp) {
-      stringstream ss;
-      ss << "w-" << to_string(l-pos) 
-	 << "-" << token << "-" << tag.getTag(pos);
-      if(token == sen[l].word)
-	(*output)[ss.str()] = 1;
-      else
-	(*output)[ss.str()] = 1;
+      string ss = "w-";
+      ss += lpos;
+      ss += "-";
+      ss += token;
+      ss += "-";
+      ss += tag.getTag(pos);
+      //(*output)[ss] = 1;
+      insertFeature(output, ss);
     }
     for(int d = 1; d <= depth; d++) {
       if(d >= sen[l].depth()) continue;
-      stringstream ss;
-      string ds = "";
-      if(d > 1) ds = to_string(d);
-      ss << "t" << ds << "-" << l-pos 
-	<< "-" << sen[l].token[d] << "-" << tag.getTag(pos);
-      (*output)[ss.str()] = 1;
+      string ss = "t";
+      if(d > 1) ss += boost::lexical_cast<string>(d);
+      ss += "-";
+      ss += lpos;
+      ss += "-";
+      ss += sen[l].token[d];
+      ss +="-";
+      ss += tag.getTag(pos);
+      insertFeature(output, ss);
+      //(*output)[ss] = 1;
     }
   }
 }
@@ -80,8 +88,12 @@ void extractUnigramFeature(const Tag& tag, int pos, int breadth, int depth, Feat
 void extractBigramFeature(const Tag& tag, int pos, FeaturePointer output) {
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();
-  stringstream ss;
-  ss << "p-" << tag.getTag(pos-1) << "-" 
-  	<< tag.getTag(pos);
-  (*output)[ss.str()] = 1;
+  string ss = "p-";
+  ss += tag.getTag(pos-1);
+  ss += "-";
+  ss += tag.getTag(pos);
+  /* ss << "p-" << tag.getTag(pos-1) << "-" 
+  	<< tag.getTag(pos);*/
+  // (*output)[ss.str()] = 1;
+  insertFeature(output, ss); 
 }

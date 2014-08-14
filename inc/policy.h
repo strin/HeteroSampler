@@ -45,7 +45,7 @@ public:
   virtual void logNode(MarkovTreeNodePtr node);
 protected:
   // const environment. 
-  FeaturePointer wordent, wordfreq;
+  ParamPointer wordent, wordfreq;
   double wordent_mean, wordfreq_mean;
   Vector2d tag_bigram;
   std::vector<double> tag_unigram_start;

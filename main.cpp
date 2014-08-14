@@ -70,9 +70,6 @@ int main(int argc, char* argv[]) {
     }else if(inference == "Simple") {
       model = shared_ptr<Model>(new ModelSimple(&corpus, vm));
       model->run(testCorpus);
-    }else if(inference == "FwBw") {
-      model = shared_ptr<Model>(new ModelFwBw(&corpus, vm));
-      model->run(testCorpus);
     }else if(inference == "TreeUA") {
       model = shared_ptr<ModelTreeUA>(new ModelTreeUA(&corpus, vm));
       model->run(testCorpus);

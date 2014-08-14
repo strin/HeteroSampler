@@ -222,16 +222,18 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   size_t taglen = model->corpus->tags.size();
   string word = seq.seq[pos].word;
   // bias.
-  (*feat)["b"] = 1;
+  insertFeature(feat, "b");
   // feat: entropy and frequency.
   if(wordent->find(word) == wordent->end())
-    (*feat)["ent"] = log(taglen)-wordent_mean;
+    insertFeature(feat, "ent", log(taglen)-wordent_mean);
+    // (*feat)["ent"] = log(taglen)-wordent_mean;
   else
-    (*feat)["ent"] = (*wordent)[word];
+    insertFeature(feat, "ent", (*wordent)[word]);
+    // (*feat)["ent"] = (*wordent)[word];
   if(wordfreq->find(word) == wordfreq->end())
-    (*feat)["freq"] = log(model->corpus->total_words)-wordfreq_mean;
+    insertFeature(feat, "freq", log(model->corpus->total_words)-wordfreq_mean);
   else
-    (*feat)["freq"] = (*wordfreq)[word];
+    insertFeature(feat, "freq", (*wordfreq)[word]);
   StringVector nlp = NLPfunc(word);
   for(const string wordfeat : *nlp) {
     if(wordfeat == word) continue; 
@@ -239,7 +241,8 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
     if(wordfeat == lowercase) continue;
     if(wordfeat[0] == 'p' or wordfeat[0] == 's') continue;
-    (*feat)[wordfeat] = 1;
+    insertFeature(feat, wordfeat);
+    // (*feat)[wordfeat] = 1;
     // (*feat)[wordfeat+"-ent"] = (*wordent)[word]; 
   }
   return feat;
@@ -342,18 +345,18 @@ CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
 
 FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   FeaturePointer feat = Policy::extractFeatures(node, pos);
-  (*feat)["model-ent"] = node->tag->entropy[pos];
+  insertFeature(feat, "model-ent", node->tag->entropy[pos]);
   if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
     string tg = model->corpus->invtags.find(node->tag->tag[pos])->second;
     if(pos >= 1) {
       string prev_tg = model->corpus->invtags.find(node->tag->tag[pos-1])->second;
       if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
-	(*feat)["bad"] = 1;
+	insertFeature(feat, "bad");
     }
     if(pos < node->tag->size()-1) {
       string next_tg = model->corpus->invtags.find(node->tag->tag[pos+1])->second;
       if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
-	(*feat)["bad"] = 1;
+	insertFeature(feat, "bad");
     }
   }
   return feat;
@@ -418,7 +421,7 @@ void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
       model->sampleOne(*node->tag, i);
       double reward = is_equal();
       double logR = reward - c - reward_baseline; 
-      ParamPointer feat = this->extractFeatures(node, i);   
+      FeaturePointer feat = this->extractFeatures(node, i);   
       double resp = ::score(param, feat);
 //      cout << "logR: " << logR << ", resp: " << resp << endl;
       mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 

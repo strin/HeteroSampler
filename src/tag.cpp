@@ -100,7 +100,7 @@ string Tag::str() {
   stringstream ss;
   size_t seqlen = seq->seq.size();
   for(size_t i = 0; i < seqlen; i++) {
-    ss << seq->seq[i].word << "/" << corpus->invtags.find(tag[i])->second << "\t";
+    ss << seq->seq[i].word << "/" << this->getTag(i) << "\t";
   }
   return ss.str();
 }

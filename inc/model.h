@@ -38,8 +38,8 @@ public:
   virtual void sampleOne(Tag& tag, int choice);           // sample using custom kernel choice.
 
   /* stats utils */
-  std::tuple<FeaturePointer, double> tagEntropySimple() const;
-  std::tuple<FeaturePointer, double> wordFrequencies() const;
+  std::tuple<ParamPointer, double> tagEntropySimple() const;
+  std::tuple<ParamPointer, double> wordFrequencies() const;
   std::pair<Vector2d, std::vector<double> > tagBigram() const;
   virtual double score(const Tag& tag);
   // evaluate the accuracy for POS tag aginst truth.
@@ -74,7 +74,7 @@ public:
 
 protected:
   void adagrad(ParamPointer gradient);
-  void configStepsize(ParamPointer gradient, double new_eta);
+  void configStepsize(FeaturePointer gradient, double new_eta);
 
   int K;          // num of particle. 
   int num_ob;     // current number of observations.
@@ -121,14 +121,6 @@ public:
   TagVector sample(const Sentence& seq);
 };
 
-/* using forward-backward inference for discriminative MRF */
-struct ModelFwBw : public ModelCRFGibbs {
-public:
-  ModelFwBw(const Corpus* corpus, const boost::program_options::variables_map& vm);
-  ParamPointer gradient(const Sentence& seq, TagVector* samples = nullptr, bool update_grad = true);
-  ParamPointer gradient(const Sentence& seq);
-  TagVector sample(const Sentence& seq);
-};
 
 struct ModelTreeUA : public ModelCRFGibbs {
 public:
@@ -181,7 +173,7 @@ public:
   /* parameters */
   double etaT;
 private:
-  FeaturePointer wordent, wordfreq;
+  ParamPointer wordent, wordfreq;
   double wordent_mean, wordfreq_mean;
   Vector2d tag_bigram;
   std::vector<double> tag_unigram_start;

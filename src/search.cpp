@@ -189,9 +189,8 @@ void ModelAdaTree::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag t
       double prob = get<0>(predT);
       node->posgrad = get<1>(predT);
       node->neggrad = get<2>(predT);
-      ParamPointer feat = get<3>(predT); 
+      FeaturePointer feat = get<3>(predT); 
       th_mutex.lock();
-      this->configStepsize(node->gradient, this->eta);
       this->configStepsize(feat, this->etaT);
       th_mutex.unlock();
 
@@ -244,21 +243,21 @@ FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const S
   size_t taglen = corpus->tags.size();
   string word = seq.seq[pos].word;
   /* dataset statistics */
-  (*feat)["ent"] = log(taglen);
+  insertFeature(feat, "ent", log(taglen));
   if(wordent->find(word) != wordent->end()) 
-    (*feat)["ent"] = (*wordent)[word];
-  (*feat)["freq"] = log(corpus->total_words);
+    insertFeature(feat, "ent", (*wordent)[word]);
+  insertFeature(feat, "freq", log(corpus->total_words));
   if(wordfreq->find(word) != wordfreq->end()) 
-    (*feat)["freq"] = (*wordfreq)[word];
+    insertFeature(feat, "freq", (*wordfreq)[word]);
   /* posterior statistics */
-  (*feat)["score"] = tag.score(this->extractFeatures(tag, pos));
+  insertFeature(feat, "score", tag.score(this->extractFeatures(tag, pos)));
   double sc[taglen];
   for(size_t i = 0; i < taglen; i++) {
     mytag.tag[pos] = i;
     sc[i] = mytag.score(this->extractFeatures(mytag, pos));
   }
   logNormalize(sc, taglen);
-  (*feat)["ent-score"] = logEntropy(sc, taglen);
+  insertFeature(feat, "ent-score", logEntropy(sc, taglen));
   return feat;
 }
 
@@ -267,10 +266,10 @@ FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const S
   size_t seqlen = tag.size();
   size_t taglen = corpus->tags.size();
   // feat: bias.
-  (*feat)["bias-stopornot"] = 1.0;
+  insertFeature(feat, "bias-stopornot");
   // feat: word len.
-  (*feat)["len-stopornot"] = (double)seqlen; 
-  (*feat)["len-inv-stopornot"] = 1/(double)seqlen;
+  insertFeature(feat, "len-stopornot", seqlen);
+  insertFeature(feat, "len-inv-stopornot", 1/(double)seqlen);
   // feat: entropy and frequency.
   double max_ent = -DBL_MAX, ave_ent = 0.0;
   double max_freq = -DBL_MAX, ave_freq = 0.0;
@@ -293,10 +292,10 @@ FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const S
   }
   ave_ent /= seqlen;
   ave_freq /= seqlen;
-  (*feat)["max-ent"] = max_ent;
-  (*feat)["max-freq"] = max_freq;
-  (*feat)["ave-ent"] = ave_ent;
-  (*feat)["ave-freq"] = ave_freq;
+  insertFeature(feat, "max-ent", max_ent);
+  insertFeature(feat, "ave-ent", ave_ent);
+  insertFeature(feat, "max-freq", max_freq);
+  insertFeature(feat, "ave-freq", ave_freq);
   // feat: avg sample path length.
   int L = 3, l = 0;
   double dist = 0.0;
@@ -309,12 +308,12 @@ FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const S
     p = pf;
   }
   if(l > 0) dist /= l;
-  (*feat)["len-sample-path"] = dist;
+  insertFeature(feat, "len-sample-path", dist);
   // log probability of current sample in terms of marginal training stats.
   double logprob = tag_unigram_start[tag.tag[0]];
   for(size_t t = 1; t < seqlen; t++) 
     logprob += tag_bigram[tag.tag[t-1]][tag.tag[t]];
-  (*feat)["log-prob-tag-bigram"] = logprob;
+  insertFeature(feat, "log-prob-tag-bigram", logprob);
   return feat;
 }
 

@@ -35,13 +35,13 @@ Model::Model(const Corpus* corpus, const po::variables_map& vm)
   rngs.resize(K);
 }
 
-void Model::configStepsize(ParamPointer gradient, double new_eta) {
+void Model::configStepsize(FeaturePointer gradient, double new_eta) {
   for(const pair<string, double>& p : *gradient) 
     (*stepsize)[p.first] = new_eta;
 }
 
-tuple<FeaturePointer, double> Model::tagEntropySimple() const {
-  FeaturePointer feat = makeFeaturePointer();
+tuple<ParamPointer, double> Model::tagEntropySimple() const {
+  ParamPointer feat = makeParamPointer();
   const size_t taglen = corpus->tags.size();
   double logweights[taglen];
   // compute raw entropy.
@@ -81,8 +81,8 @@ tuple<FeaturePointer, double> Model::tagEntropySimple() const {
   return make_tuple(feat, mean_ent);
 }
 
-tuple<FeaturePointer, double> Model::wordFrequencies() const {
-  FeaturePointer feat = makeFeaturePointer();
+tuple<ParamPointer, double> Model::wordFrequencies() const {
+  ParamPointer feat = makeParamPointer();
   // compute raw feature.
   for(const pair<string, int>& p : corpus->dic_counts) {
     (*feat)[p.first] = log(corpus->total_words)-log(p.second);

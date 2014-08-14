@@ -131,11 +131,7 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
   retagged.retag(*this->corpus); // use training taggs. 
   int testLag = corpus->seqs.size()*testFrequency;
   num_ob = 0;
-  xmllog.begin("Q"); xmllog << Q << endl; xmllog.end();
-  xmllog.begin("T"); xmllog << T << endl; xmllog.end();
-  xmllog.begin("B"); xmllog << B << endl; xmllog.end();
-  xmllog.begin("eta"); xmllog << eta << endl; xmllog.end();
-  xmllog.begin("taglen"); xmllog << corpus->tags.size() << endl; xmllog.end();
+  this->logArgs();
   xmllog.begin("num_train"); xmllog << corpus->size() << endl; xmllog.end();
   xmllog.begin("num_test"); xmllog << testCorpus.size() << endl; xmllog.end();
   xmllog.begin("test_lag"); xmllog << testLag << endl; xmllog.end();
@@ -155,6 +151,14 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
     }
     xmllog.end();
   }
+}
+
+void Model::logArgs() {
+  xmllog.begin("Q"); xmllog << Q << endl; xmllog.end();
+  xmllog.begin("T"); xmllog << T << endl; xmllog.end();
+  xmllog.begin("B"); xmllog << B << endl; xmllog.end();
+  xmllog.begin("eta"); xmllog << eta << endl; xmllog.end();
+  xmllog.begin("taglen"); xmllog << corpus->tags.size() << endl; xmllog.end();
 }
 
 tuple<int, int> Model::evalPOS(const Tag& tag) {

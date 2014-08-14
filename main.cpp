@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
       ("c", po::value<double>()->default_value(0), "extent of time regularization")
       ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
       ("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
+      ("factorL", po::value<int>()->default_value(2), "up to what order of gram should be used")
       ("Tstar", po::value<double>()->default_value(T), "time resource constraints")
       ("eps_split", po::value<double>()->default_value(0.0), "prob of split in MarkovTree")
       ("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")

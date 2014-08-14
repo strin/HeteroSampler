@@ -78,20 +78,35 @@ ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool
   return gradient;
 }
 
+void ModelSimple::logArgs() {
+  Model::logArgs();
+  xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
+  xmllog.begin("depthL"); xmllog << depthL << endl; xmllog.end();
+}
+
 //////// Model CRF Gibbs ///////////////////////////////
 ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
-:ModelSimple(corpus, vm), 
+:ModelSimple(corpus, vm), factorL(vm["factorL"].as<int>()), 
  extractFeatures([&] (const Tag& tag, int pos) {
    const vector<Token>& sen = tag.seq->seq;
    int seqlen = tag.size();
    // extract word features. 
    FeaturePointer features = makeFeaturePointer();
    extractUnigramFeature(tag, pos, windowL, depthL, features);
+   /*
+   // extract word bigram.
    if(pos >= 1) {
      extractBigramFeature(tag, pos, features);
    }
    if(pos < seqlen-1) {
      extractBigramFeature(tag, pos+1, features);
+   }*/
+   for(int factor = 1; factor <= factorL; factor++) {
+    for(int p = pos; p < pos+factor; p++) {
+      if(p-factor+1 >= 0 && p < seqlen) {
+	extractXgramFeature(tag, p, factor, features);
+      }
+    }
    }
    return features;
  }) {}
@@ -211,6 +226,11 @@ void ModelCRFGibbs::sampleOneSweep(Tag& tag) {
 			  return this->extractFeatures(tag, i); 
 			}, false, false);
   }
+}
+
+void ModelCRFGibbs::logArgs() {
+  ModelSimple::logArgs();
+  xmllog.begin("factorL"); xmllog << windowL << endl; xmllog.end();
 }
 
 ParamPointer ModelCRFGibbs::gradient(const Sentence& seq) {

@@ -88,6 +88,7 @@ void extractUnigramFeature(const Tag& tag, int pos, int breadth, int depth, Feat
 void extractBigramFeature(const Tag& tag, int pos, FeaturePointer output) {
   const vector<Token>& sen = tag.seq->seq;
   int seqlen = tag.size();
+  assert(pos >= 0 && pos < seqlen);
   string ss = "p-";
   ss += tag.getTag(pos-1);
   ss += "-";
@@ -96,4 +97,19 @@ void extractBigramFeature(const Tag& tag, int pos, FeaturePointer output) {
   	<< tag.getTag(pos);*/
   // (*output)[ss.str()] = 1;
   insertFeature(output, ss); 
+}
+
+void extractXgramFeature(const Tag& tag, int pos, int factor, FeaturePointer output) {
+  const vector<Token>& sen = tag.seq->seq;
+  int seqlen = tag.size();
+  assert(pos >= 0 && pos < seqlen);
+  assert(pos >= factor-1);
+  assert(factor >= 1);
+  string ss = "p";
+  ss += boost::lexical_cast<string>(factor);
+  for(int f = 1; f <= factor; f++) {
+    ss += "-";
+    ss += tag.getTag(pos-f+1);
+  }
+  insertFeature(output, ss);
 }

@@ -66,7 +66,7 @@ public:
   friend std::istream& operator>>(std::istream& os, Model& model);
 
   XMLlog xmllog;
- 
+  virtual void logArgs(); 
   /* const environment */
   enum Scoring {SCORING_NER, SCORING_ACCURACY };
   Scoring scoring;
@@ -90,7 +90,8 @@ public:
   TagVector sample(const Sentence& seq); 
   void sample(Tag& tag, int time);
   FeaturePointer extractFeatures(const Tag& tag, int pos);
-
+  
+  virtual void logArgs();
 protected:
   int windowL, depthL; // range of unigram features.
 };
@@ -109,8 +110,11 @@ public:
   // FeaturePointer extractFeatures(const Tag& tag, int pos);
   FeaturePointer extractFeaturesAll(const Tag& tag);
   double score(const Tag& tag);
+
+  virtual void logArgs();
 private:
   void sampleOneSweep(Tag& tag);
+  int factorL;
 };
 
 struct ModelIncrGibbs : public ModelCRFGibbs {

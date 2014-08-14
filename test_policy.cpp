@@ -33,6 +33,7 @@ int main(int argc, char* argv[]) {
 	("c", po::value<double>()->default_value(0.1), "time regularization")
 	("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
 	("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
+	("factorL", po::value<int>()->default_value(2), "up to what order of gram should be used")
 	("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
 	("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
 	("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")

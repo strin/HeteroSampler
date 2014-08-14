@@ -74,21 +74,22 @@ XMLlog::~XMLlog() {
 
 string XMLlog::encodeString(string source)
 {
-  stringstream ss;
+  string ss;
   for(int i = 0; i < source.size(); i++)
   {
-    if(source[i] == '\"')
-      ss << "&quot;";
+    if(source[i]>>7) ss += source[i];
+    else if(source[i] == '\"')
+      ss += "&quot;";
     else if (((source[i]) >= 32 && (source[i]) <= 37)                        
        || ((source[i]) == 39 )
        || ((source[i]) >= 42 && (source[i]) <= 59) 
        || ((source[i]) >= 64 && (source[i]) <= 122)
        || source[i] == 9)
-	  ss << source[i];
+	  ss += source[i];
     else
-	ss << ARR_ASCII_MAP[(int)source[i]];
+	ss += ARR_ASCII_MAP[(int)source[i]];
   }
-  return ss.str();
+  return ss;
 }
 
 void XMLlog::registerSignals() {

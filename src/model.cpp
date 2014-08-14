@@ -135,6 +135,7 @@ void Model::run(const Corpus& testCorpus, bool lets_test) {
   xmllog.begin("T"); xmllog << T << endl; xmllog.end();
   xmllog.begin("B"); xmllog << B << endl; xmllog.end();
   xmllog.begin("eta"); xmllog << eta << endl; xmllog.end();
+  xmllog.begin("taglen"); xmllog << corpus->tags.size() << endl; xmllog.end();
   xmllog.begin("num_train"); xmllog << corpus->size() << endl; xmllog.end();
   xmllog.begin("num_test"); xmllog << testCorpus.size() << endl; xmllog.end();
   xmllog.begin("test_lag"); xmllog << testLag << endl; xmllog.end();

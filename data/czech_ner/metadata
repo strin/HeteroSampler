@@ -1,0 +1,5 @@
+name: Czech Named Entity Corpus 1.0
+format: SequenceTagging
+description: Fine-grained nesting named entity labels. The nesting has been flattened. If a word is inside named entity labeled ps inside an entity named P, the word is labeled with P:ps
+url: http://ufal.mff.cuni.cz/tectomt/releases/czech_named_entity_corpus_10/index.html
+source: Institute of Formal and Applied Linguistics

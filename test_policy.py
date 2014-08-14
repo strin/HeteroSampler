@@ -1,16 +1,33 @@
 import numpy as np
 import os, sys
 import numpy.random as npr
+from farm import *
 from stat_policy import *
 
 thres_l = [0.5, 1, 1.5, 2, 2.5, 3, 1000]
-c_l = [0.05, 0.1, 0.20, 0.3, 1]
 T_l = [1, 2, 3, 4]
 
-if len(sys.argv) < 2:
-  print 'toy', 'toy0', 'plot_toy'
-  exit(0)
+def pos_ner_gibbs(w, test_count, T):
+    cmd = '''./policy --inference Gibbs --policy gibbs --name test_policy/pos_ner_gibbs_T%d_w%d_tc%d \
+    --T %d --numThreads 5 --model model/ner_pos_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
+    --verbose false --train data/eng_pos_ner/train --test data/eng_pos_ner/test''' \
+    % (T, w,test_count, T, w,  w, test_count)
+    print cmd
+    os.system(cmd)  
+    policy = PolicyResult('test_policy/pos_ner_gibbs_T%d_w%d_tc%d' % (T, w, test_count))
+    print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
+farm = Farm()
+for w in [0,1]:
+  for T in [1,2,3,4]:
+    farm.add('pos_ner/gibbs/toy/w%d/T%d' % (w, T), lambda w=w, T=T: pos_ner_gibbs(w, 100, T))
+
+if len(sys.argv) < 2:
+  farm.visualize()
+  exit(0)
+farm.run(sys.argv[1])
+
+"""
 if sys.argv[1] == "toy_entropy":
     for thres in thres_l:
       cmd = '''./policy --inference Gibbs --policy entropy --name test_policy/entropy_%0.2f \
@@ -53,6 +70,16 @@ if sys.argv[1] == "wsj_cyclic":
       print cmd
       os.system(cmd)  
       policy = PolicyResult('test_policy/wsj_cyclic_%f' % c)
+      print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
+if sys.argv[1] == "wsj_cyclic_value":
+  for c in c_l:
+      cmd = '''./policy --inference Gibbs --policy cyclic_value \
+      --name test_policy/wsj_cyclic_value_%f --c %f --numThreads 10 --eta 1 --K 10 \
+      --model model/wsj_gibbs.model --train data/wsj/wsj-pos.train \
+      --test data/wsj/wsj-pos.test ''' % (c, c)
+      print cmd
+      os.system(cmd)  
+      policy = PolicyResult('test_policy/wsj_cyclic_value_%f' % c)
       print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 elif sys.argv[1] == "wsj_gibbs":
   for T in T_l:
@@ -106,3 +133,4 @@ elif sys.argv[1] == "toy0":
     os.system(cmd)  
     stop = StopResult('gibbs0_T%d' % T)
     print 'T = ', T, 'acc = ', stop.accuracy
+"""

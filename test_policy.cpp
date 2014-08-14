@@ -38,6 +38,7 @@ int main(int argc, char* argv[]) {
 	("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
 	("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")
 	("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
+	("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);

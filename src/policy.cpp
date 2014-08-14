@@ -19,6 +19,7 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
  eta(vm["eta"].as<double>()),
  train_count(vm["trainCount"].as<size_t>()), 
  test_count(vm["testCount"].as<size_t>()),
+ verbose(vm["verbose"].as<bool>()), 
  param(makeParamPointer()), G2(makeParamPointer()) {
   // init stats.
   auto wordent_meanent = model->tagEntropySimple();
@@ -95,7 +96,8 @@ void Policy::train(const Corpus& corpus) {
     if(count >= train_count) break;
     if(count % 1000 == 0) 
       cout << "\t " << (double)count/retagged.seqs.size()*100 << " %" << endl;
-    lg->begin("example_"+to_string(count));
+    if(verbose)
+      lg->begin("example_"+to_string(count));
     MarkovTree tree;
     Tag tag(&seq, model->corpus, &rng, model->param);
     tree.root->log_weight = -DBL_MAX;
@@ -123,21 +125,27 @@ void Policy::train(const Corpus& corpus) {
     double log_sum_w = tree.logSumWeights(tree.root); // norm grad, avoid overflow.
     pair<ParamPointer, double> grad_lgweight = tree.aggregateGradient(tree.root, log_sum_w);
     ParamPointer gradient = grad_lgweight.first;
-    lg->begin("gradient_agg");
-    *lg << *gradient << endl;
-    lg->end();
+    if(verbose) {
+      lg->begin("gradient_agg");
+      *lg << *gradient << endl;
+      lg->end();
+    }
     ::adagrad(param, G2, gradient, eta);
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = tree.root->children[k];
       while(node->children.size() > 0) node = node->children[0]; // take final sample.
-      lg->begin("node");
-      this->logNode(node);
-      lg->end(); // </node>
+      if(verbose) {
+	lg->begin("node");
+	this->logNode(node);
+	lg->end(); // </node>
+      }
     }
-    lg->begin("param");
-    *lg << *param;
-    lg->end(); // </param>
-    lg->end(); // </example>
+    if(verbose) {
+      lg->begin("param");
+      *lg << *param;
+      lg->end(); // </param>
+      lg->end(); // </example>
+    }
     count++;
   }
   lg->begin("param");

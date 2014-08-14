@@ -53,6 +53,7 @@ protected:
   const size_t K;
   const size_t test_count, train_count;
   const double eta;
+  const bool verbose;
 
   // global environment.
   ModelPtr model;

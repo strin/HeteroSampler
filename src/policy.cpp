@@ -154,19 +154,36 @@ void Policy::train(const Corpus& corpus) {
   lg->end(); // </train>
 }
 
-double Policy::test(const Corpus& testCorpus) {
+Policy::Result::Result(const Corpus& corpus) 
+:corpus(corpus) {
+  nodes.clear();
+}
+
+Policy::ResultPtr Policy::test(const Corpus& testCorpus) {
+  Policy::ResultPtr result = makeResultPtr(testCorpus); 
+  result->corpus.retag(*model->corpus);
+  result->nodes.resize(test_count, nullptr);
+  test(result);
+  return result;
+}
+
+void Policy::test(Policy::ResultPtr result) {
   cout << "> test " << endl;
-  Corpus retagged(testCorpus);
-  retagged.retag(*model->corpus);
-  vector<MarkovTreeNodePtr> result;
   lg->begin("test");
+  assert(result != nullptr);
   size_t count = 0;
-  for(const Sentence& seq : retagged.seqs) {
+  for(const Sentence& seq : result->corpus.seqs) {
     if(count >= test_count) break;
-    MarkovTreeNodePtr node = makeMarkovTreeNode(nullptr);
-    node->tag = makeTagPtr(&seq, model->corpus, &rng, model->param);
+    MarkovTreeNodePtr node;
+    if(result->nodes[count] == nullptr) {
+      node = makeMarkovTreeNode(nullptr);
+      result->nodes[count] = node;
+      node->tag = makeTagPtr(&seq, model->corpus, &rng, model->param);
+    }else{
+      node = result->nodes[count];
+      while(node->children.size() > 0) node = node->children[0]; // extend on branch.
+    }
     test_thread_pool.addWork(node);
-    result.push_back(node);
     count++;
   }
   test_thread_pool.waitFinish();
@@ -174,7 +191,7 @@ double Policy::test(const Corpus& testCorpus) {
   count = 0;
   size_t hit_count = 0, pred_count = 0, truth_count = 0; 
   size_t ave_time = 0;
-  for(MarkovTreeNodePtr node : result) {
+  for(MarkovTreeNodePtr node : result->nodes) {
     while(node->children.size() > 0) node = node->children[0]; // take final sample.
     ave_time += node->depth+1;
     lg->begin("example_"+to_string(count));
@@ -206,7 +223,7 @@ double Policy::test(const Corpus& testCorpus) {
     *lg << time << endl;
     lg->end(); // </time>
     lg->end(); // </test>
-    return accuracy;
+    result->score = accuracy;
   }else if(model->scoring == Model::SCORING_NER) {
     double f1 = 2 * accuracy * recall / (accuracy + recall);
     lg->begin("accuracy");
@@ -217,9 +234,9 @@ double Policy::test(const Corpus& testCorpus) {
     *lg << time << endl;
     lg->end(); // </time>
     lg->end(); // </test>
-    return f1;
+    result->score = f1;
   }
-  return -1;
+  result->score = -1;
 }
 
 FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
@@ -283,6 +300,11 @@ void Policy::logNode(MarkovTreeNodePtr node) {
   *lg << endl;
   lg->end();
   lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
+}
+
+void Policy::resetLog(std::shared_ptr<XMLlog> new_lg) {
+  while(lg->depth() > 0) lg->end();
+  lg = new_lg;
 }
 /////////////////////////////////////////////////////////////////////////////
 ////// Gibbs Policy   ///////////////////////////////////////////

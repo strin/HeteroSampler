@@ -13,6 +13,7 @@ class ThreadPool {
 public:
   // constructor.
   ThreadPool(size_t num_threads, std::function<void(int, const T&)> worker);
+  ~ThreadPool();
   // return number of threads in the pool.
   size_t numThreads() const {return this->th.size; }
   // add work (type T) to the thread pool.
@@ -31,13 +32,25 @@ private:
   std::condition_variable th_cv, th_finished;
   std::vector<std::shared_ptr<std::stringstream> > th_stream;
   std::vector<std::shared_ptr<XMLlog> > th_log;
+
+  bool is_stopped;
 };
 
 
 template<class T>
 ThreadPool<T>::ThreadPool(size_t num_threads, std::function<void(int, const T&)> worker)
-:worker(worker) {
+:worker(worker), is_stopped(false) {
   this->initThreads(num_threads);
+}
+
+template<class T>
+ThreadPool<T>::~ThreadPool() {
+  std::unique_lock<std::mutex> lock(th_mutex);
+  is_stopped = true;
+  active_work = th.size();
+  lock.unlock(); 
+  th_cv.notify_all();
+  waitFinish();
 }
 
 template<class T>
@@ -52,6 +65,12 @@ void ThreadPool<T>::initThreads(size_t num_threads) {
     this->th[ni] = std::shared_ptr<std::thread>(new std::thread([&] (int tid) {
       std::unique_lock<std::mutex> lock(th_mutex);
       while(true) {
+	if(is_stopped) {
+	  active_work--;
+	  th_finished.notify_all();
+	  lock.unlock();
+	  return;
+	}
 	if(th_work.size() > 0) {
 	  T work = th_work.front();
 	  th_work.pop_front();

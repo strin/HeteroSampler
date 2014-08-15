@@ -73,16 +73,18 @@ int main(int argc, char* argv[]) {
     }else if(vm["policy"].as<string>() == "gibbs_shared") {
       Policy::ResultPtr result = nullptr;
       string name = vm["name"].as<string>();
-      for(size_t t = 1; t <= vm["T"].as<size_t>(); t++) {
-	// vm.insert(make_pair("T", po::variable_value(t, false)));
+      const size_t T = vm["T"].as<size_t>();
+      vector<shared_ptr<GibbsPolicy> > gibbs_policy(T);
+      for(size_t t = 1; t <= T; t++) {
 	string myname = name+"_T"+to_string(t);
-	auto gibbs_policy = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
-	gibbs_policy->T = t;
-	gibbs_policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname+"/policy.xml")));  
+	gibbs_policy[t-1] = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
+	gibbs_policy[t-1]->T = t;
+	system(("mkdir -p "+myname).c_str());
+	gibbs_policy[t-1]->resetLog(shared_ptr<XMLlog>(new XMLlog(myname+"/policy.xml")));  
 	if(t == 1) {
-	  result = gibbs_policy->test(testCorpus);
+	  result = gibbs_policy[t-1]->test(testCorpus);
 	}else{
-	  gibbs_policy->test(result);
+	  gibbs_policy[t-1]->test(result);
 	}
       }
     }else if(vm["policy"].as<string>() == "cyclic") {

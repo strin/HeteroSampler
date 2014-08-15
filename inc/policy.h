@@ -17,9 +17,23 @@ public:
   Policy(ModelPtr model, const boost::program_options::variables_map& vm);
   ~Policy();
 
+  // results in terms of test samples.
+  class Result {
+  public:
+    Result(const Corpus& corpus);
+    std::vector<MarkovTreeNodePtr> nodes;
+    Corpus corpus;
+    double score;
+  };
+  typedef std::shared_ptr<Result> ResultPtr;
+  inline static ResultPtr makeResultPtr(const Corpus& corpus) {
+    return ResultPtr(new Result(corpus));
+  }
+
   // run test on corpus.
   // return: accuracy on the test set.
-  double test(const Corpus& testCorpus);
+  ResultPtr test(const Corpus& testCorpus);
+  void test(ResultPtr result);
 
   // run training on corpus.
   virtual void train(const Corpus& corpus);
@@ -43,6 +57,9 @@ public:
 
   // log information about node.
   virtual void logNode(MarkovTreeNodePtr node);
+
+  // reset log.
+  void resetLog(std::shared_ptr<XMLlog> new_lg);
 protected:
   // const environment. 
   ParamPointer wordent, wordfreq;
@@ -76,8 +93,6 @@ public:
   //	     second/third pass only update words with entropy exceeding threshold.
   int policy(MarkovTreeNodePtr node);
 
-
-private:
   size_t T; // how many sweeps.
 };
 

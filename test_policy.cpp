@@ -70,6 +70,21 @@ int main(int argc, char* argv[]) {
     }else if(vm["policy"].as<string>() == "gibbs") {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm)));   
       policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "gibbs_shared") {
+      Policy::ResultPtr result = nullptr;
+      string name = vm["name"].as<string>();
+      for(size_t t = 1; t <= vm["T"].as<size_t>(); t++) {
+	// vm.insert(make_pair("T", po::variable_value(t, false)));
+	string myname = name+"_T"+to_string(t);
+	auto gibbs_policy = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
+	gibbs_policy->T = t;
+	gibbs_policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname+"/policy.xml")));  
+	if(t == 1) {
+	  result = gibbs_policy->test(testCorpus);
+	}else{
+	  gibbs_policy->test(result);
+	}
+      }
     }else if(vm["policy"].as<string>() == "cyclic") {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicPolicy(model, vm)));
       policy->train(corpus);

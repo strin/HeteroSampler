@@ -35,6 +35,9 @@ public:
   ResultPtr test(const Corpus& testCorpus);
   void test(ResultPtr result);
 
+  // apply gradient from on samples.
+  virtual void gradient(MarkovTree& tree);
+
   // run training on corpus.
   virtual void train(const Corpus& corpus);
 
@@ -140,6 +143,8 @@ public:
   // sample for training.
   void sample(int tid, MarkovTreeNodePtr node);
 
+  // overload gradient, add exponentiated gradient for *c*.
+  virtual void gradient(MarkovTree& tree);
 protected:
   size_t T;
 };

@@ -139,5 +139,8 @@ public:
 
   // sample for training.
   void sample(int tid, MarkovTreeNodePtr node);
+
+protected:
+  size_t T;
 };
 #endif

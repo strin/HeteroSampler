@@ -130,7 +130,15 @@ void Policy::train(const Corpus& corpus) {
       *lg << *gradient << endl;
       lg->end();
     }
+
     ::adagrad(param, G2, gradient, eta);
+    if(param->find("hyper-c") != param->end()) {
+      cout << "hyper-c " << (*param)["hyper-c"] << endl;
+      if((*param)["hyper-c"] < 0) 
+	(*param)["hyper-c"] = 0;
+      if((*param)["hyper-c"] > 1) 
+	(*param)["hyper-c"] = 1;
+    }
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = tree.root->children[k];
       while(node->children.size() > 0) node = node->children[0]; // take final sample.
@@ -162,7 +170,7 @@ Policy::Result::Result(const Corpus& corpus)
 Policy::ResultPtr Policy::test(const Corpus& testCorpus) {
   Policy::ResultPtr result = makeResultPtr(testCorpus); 
   result->corpus.retag(*model->corpus);
-  result->nodes.resize(test_count, nullptr);
+  result->nodes.resize(min(test_count, testCorpus.seqs.size()), nullptr);
   test(result);
   return result;
 }
@@ -192,6 +200,7 @@ void Policy::test(Policy::ResultPtr result) {
   size_t hit_count = 0, pred_count = 0, truth_count = 0; 
   size_t ave_time = 0;
   for(MarkovTreeNodePtr node : result->nodes) {
+    if(count >= test_count) break;
     while(node->children.size() > 0) node = node->children[0]; // take final sample.
     ave_time += node->depth+1;
     lg->begin("example_"+to_string(count));
@@ -368,7 +377,7 @@ int EntropyPolicy::policy(MarkovTreeNodePtr node) {
 ////// Cyclic Policy ///////////////////////////////////////////
 CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
 :Policy(model, vm), 
- c(vm["c"].as<double>())
+ c(vm["c"].as<double>()) 
 {
 }
 
@@ -429,17 +438,21 @@ double CyclicPolicy::reward(MarkovTreeNodePtr node) {
 /////////////////////////////////////////////////////////////////////////////////////
 //////// Cyclic Value Policy /////////////////////////////////////////////////////////////
 CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
-:CyclicPolicy(model, vm) { 
+:CyclicPolicy(model, vm), T(vm["T"].as<size_t>()){ 
+  (*param)["hyper-c"] = c;
 }
 
 void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
   node->depth = 0;
   node->choice = -1;
+  size_t time = 0;
+  this->c = (*param)["hyper-c"];
   try{
     node->tag->rng = &thread_pool.rngs[tid];
     for(size_t i = 0; i < node->tag->size(); i++) {
       model->sampleOne(*node->tag, i);
     }
+    time += node->tag->size();
     node->gradient = makeParamPointer();
     Tag old_tag(*node->tag);
     for(size_t i = 0; i < node->tag->size(); i++) {
@@ -452,9 +465,12 @@ void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
       double logR = reward - c - reward_baseline; 
       FeaturePointer feat = this->extractFeatures(node, i);   
       double resp = ::score(param, feat);
+      if(resp > 0) 
+	time += 1;
 //      cout << "logR: " << logR << ", resp: " << resp << endl;
       mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
     }
+    mapUpdate(*node->gradient, "hyper-c", (double)time-(double)T);
     // cout << "tag0: " << old_tag.str() << endl;
     // cout << "tag1: " << node->tag->str() << endl;
     node->log_weight = 0;

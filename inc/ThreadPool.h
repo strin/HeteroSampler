@@ -15,7 +15,7 @@ public:
   ThreadPool(size_t num_threads, std::function<void(int, const T&)> worker);
   ~ThreadPool();
   // return number of threads in the pool.
-  size_t numThreads() const {return this->th.size; }
+  size_t numThreads() const {return this->th.size(); }
   // add work (type T) to the thread pool.
   void addWork(const T& work);
   // wait a quescent moment when there is no active work.

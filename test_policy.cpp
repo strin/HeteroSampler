@@ -86,7 +86,9 @@ int main(int argc, char* argv[]) {
 	}else{
 	  gibbs_policy[t-1]->test(result);
 	}
+	gibbs_policy[t-1]->resetLog(nullptr);
       }
+      system(("rm -r "+name).c_str());
     }else if(vm["policy"].as<string>() == "cyclic") {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicPolicy(model, vm)));
       policy->train(corpus);

@@ -143,9 +143,16 @@ public:
   // sample for training.
   void sample(int tid, MarkovTreeNodePtr node);
 
+  // training.
+  void train(const Corpus& corpus);
+
   // overload gradient, add exponentiated gradient for *c*.
   virtual void gradient(MarkovTree& tree);
 protected:
   size_t T;
+
+private:
+  const bool lets_resp_reward = true;
+  std::vector<std::pair<double, double> > resp_reward; // resp, reward pair.   
 };
 #endif

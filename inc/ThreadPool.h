@@ -66,7 +66,7 @@ void ThreadPool<T>::initThreads(size_t num_threads) {
       std::unique_lock<std::mutex> lock(th_mutex);
       while(true) {
 	if(is_stopped) {
-	  active_work--;
+	  active_work-=1;
 	  th_finished.notify_all();
 	  lock.unlock();
 	  return;

@@ -86,6 +86,18 @@ void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
   }
 }
 
+void Policy::gradient(MarkovTree& tree) {
+  double log_sum_w = tree.logSumWeights(tree.root); // norm grad, avoid overflow.
+  pair<ParamPointer, double> grad_lgweight = tree.aggregateGradient(tree.root, log_sum_w);
+  ParamPointer gradient = grad_lgweight.first;
+  if(verbose) {
+    lg->begin("gradient_agg");
+    *lg << *gradient << endl;
+    lg->end();
+  }
+  ::adagrad(param, G2, gradient, eta);
+}
+
 void Policy::train(const Corpus& corpus) {
   cout << "> train " << endl;
   Corpus retagged(corpus);
@@ -106,6 +118,7 @@ void Policy::train(const Corpus& corpus) {
       this->thread_pool.addWork(node); 
     }
     thread_pool.waitFinish();
+    /*
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = tree.root->children[k];
       ParamPointer g = makeParamPointer();
@@ -117,28 +130,12 @@ void Policy::train(const Corpus& corpus) {
 	  mapUpdate(*g, *node->gradient);
 	}
       }
-    /*  lg->begin("gradient");
+      lg->begin("gradient");
       *lg << *g << endl;
       *lg << node->log_weight << endl;
-      lg->end(); */
-    }
-    double log_sum_w = tree.logSumWeights(tree.root); // norm grad, avoid overflow.
-    pair<ParamPointer, double> grad_lgweight = tree.aggregateGradient(tree.root, log_sum_w);
-    ParamPointer gradient = grad_lgweight.first;
-    if(verbose) {
-      lg->begin("gradient_agg");
-      *lg << *gradient << endl;
-      lg->end();
-    }
-
-    ::adagrad(param, G2, gradient, eta);
-    if(param->find("hyper-c") != param->end()) {
-      cout << "hyper-c " << (*param)["hyper-c"] << endl;
-      if((*param)["hyper-c"] < 0) 
-	(*param)["hyper-c"] = 0;
-      if((*param)["hyper-c"] > 1) 
-	(*param)["hyper-c"] = 1;
-    }
+      lg->end(); 
+    }*/
+    this->gradient(tree);
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = tree.root->children[k];
       while(node->children.size() > 0) node = node->children[0]; // take final sample.
@@ -439,14 +436,14 @@ double CyclicPolicy::reward(MarkovTreeNodePtr node) {
 //////// Cyclic Value Policy /////////////////////////////////////////////////////////////
 CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
 :CyclicPolicy(model, vm), T(vm["T"].as<size_t>()){ 
-  (*param)["hyper-c"] = c;
+  if(c == 0) (*param)["hyper-c"] = -10000;
+  else (*param)["hyper-c"] = log(c);
 }
 
 void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
   node->depth = 0;
   node->choice = -1;
   size_t time = 0;
-  this->c = (*param)["hyper-c"];
   try{
     node->tag->rng = &thread_pool.rngs[tid];
     for(size_t i = 0; i < node->tag->size(); i++) {
@@ -470,13 +467,23 @@ void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
 //      cout << "logR: " << logR << ", resp: " << resp << endl;
       mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
     }
-    mapUpdate(*node->gradient, "hyper-c", (double)time-(double)T);
+    cout << "time " << time << " T " << T << endl;
+    mapUpdate(*node->gradient, "hyper-c", c * ((double)time-(double)T));
     // cout << "tag0: " << old_tag.str() << endl;
     // cout << "tag1: " << node->tag->str() << endl;
     node->log_weight = 0;
   }catch(const char* ee) {
     cout << "error: " << ee << endl;
   }
+}
+
+void CyclicValuePolicy::gradient(MarkovTree& tree) {
+  const double eta_c = 1;
+  Policy::gradient(tree);
+  if((*param)["hyper-c"] * eta_c > 0) 
+    (*param)["hyper-c"] = - eta / sqrt(1e-4 + (*G2)["hyper-c"]);
+  this->c = exp(eta_c * (*param)["hyper-c"]);
+  cout << "hyper-c " << (*param)["hyper-c"] << " , c " << c << endl;
 }
 
 int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {

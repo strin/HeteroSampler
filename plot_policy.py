@@ -4,6 +4,7 @@ import numpy.random as npr
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import itertools
+import codecs
 mpl.use('Agg')
 from stat_policy import *
 
@@ -21,6 +22,9 @@ def plot(path_l, legend_l, output, color_l=['r','g','b','k'], \
       policy_l[-1].append(policy)
       time.append(policy.ave_time())
       acc.append(policy.accuracy)
+    pair = sorted(zip(time, acc), key=lambda x: x[0])
+    time, acc = zip(*pair)
+    time, acc = (list(time), list(acc))
     p, = plt.plot(time, acc, '%s%s' % (color_l[pathi], marker_l[pathi]))
     plot_l.append(p)
     [time, acc] = zip(*sorted(zip(time,acc), key=lambda ta : ta[0]))
@@ -87,20 +91,19 @@ if __name__ == '__main__':
       path_out = sys.argv[3]
     else:
       path_out = '.'
+    files = os.listdir(path_in+'/test_policy/')
     path_l = list()
-    path_l.append(list())
-    for T in [1,2,3,4]:
-      path_l[-1].append(path_in+'/test_policy/%s_gibbs_T%d' % (name, T))
-    path_l.append(list())
-    for c in [0, 0.05, 0.1, 0.2, 0.3, 1]:
-      path_l[-1].append(path_in+'/test_policy/%s_policy_c%f' % (name, c))
+    scheme_l = ['gibbs', 'policy']
+    for scheme in scheme_l:
+      path = [path_in+'/test_policy/'+f for f in files if f.find('%s_%s'%(name, scheme)) != -1]
+      path_l.append(path)
     """
     path_l.append(list())
     for thres in [0.5,1.0,1.5,2.0,2.5,3.0]:
       path_l[-1].append(path_in+'/test_policy/%s_entropy_%0.2f' % (name, thres))
     """
-    policy_l = plot(path_l, ['Gibbs', 'Policy'], path_out+'/%s.png' % name)
+    policy_l = plot(path_l, scheme_l, path_out+'/%s.png' % name)
     name_l = [[p.split('/')[-1] for p in path] for path in path_l]
-    html = open(path_out+'/%s.html' % name, 'w')
+    html = codecs.open(path_out+'/%s.html' % name, 'w', encoding='utf-8')
     html.write(PolicyResult.viscomp(list(itertools.chain(*policy_l)), \
                       list(itertools.chain(*name_l)), 'POS'))

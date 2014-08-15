@@ -152,7 +152,7 @@ protected:
   size_t T;
 
 private:
-  const bool lets_resp_reward = true;
+  static const bool lets_resp_reward = false;
   std::vector<std::pair<double, double> > resp_reward; // resp, reward pair.   
 };
 #endif

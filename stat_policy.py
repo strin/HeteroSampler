@@ -43,7 +43,7 @@ class PolicyResult:
             feat[entry.attrib['name']] = float(entry.attrib['value'])
           ex['feat'].append(feat)
         else:
-          ex[attr.tag] = attr.text
+          ex[attr.tag] = unicode(attr.text)
       me.testex.append(ex)
 
   def ave_time(me):
@@ -58,7 +58,10 @@ class PolicyResult:
   # compare with you, and visualize the result.
   @staticmethod
   def viscomp(policy_l, name_l, mode='POS'):
-    tagprob = corpus.read_tagposterior(policy_l[0].corpus, mode)
+    for policy in policy_l:
+      if hasattr(policy, 'corpus'):
+        tagprob = corpus.read_tagposterior(policy.corpus, mode)
+        break
     BG_HIGHLIGHT = '#D4E6FA'
     BG_SELECT = '#EDD861'
     for policy in policy_l:
@@ -80,14 +83,15 @@ class PolicyResult:
       background-color: %s;
     }''' % BG_SELECT
     head += '</style>'
-    body = '''<p>Locations selected for inference are highlighted with <span style='background-color: %s'>&nbsp;&nbsp;&nbsp;</span> <br>
-    Features have their means subtracted.  </p>''' % BG_HIGHLIGHT
-    body += '''<h3> Models </h3> <table>'''
+    body = ['''<p>Locations selected for inference are highlighted with <span style='background-color: %s'>&nbsp;&nbsp;&nbsp;</span> <br>
+    Features have their means subtracted.  </p>''' % BG_HIGHLIGHT]
+    body += ['''<h3> Models </h3> <table>''']
     for (name, policy) in zip(name_l, policy_l):
-      body += '''<tr><td><span title="%s">%s</span></td></tr> '''%(str(policy.param), name)
+      body += ['''<tr><td><span title="%s">%s</span></td></tr> '''%(str(policy.param), name)]
     body += '''</table> <h3> Test Examples </h3>'''
     count = 0
     for ex_l in zip(*[test.testex for test in policy_l]):
+      print 'count = ', count
       token_truth = ex_l[0]['truth'].replace('\n', '').split('\t')
       token_l = [ex['tag'].replace('\n', '').split('\t') for ex in ex_l]
       words = [token.split('/')[0] for token in token_truth if token != '']
@@ -99,13 +103,14 @@ class PolicyResult:
           mask_l.append([float(t) for t in ex['mask'].replace('\n', '').split('\t') if t != ''])
         else:
           mask_l.append(None)
-      body += "<p><table><tr>"
-      body += '''<td style='background-color: #000000; color: #ffffff'>%d</td>''' % count
-      body += '''<td style='text-align: center; color: #9C9C9C; font-size: 14'><b style='font-size: 16'> Words</b> <br>
-      Truth '''
+      body += ["<p><table><tr>"]
+      body += ['''<td style='background-color: #000000; color: #ffffff'>%d</td>''' % count]
+      body += ['''<td style='text-align: center; color: #9C9C9C; font-size: 14'><b style='font-size: 16'> Words</b> <br>
+      Truth ''']
       for name in name_l:
-        body += '''<br> %s ''' % name
-      body += '''</td>'''
+        body += ['''<br> %s ''' % name]
+      body += ['''</td>''']
+      print words
       for (i, token) in enumerate(zip(*([words, true_tag]+tag_l))):
         token = list(token)
         w = token[0]
@@ -130,18 +135,18 @@ class PolicyResult:
               c.append('11B502')
             else:
               c.append('ED2143')
-        body += '''<td style='text-align: center; font-size: 14'> <b style='font-size: 16'> %s </b> <br> 
-        <span> %s </span>''' % (w, tag)
+        body += ['''<td style='text-align: center; font-size: 14'> <b style='font-size: 16'> %s </b> <br> 
+        <span> %s </span>''' % (w, tag)]
         for j in range(len(token)):
           bg = ''
           if mask_l[j] != None and mask_l[j][i] == 1:
             bg = '; background-color: %s ' % BG_HIGHLIGHT
-          body += '''<br> <span title=\"%s\" style='color: %s %s'> %s </span>''' % (str(f[j]), c[j], bg, token[j])
-        body += '''</td>'''
+          body += ['''<br> <span title=\"%s\" style='color: %s %s'> %s </span>''' % (str(f[j]), c[j], bg, token[j])]
+        body += ['''</td>''']
 
-      body += "</tr></table></p>"
+      body += ["</tr></table></p>"]
       count += 1
-    return '''<html>\n<head>\n%s</head>\n<body>\n%s</body>\n</html>''' % (head, body)
+    return '''<html>\n<head>\n%s</head>\n<body>\n%s</body>\n</html>''' % (head, "".join(body))
 
 if __name__ == '__main__':
   name = sys.argv[1]

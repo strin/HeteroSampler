@@ -54,7 +54,7 @@ if __name__ == '__main__':
     html = open(path_out+'/wsj.html', 'w')
     html.write(PolicyResult.viscomp(list(itertools.chain(*policy_l)), \
                       list(itertools.chain(*name_l)), ))
-  if name == 'ner':
+  elif name == 'ner':
     if len(sys.argv) >= 3:
       path_in = sys.argv[2]
     else:
@@ -78,3 +78,29 @@ if __name__ == '__main__':
     html = open(path_out+'/ner.html', 'w')
     html.write(PolicyResult.viscomp(list(itertools.chain(*policy_l)), \
                       list(itertools.chain(*name_l)), 'NER'))
+  else:
+    if len(sys.argv) >= 3:
+      path_in = sys.argv[2]
+    else:
+      path_in = '.'
+    if len(sys.argv) >= 4:
+      path_out = sys.argv[3]
+    else:
+      path_out = '.'
+    path_l = list()
+    path_l.append(list())
+    for T in [1,2,3,4]:
+      path_l[-1].append(path_in+'/test_policy/%s_gibbs_T%d' % (name, T))
+    path_l.append(list())
+    for c in [0, 0.05, 0.1, 0.2, 0.3, 1]:
+      path_l[-1].append(path_in+'/test_policy/%s_policy_c%f' % (name, c))
+    """
+    path_l.append(list())
+    for thres in [0.5,1.0,1.5,2.0,2.5,3.0]:
+      path_l[-1].append(path_in+'/test_policy/%s_entropy_%0.2f' % (name, thres))
+    """
+    policy_l = plot(path_l, ['Gibbs', 'Policy'], path_out+'/%s.png' % name)
+    name_l = [[p.split('/')[-1] for p in path] for path in path_l]
+    html = open(path_out+'/%s.html' % name, 'w')
+    html.write(PolicyResult.viscomp(list(itertools.chain(*policy_l)), \
+                      list(itertools.chain(*name_l)), 'POS'))

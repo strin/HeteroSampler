@@ -9,22 +9,25 @@ class PolicyResult:
     me.name = name
     me.tree = ElementTree.parse(me.name+'/policy.xml')
     me.root = me.tree.getroot()
+    me.param = dict()
     for data in me.root:
       if data.tag == 'args':
         for item in data:
           if item.tag == 'corpus':
             me.corpus = item.text.replace('\n', '')
+      if data.tag == 'train':
+        for item in data:
+          if item.tag == 'param':
+            me.param = dict()
+            for attr in item:
+              if attr.tag == 'entry':
+                me.param[attr.attrib['name']] = float(attr.attrib['value'])
       if data.tag == 'test':
         for item in data:
           if item.tag == 'accuracy':
             me.accuracy = float(item.text)
           elif item.tag == 'example':
             me.parse_test(item)
-          elif item.tag == 'param':
-            me.param = dict()
-            for attr in item:
-              if attr.tag == 'entry':
-                me.param[attr.attrib['name']] = float(attr.attrib['value'])
           
   def parse_test(me, node):
     me.testex = list()
@@ -79,6 +82,10 @@ class PolicyResult:
     head += '</style>'
     body = '''<p>Locations selected for inference are highlighted with <span style='background-color: %s'>&nbsp;&nbsp;&nbsp;</span> <br>
     Features have their means subtracted.  </p>''' % BG_HIGHLIGHT
+    body += '''<h3> Models </h3> <table>'''
+    for (name, policy) in zip(name_l, policy_l):
+      body += '''<tr><td><span title="%s">%s</span></td></tr> '''%(str(policy.param), name)
+    body += '''</table> <h3> Test Examples </h3>'''
     count = 0
     for ex_l in zip(*[test.testex for test in policy_l]):
       token_truth = ex_l[0]['truth'].replace('\n', '').split('\t')

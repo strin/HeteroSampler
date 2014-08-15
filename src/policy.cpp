@@ -262,7 +262,6 @@ void Policy::logNode(MarkovTreeNodePtr node) {
   lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
   int hits = 0;
   for(size_t i = 0; i < node->tag->size(); i++) {
-  /*
     lg->begin("feat"); 
     *lg << *this->extractFeatures(node, i);
     lg->end(); // </feat> */

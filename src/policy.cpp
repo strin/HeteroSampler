@@ -162,7 +162,7 @@ Policy::Result::Result(const Corpus& corpus)
 Policy::ResultPtr Policy::test(const Corpus& testCorpus) {
   Policy::ResultPtr result = makeResultPtr(testCorpus); 
   result->corpus.retag(*model->corpus);
-  result->nodes.resize(test_count, nullptr);
+  result->nodes.resize(min(test_count, testCorpus.seqs.size()), nullptr);
   test(result);
   return result;
 }
@@ -192,6 +192,7 @@ void Policy::test(Policy::ResultPtr result) {
   size_t hit_count = 0, pred_count = 0, truth_count = 0; 
   size_t ave_time = 0;
   for(MarkovTreeNodePtr node : result->nodes) {
+    if(count >= test_count) break;
     while(node->children.size() > 0) node = node->children[0]; // take final sample.
     ave_time += node->depth+1;
     lg->begin("example_"+to_string(count));

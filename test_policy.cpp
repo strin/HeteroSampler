@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
       for(size_t t = 1; t <= T; t++) {
 	string myname = name+"_T"+to_string(t);
 	gibbs_policy[t-1] = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
-	gibbs_policy[t-1]->T = t;
+	gibbs_policy[t-1]->T = 1;  // do one sweep after another.
 	system(("mkdir -p "+myname).c_str());
 	gibbs_policy[t-1]->resetLog(shared_ptr<XMLlog>(new XMLlog(myname+"/policy.xml")));  
 	if(t == 1) {

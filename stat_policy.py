@@ -91,7 +91,6 @@ class PolicyResult:
     body += '''</table> <h3> Test Examples </h3>'''
     count = 0
     for ex_l in zip(*[test.testex for test in policy_l]):
-      print 'count = ', count
       token_truth = ex_l[0]['truth'].replace('\n', '').split('\t')
       token_l = [ex['tag'].replace('\n', '').split('\t') for ex in ex_l]
       words = [token.split('/')[0] for token in token_truth if token != '']
@@ -110,7 +109,6 @@ class PolicyResult:
       for name in name_l:
         body += ['''<br> %s ''' % name]
       body += ['''</td>''']
-      print words
       for (i, token) in enumerate(zip(*([words, true_tag]+tag_l))):
         token = list(token)
         w = token[0]

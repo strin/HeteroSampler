@@ -10,7 +10,7 @@ T_l = [1, 2, 3, 4]
 def pos_ner_gibbs(w, test_count, T):
     cmd = '''./policy --inference Gibbs --policy gibbs --name test_policy/pos_ner_w%d_tc%d_gibbs_T%d \
     --T %d --numThreads 5 --model model/ner_pos_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
-    --verbose false --train data/eng_pos_ner/train --test data/eng_pos_ner/test''' \
+    --eta 1 --verbose false --train data/eng_pos_ner/train --test data/eng_pos_ner/test''' \
     % (w, test_count, T, T, w,  w, test_count)
     print cmd
     os.system(cmd)  
@@ -20,12 +20,20 @@ def pos_ner_gibbs(w, test_count, T):
 def pos_ner_policy(w, count, c):
     cmd = '''./policy --inference Gibbs --policy cyclic_value --name test_policy/pos_ner_w%d_tc%d_policy_c%f \
     --c %f --numThreads 5 --model model/ner_pos_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
-    --trainCount %d --verbose false --train data/eng_pos_ner/train --test data/eng_pos_ner/test''' \
+    --eta 1 --trainCount %d --verbose false --train data/eng_pos_ner/train --test data/eng_pos_ner/test''' \
     % (w, count, c, c, w,  w, count, count)
     print cmd
     os.system(cmd)  
     policy = PolicyResult('test_policy/pos_ner_w%d_tc%d_policy_c%f' % (w, count, c))
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
+
+def ner_gibbs_shared(w, f, test_count, T):
+    cmd = '''./policy --inference Gibbs --policy gibbs_shared --name test_policy/ner_w%d_f%d_tc%d_gibbs \
+    --T %d --numThreads 5 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --testCount %d \
+    --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
+    % (w, f, test_count, T,  w, f,  w, test_count, f)
+    print cmd
+    os.system(cmd)  
 
 def ner_gibbs(w, f, test_count, T):
     cmd = '''./policy --inference Gibbs --policy gibbs --name test_policy/ner_w%d_f%d_tc%d_gibbs_T%d \
@@ -37,14 +45,14 @@ def ner_gibbs(w, f, test_count, T):
     policy = PolicyResult('test_policy/ner_w%d_f%d_tc%d_gibbs_T%d' % (w, f, test_count, T))
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
-def ner_policy(w, f, count, c):
-    cmd = '''./policy --inference Gibbs --policy cyclic_value --name test_policy/ner_w%d_f%d_tc%d_policy_c%f \
-    --c %f --numThreads 5 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --testCount %d \
-    --depthL 2 --factorL %d --trainCount %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
-    % (w, f, count, c, c, w, f,  w, count, f,  count)
+def ner_policy(w, f, count, T):
+    cmd = '''./policy --inference Gibbs --policy cyclic_value --name test_policy/ner_w%d_f%d_tc%d_policy_T%f \
+    --Tstar %f --numThreads 5 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --testCount %d \
+    --eta 1 --K 5 --depthL 2 --factorL %d --trainCount %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
+    % (w, f, count, T, T, w, f,  w, count, f,  count)
     print cmd
     os.system(cmd)  
-    policy = PolicyResult('test_policy/ner_w%d_f%d_tc%d_policy_c%f' % (w, f, count, c))
+    policy = PolicyResult('test_policy/ner_w%d_f%d_tc%d_policy_T%f' % (w, f, count, T))
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
 def czech_gibbs(w, test_count, T):
@@ -60,34 +68,37 @@ def czech_gibbs(w, test_count, T):
 def czech_policy(w, count, T):
     cmd = '''./policy --inference Gibbs --policy cyclic_value --name test_policy/czech_w%d_tc%d_policy_T%d \
     --c 0.1 --T %d --numThreads 10 --model model/czech_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
-    --trainCount %d --verbose false --train data/czech_ner/train --test data/czech_ner/test --K 10''' \
+    --eta 1 --trainCount %d --verbose false --train data/czech_ner/train --test data/czech_ner/test --K 10''' \
     % (w, count, T, T, w,  w, count, count)
     print cmd
     os.system(cmd)  
     policy = PolicyResult('test_policy/czech_w%d_tc%d_policy_T%d' % (w, count, T))
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
+TOY = 1000
+
 farm = Farm()
 for w in [0,1]:
   for T in [1,2,3,4]:
-    farm.add('pos_ner/gibbs/toy/w%d/T%d' % (w, T), lambda w=w, T=T: pos_ner_gibbs(w, 100, T))
-    farm.add('czech/gibbs/toy/w%d/T%d' % (w, T), lambda w=w, T=T: czech_gibbs(w, 100, T))
+    farm.add('pos_ner/gibbs/toy/w%d/T%d' % (w, T), lambda w=w, T=T: pos_ner_gibbs(w, TOY, T))
+    farm.add('czech/gibbs/toy/w%d/T%d' % (w, T), lambda w=w, T=T: czech_gibbs(w, TOY, T))
     farm.add('pos_ner/gibbs/full/w%d/T%d' % (w, T), lambda w=w, T=T: pos_ner_gibbs(w, 99999, T))
     farm.add('czech/gibbs/full/w%d/T%d' % (w, T), lambda w=w, T=T: czech_gibbs(w, 99999, T))
   for T in [25, 30, 35, 40, 45, 50]:
-    farm.add('czech/policy/toy/w%d/T%d' % (w, T), lambda w=w, T=T: czech_policy(w, 100, T))
+    farm.add('czech/policy/toy/w%d/T%d' % (w, T), lambda w=w, T=T: czech_policy(w, TOY, T))
     farm.add('czech/policy/full/w%d/T%d' % (w, T), lambda w=w, T=T: czech_policy(w, 99999, T))
   for c in [0.0, 0.05, 0.1, 0.2, 0.3, 1]:
     farm.add('pos_ner/policy/full/w%d/c%f' % (w, c), lambda w=w, c=c: pos_ner_policy(w, 99999, c))
-    farm.add('pos_ner/policy/toy/w%d/c%f' % (w, c), lambda w=w, c=c: pos_ner_policy(w, 100, c))
+    farm.add('pos_ner/policy/toy/w%d/c%f' % (w, c), lambda w=w, c=c: pos_ner_policy(w, TOY, c))
 
 for f in [1,2,3,4]:
   for T in [1,2,3,4]:
-    farm.add('ner/gibbs/toy/w2/f%d/T%d' % (f, T), lambda f=f, T=T: ner_gibbs(2, f, 100, T))
+    # farm.add('ner/gibbs/toy/w2/f%d/T%d' % (f, T), lambda f=f, T=T: ner_gibbs(2, f, 100, T))
     farm.add('ner/gibbs/full/w2/f%d/T%d' % (f, T), lambda f=f, T=T: ner_gibbs(2, f, 99999, T))
-  for c in [0.0, 0.05, 0.1, 0.2, 0.3, 1]:
-    farm.add('ner/policy/toy/w2/f%d/c%f' % (f, c), lambda f=f, c=c: ner_policy(2, f, 100, c))
-    farm.add('ner/policy/full/w2/f%d/c%f' % (f, c), lambda f=f, c=c: ner_policy(2, f, 99999, c))
+  farm.add('ner/gibbs/toy', lambda: ner_gibbs_shared(2, f, TOY, 4)) 
+  for T in [1.0, 1.25, 1.5, 1.75, 2]:
+    farm.add('ner/policy/toy/w2/f%d/T%f' % (f, T), lambda f=f, T=T: ner_policy(2, f, TOY, T))
+    farm.add('ner/policy/full/w2/f%d/T%f' % (f, T), lambda f=f, c=c: ner_policy(2, f, 99999, T))
 
 if len(sys.argv) < 2:
   farm.visualize()

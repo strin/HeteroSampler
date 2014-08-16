@@ -462,13 +462,13 @@ void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
       double reward_baseline = is_equal();
       model->sampleOne(*node->tag, i);
       double reward = is_equal();
-      double logR = reward - c - reward_baseline; 
+      double logR = reward - reward_baseline; 
       if(lets_resp_reward) {
 	  
       }
       FeaturePointer feat = this->extractFeatures(node, i);   
       double resp = ::score(param, feat);
-      if(resp > 0) 
+      if(resp > c) 
 	time += 1;
       if(lets_resp_reward) {
 	resp_reward.push_back(make_pair(logR, resp));
@@ -476,8 +476,8 @@ void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
 //      cout << "logR: " << logR << ", resp: " << resp << endl;
       mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
     }
-    cout << "time " << time << " T " << T << endl;
-    mapUpdate(*node->gradient, "hyper-c", c * ((double)time-(double)T));
+    // cout << "time " << time << " T " << T << endl;
+    mapUpdate(*node->gradient, "hyper-c", ((double)time-(double)T));
     // cout << "tag0: " << old_tag.str() << endl;
     // cout << "tag1: " << node->tag->str() << endl;
     node->log_weight = 0;
@@ -492,7 +492,6 @@ void CyclicValuePolicy::gradient(MarkovTree& tree) {
   if((*param)["hyper-c"] * eta_c > 0) 
     (*param)["hyper-c"] = - eta / sqrt(1e-4 + (*G2)["hyper-c"]);
   this->c = exp(eta_c * (*param)["hyper-c"]);
-  cout << "hyper-c " << (*param)["hyper-c"] << " , c " << c << endl;
 }
 
 void CyclicValuePolicy::train(const Corpus& corpus) {
@@ -504,6 +503,7 @@ void CyclicValuePolicy::train(const Corpus& corpus) {
     }
     lg->end(); // </resp_reward>
   }
+  cout << "hyper-c " << (*param)["hyper-c"] << " , c " << c << endl;
 }
 
 int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {
@@ -522,7 +522,7 @@ int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {
       double resp = ::score(param, feat);
       node->tag->resp[pos] = resp;
       // if(rng->random01() < resp) { // strategy 1. randomized test.
-      if(resp > 0) { // strategy 2. deterministic test.
+      if(resp > c) { // strategy 2. deterministic test.
 	node->tag->mask[pos] = 1;
 	node->time_stamp = i+1;
 	return pos;

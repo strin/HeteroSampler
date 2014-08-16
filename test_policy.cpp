@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
       policy->test(testCorpus);
     }else if(vm["policy"].as<string>() == "cyclic_value_shared") {
       string name = vm["name"].as<string>();
-      const int fold = 5;
+      const int fold = 10;
       shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
       policy->lets_resp_reward = true;
       policy->train(corpus);

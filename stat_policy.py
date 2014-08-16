@@ -58,6 +58,7 @@ class PolicyResult:
   # compare with you, and visualize the result.
   @staticmethod
   def viscomp(policy_l, name_l, mode='POS'):
+    tagprob = None
     for policy in policy_l:
       if hasattr(policy, 'corpus'):
         tagprob = corpus.read_tagposterior(policy.corpus, mode)
@@ -119,10 +120,11 @@ class PolicyResult:
         for j in range(len(token)):
           if token[j] != tag:
             all_same = False
-          if tagprob.has_key(words[i]):
-            ex_l[j]['feat'][i]['prob'] = tagprob[words[i]]
-          else:
-            ex_l[j]['feat'][i]['prob'] = 'not seen'
+          if tagprob != None:
+            if tagprob.has_key(words[i]):
+              ex_l[j]['feat'][i]['prob'] = tagprob[words[i]]
+            else:
+              ex_l[j]['feat'][i]['prob'] = 'not seen'
           f.append(ex_l[j]['feat'][i])
         if all_same:
           c = ['#000000'] * len(token)

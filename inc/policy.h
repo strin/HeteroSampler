@@ -130,9 +130,6 @@ public:
   virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
 
 protected:
-  double Tstar, T;
-
-protected:
   double c;          // regularization of computation.
 };
 

@@ -373,10 +373,7 @@ int EntropyPolicy::policy(MarkovTreeNodePtr node) {
 ////// Cyclic Policy ///////////////////////////////////////////
 CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
 :Policy(model, vm), 
- c(vm["c"].as<double>()), Tstar(vm["Tstar"].as<double>())
-{
-  T = model->corpus->aveT * Tstar;
-  // cout << "T = " << T << " , aveT " << model->corpus->aveT << endl;
+ c(vm["c"].as<double>()) {
 }
 
 FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
@@ -437,8 +434,6 @@ double CyclicPolicy::reward(MarkovTreeNodePtr node) {
 //////// Cyclic Value Policy /////////////////////////////////////////////////////////////
 CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
 :CyclicPolicy(model, vm) { 
-  if(c == 0) (*param)["hyper-c"] = -10000;
-  else (*param)["hyper-c"] = log(c);
   if(lets_resp_reward and K > 1 and thread_pool.numThreads() > 1) 
     throw "multithread environment cannot record reward.";
 }
@@ -446,13 +441,11 @@ CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm
 void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
   node->depth = 0;
   node->choice = -1;
-  size_t time = 0;
   try{
     node->tag->rng = &thread_pool.rngs[tid];
     for(size_t i = 0; i < node->tag->size(); i++) {
       model->sampleOne(*node->tag, i);
     }
-    time += node->tag->size();
     node->gradient = makeParamPointer();
     Tag old_tag(*node->tag);
     for(size_t i = 0; i < node->tag->size(); i++) {
@@ -468,18 +461,12 @@ void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
       }
       FeaturePointer feat = this->extractFeatures(node, i);   
       double resp = ::score(param, feat);
-      if(resp > c) 
-	time += 1;
       if(lets_resp_reward) {
 	resp_reward.push_back(make_pair(logR, resp));
       }
 //      cout << "logR: " << logR << ", resp: " << resp << endl;
       mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
     }
-    // cout << "time " << time << " T " << T << endl;
-    mapUpdate(*node->gradient, "hyper-c", ((double)time-(double)T));
-    // cout << "tag0: " << old_tag.str() << endl;
-    // cout << "tag1: " << node->tag->str() << endl;
     node->log_weight = 0;
   }catch(const char* ee) {
     cout << "error: " << ee << endl;
@@ -487,11 +474,7 @@ void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
 }
 
 void CyclicValuePolicy::gradient(MarkovTree& tree) {
-  const double eta_c = 1;
   Policy::gradient(tree);
-  if((*param)["hyper-c"] * eta_c > 0) 
-    (*param)["hyper-c"] = - eta / sqrt(1e-4 + (*G2)["hyper-c"]);
-  this->c = exp(eta_c * (*param)["hyper-c"]);
 }
 
 void CyclicValuePolicy::train(const Corpus& corpus) {
@@ -503,7 +486,6 @@ void CyclicValuePolicy::train(const Corpus& corpus) {
     }
     lg->end(); // </resp_reward>
   }
-  cout << "hyper-c " << (*param)["hyper-c"] << " , c " << c << endl;
 }
 
 int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {

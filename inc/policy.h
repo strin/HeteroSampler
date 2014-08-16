@@ -24,6 +24,7 @@ public:
     std::vector<MarkovTreeNodePtr> nodes;
     Corpus corpus;
     double score;
+    double time;
   };
   typedef std::shared_ptr<Result> ResultPtr;
   inline static ResultPtr makeResultPtr(const Corpus& corpus) {

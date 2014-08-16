@@ -168,6 +168,7 @@ Policy::ResultPtr Policy::test(const Corpus& testCorpus) {
   Policy::ResultPtr result = makeResultPtr(testCorpus); 
   result->corpus.retag(*model->corpus);
   result->nodes.resize(min(test_count, testCorpus.seqs.size()), nullptr);
+  result->time = 0;
   test(result);
   return result;
 }
@@ -218,15 +219,15 @@ void Policy::test(Policy::ResultPtr result) {
   lg->end(); // </example>
   double accuracy = (double)hit_count/pred_count;
   double recall = (double)hit_count/truth_count;
-  double time = (double)ave_time/count;
-  cout << "time: " << time << endl;
+  result->time += (double)ave_time/count;
+  cout << "time: " << result->time << endl;
   if(model->scoring == Model::SCORING_ACCURACY) {
     lg->begin("accuracy");
     *lg << accuracy << endl;
     cout << "acc: " << accuracy << endl;
     lg->end(); // </accuracy>
     lg->begin("time");
-    *lg << time << endl;
+    *lg << result->time << endl;
     lg->end(); // </time>
     lg->end(); // </test>
     result->score = accuracy;
@@ -237,7 +238,7 @@ void Policy::test(Policy::ResultPtr result) {
     cout << "f1: " << f1 << endl;
     lg->end(); // </accuracy>
     lg->begin("time");
-    *lg << time << endl;
+    *lg << result->time << endl;
     lg->end(); // </time>
     lg->end(); // </test>
     result->score = f1;

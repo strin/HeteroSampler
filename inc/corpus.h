@@ -52,6 +52,7 @@ public:
   std::map<std::string, int> dic, dic_counts;
   std::map<std::string, std::vector<int> > word_tag_count;
   size_t total_words;
+  double aveT; // average length of seq.
   // total_tags;
   std::map<int, std::string> invtags;
   std::string invtag(int id) const {return invtags.find(id)->second; }

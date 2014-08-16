@@ -110,19 +110,12 @@ void Corpus::read(const string& filename, bool lets_shuffle) {
     }else
       lines.push_back(line);
   }
-  // count tags.
-  /*
-  if(mode == MODE_POS) total_tags = total_words; 
-  else{
-    total_tags = 0;
-    for(const pair<string, int>& p : tagcounts) {
-      if(p.first != "O") total_tags += p.second; 
-    }
-  }*/
   // convert raw tag into integer tag.
   invtags.clear();
   word_tag_count.clear();
+  aveT = 0;
   for(Sentence& seq : seqs) {
+    aveT += seq.size();
     for(const Token& token : seq.seq) {
       string tg;
       tg = token.tag;
@@ -135,6 +128,7 @@ void Corpus::read(const string& filename, bool lets_shuffle) {
       word_tag_count[token.word][itg]++;
     }
   }
+  aveT /= (double)seqs.size();
   // shuffle corpus.
   if(lets_shuffle)
     shuffle<Sentence>(seqs, cokus);

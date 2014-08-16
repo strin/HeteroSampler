@@ -47,7 +47,7 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
 }
 
 Policy::~Policy() {
-  while(lg->depth() > 0) 
+  while(lg != nullptr and lg->depth() > 0) 
     lg->end();
 }
 
@@ -315,8 +315,7 @@ void Policy::resetLog(std::shared_ptr<XMLlog> new_lg) {
 ////// Gibbs Policy   ///////////////////////////////////////////
 
 GibbsPolicy::GibbsPolicy(ModelPtr model, const po::variables_map& vm)
-:Policy(model, vm),  
- T(vm["T"].as<size_t>())
+:Policy(model, vm), T(vm["T"].as<size_t>()) 
 {
 }
 
@@ -374,8 +373,10 @@ int EntropyPolicy::policy(MarkovTreeNodePtr node) {
 ////// Cyclic Policy ///////////////////////////////////////////
 CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
 :Policy(model, vm), 
- c(vm["c"].as<double>()) 
+ c(vm["c"].as<double>()), Tstar(vm["Tstar"].as<double>())
 {
+  T = model->corpus->aveT * Tstar;
+  // cout << "T = " << T << " , aveT " << model->corpus->aveT << endl;
 }
 
 FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
@@ -435,12 +436,11 @@ double CyclicPolicy::reward(MarkovTreeNodePtr node) {
 /////////////////////////////////////////////////////////////////////////////////////
 //////// Cyclic Value Policy /////////////////////////////////////////////////////////////
 CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
-:CyclicPolicy(model, vm), T(vm["T"].as<size_t>()){ 
+:CyclicPolicy(model, vm) { 
   if(c == 0) (*param)["hyper-c"] = -10000;
   else (*param)["hyper-c"] = log(c);
   if(lets_resp_reward and K > 1 and thread_pool.numThreads() > 1) 
     throw "multithread environment cannot record reward.";
-  cout << "1" << endl;
 }
 
 void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {

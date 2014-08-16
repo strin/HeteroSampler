@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
 	("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
 	("threshold", po::value<double>()->default_value(0.8), "theshold for entropy policy")
 	("T", po::value<size_t>()->default_value(1), "number of sweeps in Gibbs sampling")
+	("Tstar", po::value<double>()->default_value(1.5), "computational resource constraint (used to compute c)")
 	("B", po::value<size_t>()->default_value(0), "number of burnin steps")
 	("Q", po::value<size_t>()->default_value(10), "number of passes")
 	("Q0", po::value<int>()->default_value(1), "number of passes for smart init")

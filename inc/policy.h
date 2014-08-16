@@ -128,6 +128,10 @@ public:
   
   // extract features from node.
   virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+
+protected:
+  double Tstar, T;
+
 protected:
   double c;          // regularization of computation.
 };
@@ -148,8 +152,6 @@ public:
 
   // overload gradient, add exponentiated gradient for *c*.
   virtual void gradient(MarkovTree& tree);
-protected:
-  size_t T;
 
 private:
   static const bool lets_resp_reward = false;

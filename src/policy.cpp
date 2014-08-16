@@ -433,9 +433,7 @@ double CyclicPolicy::reward(MarkovTreeNodePtr node) {
 /////////////////////////////////////////////////////////////////////////////////////
 //////// Cyclic Value Policy /////////////////////////////////////////////////////////////
 CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
-:CyclicPolicy(model, vm) { 
-  if(lets_resp_reward and K > 1 and thread_pool.numThreads() > 1) 
-    throw "multithread environment cannot record reward.";
+:CyclicPolicy(model, vm), lets_resp_reward(false) { 
 }
 
 void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
@@ -456,13 +454,10 @@ void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
       model->sampleOne(*node->tag, i);
       double reward = is_equal();
       double logR = reward - reward_baseline; 
-      if(lets_resp_reward) {
-	  
-      }
       FeaturePointer feat = this->extractFeatures(node, i);   
       double resp = ::score(param, feat);
       if(lets_resp_reward) {
-	resp_reward.push_back(make_pair(logR, resp));
+	resp_reward.push_back(make_pair(resp, logR));
       }
 //      cout << "logR: " << logR << ", resp: " << resp << endl;
       mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
@@ -478,6 +473,8 @@ void CyclicValuePolicy::gradient(MarkovTree& tree) {
 }
 
 void CyclicValuePolicy::train(const Corpus& corpus) {
+  if(lets_resp_reward and K > 1 and thread_pool.numThreads() > 1) 
+    throw "multithread environment cannot record reward.";
   Policy::train(corpus);
   if(lets_resp_reward) {
     lg->begin("resp_reward");

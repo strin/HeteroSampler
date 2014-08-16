@@ -98,6 +98,30 @@ int main(int argc, char* argv[]) {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicValuePolicy(model, vm)));
       policy->train(corpus);
       policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "cyclic_value_shared") {
+      string name = vm["name"].as<string>();
+      const int fold = 5;
+      shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
+      policy->lets_resp_reward = true;
+      policy->train(corpus);
+      vector<shared_ptr<CyclicValuePolicy> > test_policy;
+      auto compare = [] (pair<double, double> a, pair<double, double> b) {
+	return (a.first < b.first);
+      };
+      sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 
+      for(int i = 0; i <= fold; i++) {
+	double c = policy->resp_reward[i * (policy->resp_reward.size()-1)/(double)fold].first;
+	string myname = name+"_i"+to_string(i);
+	system(("mkdir -p " + myname).c_str());
+	shared_ptr<CyclicValuePolicy> ptest = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
+	test_policy.push_back(ptest);
+	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+	ptest->param = policy->param; 
+	ptest->c = c;
+	ptest->test(testCorpus);
+	ptest->resetLog(nullptr);
+      }
+      system(("rm -r "+name).c_str());
     }
   }catch(char const* ee) {
     cout << "error: " << ee << endl;

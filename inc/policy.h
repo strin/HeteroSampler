@@ -63,7 +63,8 @@ public:
 
   // reset log.
   void resetLog(std::shared_ptr<XMLlog> new_lg);
-protected:
+
+
   // const environment. 
   ParamPointer wordent, wordfreq;
   double wordent_mean, wordfreq_mean;
@@ -129,7 +130,6 @@ public:
   // extract features from node.
   virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
 
-protected:
   double c;          // regularization of computation.
 };
 
@@ -150,8 +150,7 @@ public:
   // overload gradient, add exponentiated gradient for *c*.
   virtual void gradient(MarkovTree& tree);
 
-private:
-  static const bool lets_resp_reward = false;
-  std::vector<std::pair<double, double> > resp_reward; // resp, reward pair.   
+  bool lets_resp_reward;
+  std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
 };
 #endif

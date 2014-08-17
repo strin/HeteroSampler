@@ -26,6 +26,8 @@ class PolicyResult:
         for item in data:
           if item.tag == 'accuracy':
             me.accuracy = float(item.text)
+          elif item.tag == 'time':
+            me.time = float(item.text)
           elif item.tag == 'example':
             me.parse_test(item)
           
@@ -47,6 +49,8 @@ class PolicyResult:
       me.testex.append(ex)
 
   def ave_time(me):
+    if hasattr(me, 'time'):
+      return me.time
     time = list()
     for ex in me.testex:
       ex_len = len(ex['truth'].split('\t'))-1

@@ -49,7 +49,7 @@ def ner_multi_policy_shared(w, f, test_count):
     --T 4 --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
     % (w, f, test_count,  w, f,  w, test_count, test_count, f)
     print cmd
-    os.system(cmd)  
+    os.system(cmd + ' &')  
 
 def ner_gibbs(w, f, test_count, T):
     cmd = '''./policy --inference Gibbs --policy gibbs --name test_policy/ner_w%d_f%d_tc%d_gibbs_T%d \

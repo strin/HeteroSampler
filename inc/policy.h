@@ -123,7 +123,7 @@ class CyclicPolicy : public Policy {
 public:
   CyclicPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
 
-  int policy(MarkovTreeNodePtr node); 
+  virtual int policy(MarkovTreeNodePtr node); 
   
   // reward = -dist - c * (depth+1).
   double reward(MarkovTreeNodePtr node);
@@ -140,13 +140,13 @@ class CyclicValuePolicy : public CyclicPolicy {
 public:
   CyclicValuePolicy(ModelPtr model, const boost::program_options::variables_map& vm);
 
-  int policy(MarkovTreeNodePtr node);
+  virtual int policy(MarkovTreeNodePtr node);
 
   // sample for training.
-  void sample(int tid, MarkovTreeNodePtr node);
+  virtual void sample(int tid, MarkovTreeNodePtr node);
 
   // training.
-  void train(const Corpus& corpus);
+  virtual void train(const Corpus& corpus);
 
   // overload gradient, add exponentiated gradient for *c*.
   virtual void gradient(MarkovTree& tree);
@@ -154,4 +154,23 @@ public:
   bool lets_resp_reward;
   std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
 };
+
+class MultiCyclicValuePolicy : public CyclicValuePolicy {
+public:
+  MultiCyclicValuePolicy(ModelPtr model, const boost::program_options::variables_map& vm);
+
+  virtual int policy(MarkovTreeNodePtr node);
+
+  // logNodes after each pass.
+  virtual void logNode(MarkovTreeNodePtr node);
+
+  virtual void sample(int tid, MarkovTreeNodePtr node);
+  
+  // rename features from CyclicPolicy::extractFeatures based on current pass.
+  virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+
+protected:
+  size_t T;
+};
+
 #endif

@@ -20,6 +20,10 @@ public:
   void addWork(const T& work);
   // wait a quescent moment when there is no active work.
   void waitFinish();
+  // lock.
+  void lock();
+  // unlock.
+  void unlock();
   std::function<void(int, const T&)> worker;
 
   std::vector<objcokus> rngs;
@@ -107,4 +111,13 @@ void ThreadPool<T>::waitFinish() {
   lock.unlock();
 }
 
+template<class T>
+void ThreadPool<T>::lock() {
+  th_mutex.lock();
+}
+
+template<class T>
+void ThreadPool<T>::unlock() {
+  th_mutex.unlock();
+}
 #endif

@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 	("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
 	("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
 	("threshold", po::value<double>()->default_value(0.8), "theshold for entropy policy")
-	("T", po::value<size_t>()->default_value(1), "number of sweeps in Gibbs sampling")
+	("T", po::value<size_t>()->default_value(4), "number of sweeps in Gibbs sampling")
 	("Tstar", po::value<double>()->default_value(1.5), "computational resource constraint (used to compute c)")
 	("B", po::value<size_t>()->default_value(0), "number of burnin steps")
 	("Q", po::value<size_t>()->default_value(10), "number of passes")
@@ -98,6 +98,36 @@ int main(int argc, char* argv[]) {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicValuePolicy(model, vm)));
       policy->train(corpus);
       policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "multi_cyclic_value") {
+      policy = shared_ptr<Policy>(new MultiCyclicValuePolicy(model, vm));
+      policy->train(corpus);
+      policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "multi_cyclic_value_shared") {
+      string name = vm["name"].as<string>();
+      const int fold = 10;
+      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
+      shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
+      policy->lets_resp_reward = true;
+      policy->train(corpus);
+      vector<shared_ptr<MultiCyclicValuePolicy> > test_policy;
+      auto compare = [] (pair<double, double> a, pair<double, double> b) {
+	return (a.first < b.first);
+      };
+      sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 
+      for(int i : fold_l) {
+	double c = policy->resp_reward[i * (policy->resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+	// string myname = name+"_i"+to_string(i);
+	string myname = name + "_c" + boost::lexical_cast<string>(c);
+	system(("mkdir -p " + myname).c_str());
+	shared_ptr<MultiCyclicValuePolicy> ptest = shared_ptr<MultiCyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
+	test_policy.push_back(ptest);
+	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+	ptest->param = policy->param; 
+	ptest->c = c;
+	ptest->test(testCorpus);
+	ptest->resetLog(nullptr);
+      }
+      system(("rm -r "+name).c_str());
     }else if(vm["policy"].as<string>() == "cyclic_value_shared") {
       string name = vm["name"].as<string>();
       const int fold = 10;

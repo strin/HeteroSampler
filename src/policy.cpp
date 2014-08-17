@@ -1,5 +1,6 @@
 #include "policy.h"
 #include "feature.h"
+#include <boost/lexical_cast.hpp>
 
 namespace po = boost::program_options;
 
@@ -199,10 +200,10 @@ void Policy::test(Policy::ResultPtr result) {
   size_t ave_time = 0;
   for(MarkovTreeNodePtr node : result->nodes) {
     if(count >= test_count) break;
-    while(node->children.size() > 0) node = node->children[0]; // take final sample.
-    ave_time += node->depth+1;
     lg->begin("example_"+to_string(count));
     this->logNode(node);
+    while(node->children.size() > 0) node = node->children[0]; // take final sample.
+    ave_time += node->depth+1;
     if(model->scoring == Model::SCORING_ACCURACY) {
       tuple<int, int> hit_pred = model->evalPOS(*node->tag);
       hit_count += get<0>(hit_pred);
@@ -281,6 +282,7 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
 }
 
 void Policy::logNode(MarkovTreeNodePtr node) {
+  while(node->children.size() > 0) node = node->children[0]; // take final sample.
   lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
   lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
   lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
@@ -514,3 +516,123 @@ int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {
     return -1;
   }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////
+//////// Multi Cyclic Value Policy /////////////////////////////////////////////////
+MultiCyclicValuePolicy::MultiCyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
+:CyclicValuePolicy(model, vm), 
+ T(vm["T"].as<size_t>()) { 
+}
+
+int MultiCyclicValuePolicy::policy(MarkovTreeNodePtr node) {
+  if(node->depth == 0) node->time_stamp = -1;
+  if(node->depth < node->tag->size()) {
+    node->time_stamp++;
+    return node->depth;
+  }else{
+    objcokus* rng = node->tag->rng;
+    assert(!node->parent.expired());
+    size_t i = node->time_stamp + 1;
+    node->gradient = makeParamPointer();
+    for(; i < T * node->tag->size(); i++) {      
+      size_t pos = i % node->tag->size();
+      node->time_stamp = i;
+      FeaturePointer feat = this->extractFeatures(node, pos);
+      double resp = ::score(param, feat);
+      node->tag->resp[pos] = resp;
+      if(resp > c) { 
+	node->tag->mask[pos] = 1;
+	return pos;
+      }else{
+	node->tag->mask[pos] = 0;
+      }
+    }
+    node->time_stamp = i;
+    return -1;
+  }
+}
+
+void MultiCyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
+  node->depth = 0;
+  node->choice = -1;
+  try{
+    node->tag->rng = &thread_pool.rngs[tid];
+    for(size_t i = 0; i < node->tag->size(); i++) {
+      model->sampleOne(*node->tag, i);
+    }
+    node->gradient = makeParamPointer();
+    for(size_t t = 1; t < T; t++) {
+      for(size_t i = 0; i < node->tag->size(); i++) {
+	node->time_stamp = t * node->tag->size() + i;
+	auto is_equal = [&] () {
+	  return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
+	};
+	double reward_baseline = is_equal();
+	model->sampleOne(*node->tag, i);
+	double reward = is_equal();
+	double logR = reward - reward_baseline; 
+	FeaturePointer feat = this->extractFeatures(node, i);   
+	double resp = ::score(param, feat);
+	if(lets_resp_reward) {
+	  thread_pool.lock();
+	  resp_reward.push_back(make_pair(resp, logR));
+	  thread_pool.unlock();
+	}
+	mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+      }
+    }
+    node->log_weight = 0;
+  }catch(const char* ee) {
+    cout << "error: " << ee << endl;
+  }
+}
+
+FeaturePointer MultiCyclicValuePolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
+  FeaturePointer feat = CyclicValuePolicy::extractFeatures(node, pos);
+  int pass = node->time_stamp / node->tag->size();
+  for(pair<string, double>& p : *feat) {
+    p.first = boost::lexical_cast<string>(pass) + "-" + p.first;
+  }
+  return feat; 
+}
+
+
+void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
+  size_t pass = 0;
+  while(node->children.size() > 0) {
+    if(node->time_stamp >= pass * node->tag->size()) {
+      pass += 1;
+      lg->begin("pass_"+boost::lexical_cast<string>(pass));
+	lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
+	for(size_t i = 0; i < node->tag->size(); i++) {
+	  lg->begin("feat"); 
+	  *lg << *this->extractFeatures(node, i);
+	  lg->end(); // </feat> */
+	}
+	lg->begin("resp");
+	for(size_t i = 0; i < node->tag->size(); i++) {
+	  *lg << node->tag->resp[i] << "\t";            
+	}
+	*lg << endl;
+	lg->end(); // </resp>
+	lg->begin("mask");
+	for(size_t i = 0; i < node->tag->size(); i++) {
+	  *lg << node->tag->mask[i] << "\t";            
+	}
+	*lg << endl;
+	lg->end(); // </mask>
+      lg->end(); // </pass>
+    }
+    node = node->children[0]; // take final sample.
+  }
+  lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
+  lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
+  int hits = 0;
+  for(size_t i = 0; i < node->tag->size(); i++) {
+    if(node->tag->tag[i] == node->tag->seq->tag[i]) {
+      hits++;
+    }
+  }
+  lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
+}
+

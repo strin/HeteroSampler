@@ -118,7 +118,10 @@ void Policy::train(const Corpus& corpus) {
   cout << "> train " << endl;
   lg->begin("train");
     for(size_t q = 0; q < Q; q++) {
+      cout << "\t epoch " << q << endl;
+      cout << "\t update policy " <<  endl;
       this->trainPolicy(corpus);
+      cout << "\t update kernel " << endl;
       this->trainKernel(corpus);
     }
     lg->begin("param");
@@ -134,7 +137,7 @@ void Policy::trainPolicy(const Corpus& corpus) {
   for(const Sentence& seq : retagged.seqs) {
     if(count >= train_count) break;
     if(count % 1000 == 0) 
-      cout << "\t " << (double)count/retagged.seqs.size()*100 << " %" << endl;
+      cout << "\t\t " << (double)count/retagged.seqs.size()*100 << " %" << endl;
     if(verbose)
       lg->begin("example_"+to_string(count));
     MarkovTree tree;
@@ -189,7 +192,7 @@ void Policy::trainKernel(const Corpus& corpus) {
   for(const Sentence& seq : retagged.seqs) {
     if(count >= train_count) break;
     if(count % 1000 == 0) 
-      cout << "\t " << (double)count/retagged.seqs.size()*100 << " %" << endl;
+      cout << "\t\t " << (double)count/retagged.seqs.size()*100 << " %" << endl;
     MarkovTree tree;
     Tag tag(&seq, model->corpus, &rng, model->param);
     tree.root->log_weight = -DBL_MAX;
@@ -199,6 +202,7 @@ void Policy::trainKernel(const Corpus& corpus) {
     }
     thread_pool.waitFinish();
     this->gradientKernel(tree);
+    count += 1;
   }
 }
 

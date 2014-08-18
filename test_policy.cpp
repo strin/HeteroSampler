@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 	("T", po::value<size_t>()->default_value(4), "number of sweeps in Gibbs sampling")
 	("Tstar", po::value<double>()->default_value(1.5), "computational resource constraint (used to compute c)")
 	("B", po::value<size_t>()->default_value(0), "number of burnin steps")
-	("Q", po::value<size_t>()->default_value(10), "number of passes")
+	("Q", po::value<size_t>()->default_value(1), "number of passes")
 	("Q0", po::value<int>()->default_value(1), "number of passes for smart init")
 	("K", po::value<size_t>()->default_value(5), "number of samples in policy gradient")
 	("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
@@ -40,6 +40,7 @@ int main(int argc, char* argv[]) {
 	("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")
 	("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
 	("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
+	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -64,7 +65,13 @@ int main(int argc, char* argv[]) {
       file.close();
     }
     corpus.computeWordFeat();
+
     shared_ptr<Policy> policy;
+    bool lets_model = vm["lets_model"].as<bool>();
+    auto train_func = [&] (shared_ptr<Policy> policy) {
+      if(lets_model) policy->train(corpus);
+      else policy->trainPolicy(corpus);
+    };
     if(vm["policy"].as<string>() == "entropy") {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<EntropyPolicy>(new EntropyPolicy(model, vm)));   
       policy->test(testCorpus);
@@ -92,15 +99,15 @@ int main(int argc, char* argv[]) {
       system(("rm -r "+name).c_str());
     }else if(vm["policy"].as<string>() == "cyclic") {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicPolicy(model, vm)));
-      policy->train(corpus);
+      train_func(policy);
       policy->test(testCorpus);
     }else if(vm["policy"].as<string>() == "cyclic_value") {
       policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicValuePolicy(model, vm)));
-      policy->train(corpus);
+      train_func(policy);
       policy->test(testCorpus);
     }else if(vm["policy"].as<string>() == "multi_cyclic_value") {
       policy = shared_ptr<Policy>(new MultiCyclicValuePolicy(model, vm));
-      policy->train(corpus);
+      train_func(policy);
       policy->test(testCorpus);
     }else if(vm["policy"].as<string>() == "multi_cyclic_value_shared") {
       string name = vm["name"].as<string>();
@@ -108,7 +115,7 @@ int main(int argc, char* argv[]) {
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
       shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
       policy->lets_resp_reward = true;
-      policy->train(corpus);
+      train_func(policy);
       vector<shared_ptr<MultiCyclicValuePolicy> > test_policy;
       auto compare = [] (pair<double, double> a, pair<double, double> b) {
 	return (a.first < b.first);
@@ -133,7 +140,7 @@ int main(int argc, char* argv[]) {
       const int fold = 10;
       shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
       policy->lets_resp_reward = true;
-      policy->train(corpus);
+      train_func(policy);
       vector<shared_ptr<CyclicValuePolicy> > test_policy;
       auto compare = [] (pair<double, double> a, pair<double, double> b) {
 	return (a.first < b.first);

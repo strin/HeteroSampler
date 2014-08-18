@@ -275,7 +275,7 @@ void Model::sample(Tag& tag, int time) {
   tag = *this->sample(*tag.seq).back();
 }
 
-void Model::sampleOne(Tag& tag, int choice) {
+ParamPointer Model::sampleOne(Tag& tag, int choice) {
   throw "custom kernel choice not implemented."; 
 }
 

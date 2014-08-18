@@ -117,12 +117,12 @@ void ModelCRFGibbs::sample(Tag& tag, int time) {
   }
 }
 
-void ModelCRFGibbs::sampleOne(Tag& tag, int choice) {
+ParamPointer ModelCRFGibbs::sampleOne(Tag& tag, int choice) {
   if(choice >= tag.size())
     throw "kernel choice invalid (>= tag size)";
-  tag.proposeGibbs(choice, [&] (const Tag& tag) -> FeaturePointer {
+  return tag.proposeGibbs(choice, [&] (const Tag& tag) -> FeaturePointer {
 			return this->extractFeatures(tag, choice); 
-		      }, false, false);
+		      }, true, true);
 }
 
 TagVector ModelCRFGibbs::sample(const Sentence& seq) { 

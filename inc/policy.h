@@ -36,11 +36,20 @@ public:
   ResultPtr test(const Corpus& testCorpus);
   void test(ResultPtr result);
 
-  // apply gradient from on samples.
-  virtual void gradient(MarkovTree& tree);
+  // apply gradient from samples to policy.
+  virtual void gradientPolicy(MarkovTree& tree);
+
+  // apply gradient from samples to model.
+  virtual void gradientKernel(MarkovTree& tree);
 
   // run training on corpus.
   virtual void train(const Corpus& corpus);
+
+  // train policy.
+  virtual void trainPolicy(const Corpus& corpus);
+
+  // train primitive kernels. 
+  virtual void trainKernel(const Corpus& corpus);
 
   // sample node, default uses Gibbs sampling.
   virtual void sampleTest(int tid, MarkovTreeNodePtr node);
@@ -72,7 +81,7 @@ public:
   Vector2d tag_bigram;
   std::vector<double> tag_unigram_start;
   const std::string name;
-  const size_t K;
+  const size_t K, Q; // K: num samples. Q: num epochs.
   const size_t test_count, train_count;
   const double eta;
   const bool verbose;
@@ -146,10 +155,7 @@ public:
   virtual void sample(int tid, MarkovTreeNodePtr node);
 
   // training.
-  virtual void train(const Corpus& corpus);
-
-  // overload gradient, add exponentiated gradient for *c*.
-  virtual void gradient(MarkovTree& tree);
+  virtual void trainPolicy(const Corpus& corpus);
 
   bool lets_resp_reward;
   std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   

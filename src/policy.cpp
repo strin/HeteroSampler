@@ -21,6 +21,7 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
  train_count(vm["trainCount"].as<size_t>()), 
  test_count(vm["testCount"].as<size_t>()),
  verbose(vm["verbose"].as<bool>()), 
+ Q(vm["Q"].as<size_t>()),
  param(makeParamPointer()), G2(makeParamPointer()) {
   // init stats.
   auto wordent_meanent = model->tagEntropySimple();
@@ -74,12 +75,14 @@ void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
 	throw "Policy Chain reaches maximum depth.";
       node->tag->rng = &test_thread_pool.rngs[tid];
       node->choice = this->policy(node);
-      node->log_weight = -DBL_MAX; 
       if(node->choice == -1) {
 	node->log_weight = this->reward(node); 
+	node->gradient = makeParamPointer();
 	break;
+      }else{
+	node->log_weight = -DBL_MAX; 
+        node->gradient = model->sampleOne(*node->tag, node->choice);
       }
-      model->sampleOne(*node->tag, node->choice);
       node = addChild(node, *node->tag);
     }
   }catch(const char* ee) {
@@ -87,7 +90,7 @@ void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
   }
 }
 
-void Policy::gradient(MarkovTree& tree) {
+void Policy::gradientPolicy(MarkovTree& tree) {
   double log_sum_w = tree.logSumWeights(tree.root); // norm grad, avoid overflow.
   pair<ParamPointer, double> grad_lgweight = tree.aggregateGradient(tree.root, log_sum_w);
   ParamPointer gradient = grad_lgweight.first;
@@ -99,11 +102,34 @@ void Policy::gradient(MarkovTree& tree) {
   ::adagrad(param, G2, gradient, eta);
 }
 
+void Policy::gradientKernel(MarkovTree& tree) {
+  double log_sum_w = tree.logSumWeights(tree.root);
+  pair<ParamPointer, double> grad_lgweight = tree.aggregateGradient(tree.root, log_sum_w);
+  ParamPointer gradient = grad_lgweight.first;
+  if(verbose) {
+    lg->begin("gradient_agg");
+    *lg << *gradient << endl;
+    lg->end();
+  }
+  ::adagrad(model->param, model->G2, gradient, eta);
+}
+
 void Policy::train(const Corpus& corpus) {
   cout << "> train " << endl;
+  lg->begin("train");
+    for(size_t q = 0; q < Q; q++) {
+      this->trainPolicy(corpus);
+      this->trainKernel(corpus);
+    }
+    lg->begin("param");
+    *lg << *param;
+    lg->end();
+  lg->end(); // </train>
+}
+
+void Policy::trainPolicy(const Corpus& corpus) {
   Corpus retagged(corpus);
   retagged.retag(*model->corpus);
-  lg->begin("train");
   size_t count = 0;
   for(const Sentence& seq : retagged.seqs) {
     if(count >= train_count) break;
@@ -136,11 +162,11 @@ void Policy::train(const Corpus& corpus) {
       *lg << node->log_weight << endl;
       lg->end(); 
     }*/
-    this->gradient(tree);
-    for(size_t k = 0; k < K; k++) {
-      MarkovTreeNodePtr node = tree.root->children[k];
-      while(node->children.size() > 0) node = node->children[0]; // take final sample.
-      if(verbose) {
+    this->gradientPolicy(tree);
+    if(verbose) {
+      for(size_t k = 0; k < K; k++) {
+	MarkovTreeNodePtr node = tree.root->children[k];
+	while(node->children.size() > 0) node = node->children[0]; // take final sample.
 	lg->begin("node");
 	this->logNode(node);
 	lg->end(); // </node>
@@ -154,10 +180,26 @@ void Policy::train(const Corpus& corpus) {
     }
     count++;
   }
-  lg->begin("param");
-  *lg << *param;
-  lg->end();
-  lg->end(); // </train>
+}
+
+void Policy::trainKernel(const Corpus& corpus) {
+  Corpus retagged(corpus);
+  retagged.retag(*model->corpus);
+  size_t count = 0;
+  for(const Sentence& seq : retagged.seqs) {
+    if(count >= train_count) break;
+    if(count % 1000 == 0) 
+      cout << "\t " << (double)count/retagged.seqs.size()*100 << " %" << endl;
+    MarkovTree tree;
+    Tag tag(&seq, model->corpus, &rng, model->param);
+    tree.root->log_weight = -DBL_MAX;
+    for(size_t k = 0; k < K; k++) {
+      MarkovTreeNodePtr node = addChild(tree.root, tag);
+      this->thread_pool.addWork(node); 
+    }
+    thread_pool.waitFinish();
+    this->gradientKernel(tree);
+  }
 }
 
 Policy::Result::Result(const Corpus& corpus) 
@@ -439,6 +481,7 @@ CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm
 :CyclicPolicy(model, vm), lets_resp_reward(false) { 
 }
 
+// will update gradient of policy.
 void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
   node->depth = 0;
   node->choice = -1;
@@ -471,14 +514,12 @@ void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
   }
 }
 
-void CyclicValuePolicy::gradient(MarkovTree& tree) {
-  Policy::gradient(tree);
-}
-
-void CyclicValuePolicy::train(const Corpus& corpus) {
+void CyclicValuePolicy::trainPolicy(const Corpus& corpus) {
   if(lets_resp_reward and K > 1 and thread_pool.numThreads() > 1) 
     throw "multithread environment cannot record reward.";
-  Policy::train(corpus);
+  if(lets_resp_reward) 
+    resp_reward.clear();
+  Policy::trainPolicy(corpus);
   if(lets_resp_reward) {
     lg->begin("resp_reward");
     for(const pair<double, double>& p : resp_reward) {
@@ -488,6 +529,7 @@ void CyclicValuePolicy::train(const Corpus& corpus) {
   }
 }
 
+// will update gradient of transition.
 int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {
   if(node->depth == 0) node->time_stamp = 0;
   if(node->depth < node->tag->size()) {
@@ -497,7 +539,6 @@ int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {
     objcokus* rng = node->tag->rng;
     assert(!node->parent.expired());
     size_t i = node->time_stamp;
-    node->gradient = makeParamPointer();
     for(; i < 2 * node->tag->size(); i++) {      
       size_t pos = i % node->tag->size();
       FeaturePointer feat = this->extractFeatures(node, pos);

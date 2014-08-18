@@ -69,10 +69,11 @@ if __name__ == '__main__':
       path_out = '.'
     files = os.listdir(path_in+'/test_policy/')
     path_l = list()
-    scheme_l = ['gibbs', 'policy']
+    scheme_l = ['gibbs', 'multi_policy']
     for scheme in scheme_l:
       path = [path_in+'/test_policy/'+f for f in files if f.find('%s_%s'%(name, scheme)) == 0]
       path_l.append(path)
+    print path_l
     """
     path_l.append(list())
     for thres in [0.5,1.0,1.5,2.0,2.5,3.0]:

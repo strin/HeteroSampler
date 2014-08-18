@@ -3,6 +3,7 @@ import numpy as np
 import os, sys
 import numpy.random as npr
 import corpus
+import itertools
 
 class PolicyResult:
   def __init__(me, name):
@@ -31,21 +32,32 @@ class PolicyResult:
           elif item.tag == 'example':
             me.parse_test(item)
           
+  def parse_test_datapoint(me, node):
+    exp = dict()
+    for attr in node:
+      if attr.tag == 'dist' or attr.tag == 'time':
+        exp[attr.tag] = float(attr.text)
+      elif attr.tag == 'feat':
+        feat = dict()
+        for entry in attr:
+          feat[entry.attrib['name']] = float(entry.attrib['value'])
+        if not exp.has_key('feat'):
+          exp['feat'] = list();
+        exp['feat'].append(feat)
+      else:
+        exp[attr.tag] = unicode(attr.text)
+    return exp 
+
   def parse_test(me, node):
     me.testex = list()
     for row in node:
-      ex = dict()
-      ex['feat'] = list()
+      ex = list()
+      exp = me.parse_test_datapoint(row) 
+      if exp.has_key('tag'):
+        ex.append(exp)
       for attr in row:
-        if attr.tag == 'dist' or attr.tag == 'time':
-          ex[attr.tag] = float(attr.text)
-        elif attr.tag == 'feat':
-          feat = dict()
-          for entry in attr:
-            feat[entry.attrib['name']] = float(entry.attrib['value'])
-          ex['feat'].append(feat)
-        else:
-          ex[attr.tag] = unicode(attr.text)
+        if attr.tag.find('pass') == 0:
+          ex.append(me.parse_test_datapoint(attr))
       me.testex.append(ex)
 
   def ave_time(me):
@@ -95,7 +107,12 @@ class PolicyResult:
       body += ['''<tr><td><span title="%s">%s</span></td></tr> '''%(str(policy.param), name)]
     body += '''</table> <h3> Test Examples </h3>'''
     count = 0
+    oldname_l = name_l
     for ex_l in zip(*[test.testex for test in policy_l]):
+      name_l = list()
+      for (name, ex) in zip(oldname_l,ex_l):
+        name_l += [name] + ['   '] * (len(ex)-1)
+      ex_l = list(itertools.chain(*ex_l))
       token_truth = ex_l[0]['truth'].replace('\n', '').split('\t')
       token_l = [ex['tag'].replace('\n', '').split('\t') for ex in ex_l]
       words = [token.split('/')[0] for token in token_truth if token != '']

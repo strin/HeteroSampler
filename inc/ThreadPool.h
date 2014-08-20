@@ -51,10 +51,14 @@ template<class T>
 ThreadPool<T>::~ThreadPool() {
   std::unique_lock<std::mutex> lock(th_mutex);
   is_stopped = true;
-  active_work = th.size();
+  active_work = th_work.size();
   lock.unlock(); 
   th_cv.notify_all();
   waitFinish();
+  for(std::shared_ptr<std::thread>& t : this->th) {
+    t->detach();  // must detach before delete according to c++ 11.
+    t = nullptr;
+  }
 }
 
 template<class T>

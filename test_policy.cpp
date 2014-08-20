@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
       shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
       policy->lets_resp_reward = true;
       train_func(policy);
-      vector<shared_ptr<MultiCyclicValuePolicy> > test_policy;
+      shared_ptr<MultiCyclicValuePolicy> ptest;
       auto compare = [] (pair<double, double> a, pair<double, double> b) {
 	return (a.first < b.first);
       };
@@ -126,8 +126,7 @@ int main(int argc, char* argv[]) {
 	// string myname = name+"_i"+to_string(i);
 	string myname = name + "_c" + boost::lexical_cast<string>(c);
 	system(("mkdir -p " + myname).c_str());
-	shared_ptr<MultiCyclicValuePolicy> ptest = shared_ptr<MultiCyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
-	test_policy.push_back(ptest);
+	ptest = shared_ptr<MultiCyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
 	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
 	ptest->param = policy->param; 
 	ptest->c = c;

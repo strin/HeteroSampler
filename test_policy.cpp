@@ -82,19 +82,19 @@ int main(int argc, char* argv[]) {
       Policy::ResultPtr result = nullptr;
       string name = vm["name"].as<string>();
       const size_t T = vm["T"].as<size_t>();
-      vector<shared_ptr<GibbsPolicy> > gibbs_policy(T);
+      shared_ptr<GibbsPolicy> gibbs_policy;
       for(size_t t = 1; t <= T; t++) {
 	string myname = name+"_T"+to_string(t);
-	gibbs_policy[t-1] = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
-	gibbs_policy[t-1]->T = 1;  // do one sweep after another.
+	gibbs_policy = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
+	gibbs_policy->T = 1;  // do one sweep after another.
 	system(("mkdir -p "+myname).c_str());
-	gibbs_policy[t-1]->resetLog(shared_ptr<XMLlog>(new XMLlog(myname+"/policy.xml")));  
+	gibbs_policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname+"/policy.xml")));  
 	if(t == 1) {
-	  result = gibbs_policy[t-1]->test(testCorpus);
+	  result = gibbs_policy->test(testCorpus);
 	}else{
-	  gibbs_policy[t-1]->test(result);
+	  gibbs_policy->test(result);
 	}
-	gibbs_policy[t-1]->resetLog(nullptr);
+	gibbs_policy->resetLog(nullptr);
       }
       system(("rm -r "+name).c_str());
     }else if(vm["policy"].as<string>() == "cyclic") {
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
       shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
       policy->lets_resp_reward = true;
       train_func(policy);
-      vector<shared_ptr<CyclicValuePolicy> > test_policy;
+      shared_ptr<CyclicValuePolicy> ptest;
       auto compare = [] (pair<double, double> a, pair<double, double> b) {
 	return (a.first < b.first);
       };
@@ -150,8 +150,7 @@ int main(int argc, char* argv[]) {
 	double c = policy->resp_reward[i * (policy->resp_reward.size()-1)/(double)fold].first;
 	string myname = name+"_i"+to_string(i);
 	system(("mkdir -p " + myname).c_str());
-	shared_ptr<CyclicValuePolicy> ptest = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
-	test_policy.push_back(ptest);
+	ptest = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
 	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
 	ptest->param = policy->param; 
 	ptest->c = c;

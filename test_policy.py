@@ -51,6 +51,14 @@ def ner_multi_policy_shared(w, f, test_count):
     print cmd
     os.system(cmd + ' &')  
 
+def czech_multi_policy_shared(w,  test_count):
+    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name test_policy/czech_w%d_tc%d_multi_policy \
+    --K 1 --numThreads 10 --model model/czech_gibbs_w%d.model --scoring Acc --windowL %d --trainCount %d --testCount %d \
+    --T 4 --verbose false --train data/czech_ner/train --test data/czech_ner/test''' \
+    % (w, test_count,  w, test_count, test_count, f)
+    print cmd
+    os.system(cmd + ' &')  
+
 def ner_gibbs(w, f, test_count, T):
     cmd = '''./policy --inference Gibbs --policy gibbs --name test_policy/ner_w%d_f%d_tc%d_gibbs_T%d \
     --T %d --numThreads 5 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --testCount %d \
@@ -116,6 +124,7 @@ for w in [0,1,2]:
   farm.add('czech/policy/w%d/toy'%w, lambda w=w: czech_policy_shared(w, TOY)) 
   farm.add('czech/gibbs/w%d/full'%w, lambda w=w: czech_gibbs_shared(w, FULL, 4)) 
   farm.add('czech/policy/w%d/full'%w, lambda w=w: czech_policy_shared(w, FULL)) 
+  farm.add('czech/multi_policy/w%d/full'%w, lambda w=w: czech_multi_policy_shared(w, FULL)) 
 
 for f in [1,2,3,4]:
   for T in [1,2,3,4]:

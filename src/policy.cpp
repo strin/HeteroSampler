@@ -225,43 +225,50 @@ void Policy::test(Policy::ResultPtr result) {
   lg->begin("test");
   assert(result != nullptr);
   size_t count = 0;
+  lg->begin("example");
+  count = 0;
+  size_t hit_count = 0, pred_count = 0, truth_count = 0; 
+  size_t ave_time = 0;
+  vector<MarkovTreeNodePtr> stack;
+  vector<int> id;
   for(const Sentence& seq : result->corpus.seqs) {
     if(count >= test_count) break;
     MarkovTreeNodePtr node;
     if(result->nodes[count] == nullptr) {
       node = makeMarkovTreeNode(nullptr);
-      result->nodes[count] = node;
       node->tag = makeTagPtr(&seq, model->corpus, &rng, model->param);
     }else{
       node = result->nodes[count];
-      while(node->children.size() > 0) node = node->children[0]; // extend on branch.
     }
+    stack.push_back(node);
+    id.push_back(count);
     test_thread_pool.addWork(node);
     count++;
-  }
-  test_thread_pool.waitFinish();
-  lg->begin("example");
-  count = 0;
-  size_t hit_count = 0, pred_count = 0, truth_count = 0; 
-  size_t ave_time = 0;
-  for(MarkovTreeNodePtr node : result->nodes) {
-    if(count >= test_count) break;
-    lg->begin("example_"+to_string(count));
-    this->logNode(node);
-    while(node->children.size() > 0) node = node->children[0]; // take final sample.
-    ave_time += node->depth+1;
-    if(model->scoring == Model::SCORING_ACCURACY) {
-      tuple<int, int> hit_pred = model->evalPOS(*node->tag);
-      hit_count += get<0>(hit_pred);
-      pred_count += get<1>(hit_pred);
-    }else if(model->scoring == Model::SCORING_NER) {
-      tuple<int, int, int> hit_pred_truth = model->evalNER(*node->tag);
-      hit_count += get<0>(hit_pred_truth);
-      pred_count += get<1>(hit_pred_truth);
-      truth_count += get<2>(hit_pred_truth);
+    if(count % thread_pool.numThreads() == 0 || count == test_count-1 
+	|| count == result->corpus.seqs.size()-1) {
+      test_thread_pool.waitFinish();
+      for(size_t i = 0; i < id.size(); i++) {
+	MarkovTreeNodePtr node = stack[i];
+	lg->begin("example_"+to_string(id[i]));
+	this->logNode(node);
+	while(node->children.size() > 0) node = node->children[0]; // take final sample.
+	result->nodes[id[i]] = node;
+	ave_time += node->depth+1;
+	if(model->scoring == Model::SCORING_ACCURACY) {
+	  tuple<int, int> hit_pred = model->evalPOS(*node->tag);
+	  hit_count += get<0>(hit_pred);
+	  pred_count += get<1>(hit_pred);
+	}else if(model->scoring == Model::SCORING_NER) {
+	  tuple<int, int, int> hit_pred_truth = model->evalNER(*node->tag);
+	  hit_count += get<0>(hit_pred_truth);
+	  pred_count += get<1>(hit_pred_truth);
+	  truth_count += get<2>(hit_pred_truth);
+	}
+	lg->end(); // </example_i>
+      }
+      stack.clear();
+      id.clear();
     }
-    lg->end(); // </example_i>
-    count++;
   }
   lg->end(); // </example>
   double accuracy = (double)hit_count/pred_count;

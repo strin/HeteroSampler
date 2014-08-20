@@ -121,6 +121,7 @@ int main(int argc, char* argv[]) {
 	return (a.first < b.first);
       };
       sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 
+      system(("rm -r "+name+"*").c_str());
       for(int i : fold_l) {
 	double c = policy->resp_reward[i * (policy->resp_reward.size()-1)/(double)fold_l[fold-1]].first;
 	// string myname = name+"_i"+to_string(i);

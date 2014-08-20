@@ -51,7 +51,7 @@ template<class T>
 ThreadPool<T>::~ThreadPool() {
   std::unique_lock<std::mutex> lock(th_mutex);
   is_stopped = true;
-  active_work = th_work.size();
+  active_work = th.size();
   lock.unlock(); 
   th_cv.notify_all();
   waitFinish();

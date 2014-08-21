@@ -250,8 +250,8 @@ void Policy::test(Policy::ResultPtr result) {
       for(size_t i = 0; i < id.size(); i++) {
 	MarkovTreeNodePtr node = stack[i];
 	lg->begin("example_"+to_string(id[i]));
-	this->logNode(node);
 	while(node->children.size() > 0) node = node->children[0]; // take final sample.
+	this->logNode(node);
 	result->nodes[id[i]] = node;
 	ave_time += node->depth+1;
 	if(model->scoring == Model::SCORING_ACCURACY) {

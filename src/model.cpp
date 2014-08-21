@@ -233,7 +233,7 @@ double Model::test(const Corpus& testCorpus) {
   xmllog.begin("test");
   int ex = 0;
   for(const Sentence& seq : retagged.seqs) {
-    shared_ptr<Tag> tag = this->sample(seq).back();
+    shared_ptr<Tag> tag = this->sample(seq, true).back();
     Tag truth(seq, corpus, &rngs[0], param);
     xmllog.begin("example_"+to_string(ex));
       xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
@@ -271,8 +271,8 @@ double Model::test(const Corpus& testCorpus) {
   return -1;
 }
 
-void Model::sample(Tag& tag, int time) {
-  tag = *this->sample(*tag.seq).back();
+void Model::sample(Tag& tag, int time, bool argmax) {
+  tag = *this->sample(*tag.seq, argmax).back();
 }
 
 ParamPointer Model::sampleOne(Tag& tag, int choice) {

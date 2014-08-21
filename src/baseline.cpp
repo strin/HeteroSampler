@@ -17,18 +17,19 @@ ModelSimple::ModelSimple(const Corpus* corpus, const po::variables_map& vm)
   xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
 }
 
-void ModelSimple::sample(Tag& tag, int time) {
+void ModelSimple::sample(Tag& tag, int time, bool argmax) {
   for(int t = 0; t < time; t++) {
     for(size_t i = 0; i < tag.size(); i++) {
       auto featExtract = [&] (const Tag& tag) -> FeaturePointer {
 			    return this->extractFeatures(tag, i); 
 			  };
-      tag.proposeGibbs(i, featExtract, false, false);
+      tag.proposeGibbs(i, featExtract, false, false, argmax);
     }
   }
 }
 
-TagVector ModelSimple::sample(const Sentence& seq) {
+TagVector ModelSimple::sample(const Sentence& seq, bool argmax) {
+  assert(argmax == true);
   TagVector vec;
   gradient(seq, &vec, false);
   return vec;
@@ -111,9 +112,9 @@ ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
    return features;
  }) {}
 
-void ModelCRFGibbs::sample(Tag& tag, int time) {
+void ModelCRFGibbs::sample(Tag& tag, int time, bool argmax) {
   for(int t = 0; t < time; t++) {
-    this->sampleOneSweep(tag);  
+    this->sampleOneSweep(tag, argmax);  
   }
 }
 
@@ -125,10 +126,10 @@ ParamPointer ModelCRFGibbs::sampleOne(Tag& tag, int choice) {
 		      }, true, true);
 }
 
-TagVector ModelCRFGibbs::sample(const Sentence& seq) { 
+TagVector ModelCRFGibbs::sample(const Sentence& seq, bool argmax) { 
   TagVector vec;
   TagPtr tag = makeTagPtr(&seq, corpus, &rngs[0], param);
-  this->sample(*tag, T);
+  this->sample(*tag, T, argmax);
   vec.push_back(tag);
   return vec;
 }
@@ -154,16 +155,6 @@ void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer f
 	insertFeature(features, ss.str());
 	// (*features)[ss.str()] = 1;
     }
-    /*if(corpus->mode == Corpus::MODE_NER) { // add pos tags for NER task.
-      stringstream ss;
-      ss << "t-" << to_string(l-pos)
-         << "-" << sen[l].pos << "-" << tag.getTag(pos);
-      (*features)[ss.str()] = 1;
-      ss.clear();
-      ss << "t2-" << to_string(l-pos)
-         << "-" << sen[l].pos2 << "-" << tag.getTag(pos);
-      (*features)[ss.str()] = 1;
-    }*/
   }
 }
 
@@ -182,33 +173,6 @@ void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer fe
   // (*features)[ss.str()] = 1;
 }
 
-/* FeaturePointer ModelCRFGibbs::extractFeatures(const Tag& tag, int pos) {
-  const vector<Token>& sen = tag.seq->seq;
-  int seqlen = tag.size();
-  // extract word features. 
-  FeaturePointer features = makeFeaturePointer();
-  
-  // this->addUnigramFeatures(tag, pos, features);
-  // extract bigram features.
-  // if(pos >= 1) {
-  //   addBigramFeatures(tag, pos, features); 
-  // }
-  // if(pos < seqlen-1) {
-  //   addBigramFeatures(tag, pos+1, features);
-  // }
-  int depth = 0;
-  if(corpus->mode == Corpus::MODE_NER) 
-    depth = 2;
-  extractUnigramFeature(tag, pos, windowL, depth, features);
-  if(pos >= 1) {
-    extractBigramFeature(tag, pos, features);
-  }
-  if(pos < seqlen-1) {
-    extractBigramFeature(tag, pos+1, features);
-  }
-  return features;
-}*/
-
 FeaturePointer ModelCRFGibbs::extractFeaturesAll(const Tag& tag) {
   FeaturePointer features = makeFeaturePointer();
   size_t seqlen = tag.size();
@@ -220,11 +184,11 @@ FeaturePointer ModelCRFGibbs::extractFeaturesAll(const Tag& tag) {
   return features;
 }
 
-void ModelCRFGibbs::sampleOneSweep(Tag& tag) {
+void ModelCRFGibbs::sampleOneSweep(Tag& tag, bool argmax) {
   for(int i = 0; i < tag.tag.size(); i++) { 
     tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
 			  return this->extractFeatures(tag, i); 
-			}, false, false);
+			}, false, false, argmax);
   }
 }
 

@@ -42,7 +42,7 @@ string str(FeaturePointer features) {
 }
 
 ParamPointer Tag::proposeGibbs(int pos, function<FeaturePointer(const Tag& tag)>
-featExtract, bool grad_expect, bool grad_sample) {
+featExtract, bool grad_expect, bool grad_sample, bool argmax) {
   const vector<Token>& sen = seq->seq;
   int seqlen = sen.size();
   if(pos >= seqlen) 
@@ -58,7 +58,17 @@ featExtract, bool grad_expect, bool grad_sample) {
   }
   logNormalize(sc, taglen);
   this->entropy[pos] = logEntropy(sc, taglen);
-  int val = rng->sampleCategorical(sc, taglen);
+  int val;
+  if(argmax) {
+    double max_sc = -DBL_MAX;
+    for(int t = 0; t < taglen; t++) {
+      if(sc[t] > max_sc) {
+	max_sc = sc[t];
+	val = t;
+      }
+    }
+  }else
+    val = rng->sampleCategorical(sc, taglen);
   if(val == taglen) throw "Gibbs sample out of bound.";
   tag[pos] = val;
   this->features = featExtract(*this);

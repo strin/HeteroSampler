@@ -92,7 +92,7 @@ public:
   void randomInit();
   // propose Gibbs-style modification to *pos*
   // return: gradient induced by Gibbs kernel.
-  ParamPointer proposeGibbs(int pos, std::function<FeaturePointer(const Tag& tag)> featExtract, bool grad_expect = false, bool grad_sample = true);
+  ParamPointer proposeGibbs(int pos, std::function<FeaturePointer(const Tag& tag)> featExtract, bool grad_expect =  false, bool grad_sample = true, bool argmax = false);
    // return un-normalized log-score.
   double score(FeaturePointer features) const; 
   // distance to another tag.

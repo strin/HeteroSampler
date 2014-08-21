@@ -30,11 +30,11 @@ public:
 
   /* gradient interface */
   virtual ParamPointer gradient(const Sentence& seq) = 0; 
-  virtual TagVector sample(const Sentence& seq) = 0;
+  virtual TagVector sample(const Sentence& seq, bool argmax = false) = 0;
   // infer under computational constraints.
   // emulate t-step transition of a markov chain.
   // default: use Model::sample(*tag.seq), i.e. time = T.
-  virtual void sample(Tag& tag, int time);             // inplace.
+  virtual void sample(Tag& tag, int time, bool argmax = false);             // inplace.
   // sample using custom kernel choice.
   // return: gradient.
   virtual ParamPointer sampleOne(Tag& tag, int choice);           
@@ -89,8 +89,8 @@ public:
   ModelSimple(const Corpus* corpus, const boost::program_options::variables_map& vm);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
-  TagVector sample(const Sentence& seq); 
-  void sample(Tag& tag, int time);
+  virtual TagVector sample(const Sentence& seq, bool argmax = false); 
+  virtual void sample(Tag& tag, int time, bool argmax = false);
   FeaturePointer extractFeatures(const Tag& tag, int pos);
   
   virtual void logArgs();
@@ -103,8 +103,8 @@ public:
   ModelCRFGibbs(const Corpus* corpus, const boost::program_options::variables_map& vm);
   ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
   ParamPointer gradient(const Sentence& seq);
-  TagVector sample(const Sentence& seq);
-  void sample(Tag& tag, int time);
+  virtual TagVector sample(const Sentence& seq, bool argmax = false);
+  virtual void sample(Tag& tag, int time, bool argmax = false);
   ParamPointer sampleOne(Tag& tag, int choice);
   void addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features);
   void addBigramFeatures(const Tag& tag, int pos, FeaturePointer features);
@@ -118,7 +118,7 @@ protected:
   int factorL;
   
 private:
-  void sampleOneSweep(Tag& tag);
+  void sampleOneSweep(Tag& tag, bool argmax = false);
 };
 
 struct ModelIncrGibbs : public ModelCRFGibbs {

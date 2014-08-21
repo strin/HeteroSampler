@@ -125,8 +125,8 @@ class PolicyResult:
         else:
           mask_l.append(None)
       body += ["<p><table><tr>"]
-      body += ['''<td style='background-color: #000000; color: #ffffff'>%d</td>''' % count]
-      body += ['''<td style='text-align: center; color: #9C9C9C; font-size: 14'><b style='font-size: 16'> Words</b> <br>
+      body += ['''<td nowrap style='background-color: #000000; color: #ffffff'>%d</td>''' % count]
+      body += ['''<td nowrap style='text-align: center; color: #9C9C9C; font-size: 14'><b style='font-size: 16'> Words</b> <br>
       Truth ''']
       for name in name_l:
         body += ['''<br> %s ''' % name]
@@ -156,13 +156,13 @@ class PolicyResult:
               c.append('11B502')
             else:
               c.append('ED2143')
-        body += ['''<td style='text-align: center; font-size: 14'> <b style='font-size: 16'> %s </b> <br> 
+        body += ['''<td nowrap style='text-align: center; font-size: 14'> <b style='font-size: 16'> %s </b> <br> 
         <span> %s </span>''' % (w, tag)]
         for j in range(len(token)):
           bg = ''
           if mask_l[j] != None and mask_l[j][i] == 1:
             bg = '; background-color: %s ' % BG_HIGHLIGHT
-          body += ['''<br> <span title=\"%s\" style='color: %s %s'> %s </span>''' % (str(f[j]), c[j], bg, token[j])]
+          body += ['''<br> <span title=\"%s\" style='display: inline-block; color: %s %s'> %s </span>''' % (str(f[j]), c[j], bg, token[j])]
         body += ['''</td>''']
 
       body += ["</tr></table></p>"]

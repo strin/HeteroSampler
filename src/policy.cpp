@@ -650,8 +650,8 @@ FeaturePointer MultiCyclicValuePolicy::extractFeatures(MarkovTreeNodePtr node, i
 
 
 void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
-  size_t pass = 0;
-  while(node->children.size() > 0) {
+  size_t pass = 1;
+  while(true) {
     if(node->time_stamp >= pass * node->tag->size()) {
       pass += 1;
       lg->begin("pass_"+boost::lexical_cast<string>(pass));
@@ -675,7 +675,10 @@ void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
 	lg->end(); // </mask>
       lg->end(); // </pass>
     }
-    node = node->children[0]; // take final sample.
+    if(node->children.size() > 0)
+      node = node->children[0]; // take final sample.
+    else
+      break;
   }
   lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
   lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();

@@ -244,8 +244,8 @@ void Policy::test(Policy::ResultPtr result) {
     id.push_back(count);
     test_thread_pool.addWork(node);
     count++;
-    if(count % thread_pool.numThreads() == 0 || count == test_count-1 
-	|| count == result->corpus.seqs.size()-1) {
+    if(count % thread_pool.numThreads() == 0 || count == test_count 
+	|| count == result->corpus.seqs.size()) {
       test_thread_pool.waitFinish();
       for(size_t i = 0; i < id.size(); i++) {
 	MarkovTreeNodePtr node = stack[i];

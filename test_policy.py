@@ -9,7 +9,7 @@ T_l = [1, 2, 3, 4]
 path = "test_policy"
 
 def pos_ner_gibbs(w, test_count, T):
-    cmd = '''./policy --inference Gibbs --policy gibbs --name'''+path+'''/pos_ner_w%d_tc%d_gibbs_T%d \
+    cmd = '''./policy --inference Gibbs --policy gibbs --name '''+path+'''/pos_ner_w%d_tc%d_gibbs_T%d \
     --T %d --numThreads 5 --model model/ner_pos_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
     --eta 1 --verbose false --train data/eng_pos_ner/train --test data/eng_pos_ner/test''' \
     % (w, test_count, T, T, w,  w, test_count)
@@ -19,7 +19,7 @@ def pos_ner_gibbs(w, test_count, T):
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
 def pos_ner_gibbs_shared(w, test_count, T):
-    cmd = '''./policy --inference Gibbs --policy gibbs_shared --name'''+path+'''/pos_ner_w%d_tc%d_gibbs \
+    cmd = '''./policy --inference Gibbs --policy gibbs_shared --name '''+path+'''/pos_ner_w%d_tc%d_gibbs \
     --T %d --numThreads 5 --model model/ner_pos_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
     --eta 1 --verbose false --train data/eng_pos_ner/train --test data/eng_pos_ner/test''' \
     % (w, test_count, T, w,  w, test_count)
@@ -27,7 +27,7 @@ def pos_ner_gibbs_shared(w, test_count, T):
     os.system(cmd + ' &')  
     
 def pos_ner_policy(w, count, c):
-    cmd = '''./policy --inference Gibbs --policy cyclic_value --name'''+path+'''/pos_ner_w%d_tc%d_policy_c%f \
+    cmd = '''./policy --inference Gibbs --policy cyclic_value --name '''+path+'''/pos_ner_w%d_tc%d_policy_c%f \
     --c %f --numThreads 5 --model model/ner_pos_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
     --eta 1 --trainCount %d --verbose false --train data/eng_pos_ner/train --test data/eng_pos_ner/test''' \
     % (w, count, c, c, w,  w, count, count)
@@ -37,7 +37,7 @@ def pos_ner_policy(w, count, c):
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
 def pos_ner_multi_policy_shared(w, count):
-    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name'''+path+'''/pos_ner_w%d_tc%d_multi_policy \
+    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name '''+path+'''/pos_ner_w%d_tc%d_multi_policy \
     --K 1 --numThreads 10 --model model/ner_pos_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
     --T 4 --eta 1 --trainCount %d --verbose false --train data/eng_pos_ner/train --test data/eng_pos_ner/test''' \
     % (w, count,  w,  w, count, count)
@@ -45,7 +45,7 @@ def pos_ner_multi_policy_shared(w, count):
     os.system(cmd + ' &')  
 
 def ner_gibbs_shared(w, f, test_count, T):
-    cmd = '''./policy --inference Gibbs --policy gibbs_shared --name'''+path+'''/ner_w%d_f%d_tc%d_gibbs \
+    cmd = '''./policy --inference Gibbs --policy gibbs_shared --name '''+path+'''/ner_w%d_f%d_tc%d_gibbs \
     --T %d --numThreads 10 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --trainCount %d --testCount %d \
     --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
     % (w, f, test_count, T,  w, f,  w, test_count, test_count, f)
@@ -53,7 +53,7 @@ def ner_gibbs_shared(w, f, test_count, T):
     os.system(cmd)  
 
 def ner_policy_shared(w, f, test_count):
-    cmd = '''./policy --inference Gibbs --policy cyclic_value_shared --name'''+path+'''/ner_w%d_f%d_tc%d_policy \
+    cmd = '''./policy --inference Gibbs --policy cyclic_value_shared --name '''+path+'''/ner_w%d_f%d_tc%d_policy \
     --K 1 --numThreads 10 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --trainCount %d --testCount %d \
     --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
     % (w, f, test_count,  w, f,  w, test_count, test_count, f)
@@ -61,7 +61,7 @@ def ner_policy_shared(w, f, test_count):
     os.system(cmd)  
 
 def ner_multi_policy_shared(w, f, test_count):
-    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name'''+path+'''/ner_w%d_f%d_tc%d_multi_policy \
+    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name '''+path+'''/ner_w%d_f%d_tc%d_multi_policy \
     --K 1 --numThreads 10 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --trainCount %d --testCount %d \
     --T 4 --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
     % (w, f, test_count,  w, f,  w, test_count, test_count, f)
@@ -70,7 +70,7 @@ def ner_multi_policy_shared(w, f, test_count):
 
 
 def ner_gibbs(w, f, test_count, T):
-    cmd = '''./policy --inference Gibbs --policy gibbs --name'''+path+'''/ner_w%d_f%d_tc%d_gibbs_T%d \
+    cmd = '''./policy --inference Gibbs --policy gibbs --name '''+path+'''/ner_w%d_f%d_tc%d_gibbs_T%d \
     --T %d --numThreads 5 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --testCount %d \
     --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
     % (w, f, test_count, T, T, w, f,  w, test_count, f)
@@ -80,7 +80,7 @@ def ner_gibbs(w, f, test_count, T):
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
 def ner_policy(w, f, count, T):
-    cmd = '''./policy --inference Gibbs --policy cyclic_value --name'''+path+'''/ner_w%d_f%d_tc%d_policy_T%f \
+    cmd = '''./policy --inference Gibbs --policy cyclic_value --name '''+path+'''/ner_w%d_f%d_tc%d_policy_T%f \
     --Tstar %f --numThreads 5 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --testCount %d \
     --eta 1 --K 5 --depthL 2 --factorL %d --trainCount %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
     % (w, f, count, T, T, w, f,  w, count, f,  count)
@@ -90,7 +90,7 @@ def ner_policy(w, f, count, T):
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
 def czech_gibbs_shared(w, test_count, T):
-    cmd = '''./policy --inference Gibbs --policy gibbs_shared --name'''+path+'''/czech_w%d_tc%d_gibbs \
+    cmd = '''./policy --inference Gibbs --policy gibbs_shared --name '''+path+'''/czech_w%d_tc%d_gibbs \
     --T %d --numThreads 10 --model model/czech_gibbs_w%d.model --scoring Acc --windowL %d --trainCount %d --testCount %d \
     --verbose false --train data/czech_ner/train --test data/czech_ner/test''' \
     % (w, test_count, T,  w,  w, test_count, test_count)
@@ -98,7 +98,7 @@ def czech_gibbs_shared(w, test_count, T):
     os.system(cmd)  
 
 def czech_policy_shared(w, test_count):
-    cmd = '''./policy --inference Gibbs --policy cyclic_value_shared --name'''+path+'''/czech_w%d_tc%d_policy \
+    cmd = '''./policy --inference Gibbs --policy cyclic_value_shared --name '''+path+'''/czech_w%d_tc%d_policy \
     --K 1 --numThreads 10 --model model/czech_gibbs_w%d.model --scoring Acc --windowL %d --trainCount %d --testCount %d \
     --verbose false --train data/czech_ner/train --test data/czech_ner/test''' \
     % (w, test_count,  w,  w, test_count, test_count)
@@ -106,7 +106,7 @@ def czech_policy_shared(w, test_count):
     os.system(cmd)  
 
 def czech_multi_policy_shared(w,  test_count):
-    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name'''+path+'''/czech_w%d_tc%d_multi_policy \
+    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name '''+path+'''/czech_w%d_tc%d_multi_policy \
     --K 1 --numThreads 10 --model model/czech_gibbs_w%d.model --scoring Acc --windowL %d --trainCount %d --testCount %d \
     --T 4 --verbose false --train data/czech_ner/train --test data/czech_ner/test''' \
     % (w, test_count,  w, w, test_count, test_count)
@@ -114,7 +114,7 @@ def czech_multi_policy_shared(w,  test_count):
     os.system(cmd + ' &')  
 
 def czech_gibbs(w, test_count, T):
-    cmd = '''./policy --inference Gibbs --policy gibbs --name'''+path+'''/czech_w%d_tc%d_gibbs_T%d \
+    cmd = '''./policy --inference Gibbs --policy gibbs --name '''+path+'''/czech_w%d_tc%d_gibbs_T%d \
     --T %d --numThreads 5 --model model/czech_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
     --verbose false --train data/czech_ner/train --test data/czech_ner/test''' \
     % (w, test_count, T, T, w,  w, test_count)
@@ -124,7 +124,7 @@ def czech_gibbs(w, test_count, T):
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
 def czech_policy(w, count, T):
-    cmd = '''./policy --inference Gibbs --policy cyclic_value --name'''+path+'''/czech_w%d_tc%d_policy_T%f \
+    cmd = '''./policy --inference Gibbs --policy cyclic_value --name '''+path+'''/czech_w%d_tc%d_policy_T%f \
     --c 0.1 --T %f --numThreads 10 --model model/czech_gibbs_w%d.model --scoring Acc --windowL %d --testCount %d \
     --eta 1 --trainCount %d --verbose false --train data/czech_ner/train --test data/czech_ner/test --K 10''' \
     % (w, count, T, T, w,  w, count, count)
@@ -134,14 +134,14 @@ def czech_policy(w, count, T):
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
 def wsj_gibbs_shared(count, T):
-    cmd = '''./policy --inference Gibbs --policy gibbs_shared --name'''+path+'''/wsj_gibbs \
+    cmd = '''./policy --inference Gibbs --policy gibbs_shared --name '''+path+'''/wsj_gibbs \
     --T %d --numThreads 10 --train data/wsj/wsj-pos.train --scoring Acc --testCount %d \
     --test data/wsj/wsj-pos.test --windowL 0 --model model/wsj_gibbs.model --verbose false ''' % (T, count)
     print cmd
     os.system(cmd + ' &')
   
 def wsj_multi_policy_shared(count, T):
-    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name'''+path+'''/wsj_multi_policy \
+    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name '''+path+'''/wsj_multi_policy \
     --T %d --numThreads 10 --train data/wsj/wsj-pos.train --scoring Acc --testCount %d --trainCount %d \
     --eta 1 --test data/wsj/wsj-pos.test --model model/wsj_gibbs.model --verbose false \
     --K 1 ''' % (T, count, count)
@@ -190,6 +190,7 @@ if sys.argv[1][0] == ':':
   exit(0)
 if len(sys.argv) >= 3:
   path = sys.argv[2]
+  os.system('mkdir -p '+path)
 farm.run(sys.argv[1])
 
 """

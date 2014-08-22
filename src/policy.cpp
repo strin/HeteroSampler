@@ -2,6 +2,10 @@
 #include "feature.h"
 #include <boost/lexical_cast.hpp>
 
+#define USE_FEAT_ENTROPY 1
+#define USE_FEAT_ALL 0
+#define USE_FEAT_BIAS 1
+
 namespace po = boost::program_options;
 
 using namespace std;
@@ -308,14 +312,17 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   size_t taglen = model->corpus->tags.size();
   string word = seq.seq[pos].word;
   // bias.
+#if USE_FEAT_BIAS == 1
   insertFeature(feat, "b");
+#endif
+#if USE_FEAT_ENTROPY == 1
   // feat: entropy and frequency.
   if(wordent->find(word) == wordent->end())
     insertFeature(feat, "ent", log(taglen)-wordent_mean);
-    // (*feat)["ent"] = log(taglen)-wordent_mean;
   else
     insertFeature(feat, "ent", (*wordent)[word]);
-    // (*feat)["ent"] = (*wordent)[word];
+#endif
+#if USE_FEAT_ALL == 1
   if(wordfreq->find(word) == wordfreq->end())
     insertFeature(feat, "freq", log(model->corpus->total_words)-wordfreq_mean);
   else
@@ -328,9 +335,8 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     if(wordfeat == lowercase) continue;
     if(wordfeat[0] == 'p' or wordfeat[0] == 's') continue;
     insertFeature(feat, wordfeat);
-    // (*feat)[wordfeat] = 1;
-    // (*feat)[wordfeat+"-ent"] = (*wordent)[word]; 
   }
+#endif
   return feat;
 }
 
@@ -434,7 +440,10 @@ CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
 
 FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   FeaturePointer feat = Policy::extractFeatures(node, pos);
+#if USE_FEAT_ENTROPY == 1
   insertFeature(feat, "model-ent", node->tag->entropy[pos]);
+#endif
+#if USE_FEAT_ALL == 1
   if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
     string tg = model->corpus->invtags.find(node->tag->tag[pos])->second;
     if(pos >= 1) {
@@ -448,6 +457,7 @@ FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
 	insertFeature(feat, "bad");
     }
   }
+#endif
   return feat;
 }
 

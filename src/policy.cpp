@@ -227,6 +227,9 @@ Policy::ResultPtr Policy::test(const Corpus& testCorpus) {
 void Policy::test(Policy::ResultPtr result) {
   cout << "> test " << endl;
   lg->begin("test");
+  lg->begin("param");
+  *lg << *param;
+  lg->end(); // </param>
   assert(result != nullptr);
   size_t count = 0;
   lg->begin("example");

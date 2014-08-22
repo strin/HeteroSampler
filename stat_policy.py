@@ -18,14 +18,14 @@ class PolicyResult:
             me.corpus = item.text.replace('\n', '')
       if data.tag == 'train':
         for item in data:
+      if data.tag == 'test':
+        for item in data:
           if item.tag == 'param':
             me.param = dict()
             for attr in item:
               if attr.tag == 'entry':
                 me.param[attr.attrib['name']] = float(attr.attrib['value'])
-      if data.tag == 'test':
-        for item in data:
-          if item.tag == 'accuracy':
+          elif item.tag == 'accuracy':
             me.accuracy = float(item.text)
           elif item.tag == 'time':
             me.time = float(item.text)

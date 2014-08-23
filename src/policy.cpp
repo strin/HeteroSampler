@@ -9,6 +9,7 @@
 namespace po = boost::program_options;
 
 using namespace std;
+using namespace Tagging;
 
 Policy::Policy(ModelPtr model, const po::variables_map& vm) 
 :model(model), test_thread_pool(vm["numThreads"].as<size_t>(), 
@@ -138,14 +139,14 @@ void Policy::trainPolicy(const Corpus& corpus) {
   Corpus retagged(corpus);
   retagged.retag(*model->corpus);
   size_t count = 0;
-  for(const Sentence& seq : retagged.seqs) {
+  for(const SentencePtr seq : retagged.seqs) {
     if(count >= train_count) break;
     if(count % 1000 == 0) 
       cout << "\t\t " << (double)count/retagged.seqs.size()*100 << " %" << endl;
     if(verbose)
       lg->begin("example_"+to_string(count));
     MarkovTree tree;
-    Tag tag(&seq, model->corpus, &rng, model->param);
+    Tag tag(seq.get(), model->corpus, &rng, model->param);
     tree.root->log_weight = -DBL_MAX;
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = addChild(tree.root, tag);
@@ -193,12 +194,12 @@ void Policy::trainKernel(const Corpus& corpus) {
   Corpus retagged(corpus);
   retagged.retag(*model->corpus);
   size_t count = 0;
-  for(const Sentence& seq : retagged.seqs) {
+  for(const SentencePtr seq : retagged.seqs) {
     if(count >= train_count) break;
     if(count % 1000 == 0) 
       cout << "\t\t " << (double)count/retagged.seqs.size()*100 << " %" << endl;
     MarkovTree tree;
-    Tag tag(&seq, model->corpus, &rng, model->param);
+    Tag tag(seq.get(), model->corpus, &rng, model->param);
     tree.root->log_weight = -DBL_MAX;
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = addChild(tree.root, tag);
@@ -238,12 +239,12 @@ void Policy::test(Policy::ResultPtr result) {
   size_t ave_time = 0;
   vector<MarkovTreeNodePtr> stack;
   vector<int> id;
-  for(const Sentence& seq : result->corpus.seqs) {
+  for(const SentencePtr seq : result->corpus.seqs) {
     if(count >= test_count) break;
     MarkovTreeNodePtr node;
     if(result->nodes[count] == nullptr) {
       node = makeMarkovTreeNode(nullptr);
-      node->tag = makeTagPtr(&seq, model->corpus, &rng, model->param);
+      node->tag = makeTagPtr(seq.get(), model->corpus, &rng, model->param);
     }else{
       node = result->nodes[count];
     }
@@ -313,7 +314,7 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   const Sentence& seq = *tag.seq;
   size_t seqlen = tag.size();
   size_t taglen = model->corpus->tags.size();
-  string word = seq.seq[pos].word;
+  string word = cast<TokenLiteral>(seq.seq[pos])->word;
   // bias.
 #if USE_FEAT_BIAS == 1
   insertFeature(feat, "b");
@@ -413,7 +414,7 @@ int EntropyPolicy::policy(MarkovTreeNodePtr node) {
     size_t i = node->time_stamp;
     for(; i < 2 * node->tag->size(); i++) {
       size_t pos = i % node->tag->size();
-      const string& word = node->tag->seq->seq[pos].word;  
+      const string& word = cast<TokenLiteral>(node->tag->seq->seq[pos])->word;  
       double ent = 0;
       if(wordent->find(word) == wordent->end()) 
 	ent = log(model->corpus->tags.size());
@@ -685,6 +686,13 @@ void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
 	  *lg << node->tag->mask[i] << "\t";            
 	}
 	*lg << endl;
+	int hits = 0;
+	for(size_t i = 0; i < node->tag->size(); i++) {
+	  if(node->tag->tag[i] == node->tag->seq->tag[i]) {
+	    hits++;
+	  }
+	}
+	lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
 	lg->end(); // </mask>
       lg->end(); // </pass>
     }
@@ -695,12 +703,5 @@ void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
   }
   lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
   lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
-  int hits = 0;
-  for(size_t i = 0; i < node->tag->size(); i++) {
-    if(node->tag->tag[i] == node->tag->seq->tag[i]) {
-      hits++;
-    }
-  }
-  lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
 }
 

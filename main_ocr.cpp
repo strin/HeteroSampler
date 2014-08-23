@@ -7,6 +7,8 @@
 #include <boost/program_options.hpp>
 
 using namespace std;
+using namespace Tagging;
+
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
@@ -54,9 +56,9 @@ int main(int argc, char* argv[]) {
     if(vm.count("train")) train = vm["train"].as<string>();
     if(vm.count("test")) test = vm["test"].as<string>();  
     Corpus corpus;
-    corpus.read<SentenceLiteral>(train);
+    corpus.read<SentenceOCR<16, 8> >(train);
     Corpus testCorpus;
-    testCorpus.read<SentenceLiteral>(test);
+    testCorpus.read<SentenceOCR<16, 8> >(test);
 
     /* run. */
     corpus.computeWordFeat();

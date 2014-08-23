@@ -8,6 +8,7 @@
 
 using namespace std;
 using namespace std::placeholders;
+using namespace Tagging;
 namespace po = boost::program_options;
 
 ////////// Simple Model (Independent Logit) ////////////
@@ -37,11 +38,11 @@ TagVector ModelSimple::sample(const Sentence& seq, bool argmax) {
 
 FeaturePointer ModelSimple::extractFeatures(const Tag& tag, int pos) {
   FeaturePointer features = makeFeaturePointer();
-  const vector<Token>& sen = tag.seq->seq;
+  const vector<TokenPtr>& sen = tag.seq->seq;
   int seqlen = tag.size();
   // extract word features only.
   for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
-    StringVector nlp = NLPfunc(sen[l].word);
+    StringVector nlp = NLPfunc(cast<TokenLiteral>(sen[l])->word);
     for(const string& token : *nlp) {
       stringstream ss;
       ss << "simple-w-" << to_string(l-pos) 
@@ -89,7 +90,7 @@ void ModelSimple::logArgs() {
 ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
 :ModelSimple(corpus, vm), factorL(vm["factorL"].as<int>()), 
  extractFeatures([&] (const Tag& tag, int pos) {
-   const vector<Token>& sen = tag.seq->seq;
+   const vector<TokenPtr>& sen = tag.seq->seq;
    int seqlen = tag.size();
    // extract word features. 
    FeaturePointer features = makeFeaturePointer();
@@ -140,16 +141,16 @@ double ModelCRFGibbs::score(const Tag& tag) {
 }
 
 void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features) {
-  const vector<Token>& sen = tag.seq->seq;
+  const vector<TokenPtr>& sen = tag.seq->seq;
   int seqlen = tag.size();
   // word-tag potential.
   for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
-    StringVector nlp = NLPfunc(sen[l].word);
+    StringVector nlp = NLPfunc(cast<TokenLiteral>(sen[l])->word);
     for(const string& token : *nlp) {
       stringstream ss;
       ss << "w-" << to_string(l-pos) 
 	 << "-" << token << "-" << corpus->invtag(tag.tag[pos]);
-      if(token == sen[l].word)
+      if(token == cast<TokenLiteral>(sen[l])->word)
 	insertFeature(features, ss.str());
       else
 	insertFeature(features, ss.str());
@@ -159,7 +160,7 @@ void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer f
 }
 
 void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer features) {
-  const vector<Token>& sen = tag.seq->seq;
+  const vector<TokenPtr>& sen = tag.seq->seq;
   int seqlen = tag.size();
   stringstream ss;
   ss << "p-" << tag.getTag(pos-1) << "-" 

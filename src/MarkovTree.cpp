@@ -1,6 +1,7 @@
 #include "MarkovTree.h"
 
 using namespace std;
+using namespace Tagging;
 
 MarkovTreeNode::MarkovTreeNode(shared_ptr<MarkovTreeNode> parent)
 :parent(parent), log_weight(-DBL_MAX) {

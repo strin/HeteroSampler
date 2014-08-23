@@ -11,6 +11,7 @@
 
 using namespace std;
 using namespace std::placeholders;
+using namespace Tagging;
 namespace po = boost::program_options;
 
 ModelTreeUA::ModelTreeUA(const Corpus* corpus, const po::variables_map& vm) 
@@ -241,7 +242,7 @@ FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const S
   Tag mytag(tag);
   FeaturePointer feat = makeFeaturePointer();
   size_t taglen = corpus->tags.size();
-  string word = seq.seq[pos].word;
+  string word = cast<TokenLiteral>(seq.seq[pos])->word;
   /* dataset statistics */
   insertFeature(feat, "ent", log(taglen));
   if(wordent->find(word) != wordent->end()) 
@@ -274,7 +275,7 @@ FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const S
   double max_ent = -DBL_MAX, ave_ent = 0.0;
   double max_freq = -DBL_MAX, ave_freq = 0.0;
   for(size_t t = 0; t < seqlen; t++) {
-    string word = seq.seq[t].word;
+    string word = cast<TokenLiteral>(seq.seq[t])->word;
     double ent = 0, freq = 0;
     if(wordent->find(word) == wordent->end())
       ent = log(taglen); // no word, use maxent.

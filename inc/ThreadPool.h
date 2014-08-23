@@ -5,6 +5,17 @@
 #include <thread>
 #include <chrono>
 
+static long getFingerPrint(long iterations, long startSeed) { // random hash function taken from 6.816.
+  const long m = (long) 0xFFFFFFFFFFFFL;
+  const long a = 25214903917L;
+  const long c = 11L;
+  long seed = startSeed;
+  for(long i = 0; i < iterations; i++) {
+    seed = (seed*a + c) & m;
+  }
+  return ( seed >> 12 );
+}
+
 // ThreadPool using consumer-producer model.
 // each thread has a unique id, RNG and log.
 // type of work is T.

@@ -89,6 +89,27 @@ target_link_libraries(policy
   ${PYTHON_LIBRARIES}
 )
 
+add_executable(ocr main_ocr.cpp
+src/feature.cpp
+src/corpus.cpp
+src/corpus_ocr.cpp
+src/tag.cpp
+src/MarkovTree.cpp
+src/model.cpp
+src/baseline.cpp
+src/search.cpp
+src/objcokus.cpp
+src/ThreadPool.cpp
+src/policy.cpp
+)
+
+target_link_libraries(ocr
+  scilog
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${LIBS}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+)
 add_executable(test-thread test_thread.cpp
 src/ThreadPool.cpp
 src/objcokus.cpp

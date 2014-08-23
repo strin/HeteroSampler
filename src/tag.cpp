@@ -5,6 +5,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace Tagging;
 
 Tag::Tag(const Sentence* seq, const Corpus* corpus, 
 	objcokus* rng, ParamPointer param) 
@@ -43,7 +44,7 @@ string str(FeaturePointer features) {
 
 ParamPointer Tag::proposeGibbs(int pos, function<FeaturePointer(const Tag& tag)>
 featExtract, bool grad_expect, bool grad_sample, bool argmax) {
-  const vector<Token>& sen = seq->seq;
+  const vector<TokenPtr>& sen = seq->seq;
   int seqlen = sen.size();
   if(pos >= seqlen) 
     throw "Gibbs sampling proposal out of bound.";
@@ -110,7 +111,7 @@ string Tag::str() {
   string ss;
   size_t seqlen = seq->seq.size();
   for(size_t i = 0; i < seqlen; i++) {
-    ss += seq->seq[i].word;
+    ss += seq->seq[i]->str();
     ss += "/";
     ss += this->getTag(i);
     ss += "\t";

@@ -17,7 +17,7 @@ find_package (Threads)
 ADD_DEFINITIONS(-DBoost_USE_STATIC_LIBS=ON)
 set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost COMPONENTS program_options REQUIRED)
+find_package(Boost COMPONENTS python program_options REQUIRED)
 message("Include dirs of boost: " ${Boost_INCLUDE_DIRS} )
 message("Libs of boost: " ${Boost_LIBRARIES} )
 
@@ -47,20 +47,33 @@ ELSE()
   MESSAGE(FATAL_ERROR "CMakeLists.txt has not been tested/written for your compiler.")
 ENDIF()
 
+ADD_LIBRARY(tag SHARED
+  src/feature.cpp
+  src/corpus.cpp
+  src/tag.cpp
+  src/MarkovTree.cpp
+  src/model.cpp
+  src/baseline.cpp
+  src/search.cpp
+  src/objcokus.cpp
+  src/policy.cpp
+  src/ThreadPool.cpp
+)
+
+target_link_libraries(tag
+  scilog
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${LIBS}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+)
+
 add_executable(pos main.cpp
-src/feature.cpp
-src/corpus.cpp
-src/tag.cpp
-src/MarkovTree.cpp
-src/model.cpp
-src/baseline.cpp
-src/search.cpp
-src/objcokus.cpp
-src/ThreadPool.cpp
 )
 
 target_link_libraries(pos
   scilog
+  tag
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}
   ${Boost_LIBRARIES}
@@ -69,20 +82,11 @@ target_link_libraries(pos
 
 
 add_executable(policy test_policy.cpp
-src/feature.cpp
-src/corpus.cpp
-src/tag.cpp
-src/MarkovTree.cpp
-src/model.cpp
-src/baseline.cpp
-src/search.cpp
-src/objcokus.cpp
-src/ThreadPool.cpp
-src/policy.cpp
 )
 
 target_link_libraries(policy
   scilog
+  tag
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}
   ${Boost_LIBRARIES}

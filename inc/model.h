@@ -44,10 +44,14 @@ public:
   std::tuple<ParamPointer, double> wordFrequencies() const;
   std::pair<Vector2d, std::vector<double> > tagBigram() const;
   virtual double score(const Tag& tag);
+  // evaluate the confusion matrix based on accuracy.
+  std::tuple<Vector2d, StringVector> evalConfusionMatrix(const Tag& tag);
+  // evaluate the NER confusion matrix.
+  std::tuple<Vector2d, StringVector> evalConfusionMatrixNER(const Tag& tag);
   // evaluate the accuracy for POS tag aginst truth.
   // return 0: hit count.
   // return 1: pred count.
-  std::tuple<int, int> evalPOS(const Tag& tag);
+  std::tuple<int, int> evalAccuracy(const Tag& tag);
   // evaulate the F1 score for NER tag aginst truth.
   // return 0: hit count.
   // return 1: pred count.

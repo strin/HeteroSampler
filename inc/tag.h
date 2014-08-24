@@ -41,6 +41,19 @@ inline static Vector2d makeVector2d(size_t m, size_t n, double c = 0.0) {
   return vec;
 }
 
+inline static Vector2d operator+(const Vector2d& a, const Vector2d& b) {
+  assert(a.size() == b.size() and a.size() > 0);
+  Vector2d c(a.size());
+  for(size_t i = 0; i < a.size(); i++) {
+    assert(a[i].size() == b[i].size());
+    c[i].resize(a[i].size());
+    for(size_t j = 0; j < a[i].size(); j++) {
+      c[i][j] = a[i][j] + b[i][j];
+    }
+  }
+  return c;
+}
+
 inline static double score(ParamPointer param, FeaturePointer feat) {
   double ret = 0.0;
   for(const std::pair<std::string, double>& pair : *feat) {

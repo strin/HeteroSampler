@@ -49,6 +49,7 @@ public:
   std::vector<Sentence> seqs;
   objcokus cokus;
   std::map<std::string, int> tags, tagcounts;
+  size_t numTags() const {return this->tags.size(); }
   std::map<std::string, int> dic, dic_counts;
   std::map<std::string, std::vector<int> > word_tag_count;
   size_t total_words;

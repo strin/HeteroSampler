@@ -262,7 +262,7 @@ void Policy::test(Policy::ResultPtr result) {
 	result->nodes[id[i]] = node;
 	ave_time += node->depth+1;
 	if(model->scoring == Model::SCORING_ACCURACY) {
-	  tuple<int, int> hit_pred = model->evalPOS(*node->tag);
+	  tuple<int, int> hit_pred = model->evalAccuracy(*node->tag);
 	  hit_count += get<0>(hit_pred);
 	  pred_count += get<1>(hit_pred);
 	}else if(model->scoring == Model::SCORING_NER) {

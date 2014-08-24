@@ -161,7 +161,7 @@ void Model::logArgs() {
   xmllog.begin("taglen"); xmllog << corpus->tags.size() << endl; xmllog.end();
 }
 
-tuple<int, int> Model::evalPOS(const Tag& tag) {
+tuple<int, int> Model::evalAccuracy(const Tag& tag) {
   Tag truth(*tag.seq, corpus, &rngs[0], param);
   int hit_count = 0, pred_count = 0;
   for(int i = 0; i < truth.size(); i++) {
@@ -171,6 +171,95 @@ tuple<int, int> Model::evalPOS(const Tag& tag) {
     pred_count++;
   }
   return make_tuple(hit_count, pred_count);
+}
+
+tuple<Vector2d, StringVector> Model::evalConfusionMatrix(const Tag& tag) {
+  Tag truth(*tag.seq, corpus, &rngs[0], param);
+  Vector2d mat = makeVector2d(tag.corpus->numTags(), tag.corpus->numTags(), 0);
+  StringVector names = makeStringVector();
+  for(int i = 0; i < tag.corpus->numTags(); i++) {
+    names->push_back(tag.corpus->invtags.find(i)->second);
+  }
+  for(int i = 0; i < truth.size(); i++) {
+    (mat)[tag.tag[i]][truth.tag[i]]++;
+  }
+  return make_tuple(mat, names);
+}
+
+tuple<Vector2d, StringVector> Model::evalConfusionMatrixNER(const Tag& tag) {
+  Tag truth(*tag.seq, corpus, &rngs[0], param);
+  int hit_count = 0, pred_count = 0, truth_count = 0;
+  StringVector names = makeStringVector();
+  names->push_back("PER");
+  names->push_back("MISC");
+  names->push_back("LOC");
+  names->push_back("ORG");
+  names->push_back("-");
+  map<string, int> name_map;
+  for(size_t i = 0; i < names->size(); i++) {
+    name_map[(*names)[i]] = i;
+  }
+  Vector2d mat = makeVector2d(names->size(), names->size(), 0.0);
+  auto check_chunk_begin = [&] (const Tag& tag, int pos) {
+    string tg = corpus->invtags.find(tag.tag[pos])->second, 
+	   prev_tg = pos > 0 ? corpus->invtags.find(tag.tag[pos-1])->second : "O";
+    string type = tag.seq->seq[pos].pos, 
+	   prev_type = pos > 0 ? tag.seq->seq[pos-1].pos : "";
+    char tg_ch = tg[0], prev_tg_ch = prev_tg[0];  
+    return (prev_tg_ch == 'B' && tg_ch == 'B') ||
+	   (prev_tg_ch == 'I' && tg_ch == 'B') ||
+	   (prev_tg_ch == 'O' && tg_ch == 'B') ||
+	   (prev_tg_ch == 'O' && tg_ch == 'I') ||
+	   (prev_tg_ch == 'E' && tg_ch == 'E') ||
+	   (prev_tg_ch == 'E' && tg_ch == 'I') ||
+	   (prev_tg_ch == 'O' && tg_ch == 'E') ||
+	   (prev_tg_ch == 'O' && tg_ch == 'I') ||
+	   (tg != "O" && tg != "." && type != prev_type) ||
+	   (tg == "[") || (tg == "]");
+  };
+  auto check_chunk_end = [&] (const Tag& tag, int pos) { 
+    string tg = corpus->invtags.find(tag.tag[pos])->second, 
+	   next_tg = pos < tag.size()-1 ? corpus->invtags.find(tag.tag[pos+1])->second : "O";
+    string type = tag.seq->seq[pos].pos, 
+	   next_type = pos < tag.size()-1 ? tag.seq->seq[pos+1].pos : "";
+    char tg_ch = tg[0], next_tg_ch = next_tg[0];
+    return (tg_ch == 'B' && next_tg_ch == 'B') ||
+	   (tg_ch == 'B' && next_tg_ch == 'O') ||
+	   (tg_ch == 'I' && next_tg_ch == 'B') ||
+	   (tg_ch == 'I' && next_tg_ch == 'O') ||
+	   (tg_ch == 'E' && next_tg_ch == 'E') ||
+	   (tg_ch == 'E' && next_tg_ch == 'I') ||
+	   (tg_ch == 'E' && next_tg_ch == 'O') ||
+	   (tg != "O" && tg != "." && type != next_type) ||
+	   (tg == "[") || (tg == "]");
+
+  };
+  string your_name, my_name;
+  bool hit_begin = true;
+  for(int i = 0; i < truth.size(); i++) {
+    if(check_chunk_begin(truth, i)) {
+      your_name = truth.getTag(i).substr(2);
+      truth_count += 1;
+    }
+    if(check_chunk_begin(tag, i)) {
+      my_name = tag.getTag(i).substr(2);
+      pred_count += 1;
+    }
+    if(check_chunk_begin(truth, i) && check_chunk_begin(tag, i)) 
+      hit_begin = true;
+    if(tag.tag[i] != truth.tag[i]) {
+      hit_begin = false;
+    }
+    if(check_chunk_end(truth, i) && check_chunk_end(tag, i)) { 
+      hit_count += (int)hit_begin;
+      mat[name_map[my_name]][name_map[your_name]]++;
+    }else if(check_chunk_end(truth, i)) {
+      mat[name_map["-"]][name_map[your_name]]++;
+    }else if(check_chunk_end(tag, i)) {
+      mat[name_map[my_name]][name_map["-"]]++;
+    }
+  }
+  return make_tuple(mat, names);
 }
 
 tuple<int, int, int> Model::evalNER(const Tag& tag) {
@@ -232,6 +321,8 @@ double Model::test(const Corpus& testCorpus) {
   int pred_count = 0, truth_count = 0, hit_count = 0;
   xmllog.begin("test");
   int ex = 0;
+  Vector2d conf_mat;  
+  StringVector name = makeStringVector();
   for(const Sentence& seq : retagged.seqs) {
     shared_ptr<Tag> tag = this->sample(seq, false).back();
     Tag truth(seq, corpus, &rngs[0], param);
@@ -240,20 +331,42 @@ double Model::test(const Corpus& testCorpus) {
       xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
       xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
     xmllog.end();
+    tuple<Vector2d, StringVector> conf_name;
     if(this->scoring == SCORING_ACCURACY) {
-      tuple<int, int> hit_pred = this->evalPOS(*tag);
+      tuple<int, int> hit_pred = this->evalAccuracy(*tag);
       hit_count += get<0>(hit_pred);
       pred_count += get<1>(hit_pred);
+      conf_name = this->evalConfusionMatrix(*tag);
     }else if(this->scoring == SCORING_NER) {
       tuple<int, int, int> hit_pred_truth = this->evalNER(*tag);
       hit_count += get<0>(hit_pred_truth);
       pred_count += get<1>(hit_pred_truth);
       truth_count += get<2>(hit_pred_truth);
+      conf_name = this->evalConfusionMatrixNER(*tag);
     }
+    if(conf_mat.size() == 0) {
+      conf_mat = get<0>(conf_name);
+    }else{
+      conf_mat = conf_mat + get<0>(conf_name);
+    }
+    name = get<1>(conf_name);
     ex++;
   }
   xmllog.end();
 
+  xmllog.begin("confusion");
+  xmllog << "\t\t";
+  for(size_t j = 0; j < name->size(); j++) 
+    xmllog << (*name)[j] << "\t";
+  xmllog << endl;
+  for(size_t i = 0; i < conf_mat.size(); i++) {
+    xmllog << (*name)[i] << "\t";
+    for(size_t j = 0; j < conf_mat[i].size(); j++) {
+      xmllog << conf_mat[i][j] << "\t";
+    }
+    xmllog << endl;
+  }
+  xmllog.end(); //</confusion>
   xmllog.begin("score"); 
   double accuracy = (double)hit_count/pred_count;
   double recall = (double)hit_count/truth_count;

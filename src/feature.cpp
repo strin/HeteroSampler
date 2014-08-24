@@ -63,7 +63,8 @@ namespace Tagging {
       //StringVector nlp = cast<CorpusLiteral>(tag.corpus)->getWordFeat(token->word);
       string lpos = boost::lexical_cast<string>(l-pos);
       for(int itoken : token->itoken) {
-	int id = corpus->total_sig * tag.tag[pos] + itoken;
+	int id = (l-pos+breadth) * corpus->total_sig * tag.tag.size() + 
+		  corpus->total_sig * tag.tag[pos] + itoken;
 	string ss = "";
 	while(id > 0) {
 	  ss += id & 0xFF;

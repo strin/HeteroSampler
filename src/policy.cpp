@@ -3,7 +3,7 @@
 #include <boost/lexical_cast.hpp>
 
 #define USE_FEAT_ENTROPY 1
-#define USE_FEAT_ALL 0
+#define USE_FEAT_ALL 1
 #define USE_FEAT_BIAS 1
 
 namespace po = boost::program_options;
@@ -751,7 +751,7 @@ void CyclicOracle::sample(int tid, MarkovTreeNodePtr node) {
 	node->time_stamp = t * node->tag->size() + i;
 	int oldval = node->tag->tag[i];
 	model->sampleOne(*node->tag, i);
-	double resp = node->tag->sc[oldval];
+	double resp = -node->tag->sc[oldval];
 	thread_pool.lock();
 	resp_reward.push_back(make_pair(resp, 0));
 	thread_pool.unlock();

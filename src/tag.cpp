@@ -100,8 +100,9 @@ namespace Tagging {
   double Tag::score(FeaturePointer features) const {
     double score = 0;
     for(const pair<string, double>& feat : *features) {
-      if(this->param->find(feat.first) != this->param->end()) 
+      if(this->param->find(feat.first) != this->param->end()) { 
 	score += feat.second * (*this->param)[feat.first];
+      }
     }
     return score;
   }

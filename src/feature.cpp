@@ -6,7 +6,7 @@ using namespace std;
 namespace Tagging {
   StringVector NLPfunc(const string word) {
     StringVector nlp = makeStringVector();
-    nlp->push_back(word);
+    // nlp->push_back(word);
     size_t wordlen = word.length();
     for(size_t k = 1; k <= 3; k++) {
       if(wordlen > k) {
@@ -57,12 +57,22 @@ namespace Tagging {
     int seqlen = tag.size();
     // word-tag potential.
     list<pair<string, int>> vp;
+    ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(tag.corpus);
     for(int l = max(0, pos - breadth); l <= min(pos + breadth, seqlen-1); l++) {
       ptr<TokenLiteral> token = dynamic_pointer_cast<TokenLiteral>(sen[l]);
-      StringVector nlp = cast<CorpusLiteral>(tag.corpus)->getWordFeat(token->word);
+      //StringVector nlp = cast<CorpusLiteral>(tag.corpus)->getWordFeat(token->word);
       string lpos = boost::lexical_cast<string>(l-pos);
-      insertFeature(output, token->word);
-      for(const string& token : *nlp) {
+      for(int itoken : token->itoken) {
+	int id = corpus->total_sig * tag.tag[pos] + itoken;
+	string ss = "";
+	while(id > 0) {
+	  ss += id & 0xFF;
+	  id = id >> 8;
+	}
+	insertFeature(output, ss, 1);
+	break;
+      }
+      /*for(const string& token : *nlp) {
 	string ss = "w-";
 	ss += lpos;
 	ss += "-";
@@ -70,7 +80,8 @@ namespace Tagging {
 	ss += "-";
 	ss += tag.getTag(pos);
 	insertFeature(output, ss);
-      }
+      }*/
+      /*
       for(int d = 1; d <= depth; d++) {
 	if(d >= token->depth()) continue;
 	string ss = "t";
@@ -82,7 +93,7 @@ namespace Tagging {
 	ss +="-";
 	ss += tag.getTag(pos);
 	insertFeature(output, ss, 0.1);
-      }
+      }*/
     }
   }
 

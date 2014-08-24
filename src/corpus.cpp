@@ -30,7 +30,6 @@ namespace Tagging {
     word = parts[0];
     for(size_t d = 0; d < parts.size()-1; d++) 
       token.push_back(parts[d]);
-    itoken.resize(token.size());
     tag = parts[parts.size()-1];
     // old convention.
     pos = parts[1];
@@ -74,9 +73,9 @@ namespace Tagging {
   Corpus::Corpus() { 
   }
 
-  void Corpus::retag(const Corpus& corpus) {
-    this->tags = corpus.tags;
-    this->invtags = corpus.invtags;
+  void Corpus::retag(ptr<Corpus> corpus) {
+    this->tags = corpus->tags;
+    this->invtags = corpus->invtags;
     for(SentencePtr sen : seqs) {
       for(int i = 0; i < sen->size(); i++) {
 	sen->tag[i] = this->tags[sen->seq[i]->tag];
@@ -113,7 +112,6 @@ namespace Tagging {
     std::string line;
     std::vector<std::string> lines;
     int tagid = 0;
-    vec<int> tokenid;
     total_words = 0;
     this->seqs.clear();
     this->tags.clear();
@@ -136,24 +134,11 @@ namespace Tagging {
 	  }
 	  tagcounts[tg]++;
 	  ptr<TokenLiteral> token_literal = cast<TokenLiteral>(token);
-	  if(tokenid.size() == 0) { 
-	    size_t tsize = token_literal->token.size();
-	    tokenid.resize(tsize);
-	    tokens.resize(tsize);
-	    invtokens.resize(tsize);
-	  }
-	  for(size_t t = 0; t < token_literal->token.size(); t++) {
-	    if(not this->tokens[t].contains(token_literal->token[t])) {
-	      this->invtokens[t][tokenid[t]] = token_literal->token[t];
-	      this->tokens[t][token_literal->token[t]] = tokenid[t];
-	      tokenid[t]++;
-	    }
-	  }
-	  dic[token_literal->word] = true;
-	  if(dic_counts.find(token_literal->word) == dic_counts.end()) 
+	  if(dic_counts.find(token_literal->word) == dic_counts.end()) { 
+	    total_words++;
 	    dic_counts[token_literal->word] = 0;
+	  }
 	  dic_counts[token_literal->word]++;
-	  total_words++;
 	}
       }else
 	lines.push_back(line);
@@ -161,16 +146,38 @@ namespace Tagging {
     // convert raw tag into integer tag.
     word_tag_count.clear();
     aveT = 0;
+    invdic.clear();
+    dic.clear();
+    total_sig = 0;
+    auto mapNewToken = [&] (string token) {
+	dic[token] = total_sig;
+	invdic.push_back(token);
+	total_sig++;
+    };
     for(SentencePtr seq : seqs) {
       aveT += seq->size();
       for(const TokenPtr token : seq->seq) {
-	std::string tg;
+	string tg;
 	tg = token->tag;
 	int itg = tags[tg];
 	seq->tag.push_back(itg); 
 	ptr<TokenLiteral> token_literal = cast<TokenLiteral>(token);
-	for(size_t t = 0; t < token_literal->token.size(); t++) {
-	  token_literal->itoken[t] = tokens[t][token_literal->token[t]];
+	// map tokens to int.
+	string word = token_literal->word;
+	if(not dic.contains("w-"+word))  
+	  mapNewToken("w-"+word);
+	token_literal->itoken.push_back(dic["w-"+word]);
+	for(size_t t = 1; t < token_literal->token.size(); t++) {
+	  string tk = token_literal->token[t];
+	  if(not dic.contains("t"+to_string(t)+"-"+tk))
+	    mapNewToken("t"+to_string(t)+"-"+tk);
+	  token_literal->itoken.push_back(dic["t"+to_string(t)+"-"+tk]);
+	}
+	StringVector nlp = NLPfunc(token_literal->word);
+	for(auto sig : *nlp) {
+	  if(not dic.contains(sig)) 
+	    mapNewToken(sig);
+	  token_literal->itoken.push_back(dic[sig]);
 	}
 	if(word_tag_count.find(token_literal->word) == word_tag_count.end()) {
 	  word_tag_count[token_literal->word].resize(tagid, 0.0);
@@ -182,6 +189,17 @@ namespace Tagging {
     // shuffle corpus.
     if(lets_shuffle)
       shuffle<SentencePtr>(seqs, cokus);
+  }
+
+  void CorpusLiteral::retag(ptr<Corpus> corpus) {
+    if(isinstance<CorpusLiteral>(corpus)) {
+      ptr<CorpusLiteral> corpus_literal = cast<CorpusLiteral>(corpus);
+      this->dic = corpus_literal->dic;
+      this->invdic = corpus_literal->invdic;
+      this->dic_counts = corpus_literal->dic_counts;
+      this->total_sig = corpus_literal->total_sig;
+      this->total_words = corpus_literal->total_words;
+    }
   }
 
   tuple<ParamPointer, double> CorpusLiteral::tagEntropySimple() const {

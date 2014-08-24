@@ -137,7 +137,7 @@ namespace Tagging {
   }
 
   void Policy::trainPolicy(ptr<Corpus> corpus) {
-    corpus->retag(*model->corpus);
+    corpus->retag(model->corpus);
     size_t count = 0;
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
@@ -191,7 +191,7 @@ namespace Tagging {
   }
 
   void Policy::trainKernel(ptr<Corpus> corpus) {
-    corpus->retag(*model->corpus);
+    corpus->retag(model->corpus);
     size_t count = 0;
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
@@ -217,7 +217,7 @@ namespace Tagging {
 
   Policy::ResultPtr Policy::test(ptr<Corpus> testCorpus) {
     Policy::ResultPtr result = makeResultPtr(testCorpus); 
-    result->corpus->retag(*model->corpus);
+    result->corpus->retag(model->corpus);
     result->nodes.resize(min(test_count, testCorpus->seqs.size()), nullptr);
     result->time = 0;
     test(result);

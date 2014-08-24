@@ -43,7 +43,7 @@ namespace Tagging {
 
 
   void Model::run(ptr<Corpus> test_corpus, bool lets_test) {
-    test_corpus->retag(*this->corpus);
+    test_corpus->retag(this->corpus);
     int testLag = corpus->seqs.size()*testFrequency;
     num_ob = 0;
     this->logArgs();
@@ -143,7 +143,7 @@ namespace Tagging {
   }
 
   double Model::test(ptr<Corpus> test_corpus) {
-    test_corpus->retag(*this->corpus);
+    test_corpus->retag(this->corpus);
     int pred_count = 0, truth_count = 0, hit_count = 0;
     xmllog.begin("test");
     int ex = 0;

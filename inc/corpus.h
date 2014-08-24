@@ -47,7 +47,7 @@ namespace Tagging {
 		ner;   // name entity.
     // new, more general convention.
     std::vector<std::string> token; // input.
-    vec<int> itoken;             // int token.
+    vec<int> itoken;             // token + sig.
     size_t depth() const {return token.size(); }    // return input depth.
     bool is_doc_start;
 
@@ -124,7 +124,7 @@ namespace Tagging {
     }
 
     virtual void read(const std::string& filename, bool lets_shuffle = true) = 0;
-    virtual void retag(const Corpus& corpus); 
+    virtual void retag(ptr<Corpus> corpus); 
     int size() const {return seqs.size(); }
   };
 
@@ -132,6 +132,7 @@ namespace Tagging {
   public:
     CorpusLiteral();
     void read(const std::string& filename, bool lets_shuffle = true);
+    void retag(ptr<Corpus> corpus);
     
     void computeWordFeat();  // compute and cache word features.
     StringVector getWordFeat(std::string word) const;
@@ -142,12 +143,12 @@ namespace Tagging {
     std::pair<Vector2d, std::vector<double> > tagBigram() const;
 
     map<string, int> tagcounts;
-    vec<map<string, int> > tokens;  
-    vec<map<int, string> > invtokens;
 
-    std::map<std::string, int> dic, dic_counts;
-    std::map<std::string, std::vector<int> > word_tag_count;
+    map<string, int> dic, dic_counts;
+    vec<string> invdic;
+    map<string, std::vector<int> > word_tag_count;
 
+    size_t total_sig;
     size_t total_words;
   private:
     std::unordered_map<std::string, StringVector> word_feat;

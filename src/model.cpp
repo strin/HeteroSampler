@@ -233,7 +233,7 @@ double Model::test(const Corpus& testCorpus) {
   xmllog.begin("test");
   int ex = 0;
   for(const Sentence& seq : retagged.seqs) {
-    shared_ptr<Tag> tag = this->sample(seq, true).back();
+    shared_ptr<Tag> tag = this->sample(seq, false).back();
     Tag truth(seq, corpus, &rngs[0], param);
     xmllog.begin("example_"+to_string(ex));
       xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();

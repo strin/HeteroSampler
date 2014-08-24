@@ -2,10 +2,10 @@
 # learn model using ./pos, $1: task, $2: inference method.
 if [ $1 == "NER" ]; then 
   factorL=$4
-  cmd="./pos --inference $2 --T 10 --B 3 --train data/eng_ner/train --test data/eng_ner/test --eta 1 \
+  cmd="./pos --inference $2 --T 1 --B 3 --train data/eng_ner/train --test data/eng_ner/test --eta 10 \
     --depthL 2 --windowL "$3" --factorL "$factorL" --output model/ner_gibbs_w"$3"_d2_f"$factorL".model --scoring NER --Q 5"
   echo $cmd
-  ($cmd) > ner_gibbs_w$3_d2_f$factorL.xml & 
+  # ($cmd) > ner_gibbs_w$3_d2_f$factorL.xml & 
 elif [ $1 == "POS_NER" ]; then 
   for windowL in `seq 0 2` 
   do
@@ -22,5 +22,10 @@ elif [ $1 == "Czech" ]; then
     echo $cmd
     ($cmd) > czech_gibbs_w$windowL.xml &
   done
+else
+  echo "1 = [task: NER, Czech]"
+  echo "2 = [inference method: Gibbs]"
+  echo "3 = windowL"
+  echo "4 = factorL"
 fi
 

@@ -103,6 +103,7 @@ ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
    }
    // extract higher-order grams.
    for(int factor = 1; factor <= factorL; factor++) {
+    if(factor == 2) continue;
     for(int p = pos; p < pos+factor; p++) {
       if(p-factor+1 >= 0 && p < seqlen) {
 	extractXgramFeature(tag, p, factor, features);
@@ -153,7 +154,6 @@ void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer f
 	insertFeature(features, ss.str());
       else
 	insertFeature(features, ss.str());
-	// (*features)[ss.str()] = 1;
     }
   }
 }
@@ -164,22 +164,25 @@ void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer fe
   stringstream ss;
   ss << "p-" << tag.getTag(pos-1) << "-" 
   	<< tag.getTag(pos);
-  // ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
-  /* StringVector nlp = NLPfunc(sen[pos].word);
-  for(const string& token : *nlp) {
-    ss << "p2-" << tag.tag[pos-1] << "-" << tag.tag[pos] << "-" << token;
-  }*/
   insertFeature(features, ss.str());
-  // (*features)[ss.str()] = 1;
 }
 
 FeaturePointer ModelCRFGibbs::extractFeaturesAll(const Tag& tag) {
+  const vector<Token>& sen = tag.seq->seq;
+  int seqlen = tag.size();
   FeaturePointer features = makeFeaturePointer();
-  size_t seqlen = tag.size();
-  for(size_t t = 0; t < seqlen; t++) {
-    FeaturePointer this_feat = extractFeatures(tag, t);
-    insertFeature(features, this_feat);
-    //mapUpdate(*features, *this_feat);
+  for(int pos = 0; pos < seqlen; pos++) {
+    extractUnigramFeature(tag, pos, windowL, depthL, features);
+    if(pos >= 1) {
+      extractBigramFeature(tag, pos, features);
+    }
+    // extract higher-order grams.
+    for(int factor = 1; factor <= factorL; factor++) {
+     if(factor == 2) continue;
+     if(pos-factor+1 >= 0) {
+       extractXgramFeature(tag, pos, factor, features);
+     }
+    }
   }
   return features;
 }

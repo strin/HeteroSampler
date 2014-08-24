@@ -2,6 +2,10 @@
 #include "feature.h"
 #include <boost/lexical_cast.hpp>
 
+#define USE_FEAT_ENTROPY 1
+#define USE_FEAT_ALL 0
+#define USE_FEAT_BIAS 1
+
 namespace po = boost::program_options;
 
 using namespace std;
@@ -223,6 +227,9 @@ Policy::ResultPtr Policy::test(const Corpus& testCorpus) {
 void Policy::test(Policy::ResultPtr result) {
   cout << "> test " << endl;
   lg->begin("test");
+  lg->begin("param");
+  *lg << *param;
+  lg->end(); // </param>
   assert(result != nullptr);
   size_t count = 0;
   lg->begin("example");
@@ -250,8 +257,8 @@ void Policy::test(Policy::ResultPtr result) {
       for(size_t i = 0; i < id.size(); i++) {
 	MarkovTreeNodePtr node = stack[i];
 	lg->begin("example_"+to_string(id[i]));
-	while(node->children.size() > 0) node = node->children[0]; // take final sample.
 	this->logNode(node);
+	while(node->children.size() > 0) node = node->children[0]; // take final sample.
 	result->nodes[id[i]] = node;
 	ave_time += node->depth+1;
 	if(model->scoring == Model::SCORING_ACCURACY) {
@@ -308,14 +315,17 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   size_t taglen = model->corpus->tags.size();
   string word = seq.seq[pos].word;
   // bias.
+#if USE_FEAT_BIAS == 1
   insertFeature(feat, "b");
+#endif
+#if USE_FEAT_ENTROPY == 1
   // feat: entropy and frequency.
   if(wordent->find(word) == wordent->end())
     insertFeature(feat, "ent", log(taglen)-wordent_mean);
-    // (*feat)["ent"] = log(taglen)-wordent_mean;
   else
     insertFeature(feat, "ent", (*wordent)[word]);
-    // (*feat)["ent"] = (*wordent)[word];
+#endif
+#if USE_FEAT_ALL == 1
   if(wordfreq->find(word) == wordfreq->end())
     insertFeature(feat, "freq", log(model->corpus->total_words)-wordfreq_mean);
   else
@@ -328,9 +338,8 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     if(wordfeat == lowercase) continue;
     if(wordfeat[0] == 'p' or wordfeat[0] == 's') continue;
     insertFeature(feat, wordfeat);
-    // (*feat)[wordfeat] = 1;
-    // (*feat)[wordfeat+"-ent"] = (*wordent)[word]; 
   }
+#endif
   return feat;
 }
 
@@ -434,7 +443,10 @@ CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
 
 FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   FeaturePointer feat = Policy::extractFeatures(node, pos);
+#if USE_FEAT_ENTROPY == 1
   insertFeature(feat, "model-ent", node->tag->entropy[pos]);
+#endif
+#if USE_FEAT_ALL == 1
   if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
     string tg = model->corpus->invtags.find(node->tag->tag[pos])->second;
     if(pos >= 1) {
@@ -448,6 +460,7 @@ FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
 	insertFeature(feat, "bad");
     }
   }
+#endif
   return feat;
 }
 
@@ -650,8 +663,8 @@ FeaturePointer MultiCyclicValuePolicy::extractFeatures(MarkovTreeNodePtr node, i
 
 
 void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
-  size_t pass = 0;
-  while(node->children.size() > 0) {
+  size_t pass = 1;
+  while(true) {
     if(node->time_stamp >= pass * node->tag->size()) {
       pass += 1;
       lg->begin("pass_"+boost::lexical_cast<string>(pass));
@@ -675,7 +688,10 @@ void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
 	lg->end(); // </mask>
       lg->end(); // </pass>
     }
-    node = node->children[0]; // take final sample.
+    if(node->children.size() > 0)
+      node = node->children[0]; // take final sample.
+    else
+      break;
   }
   lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
   lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();

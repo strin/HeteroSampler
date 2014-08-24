@@ -13,7 +13,7 @@ using namespace std;
 namespace po = boost::program_options;
 
 namespace Tagging {
-  Model::Model(const Corpus* corpus, const po::variables_map& vm)
+  Model::Model(ptr<Corpus> corpus, const po::variables_map& vm)
   :corpus(corpus), param(makeParamPointer()), vm(vm),
    G2(makeParamPointer()) , stepsize(makeParamPointer()), 
    T(vm["T"].as<size_t>()), B(vm["B"].as<size_t>()), 
@@ -41,104 +41,14 @@ namespace Tagging {
       (*stepsize)[p.first] = new_eta;
   }
 
-  tuple<ParamPointer, double> Model::tagEntropySimple() const {
-    assert(corpus->seqs.size() > 0 and isinstance<SentenceLiteral>(corpus->seqs[0]));
-    ParamPointer feat = makeParamPointer();
-    const size_t taglen = corpus->tags.size();
-    double logweights[taglen];
-    // compute raw entropy.
-    for(const pair<string, int>& p : corpus->dic) {
-      auto count = corpus->word_tag_count.find(p.first);
-      if(count == corpus->word_tag_count.end()) {
-	cerr << "tagEntropy: word not found." << endl;
-	(*feat)[p.first] = log(taglen);
-	continue;
-      }
-      for(size_t t = 0; t < taglen; t++) {
-	if(count->second[t] == 0)
-	  logweights[t] = -DBL_MAX;
-	else
-	  logweights[t] = log(count->second[t]);
-      }
-      logNormalize(logweights, taglen);
-      double entropy = 0.0;
-      for(size_t t = 0; t < taglen; t++) {
-	entropy -= logweights[t] * exp(logweights[t]);
-      }
-      (*feat)[p.first] = entropy;
-    }
-    // compute feature mean.
-    double mean_ent = 0.0, count = 0;
-    for(const SentencePtr seq : corpus->seqs) {
-      for(size_t i = 0; i < seq->seq.size(); i++) {
-	ptr<TokenLiteral> token = dynamic_pointer_cast<TokenLiteral>(seq->seq[i]);
-	mean_ent += (*feat)[token->word]; 
-	count++;
-      }
-    }
-    mean_ent /= count;
-    // substract the mean.
-    for(const pair<string, int>& p : corpus->dic) {
-      (*feat)[p.first] -= mean_ent; 
-    }
-    return make_tuple(feat, mean_ent);
-  }
 
-  tuple<ParamPointer, double> Model::wordFrequencies() const {
-    assert(corpus->seqs.size() > 0 and isinstance<SentenceLiteral>(corpus->seqs[0]));
-    ParamPointer feat = makeParamPointer();
-    // compute raw feature.
-    for(const pair<string, int>& p : corpus->dic_counts) {
-      (*feat)[p.first] = log(corpus->total_words)-log(p.second);
-    }
-    // compute feature mean.
-    double mean_fre = 0, count = 0;
-    for(const SentencePtr seq : corpus->seqs) {
-      for(size_t i = 0; i < seq->seq.size(); i++) {
-	ptr<TokenLiteral> token = dynamic_pointer_cast<TokenLiteral>(seq->seq[i]);
-	mean_fre += (*feat)[token->word];
-	count++;
-      }
-    }
-    mean_fre /= count;
-    // substract the mean.
-    for(const pair<string, int>& p : corpus->dic) {
-      (*feat)[p.first] -= mean_fre;
-    }
-    return make_tuple(feat, mean_fre);
-  }
-
-  pair<Vector2d, vector<double> > Model::tagBigram() const {
-    size_t taglen = corpus->tags.size();
-    Vector2d mat = makeVector2d(taglen, taglen, 1.0);
-    vector<double> vec(taglen, 1.0);
-    for(const SentencePtr seq : corpus->seqs) {
-      vec[seq->tag[0]]++;
-      for(size_t t = 1; t < seq->size(); t++) {
-	mat[seq->tag[t-1]][seq->tag[t]]++; 
-      }
-    }
-    for(size_t i = 0; i < taglen; i++) {
-      vec[i] = log(vec[i])-log(taglen+corpus->seqs.size());
-      double sum_i = 0.0;
-      for(size_t j = 0; j < taglen; j++) {
-	sum_i += mat[i][j];
-      }
-      for(size_t j = 0; j < taglen; j++) {
-	mat[i][j] = log(mat[i][j])-log(sum_i);
-      }
-    }
-    return make_pair(mat, vec);
-  }
-
-  void Model::run(const Corpus& testCorpus, bool lets_test) {
-    Corpus retagged(testCorpus);
-    retagged.retag(*this->corpus); // use training taggs. 
+  void Model::run(ptr<Corpus> test_corpus, bool lets_test) {
+    test_corpus->retag(*this->corpus);
     int testLag = corpus->seqs.size()*testFrequency;
     num_ob = 0;
     this->logArgs();
     xmllog.begin("num_train"); xmllog << corpus->size() << endl; xmllog.end();
-    xmllog.begin("num_test"); xmllog << testCorpus.size() << endl; xmllog.end();
+    xmllog.begin("num_test"); xmllog << test_corpus->size() << endl; xmllog.end();
     xmllog.begin("test_lag"); xmllog << testLag << endl; xmllog.end();
     for(int q = 0; q < Q; q++) {
       xmllog.begin("pass "+to_string(q));
@@ -150,7 +60,7 @@ namespace Tagging {
 	num_ob++;
 	if(lets_test) {
 	  if(num_ob % testLag == 0) {
-	    test(retagged);
+	    test(test_corpus);
 	  }
 	}
       }
@@ -183,8 +93,8 @@ namespace Tagging {
     Tag truth(*tag.seq, corpus, &rngs[0], param);
     int hit_count = 0, pred_count = 0, truth_count = 0;
     auto check_chunk_begin = [&] (const Tag& tag, int pos) {
-      string tg = corpus->invtags.find(tag.tag[pos])->second, 
-	     prev_tg = pos > 0 ? corpus->invtags.find(tag.tag[pos-1])->second : "O";
+      string tg = tag.getTag(pos), 
+	     prev_tg = pos > 0 ? tag.getTag(pos-1) : "O";
       string type = cast<TokenLiteral>(seq->seq[pos])->pos, 
 	     prev_type = pos > 0 ? cast<TokenLiteral>(seq->seq[pos-1])->pos : "";
       char tg_ch = tg[0], prev_tg_ch = prev_tg[0];  
@@ -200,8 +110,8 @@ namespace Tagging {
 	     (tg == "[") || (tg == "]");
     };
     auto check_chunk_end = [&] (const Tag& tag, int pos) { 
-      string tg = corpus->invtags.find(tag.tag[pos])->second, 
-	     next_tg = pos < tag.size()-1 ? corpus->invtags.find(tag.tag[pos+1])->second : "O";
+      string tg = tag.getTag(pos), 
+	     next_tg = pos < tag.size()-1 ? tag.getTag(pos+1) : "O";
       string type = cast<TokenLiteral>(seq->seq[pos])->pos, 
 	     next_type = pos < tag.size()-1 ? cast<TokenLiteral>(seq->seq[pos+1])->pos : "";
       char tg_ch = tg[0], next_tg_ch = next_tg[0];
@@ -232,13 +142,12 @@ namespace Tagging {
     return make_tuple(hit_count, pred_count, truth_count);
   }
 
-  double Model::test(const Corpus& testCorpus) {
-    Corpus retagged(testCorpus);
-    retagged.retag(*this->corpus);
+  double Model::test(ptr<Corpus> test_corpus) {
+    test_corpus->retag(*this->corpus);
     int pred_count = 0, truth_count = 0, hit_count = 0;
     xmllog.begin("test");
     int ex = 0;
-    for(const SentencePtr seq : retagged.seqs) {
+    for(const SentencePtr seq : test_corpus->seqs) {
       shared_ptr<Tag> tag = this->sample(*seq, true).back();
       Tag truth(*seq, corpus, &rngs[0], param);
       xmllog.begin("example_"+to_string(ex));

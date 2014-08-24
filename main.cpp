@@ -7,6 +7,7 @@
 #include <boost/program_options.hpp>
 
 using namespace std;
+using namespace Tagging;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
@@ -49,36 +50,36 @@ int main(int argc, char* argv[]) {
     inference = vm["inference"].as<string>();
   }
   try{
-    /* load corpus. */
+    /* load corpus-> */
     string train = "data/eng_ner/train", test = "data/eng_ner/test";
     if(vm.count("train")) train = vm["train"].as<string>();
     if(vm.count("test")) test = vm["test"].as<string>();  
-    Corpus corpus;
-    corpus.read<SentenceLiteral>(train);
-    Corpus testCorpus;
-    testCorpus.read<SentenceLiteral>(test);
+    ptr<CorpusLiteral> corpus = ptr<CorpusLiteral>(new CorpusLiteral());
+    corpus->read(train);
+    ptr<CorpusLiteral> testCorpus = ptr<CorpusLiteral>(new CorpusLiteral());
+    testCorpus->read(test);
 
     /* run. */
-    corpus.computeWordFeat();
+    corpus->computeWordFeat();
     string output = vm["output"].as<string>();
     size_t pos = output.find_last_of("/");
     if(pos == string::npos) throw "invalid model output dir."; 
     system(("mkdir -p "+output.substr(0, pos)).c_str());
     shared_ptr<Model> model = nullptr;
     if(inference == "Gibbs") {
-      model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm));
+      model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
       model->run(testCorpus);
     }else if(inference == "Simple") {
-      model = shared_ptr<Model>(new ModelSimple(&corpus, vm));
+      model = shared_ptr<Model>(new ModelSimple(corpus, vm));
       model->run(testCorpus);
     }else if(inference == "TreeUA") {
-      model = shared_ptr<ModelTreeUA>(new ModelTreeUA(&corpus, vm));
+      model = shared_ptr<ModelTreeUA>(new ModelTreeUA(corpus, vm));
       model->run(testCorpus);
     }else if(inference == "AdaTree") {
-      model = shared_ptr<ModelAdaTree>(new ModelAdaTree(&corpus, vm));
+      model = shared_ptr<ModelAdaTree>(new ModelAdaTree(corpus, vm));
       model->run(testCorpus);
     }else if(inference == "GibbsIncr") { 
-      model = shared_ptr<Model>(new ModelIncrGibbs(&corpus, vm));
+      model = shared_ptr<Model>(new ModelIncrGibbs(corpus, vm));
       model->run(testCorpus);
     }
     ofstream file;

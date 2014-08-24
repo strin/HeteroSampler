@@ -12,7 +12,7 @@ using namespace Tagging;
 namespace po = boost::program_options;
 
 ////////// Simple Model (Independent Logit) ////////////
-ModelSimple::ModelSimple(const Corpus* corpus, const po::variables_map& vm) 
+ModelSimple::ModelSimple(ptr<Corpus> corpus, const po::variables_map& vm) 
 :Model(corpus, vm), windowL(vm["windowL"].as<int>()),
  depthL(vm["depthL"].as<int>()) {
   xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
@@ -87,7 +87,7 @@ void ModelSimple::logArgs() {
 }
 
 //////// Model CRF Gibbs ///////////////////////////////
-ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
+ModelCRFGibbs::ModelCRFGibbs(ptr<Corpus> corpus, const po::variables_map& vm)
 :ModelSimple(corpus, vm), factorL(vm["factorL"].as<int>()), 
  extractFeatures([&] (const Tag& tag, int pos) {
    const vector<TokenPtr>& sen = tag.seq->seq;
@@ -111,7 +111,9 @@ ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
     }
    }
    return features;
- }) {}
+ }) {
+  cast<CorpusLiteral>(corpus)->computeWordFeat();
+ }
 
 void ModelCRFGibbs::sample(Tag& tag, int time, bool argmax) {
   for(int t = 0; t < time; t++) {
@@ -140,47 +142,12 @@ double ModelCRFGibbs::score(const Tag& tag) {
   return ::score(this->param, feat);
 }
 
-void ModelCRFGibbs::addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features) {
-  const vector<TokenPtr>& sen = tag.seq->seq;
-  int seqlen = tag.size();
-  // word-tag potential.
-  for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
-    StringVector nlp = NLPfunc(cast<TokenLiteral>(sen[l])->word);
-    for(const string& token : *nlp) {
-      stringstream ss;
-      ss << "w-" << to_string(l-pos) 
-	 << "-" << token << "-" << corpus->invtag(tag.tag[pos]);
-      if(token == cast<TokenLiteral>(sen[l])->word)
-	insertFeature(features, ss.str());
-      else
-	insertFeature(features, ss.str());
-	// (*features)[ss.str()] = 1;
-    }
-  }
-}
-
-void ModelCRFGibbs::addBigramFeatures(const Tag& tag, int pos, FeaturePointer features) {
-  const vector<TokenPtr>& sen = tag.seq->seq;
-  int seqlen = tag.size();
-  stringstream ss;
-  ss << "p-" << tag.getTag(pos-1) << "-" 
-  	<< tag.getTag(pos);
-  // ss << "p-" << tag.tag[pos-1] << "-" << tag.tag[pos];
-  /* StringVector nlp = NLPfunc(sen[pos].word);
-  for(const string& token : *nlp) {
-    ss << "p2-" << tag.tag[pos-1] << "-" << tag.tag[pos] << "-" << token;
-  }*/
-  insertFeature(features, ss.str());
-  // (*features)[ss.str()] = 1;
-}
-
 FeaturePointer ModelCRFGibbs::extractFeaturesAll(const Tag& tag) {
   FeaturePointer features = makeFeaturePointer();
   size_t seqlen = tag.size();
   for(size_t t = 0; t < seqlen; t++) {
     FeaturePointer this_feat = extractFeatures(tag, t);
     insertFeature(features, this_feat);
-    //mapUpdate(*features, *this_feat);
   }
   return features;
 }
@@ -225,7 +192,7 @@ ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bo
 }
 
 ////////// Incremental Gibbs Sampling /////////////////////////
-ModelIncrGibbs::ModelIncrGibbs(const Corpus* corpus, const po::variables_map& vm)
+ModelIncrGibbs::ModelIncrGibbs(ptr<Corpus> corpus, const po::variables_map& vm)
 :ModelCRFGibbs(corpus, vm) {
 }
 

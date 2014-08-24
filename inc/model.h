@@ -24,9 +24,9 @@ namespace Tagging {
 
   struct Model {
   public:
-    Model(const Corpus* corpus, const boost::program_options::variables_map& vm);
-    virtual void run(const Corpus& testCorpus, bool lets_test = true);
-    double test(const Corpus& testCorpus);
+    Model(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
+    virtual void run(ptr<Corpus> test_corpus, bool lets_test = true);
+    double test(ptr<Corpus> test_corpus);
 
     /* gradient interface */
     virtual ParamPointer gradient(const Sentence& seq) = 0; 
@@ -39,10 +39,6 @@ namespace Tagging {
     // return: gradient.
     virtual ParamPointer sampleOne(Tag& tag, int choice);           
 
-    /* stats utils */
-    std::tuple<ParamPointer, double> tagEntropySimple() const;
-    std::tuple<ParamPointer, double> wordFrequencies() const;
-    std::pair<Vector2d, std::vector<double> > tagBigram() const;
     virtual double score(const Tag& tag);
     // evaluate the accuracy for POS tag aginst truth.
     // return 0: hit count.
@@ -60,7 +56,7 @@ namespace Tagging {
     double testFrequency;
     double eta;
     std::vector<objcokus> rngs;
-    const Corpus* corpus;
+    ptr<Corpus> corpus;
     ParamPointer param, G2, stepsize;   // model.
 
     /* IO */
@@ -86,7 +82,7 @@ namespace Tagging {
 
   struct ModelSimple : public Model {
   public:
-    ModelSimple(const Corpus* corpus, const boost::program_options::variables_map& vm);
+    ModelSimple(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
     ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
     ParamPointer gradient(const Sentence& seq);
     virtual TagVector sample(const Sentence& seq, bool argmax = false); 
@@ -100,14 +96,12 @@ namespace Tagging {
 
   struct ModelCRFGibbs : public ModelSimple {
   public:
-    ModelCRFGibbs(const Corpus* corpus, const boost::program_options::variables_map& vm);
+    ModelCRFGibbs(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
     ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
     ParamPointer gradient(const Sentence& seq);
     virtual TagVector sample(const Sentence& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
     ParamPointer sampleOne(Tag& tag, int choice);
-    void addUnigramFeatures(const Tag& tag, int pos, FeaturePointer features);
-    void addBigramFeatures(const Tag& tag, int pos, FeaturePointer features);
     std::function<FeaturePointer(const Tag& tag, int pos)> extractFeatures;
     // FeaturePointer extractFeatures(const Tag& tag, int pos);
     FeaturePointer extractFeaturesAll(const Tag& tag);
@@ -123,7 +117,7 @@ namespace Tagging {
 
   struct ModelIncrGibbs : public ModelCRFGibbs {
   public:
-    ModelIncrGibbs(const Corpus* corpus, const boost::program_options::variables_map& vm);
+    ModelIncrGibbs(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
     ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
     ParamPointer gradient(const Sentence& seq);
     TagVector sample(const Sentence& seq);
@@ -132,9 +126,9 @@ namespace Tagging {
 
   struct ModelTreeUA : public ModelCRFGibbs {
   public:
-    ModelTreeUA(const Corpus* corpus, const boost::program_options::variables_map& vm);
+    ModelTreeUA(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
 
-    virtual void run(const Corpus& testCorpus);
+    virtual void run(ptr<Corpus> test_corpus);
 
     virtual std::shared_ptr<MarkovTree> explore(const Sentence& seq);
     virtual ParamPointer gradient(const Sentence& seq);
@@ -162,7 +156,7 @@ namespace Tagging {
 
   struct ModelAdaTree : public ModelTreeUA {
   public:
-    ModelAdaTree(const Corpus* corpus, const boost::program_options::variables_map& vm);
+    ModelAdaTree(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
     /* implement components necessary */  
     void workerThreads(int tid, MarkovTreeNodePtr node, Tag tag);
     /* extract posgrad and neggrad for stop-or-not logistic regression */

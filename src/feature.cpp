@@ -55,36 +55,33 @@ namespace Tagging {
   void extractUnigramFeature(const Tag& tag, int pos, int breadth, int depth, FeaturePointer output) {
     const vector<TokenPtr>& sen = tag.seq->seq;
     int seqlen = tag.size();
-    if(isinstance<ptr<TokenLiteral> >(sen[pos])) {
-      // word-tag potential.
-      list<pair<string, int>> vp;
-      for(int l = max(0, pos - breadth); l <= min(pos + breadth, seqlen-1); l++) {
-	ptr<TokenLiteral> token = dynamic_pointer_cast<TokenLiteral>(sen[l]);
-	StringVector nlp = tag.corpus->getWordFeat(token->word);
-	string lpos = boost::lexical_cast<string>(l-pos);
-	for(const string& token : *nlp) {
-	  string ss = "w-";
-	  ss += lpos;
-	  ss += "-";
-	  ss += token;
-	  ss += "-";
-	  ss += tag.getTag(pos);
-	  //(*output)[ss] = 1;
-	  insertFeature(output, ss);
-	}
-	for(int d = 1; d <= depth; d++) {
-	  if(d >= token->depth()) continue;
-	  string ss = "t";
-	  if(d > 1) ss += boost::lexical_cast<string>(d);
-	  ss += "-";
-	  ss += lpos;
-	  ss += "-";
-	  ss += token->token[d];
-	  ss +="-";
-	  ss += tag.getTag(pos);
-	  insertFeature(output, ss);
-	  //(*output)[ss] = 1;
-	}
+    // word-tag potential.
+    list<pair<string, int>> vp;
+    for(int l = max(0, pos - breadth); l <= min(pos + breadth, seqlen-1); l++) {
+      ptr<TokenLiteral> token = dynamic_pointer_cast<TokenLiteral>(sen[l]);
+      StringVector nlp = cast<CorpusLiteral>(tag.corpus)->getWordFeat(token->word);
+      string lpos = boost::lexical_cast<string>(l-pos);
+      insertFeature(output, token->word);
+      for(const string& token : *nlp) {
+	string ss = "w-";
+	ss += lpos;
+	ss += "-";
+	ss += token;
+	ss += "-";
+	ss += tag.getTag(pos);
+	insertFeature(output, ss);
+      }
+      for(int d = 1; d <= depth; d++) {
+	if(d >= token->depth()) continue;
+	string ss = "t";
+	if(d > 1) ss += boost::lexical_cast<string>(d);
+	ss += "-";
+	ss += lpos;
+	ss += "-";
+	ss += token->token[d];
+	ss +="-";
+	ss += tag.getTag(pos);
+	insertFeature(output, ss, 0.1);
       }
     }
   }

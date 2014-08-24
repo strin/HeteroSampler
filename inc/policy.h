@@ -22,20 +22,20 @@ namespace Tagging {
     // results in terms of test samples.
     class Result {
     public:
-      Result(const Corpus& corpus);
+      Result(ptr<Corpus> corpus);
       std::vector<MarkovTreeNodePtr> nodes;
-      Corpus corpus;
+      ptr<Corpus> corpus;
       double score;
       double time;
     };
     typedef std::shared_ptr<Result> ResultPtr;
-    inline static ResultPtr makeResultPtr(const Corpus& corpus) {
+    inline static ResultPtr makeResultPtr(ptr<Corpus> corpus) {
       return ResultPtr(new Result(corpus));
     }
 
     // run test on corpus.
     // return: accuracy on the test set.
-    ResultPtr test(const Corpus& testCorpus);
+    ResultPtr test(ptr<Corpus> testCorpus);
     void test(ResultPtr result);
 
     // apply gradient from samples to policy.
@@ -45,13 +45,13 @@ namespace Tagging {
     virtual void gradientKernel(MarkovTree& tree);
 
     // run training on corpus.
-    virtual void train(const Corpus& corpus);
+    virtual void train(ptr<Corpus> corpus);
 
     // train policy.
-    virtual void trainPolicy(const Corpus& corpus);
+    virtual void trainPolicy(ptr<Corpus> corpus);
 
     // train primitive kernels. 
-    virtual void trainKernel(const Corpus& corpus);
+    virtual void trainKernel(ptr<Corpus> corpus);
 
     // sample node, default uses Gibbs sampling.
     virtual void sampleTest(int tid, MarkovTreeNodePtr node);
@@ -157,7 +157,7 @@ namespace Tagging {
     virtual void sample(int tid, MarkovTreeNodePtr node);
 
     // training.
-    virtual void trainPolicy(const Corpus& corpus);
+    virtual void trainPolicy(ptr<Corpus> corpus);
 
     bool lets_resp_reward;
     std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   

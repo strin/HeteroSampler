@@ -24,6 +24,74 @@ namespace Tagging {
 
   using string = std::string;
 
+  template<class T>
+  using vec = std::vector<T>;
+
+  template<class K, class T>
+  class map : public std::unordered_map<K, T> {
+  public:
+    bool contains(K key) {
+      return this->find(key) != this->end();
+    }
+  };
+
+  template<class T>
+  using list = std::list<T>;
+
+  template<class A, class B>
+  using pair = std::pair<A, B>;
+
+  typedef std::pair<std::string, double> ParamItem;
+  typedef ParamItem FeatureItem;
+  typedef std::shared_ptr<std::unordered_map<std::string, double> > ParamPointer;
+  // typedef ParamPointer FeaturePointer;
+  typedef std::shared_ptr<std::list<std::pair<std::string, double> > > FeaturePointer;
+  typedef std::vector<std::vector<double> > Vector2d;
+
+  inline static ParamPointer makeParamPointer() {
+    return ParamPointer(new std::unordered_map<std::string, double>());
+  }
+
+  inline static FeaturePointer makeFeaturePointer() {
+    // return makeParamPointer();
+    return FeaturePointer(new std::list<std::pair<std::string, double> >());
+  }
+
+  inline static void insertFeature(FeaturePointer feat, const std::string& key, double val = 1.0) {
+    feat->push_back(std::make_pair(key, val));
+  }
+
+  inline static void insertFeature(FeaturePointer featA, FeaturePointer featB) {
+    featA->insert(featA->end(), featB->begin(), featB->end());
+  }
+
+  inline static Vector2d makeVector2d(size_t m, size_t n, double c = 0.0) {
+    Vector2d vec(m);
+    for(size_t mi = 0; mi < m; mi++) vec[mi].resize(n, c);
+    return vec;
+  }
+
+  inline static double score(ParamPointer param, FeaturePointer feat) {
+    double ret = 0.0;
+    for(const std::pair<std::string, double>& pair : *feat) {
+      if(param->find(pair.first) != param->end()) {
+	ret += (*param)[pair.first] * pair.second;
+      }
+    }
+    return ret;
+  }
+
+  inline static void copyParamFeatures(ParamPointer param_from, std::string prefix_from,
+				  ParamPointer param_to, std::string prefix_to) {
+    for(const std::pair<std::string, double>& pair : *param_from) {
+      std::string key = pair.first;
+      size_t pos = key.find(prefix_from);
+      if(pos == std::string::npos) 
+	continue;
+      (*param_to)[prefix_to + key.substr(pos + prefix_from.length())] = pair.second;
+    }
+  }
+
   inline static double logisticFunc(double z) {
     return 1./(1+exp(0-z));
   }

@@ -162,7 +162,7 @@ namespace Tagging {
 	int itg = tags[tg];
 	seq->tag.push_back(itg); 
 	ptr<TokenLiteral> token_literal = cast<TokenLiteral>(token);
-	// map tokens to int.
+/*	// map tokens to int.
 	string word = token_literal->word;
 	if(not dic.contains("w-"+word))  
 	  mapNewToken("w-"+word);
@@ -179,6 +179,7 @@ namespace Tagging {
 	    mapNewToken(sig);
 	  token_literal->itoken.push_back(dic[sig]);
 	}
+*/
 	if(word_tag_count.find(token_literal->word) == word_tag_count.end()) {
 	  word_tag_count[token_literal->word].resize(tagid, 0.0);
 	}
@@ -193,14 +194,6 @@ namespace Tagging {
 
   void CorpusLiteral::retag(ptr<Corpus> corpus) {
     Corpus::retag(corpus);
-    if(isinstance<CorpusLiteral>(corpus)) {
-      ptr<CorpusLiteral> corpus_literal = cast<CorpusLiteral>(corpus);
-      this->dic = corpus_literal->dic;
-      this->invdic = corpus_literal->invdic;
-      this->dic_counts = corpus_literal->dic_counts;
-      this->total_sig = corpus_literal->total_sig;
-      this->total_words = corpus_literal->total_words;
-    }
   }
 
   tuple<ParamPointer, double> CorpusLiteral::tagEntropySimple() const {

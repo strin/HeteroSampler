@@ -69,7 +69,7 @@ def ner_multi_policy_shared(w, f, test_count):
     os.system(cmd + ' &')  
 
 def ner_oracle_shared(w, f, test_count):
-    cmd = '''./policy --inference Gibbs --policy cyclic_oracle_shared --name '''+path+'''/ner_w%d_f%d_tc%d_multi_policy \
+    cmd = '''./policy --inference Gibbs --policy cyclic_oracle_shared --name '''+path+'''/ner_w%d_f%d_tc%d_oracle \
     --K 1 --numThreads 10 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --trainCount %d --testCount %d \
     --T 4 --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
     % (w, f, test_count,  w, f,  w, test_count, test_count, f)

@@ -192,6 +192,7 @@ namespace Tagging {
   }
 
   void CorpusLiteral::retag(ptr<Corpus> corpus) {
+    Corpus::retag(corpus);
     if(isinstance<CorpusLiteral>(corpus)) {
       ptr<CorpusLiteral> corpus_literal = cast<CorpusLiteral>(corpus);
       this->dic = corpus_literal->dic;

@@ -135,6 +135,31 @@ int main(int argc, char* argv[]) {
 	ptest->resetLog(nullptr);
       }
       system(("rm -r "+name).c_str());
+    }else if(vm["policy"].as<string>() == "cyclic_oracle_shared") {
+      string name = vm["name"].as<string>();
+      const int fold = 10;
+      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
+      shared_ptr<CyclicOracle> policy = shared_ptr<CyclicOracle>(new CyclicOracle(model, vm));
+      train_func(policy);
+      shared_ptr<CyclicOracle> ptest;
+      auto compare = [] (pair<double, double> a, pair<double, double> b) {
+	return (a.first < b.first);
+      };
+      sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 
+      system(("rm -r "+name+"*").c_str());
+      for(int i : fold_l) {
+	double c = policy->resp_reward[i * (policy->resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+	// string myname = name+"_i"+to_string(i);
+	string myname = name + "_c" + boost::lexical_cast<string>(c);
+	system(("mkdir -p " + myname).c_str());
+	ptest = shared_ptr<CyclicOracle>(new CyclicOracle(model, vm));
+	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+	ptest->param = policy->param; 
+	ptest->c = c;
+	ptest->test(testCorpus);
+	ptest->resetLog(nullptr);
+      }
+      system(("rm -r "+name).c_str());
     }else if(vm["policy"].as<string>() == "cyclic_value_shared") {
       string name = vm["name"].as<string>();
       const int fold = 10;

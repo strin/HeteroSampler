@@ -704,3 +704,99 @@ void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
   lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
 }
 
+
+///////// Cyclic Oracle /////////////////////////////////////////////////
+CyclicOracle::CyclicOracle(ModelPtr model, const po::variables_map& vm)
+:CyclicPolicy(model, vm), 
+ T(vm["T"].as<size_t>()) { 
+}
+
+int CyclicOracle::policy(MarkovTreeNodePtr node) {
+  if(node->depth == 0) node->time_stamp = -1;
+  if(node->depth < node->tag->size()) {
+    node->time_stamp++;
+    return node->depth;
+  }else{
+    objcokus* rng = node->tag->rng;
+    assert(!node->parent.expired());
+    size_t i = node->time_stamp + 1;
+    node->gradient = makeParamPointer();
+    for(; i < T * node->tag->size(); i++) {      
+      size_t pos = i % node->tag->size();
+      node->time_stamp = i;
+      int oldval = node->tag->tag[pos];
+      Tag tag(*node->tag);
+      model->sampleOne(tag, i);          
+      double resp = tag.sc[oldval];
+      node->tag->resp[pos] = resp;
+      if(resp > c) { 
+	node->tag->mask[pos] = 1;
+	return pos;
+      }else{
+	node->tag->mask[pos] = 0;
+      }
+    }
+    node->time_stamp = i;
+    return -1;
+  }
+}
+
+void CyclicOracle::sample(int tid, MarkovTreeNodePtr node) {
+  node->depth = 0;
+  node->choice = -1;
+  try{
+    node->tag->rng = &thread_pool.rngs[tid];
+    for(size_t t = 0; t < T; t++) {
+      for(size_t i = 0; i < node->tag->size(); i++) {
+	node->time_stamp = t * node->tag->size() + i;
+	int oldval = node->tag->tag[i];
+	model->sampleOne(*node->tag, i);
+	double resp = node->tag->sc[oldval];
+	thread_pool.lock();
+	resp_reward.push_back(make_pair(resp, 0));
+	thread_pool.unlock();
+      }
+    }
+    node->log_weight = 0;
+  }catch(const char* ee) {
+    cout << "error: " << ee << endl;
+  }
+}
+
+void CyclicOracle::logNode(MarkovTreeNodePtr node) {
+  size_t pass = 1;
+  while(true) {
+    if(node->time_stamp >= pass * node->tag->size()) {
+      pass += 1;
+      lg->begin("pass_"+boost::lexical_cast<string>(pass));
+	lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
+	lg->begin("resp");
+	for(size_t i = 0; i < node->tag->size(); i++) {
+	  *lg << node->tag->resp[i] << "\t";            
+	}
+	*lg << endl;
+	lg->end(); // </resp>
+	lg->begin("mask");
+	for(size_t i = 0; i < node->tag->size(); i++) {
+	  *lg << node->tag->mask[i] << "\t";            
+	}
+	*lg << endl;
+	lg->end(); // </mask>
+      lg->end(); // </pass>
+    }
+    if(node->children.size() > 0)
+      node = node->children[0]; // take final sample.
+    else
+      break;
+  }
+  lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
+  lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
+  int hits = 0;
+  for(size_t i = 0; i < node->tag->size(); i++) {
+    if(node->tag->tag[i] == node->tag->seq->tag[i]) {
+      hits++;
+    }
+  }
+  lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
+}
+

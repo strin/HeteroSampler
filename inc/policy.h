@@ -143,6 +143,26 @@ public:
   double c;          // regularization of computation.
 };
 
+// Cyclic Oracle.
+class CyclicOracle: public CyclicPolicy {
+public:
+  CyclicOracle(ModelPtr model, const boost::program_options::variables_map& vm);
+
+  virtual int policy(MarkovTreeNodePtr node); 
+  
+  // sample for training.
+  virtual void sample(int tid, MarkovTreeNodePtr node);
+
+  std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
+
+  // logNodes after each pass.
+  virtual void logNode(MarkovTreeNodePtr node);
+
+  double c;          // regularization of computation.
+protected:
+  int T;
+};
+
 // policy based on learning value function.
 // virtual class that overwrites the training function.
 class CyclicValuePolicy : public CyclicPolicy {

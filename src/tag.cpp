@@ -50,6 +50,7 @@ featExtract, bool grad_expect, bool grad_sample, bool argmax) {
   int taglen = corpus->tags.size();
   double sc[taglen];
   vector<FeaturePointer> featvec;
+  // sample.
   for(int t = 0; t < taglen; t++) {
     tag[pos] = t;
     FeaturePointer features = featExtract(*this);
@@ -57,7 +58,13 @@ featExtract, bool grad_expect, bool grad_sample, bool argmax) {
     sc[t] = this->score(features);
   }
   logNormalize(sc, taglen);
+
+  // gather stats.
   this->entropy[pos] = logEntropy(sc, taglen);
+  this->sc.clear();
+  for(int t = 0; t < taglen; t++) 
+    this->sc.push_back(sc[t]);
+
   int val;
   if(argmax) {
     double max_sc = -DBL_MAX;

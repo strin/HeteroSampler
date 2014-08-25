@@ -76,6 +76,17 @@ def ner_oracle_shared(w, f, test_count):
     print cmd
     os.system(cmd + ' &')  
 
+def ner_multi_policy_unigram_shared(w, f, test_count):
+    method = "multi_cyclic_value_unigram"
+    cmd = '''./policy --inference Gibbs --policy '''+method+'''_shared --name '''+path
+    cmd += '''/ner_w%d_f%d_tc%d_''' % (w, f, test_count) + method 
+    cmd += ''' --K 1 --numThreads 10 --model model/ner_gibbs_w%d_d2_f%d.model ''' % (w, f)
+    cmd += ''' --unigram_model model/ner_gibbs_w%d_d2_f1.model ''' % (w) 
+    cmd += '''--scoring NER --windowL %d --trainCount %d --testCount %d ''' % (w, test_count, test_count)
+    cmd += '''--T 4 --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' % (f)
+    print cmd
+    os.system(cmd + ' &')  
+
 def ner_shared(w, f, test_count, method):
     cmd = '''./policy --inference Gibbs --policy '''+method+'''_shared --name '''+path
     cmd += '''/ner_w%d_f%d_tc%d_''' % (w, f, test_count) + method 
@@ -193,7 +204,7 @@ for f in [1,2,3,4]:
   farm.add('ner/gibbs/w2/full/f%d'%f, lambda f=f: ner_gibbs_shared(2, f, FULL, 4)) 
   farm.add('ner/policy/w2/full/f%d'%f, lambda f=f: ner_policy_shared(2, f, FULL)) 
   farm.add('ner/oracle/w2/full/f%d'%f, lambda f=f: ner_oracle_shared(2, f, FULL)) 
-  farm.add('ner/multi_policy_unigram/w2/full/f%d'%f, lambda f=f: ner_shared(2, f, FULL, "multi_cyclic_value_unigram")) 
+  farm.add('ner/multi_policy_unigram/w2/full/f%d'%f, lambda f=f: ner_multi_policy_unigram_shared(2, f, FULL)) 
   farm.add('ner/multi_policy/w2/full/f%d'%f, lambda f=f: ner_multi_policy_shared(2, f, FULL)) 
   '''
   for T in [1.0, 1.25, 1.5, 1.75, 2]:

@@ -62,8 +62,9 @@ featExtract, bool grad_expect, bool grad_sample, bool argmax) {
   // gather stats.
   this->entropy[pos] = logEntropy(sc, taglen);
   this->sc.clear();
-  for(int t = 0; t < taglen; t++) 
+  for(int t = 0; t < taglen; t++) { 
     this->sc.push_back(sc[t]);
+  }
 
   int val;
   if(argmax) {

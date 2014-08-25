@@ -139,9 +139,9 @@ int main(int argc, char* argv[]) {
     }else if(vm["policy"].as<string>() == "multi_cyclic_value_unigram_shared") {
       shared_ptr<ModelCRFGibbs> model_unigram = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm));
       std::ifstream file; 
-      file.open(vm["model"].as<string>(), std::fstream::in);
+      file.open(vm["unigram_model"].as<string>(), std::fstream::in);
       if(!file.is_open()) 
-	throw (vm["model"].as<string>()+" not found.").c_str();
+	throw (vm["unigram_model"].as<string>()+" not found.").c_str();
       file >> *model_unigram;
       file.close();
       string name = vm["name"].as<string>();

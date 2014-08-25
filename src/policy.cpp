@@ -741,7 +741,7 @@ int CyclicOracle::policy(MarkovTreeNodePtr node) {
       int oldval = node->tag->tag[pos];
       Tag tag(*node->tag);
       model->sampleOne(tag, pos);          
-      double resp = tag.sc[oldval];
+      double resp = -tag.sc[oldval];
       node->tag->resp[pos] = resp;
       if(resp > c) { 
 	node->tag->mask[pos] = 1;

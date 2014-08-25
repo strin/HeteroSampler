@@ -63,7 +63,7 @@ featExtract, bool grad_expect, bool grad_sample, bool argmax) {
   this->entropy[pos] = logEntropy(sc, taglen);
   this->sc.clear();
   for(int t = 0; t < taglen; t++) { 
-    if(isnan(sc[t])) 
+    if(std::isnan(sc[t])) 
 	cout << "nan " << endl;
     this->sc.push_back(sc[t]);
   }

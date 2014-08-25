@@ -181,6 +181,7 @@ public:
   std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
 };
 
+// run multiple cycles across the dataset.
 class MultiCyclicValuePolicy : public CyclicValuePolicy {
 public:
   MultiCyclicValuePolicy(ModelPtr model, const boost::program_options::variables_map& vm);
@@ -199,4 +200,15 @@ protected:
   size_t T;
 };
 
+
+class MultiCyclicValueUnigramPolicy : public MultiCyclicValuePolicy {
+public:
+  MultiCyclicValueUnigramPolicy(ModelPtr model, ModelPtr model_unigram, const boost::program_options::variables_map& vm);
+
+  // add features inpired by the unigram.
+  virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+
+protected:
+  ModelPtr model_unigram;
+};
 #endif

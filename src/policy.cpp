@@ -704,6 +704,20 @@ void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
   lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
 }
 
+///////// MultiCyclicValueUnigramPolicy ////////////////////////////////
+MultiCyclicValueUnigramPolicy::MultiCyclicValueUnigramPolicy(ModelPtr model, 
+    ModelPtr model_unigram, const po::variables_map& vm)
+: MultiCyclicValuePolicy(model, vm), model_unigram(model_unigram) { 
+}
+
+FeaturePointer MultiCyclicValueUnigramPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
+  FeaturePointer feat = MultiCyclicValuePolicy::extractFeatures(node, pos);
+  Tag tag(*node->tag);
+  int oldval = tag.tag[pos];
+  model->sampleOne(tag, pos);
+  insertFeature(feat, "unigram", -tag.sc[pos]);
+  return feat;
+}
 
 ///////// Cyclic Oracle /////////////////////////////////////////////////
 CyclicOracle::CyclicOracle(ModelPtr model, const po::variables_map& vm)
@@ -799,4 +813,5 @@ void CyclicOracle::logNode(MarkovTreeNodePtr node) {
   }
   lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
 }
+
 

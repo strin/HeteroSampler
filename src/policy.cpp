@@ -799,7 +799,7 @@ void CyclicOracle::logNode(MarkovTreeNodePtr node) {
       lg->end(); // </pass>
     }
     if(node->children.size() > 0)
-      node = node->children[0]; // take final sample.
+      node = node->children[0]; 
     else
       break;
   }

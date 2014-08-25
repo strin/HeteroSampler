@@ -740,7 +740,7 @@ int CyclicOracle::policy(MarkovTreeNodePtr node) {
       node->time_stamp = i;
       int oldval = node->tag->tag[pos];
       Tag tag(*node->tag);
-      model->sampleOne(tag, i);          
+      model->sampleOne(tag, pos);          
       double resp = tag.sc[oldval];
       node->tag->resp[pos] = resp;
       if(resp > c) { 

@@ -112,7 +112,7 @@ namespace Tagging {
     size_t seqlen = seq->seq.size();
     for(size_t i = 0; i < seqlen; i++) {
       ss += seq->seq[i]->str();
-      ss += "/";
+      ss += " / ";
       ss += this->getTag(i);
       ss += "\t";
     }

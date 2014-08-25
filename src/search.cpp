@@ -55,7 +55,7 @@ namespace Tagging {
 	if(node->depth >= tag.size())
 	  pos = rngs[tid].randomMT() % tag.size();
 	node->gradient = 	tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
-					    return this->extractFeatures(tag, pos);  
+					    return this->extractFeatures(shared_from_this(), tag, pos);  
 					  }, true);
 	if(node->depth < B) node->log_weight = -DBL_MAX;
 	else node->log_weight = this->score(tag); 
@@ -184,7 +184,7 @@ namespace Tagging {
 	int pos = rngs[tid].randomMT() % tag.size();
 	node->gradient = tag.proposeGibbs(pos, 
 					  [&] (const Tag& tag) -> FeaturePointer {
-					    return this->extractFeatures(tag, pos);  
+					    return this->extractFeatures(shared_from_this(), tag, pos);  
 					  }, true);
 	node->tag = shared_ptr<Tag>(new Tag(tag));
 	auto predT = this->logisticStop(node, *tag.seq, tag); 
@@ -253,11 +253,11 @@ namespace Tagging {
     if(wordfreq->find(word) != wordfreq->end()) 
       insertFeature(feat, "freq", (*wordfreq)[word]);
     /* posterior statistics */
-    insertFeature(feat, "score", tag.score(this->extractFeatures(tag, pos)));
+    insertFeature(feat, "score", tag.score(this->extractFeatures(shared_from_this(), tag, pos)));
     double sc[taglen];
     for(size_t i = 0; i < taglen; i++) {
       mytag.tag[pos] = i;
-      sc[i] = mytag.score(this->extractFeatures(mytag, pos));
+      sc[i] = mytag.score(this->extractFeatures(shared_from_this(), mytag, pos));
     }
     logNormalize(sc, taglen);
     insertFeature(feat, "ent-score", logEntropy(sc, taglen));

@@ -63,7 +63,6 @@ namespace Tagging {
   template<size_t height, size_t width>
   struct TokenOCR : public Token {
   public:
-    std::string tag;
     TokenOCR();
     TokenOCR(const std::string& line);
     virtual void parseline(const std::string& line);
@@ -161,7 +160,12 @@ namespace Tagging {
     CorpusOCR();
   
     void read(const std::string& filename, bool lets_shuffle = true);
+
+    size_t h() const {return height; }
+    size_t w() const {return width; }
   };
 
 }
+
+
 #endif

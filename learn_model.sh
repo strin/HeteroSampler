@@ -22,5 +22,10 @@ elif [ $1 == "Czech" ]; then
     echo $cmd
     ($cmd) > czech_gibbs_w$windowL.xml &
   done
+elif [ $1 == "OCR" ]; then
+  windowL=2
+  cmd="./ocr --inference $2 --T 10 --B 3 --train data/ocr/train0 --test data/ocr/test0 --eta 1 --windowL $windowL --output model/ocr_w$windowL.model --scoring Acc --Q 5 "
+  echo $cmd
+  ($cmd) > result/ocr_gibbs_w$windowL.xml
 fi
 

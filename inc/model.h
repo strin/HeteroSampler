@@ -90,11 +90,11 @@ namespace Tagging {
     FeaturePointer extractFeatures(const Tag& tag, int pos);
     
     virtual void logArgs();
-  protected:
+
     int windowL, depthL; // range of unigram features.
   };
 
-  struct ModelCRFGibbs : public ModelSimple {
+  struct ModelCRFGibbs : public ModelSimple, public std::enable_shared_from_this<Model> {
   public:
     ModelCRFGibbs(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
     ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
@@ -102,27 +102,18 @@ namespace Tagging {
     virtual TagVector sample(const Sentence& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
     ParamPointer sampleOne(Tag& tag, int choice);
-    std::function<FeaturePointer(const Tag& tag, int pos)> extractFeatures;
+    std::function<FeaturePointer(ptr<Model> model, const Tag& tag, int pos)> extractFeatures;
     // FeaturePointer extractFeatures(const Tag& tag, int pos);
     FeaturePointer extractFeaturesAll(const Tag& tag);
     double score(const Tag& tag);
 
     virtual void logArgs();
-  protected:
+
     int factorL;
     
   private:
     void sampleOneSweep(Tag& tag, bool argmax = false);
   };
-
-  struct ModelIncrGibbs : public ModelCRFGibbs {
-  public:
-    ModelIncrGibbs(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
-    ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
-    ParamPointer gradient(const Sentence& seq);
-    TagVector sample(const Sentence& seq);
-  };
-
 
   struct ModelTreeUA : public ModelCRFGibbs {
   public:

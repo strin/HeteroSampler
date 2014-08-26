@@ -23,7 +23,7 @@ elif [ $1 == "Czech" ]; then
     ($cmd) > czech_gibbs_w$windowL.xml &
   done
 elif [ $1 == "OCR" ]; then
-  for factorL in `seq 0 2`
+  for factorL in `seq 1 4`
   do
     cmd="./ocr --inference $2 --T 8 --B 5 --train data/ocr/train0 --test data/ocr/test0 --eta 0.1 --factorL $factorL  --output model/ocr_f$factorL.model --scoring Acc --Q 3 "
     echo $cmd

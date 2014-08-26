@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <thread>
 #include <chrono>
+#include <condition_variable>
 
 // ThreadPool using consumer-producer model.
 // each thread has a unique id, RNG and log.

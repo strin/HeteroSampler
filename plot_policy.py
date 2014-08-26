@@ -18,10 +18,13 @@ def plot(path_l, legend_l, output, color_l=['r','g','b','k'], \
     acc = list()
     pl = list()
     try:
+      count = 0
       for p in path:
         print p
         policy = PolicyResult(p)
-        pl.append(policy)
+        if count < 3:
+          pl.append(policy)
+          count += 1
         time.append(policy.ave_time())
         acc.append(policy.accuracy)
       policy_l.append(pl)
@@ -57,15 +60,10 @@ if __name__ == '__main__':
   files = os.listdir(path_in+'/test_policy/')
   files = [f[0] for f in sorted([(f, os.stat(path_in+'/test_policy/'+f)) for f in files], key=lambda x: x[1].st_ctime)]
   path_l = list()
-  scheme_l = ['gibbs', 'multi_policy']
+  scheme_l = ['gibbs', 'multi_policy', 'oracle']
   for scheme in scheme_l:
     path = [path_in+'/test_policy/'+f for f in files if f.find('%s_%s'%(name, scheme)) == 0]
     path_l.append(path)
-  """
-  path_l.append(list())
-  for thres in [0.5,1.0,1.5,2.0,2.5,3.0]:
-    path_l[-1].append(path_in+'/test_policy/%s_entropy_%0.2f' % (name, thres))
-  """
   policy_l = plot(path_l, scheme_l, path_out+'/%s.png' % name)
   name_l = [[p.split('/')[-1] for p in path] for path in path_l]
   html = codecs.open(path_out+'/%s.html' % name, 'w', encoding='utf-8')

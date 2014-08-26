@@ -123,6 +123,6 @@ namespace Tagging {
       ss += "-";
       ss += tag.getTag(pos-f+1);
     }
-    insertFeature(output, ss);
+    insertFeature(output, ss, 1);
   }
 }

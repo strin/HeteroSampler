@@ -180,7 +180,6 @@ namespace Tagging {
   ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
     Tag tag(&seq, corpus, &rngs[0], param);
     Tag truth(seq, corpus, &rngs[0], param);
-    FeaturePointer feat = this->extractFeaturesAll(truth);
     ParamPointer gradient = makeParamPointer();
     for(int t = 0; t < T; t++) {
       this->sampleOneSweep(tag);
@@ -193,6 +192,7 @@ namespace Tagging {
     xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
     xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
     if(update_grad) {
+      FeaturePointer feat = this->extractFeaturesAll(truth);
       mapDivide<double>(*gradient, -(double)(T-B));
       mapUpdate<double, double>(*gradient, *feat);
     }

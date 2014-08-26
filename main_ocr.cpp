@@ -84,8 +84,8 @@ int main(int argc, char* argv[]) {
 	for(int i = 0; i < 16; i++) {
 	  for(int j = 0; j < 8; j++) {
 	    string code = tag.corpus->invtags[tag.tag[pos]]+"  ";
-	    code[1] = i;
-	    code[2] = j;
+	    code[1] = i+'a';
+	    code[2] = j+'a';
 	    /*code += to_string(i);
 	    code += "-";
 	    code += to_string(j);

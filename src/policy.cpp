@@ -714,7 +714,7 @@ FeaturePointer MultiCyclicValueUnigramPolicy::extractFeatures(MarkovTreeNodePtr 
   FeaturePointer feat = MultiCyclicValuePolicy::extractFeatures(node, pos);
   Tag tag(*node->tag);
   int oldval = tag.tag[pos];
-  model->sampleOne(tag, pos);
+  model_unigram->sampleOne(tag, pos);
   insertFeature(feat, "unigram", -tag.sc[oldval]);
   return feat;
 }

@@ -103,7 +103,6 @@ ModelCRFGibbs::ModelCRFGibbs(const Corpus* corpus, const po::variables_map& vm)
    }
    // extract higher-order grams.
    for(int factor = 1; factor <= factorL; factor++) {
-    if(factor == 2) continue;
     for(int p = pos; p < pos+factor; p++) {
       if(p-factor+1 >= 0 && p < seqlen) {
 	extractXgramFeature(tag, p, factor, features);

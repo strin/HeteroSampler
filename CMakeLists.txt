@@ -17,7 +17,7 @@ find_package (Threads)
 ADD_DEFINITIONS(-DBoost_USE_STATIC_LIBS=ON)
 set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost COMPONENTS python program_options REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
 message("Include dirs of boost: " ${Boost_INCLUDE_DIRS} )
 message("Libs of boost: " ${Boost_LIBRARIES} )
 

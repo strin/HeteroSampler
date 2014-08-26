@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <thread>
 #include <chrono>
+#include <condition_variable>
 
 static long getFingerPrint(long iterations, long startSeed) { // random hash function taken from 6.816.
   const long m = (long) 0xFFFFFFFFFFFFL;

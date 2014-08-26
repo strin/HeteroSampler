@@ -175,7 +175,7 @@ namespace Tagging {
   }
 
   FeaturePointer ModelCRFGibbs::extractFeaturesAll(const Tag& tag) {
-    extractFeatAll(shared_from_this(), tag);
+    return extractFeatAll(shared_from_this(), tag);
   }
 
   void ModelCRFGibbs::sampleOneSweep(Tag& tag, bool argmax) {

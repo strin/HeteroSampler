@@ -2,7 +2,7 @@
 # learn model using ./pos, $1: task, $2: inference method.
 if [ $1 == "NER" ]; then 
   factorL=$4
-  cmd="./pos --inference $2 --T 10 --B 3 --train data/eng_ner/train --test data/eng_ner/test --eta 1 \
+  cmd="./pos --inference $2 --T 10 --B 3 --train data/eng_ner/train --test data/eng_ner/test --eta 0.1 \
     --depthL 2 --windowL "$3" --factorL "$factorL" --output model/ner_gibbs_w"$3"_d2_f"$factorL".model --scoring NER --Q 5"
   echo $cmd
   ($cmd) > ner_gibbs_w$3_d2_f$factorL.xml & 

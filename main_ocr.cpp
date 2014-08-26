@@ -106,6 +106,38 @@ int main(int argc, char* argv[]) {
         }
         return features;
       };
+      cast<ModelCRFGibbs>(model)->extractFeatAll = [] (ptr<Model> model, const Tag& tag) {
+        // default feature extraction, support literal sequence tagging.
+	assert(isinstance<ModelCRFGibbs>(model));
+	ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
+	size_t windowL = this_model->windowL;
+	size_t depthL = this_model->depthL;
+	size_t factorL = this_model->factorL;
+        assert((isinstance<CorpusOCR<16, 8> >(tag.corpus)));
+        const vector<TokenPtr>& sen = tag.seq->seq;
+        int seqlen = tag.size();
+        FeaturePointer features = makeFeaturePointer();
+	for(int pos = 0; pos < seqlen; pos++) {
+	  // extract unigram.
+	  for(int i = 0; i < 16; i++) {
+	    for(int j = 0; j < 8; j++) {
+	      string code = tag.corpus->invtags[tag.tag[pos]]+"  ";
+	      code[1] = i+'a';
+	      code[2] = j+'a';
+	      if(cast<TokenOCR<16, 8> >(sen[pos])->get(i, j) == 1) 
+		code[0] = code[0] - 'a' + 'A';
+	      insertFeature(features, code, 1); 
+	    }
+	  }
+	  // extract higher-order grams.
+	  for(int factor = 1; factor <= factorL; factor++) {
+	     if(pos-factor+1 >= 0) {
+	       extractXgramFeature(tag, pos, factor, features);
+	     }
+	  }
+	}
+        return features;
+      };
       model->run(testCorpus);
     }else if(inference == "Simple") {
       model = shared_ptr<Model>(new ModelSimple(corpus, vm));

@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 
 using namespace std;
+using namespace Tagging;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
@@ -50,13 +51,13 @@ int main(int argc, char* argv[]) {
 	return 1;
     }
     string train = vm["train"].as<string>(), test = vm["test"].as<string>();
-    Corpus corpus;
-    corpus.read(train, false);
-    Corpus testCorpus;
-    testCorpus.read(test, false);
+    ptr<CorpusLiteral> corpus = ptr<CorpusLiteral>(new CorpusLiteral());
+    corpus->read(train, false);
+    ptr<CorpusLiteral> testCorpus = ptr<CorpusLiteral>(new CorpusLiteral());
+    testCorpus->read(test, false);
     shared_ptr<Model> model;
     if(vm["inference"].as<string>() == "Gibbs") {
-      model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm));
+      model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
       std::ifstream file; 
       file.open(vm["model"].as<string>(), std::fstream::in);
       if(!file.is_open()) 
@@ -64,7 +65,7 @@ int main(int argc, char* argv[]) {
       file >> *model;
       file.close();
     }
-    corpus.computeWordFeat();
+    corpus->computeWordFeat();
 
     shared_ptr<Policy> policy;
     bool lets_model = vm["lets_model"].as<bool>();
@@ -117,7 +118,7 @@ int main(int argc, char* argv[]) {
       policy->lets_resp_reward = true;
       train_func(policy);
       shared_ptr<MultiCyclicValuePolicy> ptest;
-      auto compare = [] (pair<double, double> a, pair<double, double> b) {
+      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
 	return (a.first < b.first);
       };
       sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 
@@ -134,7 +135,6 @@ int main(int argc, char* argv[]) {
 	ptest->test(testCorpus);
 	ptest->resetLog(nullptr);
       }
-      system(("rm -r "+name).c_str());
     }else if(vm["policy"].as<string>() == "cyclic_value_shared") {
       string name = vm["name"].as<string>();
       const int fold = 10;
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
       policy->lets_resp_reward = true;
       train_func(policy);
       shared_ptr<CyclicValuePolicy> ptest;
-      auto compare = [] (pair<double, double> a, pair<double, double> b) {
+      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
 	return (a.first < b.first);
       };
       sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 

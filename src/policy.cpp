@@ -545,11 +545,18 @@ namespace Tagging {
       resp_reward.clear();
     Policy::trainPolicy(corpus);
     if(lets_resp_reward) {
-      lg->begin("resp_reward");
+      lg->begin("prec_recall");
+      const int fold = 10;
+      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
+      for(const pair<double, double>& p : getPrecRecall(fold_l, fold)) {
+	*lg << p.first << " " << p.second << endl;
+      }
+      lg->end(); // </prec_recall>
+      /*lg->begin("resp_reward");
       for(const pair<double, double>& p : resp_reward) {
 	*lg << p.first << " " << p.second << endl;
       }
-      lg->end(); // </resp_reward>
+      lg->end(); // </resp_reward>*/
     }
   }
 
@@ -580,6 +587,28 @@ namespace Tagging {
       node->time_stamp = i;
       return -1;
     }
+  }
+
+  // get precision-recall curve. 
+  std::vector<std::pair<double, double> > CyclicValuePolicy::getPrecRecall(const int fold_l[], const int fold) {
+    auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
+      return (a.first < b.first);
+    };
+    sort(resp_reward.begin(), resp_reward.end(), compare); 
+    vec<pair<double, double> > prec_rec;
+    for(int i = 0; i < fold; i++) {
+      double c = resp_reward[i * (resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+      int pred = 0, truth = 0, ac = 0;
+      for(const pair<double, double> p : resp_reward) {
+	if(p.second > 0) truth += 1; 
+	if(p.first > c) pred += 1; 
+	if(p.first > c and p.second > 0) ac += 1;
+      }
+      double prec = ac / (double)pred;
+      double recall = ac / (double)truth;
+      prec_rec.push_back(make_pair(prec, recall));
+    }
+    return prec_rec;
   }
 
   /////////////////////////////////////////////////////////////////////////////////////

@@ -17,7 +17,7 @@ class PolicyResult:
           if item.tag == 'corpus':
             me.corpus = item.text.replace('\n', '')
       if data.tag == 'train':
-        for item in data:
+	pass
       if data.tag == 'test':
         for item in data:
           if item.tag == 'param':

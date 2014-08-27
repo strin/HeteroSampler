@@ -6,9 +6,9 @@ using namespace std;
 namespace Tagging {
   StringVector NLPfunc(const string word) {
     StringVector nlp = makeStringVector();
-    // nlp->push_back(word);
+    nlp->push_back(word);
     size_t wordlen = word.length();
-    for(size_t k = 1; k <= 3; k++) {
+    for(size_t k = 1; k <= 4; k++) {
       if(wordlen > k) {
 	nlp->push_back("p"+to_string(k)+"-"+word.substr(0, k));
 	nlp->push_back("s"+to_string(k)+"-"+word.substr(wordlen-k, k));

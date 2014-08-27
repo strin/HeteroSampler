@@ -102,13 +102,6 @@ namespace Tagging {
       // extract word features. 
       FeaturePointer features = makeFeaturePointer();
       extractUnigramFeature(tag, pos, windowL, depthL, features);
-      // extract word bigram. (only for compatiblility, should be deleted).
-      if(pos >= 1) {
-        extractBigramFeature(tag, pos, features);
-      }
-      if(pos < seqlen-1) {
-        extractBigramFeature(tag, pos+1, features);
-      }
       // extract higher-order grams.
       for(int factor = 1; factor <= factorL; factor++) {
        for(int p = pos; p < pos+factor; p++) {
@@ -131,7 +124,7 @@ namespace Tagging {
       int seqlen = tag.size();
       // extract word features. 
       FeaturePointer features = makeFeaturePointer();
-      for(size_t pos = 0; pos < seqlen; pos++) {
+      for(int pos = 0; pos < seqlen; pos++) {
         // extract ILR features.
         extractUnigramFeature(tag, pos, windowL, depthL, features);
         // extract higher-order grams.
@@ -164,8 +157,12 @@ namespace Tagging {
   TagVector ModelCRFGibbs::sample(const Sentence& seq, bool argmax) { 
     TagVector vec;
     TagPtr tag = makeTagPtr(&seq, corpus, &rngs[0], param);
-    this->sample(*tag, T, argmax);
-    vec.push_back(tag);
+    for(int t = 0; t < T; t++) {
+      this->sample(*tag, 1, argmax);
+      if(t < B) continue;  
+      vec.push_back(tag);
+      tag = TagPtr(new Tag(*tag));
+    }
     return vec;
   }
 

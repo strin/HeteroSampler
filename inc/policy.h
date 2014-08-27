@@ -161,6 +161,7 @@ namespace Tagging {
 
     bool lets_resp_reward;
     std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
+    std::vector<std::pair<double, double> > getPrecRecall(const int fold[], const int num_fold);
   };
 
   class MultiCyclicValuePolicy : public CyclicValuePolicy {

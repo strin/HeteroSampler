@@ -5,6 +5,7 @@
 #define USE_FEAT_ENTROPY 1
 #define USE_FEAT_ALL 1
 #define USE_FEAT_BIAS 1
+#define USE_ORACLE 1
 
 namespace po = boost::program_options;
 
@@ -341,6 +342,12 @@ namespace Tagging {
       insertFeature(feat, wordfeat);
     }
 #endif
+#if USE_ORACLE == 1
+      int oldval = node->tag->tag[pos];
+      Tag temp(tag);
+      model->sampleOne(temp, pos);          
+      insertFeature(feat, "oracle", -temp.sc[oldval]);
+#endif
     return feat;
   }
 
@@ -563,24 +570,11 @@ namespace Tagging {
 	}
 	lg->end();
       }
-      /*lg->begin("resp_reward");
-      for(const pair<double, double>& p : resp_reward) {
-	*lg << p.first << " " << p.second << endl;
-      }
-      lg->end(); // </resp_reward>*/
     }
   }
 
   void CyclicValuePolicy::testPolicy(Policy::ResultPtr result) {
     Policy::testPolicy(result);
-    lg->begin("prec_recall");
-    const int fold = 10;
-    const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-    for(const pair<double, double>& p : getPrecRecall(fold_l, fold, test_resp_reward)) {
-      cout << p.first << " " << p.second << endl;
-      *lg << p.first << " " << p.second << endl;
-    }
-    lg->end(); // </prec_recall>
   }
 
   // will update gradient of transition.
@@ -683,7 +677,7 @@ namespace Tagging {
 	  node->tag->mask[pos] = 0;
 	}
       }
-      // node->time_stamp = i;
+      node->time_stamp = i;
       return -1;
     }
   }
@@ -739,7 +733,7 @@ namespace Tagging {
       if(node->time_stamp >= pass * node->tag->size()) {
 	lg->begin("pass_"+boost::lexical_cast<string>(pass));
 	  lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
-	  lg->begin("feat"); 
+	 /* lg->begin("feat"); 
 	  *lg << *this->extractFeatures(node, node->time_stamp % node->tag->size());
 	  lg->end(); // </feat> */
 	  lg->begin("resp");

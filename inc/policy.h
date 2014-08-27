@@ -37,6 +37,7 @@ namespace Tagging {
     // return: accuracy on the test set.
     ResultPtr test(ptr<Corpus> testCorpus);
     void test(ResultPtr result);
+    virtual void testPolicy(ResultPtr result);
 
     // apply gradient from samples to policy.
     virtual void gradientPolicy(MarkovTree& tree);
@@ -159,9 +160,12 @@ namespace Tagging {
     // training.
     virtual void trainPolicy(ptr<Corpus> corpus);
 
+    // testing.
+    virtual void testPolicy(Policy::ResultPtr result);
+
     bool lets_resp_reward;
     std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
-    std::vector<std::pair<double, double> > getPrecRecall(const int fold[], const int num_fold);
+    std::vector<std::pair<double, double> > getPrecRecall(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);
   };
 
   class MultiCyclicValuePolicy : public CyclicValuePolicy {
@@ -180,6 +184,17 @@ namespace Tagging {
 
   protected:
     size_t T;
+  };
+
+  class MultiCyclicValueUnigramPolicy : public MultiCyclicValuePolicy {
+  public:
+    MultiCyclicValueUnigramPolicy(ModelPtr model, ModelPtr model_unigram, const boost::program_options::variables_map& vm);
+
+    // add features inpired by the unigram.
+    virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+
+  protected:
+    ModelPtr model_unigram;
   };
 }
 #endif

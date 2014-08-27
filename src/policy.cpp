@@ -3,7 +3,7 @@
 #include <boost/lexical_cast.hpp>
 
 #define USE_FEAT_ENTROPY 1
-#define USE_FEAT_ALL 0
+#define USE_FEAT_ALL 1
 #define USE_FEAT_BIAS 1
 
 namespace po = boost::program_options;
@@ -41,17 +41,6 @@ namespace Tagging {
     tag_unigram_start = tag_bigram_unigram.second;
     system(("mkdir -p "+name).c_str());
     lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
-    lg->begin("args");
-      lg->begin("corpus");
-	*lg << vm["train"].as<string>() << endl;
-      lg->end();
-      lg->begin("wordent_mean");
-	*lg << wordent_mean << endl;
-      lg->end();
-      lg->begin("wordfreq_mean");
-	*lg << wordfreq_mean << endl;
-      lg->end();
-    lg->end();
   }
 
   Policy::~Policy() {
@@ -137,6 +126,14 @@ namespace Tagging {
   }
 
   void Policy::trainPolicy(ptr<Corpus> corpus) {
+    lg->begin("args");
+      lg->begin("wordent_mean");
+	*lg << wordent_mean << endl;
+      lg->end();
+      lg->begin("wordfreq_mean");
+	*lg << wordfreq_mean << endl;
+      lg->end();
+    lg->end();
     corpus->retag(model->corpus);
     size_t count = 0;
     for(const SentencePtr seq : corpus->seqs) {
@@ -146,7 +143,7 @@ namespace Tagging {
       if(verbose)
 	lg->begin("example_"+to_string(count));
       MarkovTree tree;
-      Tag tag(seq.get(), model->corpus, &rng, model->param);
+      Tag tag(seq.get(), corpus, &rng, model->param);
       tree.root->log_weight = -DBL_MAX;
       for(size_t k = 0; k < K; k++) {
 	MarkovTreeNodePtr node = addChild(tree.root, tag);
@@ -198,7 +195,7 @@ namespace Tagging {
       if(count % 1000 == 0) 
 	cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
       MarkovTree tree;
-      Tag tag(seq.get(), model->corpus, &rng, model->param);
+      Tag tag(seq.get(), corpus, &rng, model->param);
       tree.root->log_weight = -DBL_MAX;
       for(size_t k = 0; k < K; k++) {
 	MarkovTreeNodePtr node = addChild(tree.root, tag);
@@ -223,13 +220,18 @@ namespace Tagging {
     test(result);
     return result;
   }
-
+  
   void Policy::test(Policy::ResultPtr result) {
     cout << "> test " << endl;
     lg->begin("test");
     lg->begin("param");
     *lg << *param;
     lg->end(); // </param>
+    this->testPolicy(result);
+    lg->end(); // </test>
+  }
+
+  void Policy::testPolicy(Policy::ResultPtr result) {
     assert(result != nullptr);
     size_t count = 0;
     lg->begin("example");
@@ -290,7 +292,6 @@ namespace Tagging {
       lg->begin("time");
       *lg << result->time << endl;
       lg->end(); // </time>
-      lg->end(); // </test>
       result->score = accuracy;
     }else if(model->scoring == Model::SCORING_NER) {
       double f1 = 2 * accuracy * recall / (accuracy + recall);
@@ -301,7 +302,6 @@ namespace Tagging {
       lg->begin("time");
       *lg << result->time << endl;
       lg->end(); // </time>
-      lg->end(); // </test>
       result->score = f1;
     }
     result->score = -1;
@@ -326,11 +326,12 @@ namespace Tagging {
       insertFeature(feat, "ent", (*wordent)[word]);
 #endif
 #if USE_FEAT_ALL == 1
+    ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(this->model->corpus);
     if(wordfreq->find(word) == wordfreq->end())
-      insertFeature(feat, "freq", log(model->corpus->total_words)-wordfreq_mean);
+      insertFeature(feat, "freq", log(corpus->total_words)-wordfreq_mean);
     else
       insertFeature(feat, "freq", (*wordfreq)[word]);
-    StringVector nlp = NLPfunc(word);
+    StringVector nlp = corpus->getWordFeat(word);
     for(const string wordfeat : *nlp) {
       if(wordfeat == word) continue; 
       string lowercase = word;
@@ -448,14 +449,15 @@ namespace Tagging {
 #endif
 #if USE_FEAT_ALL == 1
     if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
-      string tg = model->corpus->invtags.find(node->tag->tag[pos])->second;
+      ptr<Corpus> corpus = model->corpus;
+      string tg = corpus->invtags[node->tag->tag[pos]];
       if(pos >= 1) {
-	string prev_tg = model->corpus->invtags.find(node->tag->tag[pos-1])->second;
+	string prev_tg = corpus->invtags[node->tag->tag[pos-1]];
 	if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
 	  insertFeature(feat, "bad");
       }
       if(pos < node->tag->size()-1) {
-	string next_tg = model->corpus->invtags.find(node->tag->tag[pos+1])->second;
+	string next_tg = corpus->invtags[node->tag->tag[pos+1]];
 	if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
 	  insertFeature(feat, "bad");
       }
@@ -539,6 +541,7 @@ namespace Tagging {
   }
 
   void CyclicValuePolicy::trainPolicy(ptr<Corpus> corpus) {
+    cout << "cyclic value train (lets_resp_reward = " << lets_resp_reward << ")"  << endl;
     if(lets_resp_reward and K > 1 and thread_pool.numThreads() > 1) 
       throw "multithread environment cannot record reward.";
     if(lets_resp_reward) 
@@ -548,16 +551,36 @@ namespace Tagging {
       lg->begin("prec_recall");
       const int fold = 10;
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-      for(const pair<double, double>& p : getPrecRecall(fold_l, fold)) {
+      for(const pair<double, double>& p : getPrecRecall(fold_l, fold, resp_reward)) {
+	cout << p.first << " " << p.second << endl;
 	*lg << p.first << " " << p.second << endl;
       }
       lg->end(); // </prec_recall>
+      if(verbose) {
+	lg->begin("resp_reward");
+	for(const pair<double, double>& p : resp_reward) {
+	  *lg << p.first << " " << p.second << endl; 
+	}
+	lg->end();
+      }
       /*lg->begin("resp_reward");
       for(const pair<double, double>& p : resp_reward) {
 	*lg << p.first << " " << p.second << endl;
       }
       lg->end(); // </resp_reward>*/
     }
+  }
+
+  void CyclicValuePolicy::testPolicy(Policy::ResultPtr result) {
+    Policy::testPolicy(result);
+    lg->begin("prec_recall");
+    const int fold = 10;
+    const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
+    for(const pair<double, double>& p : getPrecRecall(fold_l, fold, test_resp_reward)) {
+      cout << p.first << " " << p.second << endl;
+      *lg << p.first << " " << p.second << endl;
+    }
+    lg->end(); // </prec_recall>
   }
 
   // will update gradient of transition.
@@ -590,7 +613,8 @@ namespace Tagging {
   }
 
   // get precision-recall curve. 
-  std::vector<std::pair<double, double> > CyclicValuePolicy::getPrecRecall(const int fold_l[], const int fold) {
+  std::vector<std::pair<double, double> > CyclicValuePolicy::getPrecRecall(const int fold_l[], const int fold, 
+	std::vector<std::pair<double, double> >& resp_reward) {
     auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
       return (a.first < b.first);
     };
@@ -611,7 +635,22 @@ namespace Tagging {
     return prec_rec;
   }
 
-  /////////////////////////////////////////////////////////////////////////////////////
+  ///////// MultiCyclicValueUnigramPolicy ////////////////////////////////
+  MultiCyclicValueUnigramPolicy::MultiCyclicValueUnigramPolicy(ModelPtr model, 
+      ModelPtr model_unigram, const po::variables_map& vm)
+  : MultiCyclicValuePolicy(model, vm), model_unigram(model_unigram) { 
+  }
+
+  FeaturePointer MultiCyclicValueUnigramPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
+    FeaturePointer feat = MultiCyclicValuePolicy::extractFeatures(node, pos);
+    Tag tag(*node->tag);
+    int oldval = tag.tag[pos];
+    model_unigram->sampleOne(tag, pos);
+    int pass = node->time_stamp / node->tag->size();
+    insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", -tag.sc[oldval]);
+    return feat;
+  }
+
   //////// Multi Cyclic Value Policy /////////////////////////////////////////////////
   MultiCyclicValuePolicy::MultiCyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
   :CyclicValuePolicy(model, vm), 
@@ -629,11 +668,14 @@ namespace Tagging {
       size_t i = node->time_stamp + 1;
       node->gradient = makeParamPointer();
       for(; i < T * node->tag->size(); i++) {      
-	size_t pos = i % node->tag->size();
 	node->time_stamp = i;
+	size_t pos = i % node->tag->size();
 	FeaturePointer feat = this->extractFeatures(node, pos);
 	double resp = Tagging::score(param, feat);
 	node->tag->resp[pos] = resp;
+	if(lets_resp_reward) {
+	  this->test_resp_reward.push_back(make_pair(resp, 0));
+	}
 	if(resp > c) { 
 	  node->tag->mask[pos] = 1;
 	  return pos;
@@ -641,7 +683,7 @@ namespace Tagging {
 	  node->tag->mask[pos] = 0;
 	}
       }
-      node->time_stamp = i;
+      // node->time_stamp = i;
       return -1;
     }
   }
@@ -695,14 +737,11 @@ namespace Tagging {
     size_t pass = 1;
     while(true) {
       if(node->time_stamp >= pass * node->tag->size()) {
-	pass += 1;
 	lg->begin("pass_"+boost::lexical_cast<string>(pass));
 	  lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
-	  for(size_t i = 0; i < node->tag->size(); i++) {
-	    lg->begin("feat"); 
-	    *lg << *this->extractFeatures(node, i);
-	    lg->end(); // </feat> */
-	  }
+	  lg->begin("feat"); 
+	  *lg << *this->extractFeatures(node, node->time_stamp % node->tag->size());
+	  lg->end(); // </feat> */
 	  lg->begin("resp");
 	  for(size_t i = 0; i < node->tag->size(); i++) {
 	    *lg << node->tag->resp[i] << "\t";            
@@ -723,6 +762,7 @@ namespace Tagging {
 	  lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
 	  lg->end(); // </mask>
 	lg->end(); // </pass>
+	pass += 1;
       }
       if(node->children.size() > 0)
 	node = node->children[0]; // take final sample.

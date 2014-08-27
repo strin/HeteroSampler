@@ -6,7 +6,7 @@ import corpus
 import itertools
 
 class PolicyResult:
-  def __init__(me, name):
+  def __init__(me, name, lets_test=False):
     me.name = name
     me.tree = ElementTree.parse(me.name+'/policy.xml')
     me.root = me.tree.getroot()
@@ -30,7 +30,8 @@ class PolicyResult:
           elif item.tag == 'time':
             me.time = float(item.text)
           elif item.tag == 'example':
-            me.parse_test(item)
+            if lets_test:
+              me.parse_test(item)
           
   def parse_test_datapoint(me, node):
     exp = dict()

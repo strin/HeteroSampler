@@ -715,7 +715,7 @@ FeaturePointer MultiCyclicValueUnigramPolicy::extractFeatures(MarkovTreeNodePtr 
   Tag tag(*node->tag);
   int oldval = tag.tag[pos];
   model_unigram->sampleOne(tag, pos);
-  insertFeature(feat, "unigram", -tag.sc[oldval]);
+  // insertFeature(feat, "unigram", -tag.sc[oldval]);
   return feat;
 }
 
@@ -743,6 +743,9 @@ int CyclicOracle::policy(MarkovTreeNodePtr node) {
       model->sampleOne(tag, pos);          
       double resp = -tag.sc[oldval];
       node->tag->resp[pos] = resp;
+      thread_pool.lock();
+      test_resp_reward.push_back(make_pair(resp, 0));
+      thread_pool.unlock();
       if(resp > c) { 
 	node->tag->mask[pos] = 1;
 	return pos;

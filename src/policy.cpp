@@ -558,9 +558,9 @@ namespace Tagging {
       lg->begin("prec_recall");
       const int fold = 10;
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-      for(const pair<double, double>& p : getPrecRecall(fold_l, fold, resp_reward)) {
-	cout << p.first << " " << p.second << endl;
-	*lg << p.first << " " << p.second << endl;
+      for(const ROC& roc : getROC(fold_l, fold, resp_reward)) {
+	cout << roc.str() << endl;
+	*lg << roc.str() << endl;
       }
       lg->end(); // </prec_recall>
       if(verbose) {
@@ -607,26 +607,31 @@ namespace Tagging {
   }
 
   // get precision-recall curve. 
-  std::vector<std::pair<double, double> > CyclicValuePolicy::getPrecRecall(const int fold_l[], const int fold, 
+  vec<Policy::ROC> CyclicValuePolicy::getROC(const int fold_l[], const int fold, 
 	std::vector<std::pair<double, double> >& resp_reward) {
     auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
       return (a.first < b.first);
     };
     sort(resp_reward.begin(), resp_reward.end(), compare); 
-    vec<pair<double, double> > prec_rec;
+    vec<ROC> roc_list;
     for(int i = 0; i < fold; i++) {
       double c = resp_reward[i * (resp_reward.size()-1)/(double)fold_l[fold-1]].first;
-      int pred = 0, truth = 0, ac = 0;
+      ROC roc; 
       for(const pair<double, double> p : resp_reward) {
-	if(p.second > 0) truth += 1; 
-	if(p.first > c) pred += 1; 
-	if(p.first > c and p.second > 0) ac += 1;
+	bool pos = p.first > c;
+	bool tr = (p.second > 0) == (p.first > c) ;
+	roc.TP += pos and tr;
+	roc.TN += !pos and tr; 
+	roc.FP += pos and !tr;
+	roc.FN += !pos and !tr;
       }
-      double prec = ac / (double)pred;
-      double recall = ac / (double)truth;
-      prec_rec.push_back(make_pair(prec, recall));
+      roc.prec_sample = roc.TP / (roc.TP + roc.FP);
+      roc.prec_stop = roc.TN / (roc.TN + roc.FN);
+      roc.recall_sample = roc.TP / (roc.TP + roc.FN);
+      roc.recall_stop = roc.TN / (roc.TN + roc.FP);
+      roc_list.push_back(roc);
     }
-    return prec_rec;
+    return roc_list;
   }
 
   ///////// MultiCyclicValueUnigramPolicy ////////////////////////////////

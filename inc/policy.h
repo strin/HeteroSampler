@@ -28,6 +28,21 @@ namespace Tagging {
       double score;
       double time;
     };
+    struct ROC {
+    public:
+      ROC() : TP(0), FP(0), TN(0), FN(0) {}
+      double TP, FP, TN, FN;
+      double prec_sample, prec_stop, recall_sample, recall_stop;
+      string str() const {
+	string res = "";
+	res += "prec/sample (" + std::to_string(prec_sample) + ")\t";
+	res += "recall/sample (" + std::to_string(recall_sample) + ")\t";
+	res += "prec/stop (" + std::to_string(prec_stop) + ")\t";
+	res += "recall/stop (" + std::to_string(recall_stop) + ")\t";
+	return res;
+      }
+    };
+
     typedef std::shared_ptr<Result> ResultPtr;
     inline static ResultPtr makeResultPtr(ptr<Corpus> corpus) {
       return ResultPtr(new Result(corpus));
@@ -164,8 +179,12 @@ namespace Tagging {
     virtual void testPolicy(Policy::ResultPtr result);
 
     bool lets_resp_reward;
-    std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
-    std::vector<std::pair<double, double> > getPrecRecall(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);
+    vec<pair<double, double> > resp_RL; 
+    vec<pair<double, double> > resp_RH;
+    vec<pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
+      
+    // compute TP, FP, TN, FN.
+    vec<ROC> getROC(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);
   };
 
   class MultiCyclicValuePolicy : public CyclicValuePolicy {

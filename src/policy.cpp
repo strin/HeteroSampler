@@ -6,7 +6,7 @@
 #define USE_FEAT_CONDENT 0
 #define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
-#define USE_ORACLE 0
+#define USE_ORACLE 1
 
 namespace po = boost::program_options;
 
@@ -588,7 +588,7 @@ namespace Tagging {
     if(lets_resp_reward) {
       const int fold = 10;
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-      auto logRespReward = [&] (vec<pair<double, double> > p) {
+      auto logRespReward = [&] (vec<pair<double, double> >& p) {
 	for(const ROC& roc : getROC(fold_l, fold, p)) {
 	  cout << roc.str() << endl;
 	  *lg << roc.str() << endl;
@@ -650,7 +650,8 @@ namespace Tagging {
     };
     sort(resp_reward.begin(), resp_reward.end(), compare); 
     vec<ROC> roc_list;
-    for(int i = 0; i < fold; i++) {
+    for(int j = 0; j < fold; j++) {
+      int i = fold_l[j];
       double c = resp_reward[i * (resp_reward.size()-1)/(double)fold_l[fold-1]].first;
       ROC roc; 
       for(const pair<double, double> p : resp_reward) {
@@ -720,6 +721,9 @@ namespace Tagging {
 	  double logR = reward - reward_baseline; 
 	  test_resp_reward.push_back(make_pair(resp, logR));
 	  test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+	  if(reward_baseline == 0_ {
+	    cout << "resp = " << resp << endl;
+	  }
 	  test_resp_RL.push_back(make_pair(resp, logR));
 	  test_thread_pool.unlock();
 	}

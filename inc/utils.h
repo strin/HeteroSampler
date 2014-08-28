@@ -162,9 +162,9 @@ namespace Tagging {
     }
   }
 
-  template<class K, class T>
+  template<class K>
   static void mapReset(std::unordered_map<std::string, K>& g, double eta = 1.0) {
-    for(const std::pair<std::string, T>& p : g) {
+    for(const std::pair<std::string, K>& p : g) {
       g[p.first] = eta;
     }
   }

@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 	("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
 	("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
 	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
-    ;
+	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);    
@@ -157,6 +157,7 @@ int main(int argc, char* argv[]) {
       system(("mkdir -p " + name + "_train").c_str());
       policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
       train_func(policy);
+      if(vm["lets_notrain"].as<bool>()) mapReset(*policy->param, 1);
       policy->test(testCorpus);
       policy->resetLog(nullptr);
       shared_ptr<MultiCyclicValueUnigramPolicy> ptest;

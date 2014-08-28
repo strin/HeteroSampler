@@ -555,13 +555,22 @@ namespace Tagging {
       resp_reward.clear();
     Policy::trainPolicy(corpus);
     if(lets_resp_reward) {
-      lg->begin("prec_recall");
       const int fold = 10;
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-      for(const ROC& roc : getROC(fold_l, fold, resp_reward)) {
-	cout << roc.str() << endl;
-	*lg << roc.str() << endl;
-      }
+      auto logRespReward = [&] (vec<pair<double, double> > p) {
+	for(const ROC& roc : getROC(fold_l, fold, p)) {
+	  cout << roc.str() << endl;
+	  *lg << roc.str() << endl;
+	}
+      };
+      lg->begin("roc_R");
+	logRespReward(resp_reward);
+      lg->end(); // </prec_recall>
+      lg->begin("roc_RL");
+	logRespReward(resp_RL);
+      lg->end(); // </prec_recall>
+      lg->begin("roc_RH");
+	logRespReward(resp_RH);
       lg->end(); // </prec_recall>
       if(verbose) {
 	lg->begin("resp_reward");
@@ -713,6 +722,8 @@ namespace Tagging {
 	  if(lets_resp_reward) {
 	    thread_pool.lock();
 	    resp_reward.push_back(make_pair(resp, logR));
+	    resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+	    resp_RL.push_back(make_pair(resp, logR));
 	    thread_pool.unlock();
 	  }
 	  mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 

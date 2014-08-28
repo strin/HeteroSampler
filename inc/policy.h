@@ -178,10 +178,11 @@ namespace Tagging {
     // testing.
     virtual void testPolicy(Policy::ResultPtr result);
 
+    // response-reward pair.
     bool lets_resp_reward;
-    vec<pair<double, double> > resp_RL; 
-    vec<pair<double, double> > resp_RH;
-    vec<pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
+    vec<pair<double, double> > resp_RL; // incr in correctness, lower bound of R. 
+    vec<pair<double, double> > resp_RH; // whether incorrect, upper bound of R.
+    vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.
       
     // compute TP, FP, TN, FN.
     vec<ROC> getROC(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);

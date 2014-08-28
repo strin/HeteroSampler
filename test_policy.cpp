@@ -121,6 +121,7 @@ int main(int argc, char* argv[]) {
       system(("mkdir -p " + name + "_train").c_str());
       policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
       train_func(policy);
+      if(vm["lets_notrain"].as<bool>()) mapReset(*policy->param, 1);
       policy->test(testCorpus);
       policy->resetLog(nullptr);
       shared_ptr<MultiCyclicValuePolicy> ptest;

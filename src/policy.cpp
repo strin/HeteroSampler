@@ -3,9 +3,10 @@
 #include <boost/lexical_cast.hpp>
 
 #define USE_FEAT_ENTROPY 0
+#define USE_FEAT_CONDENT 1
 #define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
-#define USE_ORACLE 1
+#define USE_ORACLE 0
 
 namespace po = boost::program_options;
 
@@ -451,7 +452,7 @@ namespace Tagging {
 
   FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = Policy::extractFeatures(node, pos);
-#if USE_FEAT_ENTROPY == 1
+#if USE_FEAT_CONDENT == 1
     insertFeature(feat, "model-ent", node->tag->entropy[pos]);
 #endif
 #if USE_FEAT_ALL == 1

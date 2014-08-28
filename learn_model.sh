@@ -34,9 +34,9 @@ elif [ $1 == "Czech" ]; then
     ($cmd) > result/czech_gibbs_w$windowL.xml &
   done
 elif [ $1 == "OCR" ]; then
-  path=max_sample_eta_1
+  path=adagrad1
   factorL=$3
-  cmd="./ocr --inference $2 --T 16 --B 5 --train data/ocr/train0 --test data/ocr/test0 --eta 1 --factorL $factorL  --output model/$path/ocr_f$factorL.model --scoring Acc --Q 3 " 
+  cmd="./ocr --inference $2 --T 8 --B 5 --train data/ocr/train0 --test data/ocr/test0 --eta 0.3 --factorL $factorL  --output model/$path/ocr_f$factorL.model --scoring Acc --Q 3 " 
   echo $cmd
   mkdir -p model/$path
   mkdir -p result/$path

@@ -214,7 +214,7 @@ namespace Tagging {
       if(stepsize->find(p.first) != stepsize->end()) {
 	this_eta = (*stepsize)[p.first];
       }
-      mapUpdate(*param, p.first, this_eta * p.second/sqrt(1e-4 + (*G2)[p.first]));
+      mapUpdate(*param, p.first, this_eta * p.second/sqrt(1 + (*G2)[p.first]));
     }
   }
 

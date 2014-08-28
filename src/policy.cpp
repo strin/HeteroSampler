@@ -585,6 +585,32 @@ namespace Tagging {
 
   void CyclicValuePolicy::testPolicy(Policy::ResultPtr result) {
     Policy::testPolicy(result);
+    if(lets_resp_reward) {
+      const int fold = 10;
+      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
+      auto logRespReward = [&] (vec<pair<double, double> > p) {
+	for(const ROC& roc : getROC(fold_l, fold, p)) {
+	  cout << roc.str() << endl;
+	  *lg << roc.str() << endl;
+	}
+      };
+      lg->begin("test_roc_R");
+	logRespReward(test_resp_reward);
+      lg->end(); // </prec_recall>
+      lg->begin("test_roc_RL");
+	logRespReward(test_resp_RL);
+      lg->end(); // </prec_recall>
+      lg->begin("test_roc_RH");
+	logRespReward(test_resp_RH);
+      lg->end(); // </prec_recall>
+      if(verbose) {
+	lg->begin("resp_reward");
+	for(const pair<double, double>& p : test_resp_reward) {
+	  *lg << p.first << " " << p.second << endl; 
+	}
+	lg->end();
+      }
+    }
   }
 
   // will update gradient of transition.
@@ -684,7 +710,17 @@ namespace Tagging {
 	node->tag->resp[pos] = resp;
 	if(lets_resp_reward) {
 	  test_thread_pool.lock();
-	  this->test_resp_reward.push_back(make_pair(resp, 0));
+	  Tag tag(*node->tag);
+	  auto is_equal = [&] () {
+	    return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
+	  };
+	  double reward_baseline = is_equal();
+	  model->sampleOne(tag, pos);
+	  double reward = is_equal();
+	  double logR = reward - reward_baseline; 
+	  test_resp_reward.push_back(make_pair(resp, logR));
+	  test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+	  test_resp_RL.push_back(make_pair(resp, logR));
 	  test_thread_pool.unlock();
 	}
 	if(resp > c) { 

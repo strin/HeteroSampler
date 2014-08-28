@@ -180,8 +180,8 @@ namespace Tagging {
 
     // response-reward pair.
     bool lets_resp_reward;
-    vec<pair<double, double> > resp_RL; // incr in correctness, lower bound of R. 
-    vec<pair<double, double> > resp_RH; // whether incorrect, upper bound of R.
+    vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R. 
+    vec<pair<double, double> > resp_RH, test_resp_RH; // whether incorrect, upper bound of R.
     vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.
       
     // compute TP, FP, TN, FN.

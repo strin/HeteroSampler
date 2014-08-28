@@ -3,7 +3,7 @@
 #include <boost/lexical_cast.hpp>
 
 #define USE_FEAT_ENTROPY 0
-#define USE_FEAT_CONDENT 0
+#define USE_FEAT_CONDENT 1
 #define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
 #define USE_ORACLE 0
@@ -789,7 +789,9 @@ namespace Tagging {
 	lg->begin("pass_"+boost::lexical_cast<string>(pass));
 	  lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
 	  lg->begin("feat"); 
-	  *lg << *this->extractFeatures(node, node->time_stamp % node->tag->size());
+	  for(size_t i = 0; i < node->tag->size(); i++) {
+	    *lg << *this->extractFeatures(node, i) << endl;
+	  }
 	  lg->end(); // </feat> 
 	  lg->begin("resp");
 	  for(size_t i = 0; i < node->tag->size(); i++) {

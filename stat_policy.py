@@ -1,9 +1,26 @@
 import xml.etree.ElementTree as ElementTree
+from lxml import etree as Etree
 import numpy as np
 import os, sys
 import numpy.random as npr
 import corpus
 import itertools
+
+# policy result without case analysis.
+class PolicyResultLite:
+  def __init__(me, name):
+    me.name = name
+    me.tree = Etree.parse(me.name)
+    me.root = me.tree.getroot()
+    me.acc = float(me.root.findall('./test/accuracy')[0].text)
+    me.time = float(me.root.findall('./test/time')[0].text)
+    me.RL = me.root.findall('./test/test_roc_RL')
+    if me.RL != []:
+      me.RL = me.RL[0].text
+    me.RH = me.root.findall('./test/test_roc_RH')
+    if me.RH != []:
+      me.RH = me.RH[0].text
+
 
 class PolicyResult:
   def __init__(me, name):

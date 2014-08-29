@@ -1,6 +1,7 @@
 #include "corpus.h"
 #include "objcokus.h"
 #include "tag.h"
+#include "feature.h"
 #include "model.h"
 #include "utils.h"
 #include "policy.h"
@@ -18,6 +19,7 @@ int main(int argc, char* argv[]) {
     desc.add_options()
 	("help", "produce help message")
 	("inference", po::value<string>()->default_value("Gibbs"), "inference method (Gibbs)")
+	("dataset", po::value<string>()->default_value("literal"), "type of dataset to use (literal, ocr)")
 	("model", po::value<string>()->default_value("model/gibbs.model"), "use saved model to do the inference")
 	("unigram_model", po::value<string>()->default_value("model/gibbs.model"), "use a unigram (if necessary)")
 	("policy", po::value<string>()->default_value("entropy"), "sampling policy")
@@ -52,10 +54,19 @@ int main(int argc, char* argv[]) {
 	return 1;
     }
     string train = vm["train"].as<string>(), test = vm["test"].as<string>();
-    ptr<CorpusLiteral> corpus = ptr<CorpusLiteral>(new CorpusLiteral());
+    string dataset = vm["dataset"].as<string>();
+    ptr<Corpus> corpus, testCorpus;
+    if(dataset == "literal") {
+      corpus = ptr<Corpus>(new CorpusLiteral());
+      testCorpus = ptr<Corpus>(new CorpusLiteral());
+      cast<CorpusLiteral>(corpus)->computeWordFeat();
+    }else if(dataset == "ocr") {
+      corpus = ptr<Corpus>(new CorpusOCR<16, 8>());
+      testCorpus = ptr<Corpus>(new CorpusOCR<16, 8>());
+    }
     corpus->read(train, false);
-    ptr<CorpusLiteral> testCorpus = ptr<CorpusLiteral>(new CorpusLiteral());
     testCorpus->read(test, false);
+
     shared_ptr<Model> model;
     if(vm["inference"].as<string>() == "Gibbs") {
       model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
@@ -65,8 +76,11 @@ int main(int argc, char* argv[]) {
 	throw (vm["model"].as<string>()+" not found.").c_str();
       file >> *model;
       file.close();
+      if(dataset == "ocr") {
+	cast<ModelCRFGibbs>(model)->extractFeatures = extractOCR;
+	cast<ModelCRFGibbs>(model)->extractFeatAll = extractOCRAll; 
+      }
     }
-    corpus->computeWordFeat();
 
     shared_ptr<Policy> policy;
     bool lets_model = vm["lets_model"].as<bool>();

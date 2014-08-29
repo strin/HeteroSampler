@@ -79,13 +79,24 @@ def ner_multi_policy_shared(w, f, test_count, notrain=False):
     print cmd
     run(cmd + ' &')  
 
-def ocr_multi_policy_shared(f, test_count):
+def ocr_multi_policy_shared(f, test_count, notrain=False):
     cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name '''+path
     cmd += "/ocr_f%d_tc%d_multi_policy " % (f, test_count)
     cmd += " --K 1 --numThreads 10 --model model/ocr_f%d.model " % (f)
     cmd += " --scoring Acc --windowL 0 --trainCount %d --testCount %d " % (test_count, test_count) 
-    cmd += " --T 4 --depthL 0 --factorL %d --verbose false --train data/ocr/train0 --test data/ocr/test0 " % f
-    cmd += " --dataset ocr "
+    cmd += " --T 8 --depthL 0 --factorL %d --verbose false --train data/ocr/train0 --test data/ocr/test0 " % f
+    cmd += " --dataset ocr --lets_notrain %s " % toBool(notrain)
+    print cmd
+    run(cmd + ' &')  
+
+def ocr_multi_policy_unigram_shared(f, test_count, notrain=False):
+    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_unigram_shared --name '''+path
+    cmd += "/ocr_f%d_tc%d_multi_policy " % (f, test_count)
+    cmd += " --K 1 --numThreads 10 --model model/ocr_f%d.model " % (f)
+    cmd += " --unigram_model model/ocr_f1.model " 
+    cmd += " --scoring Acc --windowL 0 --trainCount %d --testCount %d " % (test_count, test_count) 
+    cmd += " --T 8 --depthL 0 --factorL %d --verbose false --train data/ocr/train0 --test data/ocr/test0 " % f
+    cmd += " --dataset ocr --lets_notrain %s " % toBool(notrain)
     print cmd
     run(cmd + ' &')  
 
@@ -256,6 +267,7 @@ for f in [1,2,3,4]:
   farm.add('ner/multi_policy/w2/toy/f%d'%f, lambda f=f: ner_multi_policy_shared(2, f, TOY)) 
   farm.add('ocr/multi_policy/full/f%d'%f, lambda f=f: ocr_multi_policy_shared(f, FULL)) 
   farm.add('ocr/multi_policy/toy/f%d'%f, lambda f=f: ocr_multi_policy_shared(f, TOY)) 
+  farm.add('ocr/multi_policy_unigram/full/f%d'%f, lambda f=f: ocr_multi_policy_unigram_shared(f, FULL)) 
 
 
   '''

@@ -56,10 +56,10 @@ def ner_gibbs_shared(w, f, test_count, T):
 
 def ocr_gibbs_shared(f, test_count, T):
     cmd = '''./policy --inference Gibbs --policy gibbs_shared --name '''+path
-    cmd += "/ocr_f%d_tc%d_gibbs " % (f, tc) 
+    cmd += "/ocr_f%d_tc%d_gibbs " % (f, test_count) 
     cmd += " --T %d --numThreads 10 --model model/ocr_f%d.model " % (T, f)
-    cmd += " --scoring Acc --windowL 0 --depthL 0 --trainCount %d --testCount %d " % (test_count, test_count) \
-    cmd += " --factorL %d --verbose false --train data/ocr/train0 --test data/ocr/test0 " % (f) \
+    cmd += " --scoring Acc --windowL 0 --depthL 0 --trainCount %d --testCount %d " % (test_count, test_count) 
+    cmd += " --factorL %d --verbose false --train data/ocr/train0 --test data/ocr/test0 --dataset ocr " % (f) 
     print cmd
     run(cmd)  
 
@@ -246,6 +246,7 @@ for f in [1,2,3,4]:
   farm.add('ner/policy/w2/toy/f%d'%f, lambda f=f: ner_policy_shared(2, f, TOY)) 
   farm.add('ner/gibbs/w2/full/f%d'%f, lambda f=f: ner_gibbs_shared(2, f, FULL, 4)) 
   farm.add('ocr/gibbs/full/f%d'%f, lambda f=f: ocr_gibbs_shared(f, FULL, 4)) 
+  farm.add('ocr/gibbs/toy/f%d'%f, lambda f=f: ocr_gibbs_shared(f, TOY, 5)) 
   farm.add('ner/policy/w2/full/f%d'%f, lambda f=f: ner_policy_shared(2, f, FULL)) 
   farm.add('ner/oracle/w2/full/f%d'%f, lambda f=f: ner_oracle_shared(2, f, FULL)) 
   farm.add('ner/multi_policy_unigram/w2/full/f%d'%f, lambda f=f: ner_multi_policy_unigram_shared(2, f, FULL)) 

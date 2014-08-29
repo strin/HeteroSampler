@@ -13,11 +13,17 @@ def plot_pr(fig, pathi, text, name):
     if line.find('nan') == -1:
       num.append(extract_number(line))
   num = np.array(num)
-  plt.figure(num=fig, figsize=(16, 8), dpi=100)
+  plt.figure(num=fig, figsize=(16, 16), dpi=100)
   plt.subplot(2,2,1);
   p, = plt.plot(num[:,0], num[:,2], '%s-' % color_l[pathi])
+  plt.title('recall (sample)')
+  plt.xlabel('threshold')
+  plt.ylabel('recall')
   plt.subplot(2,2,2);
   p, = plt.plot(num[:,0], num[:,4], '%s-' % color_l[pathi])
+  plt.title('recall (stop)')
+  plt.xlabel('threshold')
+  plt.ylabel('recall')
   plt.subplot(2,2,3)
   p, = plt.plot(num[:,1], num[:,2], '%s-' % color_l[pathi])
   plt.title('prec/recall (sample)')
@@ -86,7 +92,7 @@ if __name__ == '__main__':
     output = 'result_policy/policy_train' 
     plot_all(path_l, strategy_l, name_l, model, output)
   elif mode == 'temp':
-    path_l = ['test_policy', 'test_policy/temp', 'test_policy/temp_unigram']
+    path_l = ['test_policy/temp_gibbs', 'test_policy/temp', 'test_policy/temp_unigram']
     strategy_l = ['gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
     name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
     model = 'ner_w2_f2_tc99'

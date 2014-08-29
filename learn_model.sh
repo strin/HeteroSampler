@@ -26,12 +26,13 @@ elif [ $1 == "WSJ" ]; then
     ($cmd) > result/wsj_gibbs_w0_d0_f$factorL.xml &
   done
 elif [ $1 == "Czech" ]; then 
+  factorL=$3
   for windowL in `seq 0 2`
   do
     cmd="./pos --inference $2 --T 10 --B 3 --train data/czech_ner/train --test data/czech_ner/test --eta 1 --windowL "$windowL" \
-      --output model/czech_gibbs_w"$windowL".model --scoring Acc --Q 3 "
+      --output model/czech_gibbs_w"$windowL"_f"$factorL".model --scoring Acc --Q 3 --factorL "$factorL
     echo $cmd
-    ($cmd) > result/czech_gibbs_w$windowL.xml &
+    ($cmd) > result/czech_gibbs_w$windowL_f$factorL.xml & 
   done
 elif [ $1 == "OCR" ]; then
   path=adagrad1

@@ -1,5 +1,6 @@
 from stat_policy import *
 import re
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -14,26 +15,30 @@ def plot_pr(fig, pathi, text, name):
       num.append(extract_number(line))
   num = np.array(num)
   plt.figure(num=fig, figsize=(16, 16), dpi=100)
-  plt.subplot(2,2,1);
+  plt.subplot(2,1,1);
   p, = plt.plot(num[:,0], num[:,2], '%s-' % color_l[pathi])
   plt.title('recall (sample)')
   plt.xlabel('threshold')
   plt.ylabel('recall')
+  '''
   plt.subplot(2,2,2);
   p, = plt.plot(num[:,0], num[:,4], '%s-' % color_l[pathi])
   plt.title('recall (stop)')
   plt.xlabel('threshold')
   plt.ylabel('recall')
-  plt.subplot(2,2,3)
+  '''
+  plt.subplot(2,1,2)
   p, = plt.plot(num[:,1], num[:,2], '%s-' % color_l[pathi])
   plt.title('prec/recall (sample)')
   plt.xlabel('precision')
   plt.ylabel('recall')
+  '''
   plt.subplot(2,2,4) 
   p, = plt.plot(num[:,3], num[:,4])
   plt.title('prec/recall (stop)')
   plt.xlabel('precision')
   plt.ylabel('recall')
+  '''
     
     
 def plot_all(path_l, strategy_l, name_l, model, output):
@@ -66,23 +71,39 @@ def plot_all(path_l, strategy_l, name_l, model, output):
   plt.figure(num=-1)
   plt.legend(plot_l, name_l, loc=4)
   plt.savefig(output+'/main.png')
-  plt.show()
   plt.figure(1)
   plt.savefig(output+'/RH.png')
   plt.figure(2)
   plt.savefig(output+'/RL.png')
-    
+  plt.show()
 
 
 
 if __name__ == '__main__':
-  mode = 'temp'
+  if len(sys.argv) < 2:
+    mode = 'normal'
+  else:
+    mode = sys.argv[1]
   if mode == 'normal':
-    path_l = ['test_policy/oracle_roc', 'test_policy', 'test_policy/policy_roc_T2', 'test_policy/unigram_roc_fixed']
-    strategy_l = ['multi_policy', 'gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
-    name_l = ['Oracle', 'Gibbs', 'Conditional Entropy', 'Unigram Entropy']
-    model = 'ner_w2_f2_tc99999'
-    output = 'result_policy/roc_w2_f2' 
+    path_l = ['test_policy', 'test_policy/roc/conditional/0', 'test_policy/roc/unigram/0']
+    strategy_l = ['gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
+    name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
+    model = 'ner_w2_f1_tc99999'
+    output = 'result_policy/roc_w2_f1' 
+    plot_all(path_l, strategy_l, name_l, model, output)
+  elif mode == 'wsj':
+    path_l = ['test_policy', 'test_policy/wsj/roc/conditional/0', 'test_policy/wsj/roc/unigram/0']
+    strategy_l = ['gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
+    name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
+    model = 'wsj_w0_f2_tc99999'
+    output = 'result_policy/wsj/roc_w0_f2' 
+    plot_all(path_l, strategy_l, name_l, model, output)
+  elif mode == 'notrain':
+    path_l = ['test_policy', 'test_policy/roc/conditional_notrain/0', 'test_policy/roc/unigram_notrain/0']
+    strategy_l = ['gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
+    name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
+    model = 'ner_w2_f3_tc99999'
+    output = 'result_policy/ner_roc_w2_f3_notrain' 
     plot_all(path_l, strategy_l, name_l, model, output)
   elif mode == 'train':
     path_l = ['test_policy', 'test_policy/policy_roc', 'test_policy/policy_notrain_roc']
@@ -93,9 +114,16 @@ if __name__ == '__main__':
     plot_all(path_l, strategy_l, name_l, model, output)
   elif mode == 'temp':
     path_l = ['test_policy/temp_gibbs', 'test_policy/temp', 'test_policy/temp_unigram']
-    strategy_l = ['gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
+    strategy_l = ['gibbs', 'multi_policy', 'multi_policy']
     name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
     model = 'ner_w2_f2_tc99'
     output = 'result_policy/temp' 
+    plot_all(path_l, strategy_l, name_l, model, output)
+  else:
+    path_l = ['test_policy', 'test_policy/roc/conditional/0/']
+    strategy_l = ['gibbs', 'multi_policy']
+    name_l = [ 'Gibbs', 'Conditional Entropy']
+    model = 'ner_w2_f2_tc99999'
+    output = 'result_policy/else' 
     plot_all(path_l, strategy_l, name_l, model, output)
 

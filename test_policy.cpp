@@ -57,12 +57,15 @@ int main(int argc, char* argv[]) {
     string dataset = vm["dataset"].as<string>();
     ptr<Corpus> corpus, testCorpus;
     if(dataset == "literal") {
-      corpus = ptr<Corpus>(new CorpusLiteral());
-      testCorpus = ptr<Corpus>(new CorpusLiteral());
+      corpus = ptr<CorpusLiteral>(new CorpusLiteral());
+      testCorpus = ptr<CorpusLiteral>(new CorpusLiteral());
       cast<CorpusLiteral>(corpus)->computeWordFeat();
     }else if(dataset == "ocr") {
-      corpus = ptr<Corpus>(new CorpusOCR<16, 8>());
-      testCorpus = ptr<Corpus>(new CorpusOCR<16, 8>());
+      corpus = make_shared<CorpusOCR<16, 8> >();
+      testCorpus = make_shared<CorpusOCR<16, 8> >();
+      // <deprecated>
+      // corpus = ptr<CorpusOCR<16, 8> >(new CorpusOCR<16, 8>());
+      // testCorpus = ptr<CorpusOCR<16,8> >(new CorpusOCR<16, 8>());
     }
     corpus->read(train, false);
     testCorpus->read(test, false);

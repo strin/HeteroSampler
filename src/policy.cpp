@@ -3,7 +3,7 @@
 #include <boost/lexical_cast.hpp>
 
 #define USE_FEAT_ENTROPY 0
-#define USE_FEAT_CONDENT 0
+#define USE_FEAT_CONDENT 1
 #define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
 #define USE_ORACLE 0
@@ -31,16 +31,18 @@ namespace Tagging {
    Q(vm["Q"].as<size_t>()),
    param(makeParamPointer()), G2(makeParamPointer()) {
     // init stats.
-    ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(model->corpus);
-    auto wordent_meanent = corpus->tagEntropySimple();
-    wordent = get<0>(wordent_meanent);
-    wordent_mean = get<1>(wordent_meanent);
-    auto wordfreq_meanfreq = corpus->wordFrequencies();
-    wordfreq = get<0>(wordfreq_meanfreq);
-    wordfreq_mean = get<1>(wordfreq_meanfreq);
-    auto tag_bigram_unigram = corpus->tagBigram();
-    tag_bigram = tag_bigram_unigram.first;
-    tag_unigram_start = tag_bigram_unigram.second;
+    if(isinstance<CorpusLiteral>(model->corpus)) {
+      ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(model->corpus);
+      auto wordent_meanent = corpus->tagEntropySimple();
+      wordent = get<0>(wordent_meanent);
+      wordent_mean = get<1>(wordent_meanent);
+      auto wordfreq_meanfreq = corpus->wordFrequencies();
+      wordfreq = get<0>(wordfreq_meanfreq);
+      wordfreq_mean = get<1>(wordfreq_meanfreq);
+      auto tag_bigram_unigram = corpus->tagBigram();
+      tag_bigram = tag_bigram_unigram.first;
+      tag_unigram_start = tag_bigram_unigram.second;
+    }
     system(("mkdir -p "+name).c_str());
     lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
   }
@@ -129,12 +131,14 @@ namespace Tagging {
 
   void Policy::trainPolicy(ptr<Corpus> corpus) {
     lg->begin("args");
-      lg->begin("wordent_mean");
-	*lg << wordent_mean << endl;
-      lg->end();
-      lg->begin("wordfreq_mean");
-	*lg << wordfreq_mean << endl;
-      lg->end();
+      if(isinstance<CorpusLiteral>(corpus)) {
+	lg->begin("wordent_mean");
+	  *lg << wordent_mean << endl;
+	lg->end();
+	lg->begin("wordfreq_mean");
+	  *lg << wordfreq_mean << endl;
+	lg->end();
+      }
     lg->end();
     corpus->retag(model->corpus);
     size_t count = 0;
@@ -315,12 +319,12 @@ namespace Tagging {
     const Sentence& seq = *tag.seq;
     size_t seqlen = tag.size();
     size_t taglen = model->corpus->tags.size();
-    string word = cast<TokenLiteral>(seq.seq[pos])->word;
     // bias.
 #if USE_FEAT_BIAS == 1
     insertFeature(feat, "b");
 #endif
 #if USE_FEAT_ENTROPY == 1
+    string word = cast<TokenLiteral>(seq.seq[pos])->word;
     // feat: entropy and frequency.
     if(wordent->find(word) == wordent->end())
       insertFeature(feat, "ent", log(taglen)-wordent_mean);
@@ -328,6 +332,7 @@ namespace Tagging {
       insertFeature(feat, "ent", (*wordent)[word]);
 #endif
 #if USE_FEAT_ALL == 1
+    string word = cast<TokenLiteral>(seq.seq[pos])->word;
     ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(this->model->corpus);
     if(wordfreq->find(word) == wordfreq->end())
       insertFeature(feat, "freq", log(corpus->total_words)-wordfreq_mean);

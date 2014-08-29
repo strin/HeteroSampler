@@ -109,8 +109,8 @@ if __name__ == '__main__':
     path_l = ['test_policy', 'test_policy/roc/conditional_notrain/0', 'test_policy/roc/unigram_notrain/0']
     strategy_l = ['gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
     name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
-    model = 'ner_w2_f3_tc99999'
-    output = 'result_policy/ner_roc_w2_f3_notrain' 
+    model = 'ner_w2_f4_tc99999'
+    output = 'result_policy/ner_roc_w2_f4_notrain' 
     plot_all(path_l, strategy_l, name_l, model, output)
   elif mode == 'train':
     path_l = ['test_policy', 'test_policy/policy_roc', 'test_policy/policy_notrain_roc']

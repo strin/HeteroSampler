@@ -3,7 +3,7 @@
 #include <boost/lexical_cast.hpp>
 
 #define USE_FEAT_ENTROPY 0
-#define USE_FEAT_CONDENT 1
+#define USE_FEAT_CONDENT 0
 #define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
 #define USE_ORACLE 0
@@ -660,20 +660,23 @@ namespace Tagging {
       return (a.first < b.first);
     };
     sort(resp_reward.begin(), resp_reward.end(), compare); 
+    int truth = 0, total = resp_reward.size();
+    for(const pair<double, double>& p : resp_reward) {
+      truth += p.second > 0;
+    }
+    double cmax = resp_reward.back().first, cmin = resp_reward[0].first;
     vec<ROC> roc_list;
-    for(int j = 0; j < fold-1; j++) {
-      int i = fold_l[j];
-      double c = resp_reward[i * (resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+    int tr_count = 0, count = 0;
+    for(const pair<double, double>& p : resp_reward) {
+      tr_count += p.second > 0;
+      count += 1;
+      if(count > 1 && p.first-roc_list.back().threshold < (cmax-cmin) * 1e-4) continue;
       ROC roc; 
-      for(const pair<double, double> p : resp_reward) {
-	bool pos = p.first > c;
-	bool tr = (p.second > 0) == (p.first > c) ;
-	roc.TP += pos and tr;
-	roc.TN += !pos and tr; 
-	roc.FP += pos and !tr;
-	roc.FN += !pos and !tr;
-      }
-      roc.threshold = c;
+      roc.threshold = p.first;
+      roc.TP = truth-tr_count;
+      roc.TN = count-tr_count;
+      roc.FP = total-count-roc.TP;
+      roc.FN = count-roc.TN;
       roc.prec_sample = roc.TP / (roc.TP + roc.FP);
       roc.prec_stop = roc.TN / (roc.TN + roc.FN);
       roc.recall_sample = roc.TP / (roc.TP + roc.FN);

@@ -14,13 +14,17 @@ def plot_pr(fig, pathi, text, name):
       num.append(extract_number(line))
   num = np.array(num)
   plt.figure(num=fig, figsize=(16, 8), dpi=100)
-  plt.subplot(1,2,1)
-  p, = plt.plot(num[:,0], num[:,1], '%s-' % color_l[pathi])
+  plt.subplot(2,2,1);
+  p, = plt.plot(num[:,0], num[:,2], '%s-' % color_l[pathi])
+  plt.subplot(2,2,2);
+  p, = plt.plot(num[:,0], num[:,4], '%s-' % color_l[pathi])
+  plt.subplot(2,2,3)
+  p, = plt.plot(num[:,1], num[:,2], '%s-' % color_l[pathi])
   plt.title('prec/recall (sample)')
   plt.xlabel('precision')
   plt.ylabel('recall')
-  plt.subplot(1,2,2) 
-  p, = plt.plot(num[:,2], num[:,3])
+  plt.subplot(2,2,4) 
+  p, = plt.plot(num[:,3], num[:,4])
   plt.title('prec/recall (stop)')
   plt.xlabel('precision')
   plt.ylabel('recall')
@@ -66,7 +70,7 @@ def plot_all(path_l, strategy_l, name_l, model, output):
 
 
 if __name__ == '__main__':
-  mode = 'train'
+  mode = 'temp'
   if mode == 'normal':
     path_l = ['test_policy/oracle_roc', 'test_policy', 'test_policy/policy_roc_T2', 'test_policy/unigram_roc_fixed']
     strategy_l = ['multi_policy', 'gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
@@ -80,5 +84,12 @@ if __name__ == '__main__':
     name_l = ['Gibbs', 'Policy - Train', 'Policy - No Train']
     model = 'ner_w2_f2_tc99999'
     output = 'result_policy/policy_train' 
+    plot_all(path_l, strategy_l, name_l, model, output)
+  elif mode == 'temp':
+    path_l = ['test_policy', 'test_policy/temp', 'test_policy/temp_unigram']
+    strategy_l = ['gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
+    name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
+    model = 'ner_w2_f2_tc99'
+    output = 'result_policy/temp' 
     plot_all(path_l, strategy_l, name_l, model, output)
 

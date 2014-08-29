@@ -83,7 +83,7 @@ def ner_multi_policy_unigram_shared(w, f, test_count):
     cmd += ''' --K 1 --numThreads 10 --model model/ner_gibbs_w%d_d2_f%d.model ''' % (w, f)
     cmd += ''' --unigram_model model/ner_gibbs_w%d_d2_f1.model ''' % (w) 
     cmd += '''--scoring NER --windowL %d --trainCount %d --testCount %d ''' % (w, test_count, test_count)
-    cmd += '''--T 2 --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' % (f)
+    cmd += '''--T 4 --depthL 2 --factorL %d --verbose true --train data/eng_ner/train --test data/eng_ner/test''' % (f)
     print cmd
     os.system(cmd + ' &')  
 

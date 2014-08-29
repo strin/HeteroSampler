@@ -3,31 +3,27 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 
-def extract_number(s,notfound='NOT_FOUND'):
-  regex=r'[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?'
-  return [float(x) for x in re.findall(regex,s)]
+color_l=['r','g','b','k']
 
-def plot_pr(text, name, output):
+def plot_pr(fig, pathi, text, name):
   num = [] 
   for line in text.split('\n'):
     if line == '': 
       continue
-    num.append(extract_number(line))
+    if line.find('nan') == -1:
+      num.append(extract_number(line))
   num = np.array(num)
-  plt.figure(num=None, figsize=(16, 8), dpi=100)
+  plt.figure(num=fig, figsize=(16, 8), dpi=100)
   plt.subplot(1,2,1)
-  p, = plt.plot(num[:,0], num[:,1])
-  plt.legend([p], [name])
+  p, = plt.plot(num[:,0], num[:,1], '%s-' % color_l[pathi])
   plt.title('prec/recall (sample)')
   plt.xlabel('precision')
   plt.ylabel('recall')
   plt.subplot(1,2,2) 
   p, = plt.plot(num[:,2], num[:,3])
-  plt.legend([p], [name])
   plt.title('prec/recall (stop)')
   plt.xlabel('precision')
   plt.ylabel('recall')
-  plt.savefig(output)
     
     
 def plot_all(path_l, strategy_l, name_l, model, output):
@@ -35,7 +31,6 @@ def plot_all(path_l, strategy_l, name_l, model, output):
   acc_l = []
   time_l = []
   plot_l = []
-  color_l=['r','g','b','k']
   for (pathi, name, stg, path) in zip(range(len(name_l)), name_l, strategy_l, path_l):
     files = os.listdir(path)
     files = [f[0] for f in sorted([(f, os.stat(path+'/'+f)) for f in files], key=lambda x: x[1].st_ctime)]
@@ -47,9 +42,8 @@ def plot_all(path_l, strategy_l, name_l, model, output):
       if f.find('_train') != -1:
         test = PolicyResultLite(path+'/'+f+'/policy.xml') 
         print test.RH
-        os.system('mkdir - p ' + output + '/' + f)
-        plot_pr(test.RH, name, output+'/'+f+'/pr_RH.png')
-        plot_pr(test.RL, name, output+'/'+f+'/pr_RL.png')
+        plot_pr(1, pathi, test.RH, name)
+        plot_pr(2, pathi, test.RL, name)
       else:
         test = PolicyResultLite(path+'/'+f+'/policy.xml')
         acc.append(test.acc) 
@@ -63,15 +57,28 @@ def plot_all(path_l, strategy_l, name_l, model, output):
   plt.legend(plot_l, name_l, loc=4)
   plt.savefig(output+'/main.png')
   plt.show()
+  plt.figure(1)
+  plt.savefig(output+'/RH.png')
+  plt.figure(2)
+  plt.savefig(output+'/RL.png')
     
 
 
 
 if __name__ == '__main__':
-  path_l = ['test_policy', 'test_policy/ner_roc', 'test_policy/unigram_roc']
-  strategy_l = ['gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
-  name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
-  model = 'ner_w2_f2_tc99999'
-  output = 'result_policy/roc_w2_f2' 
-  plot_all(path_l, strategy_l, name_l, model, output)
+  mode = 'train'
+  if mode == 'normal':
+    path_l = ['test_policy/oracle_roc', 'test_policy', 'test_policy/policy_roc_T2', 'test_policy/unigram_roc_fixed']
+    strategy_l = ['multi_policy', 'gibbs', 'multi_policy', 'multi_cyclic_value_unigram']
+    name_l = ['Oracle', 'Gibbs', 'Conditional Entropy', 'Unigram Entropy']
+    model = 'ner_w2_f2_tc99999'
+    output = 'result_policy/roc_w2_f2' 
+    plot_all(path_l, strategy_l, name_l, model, output)
+  elif mode == 'train':
+    path_l = ['test_policy', 'test_policy/policy_roc', 'test_policy/policy_notrain_roc']
+    strategy_l = ['gibbs', 'multi_policy', 'multi_policy']
+    name_l = ['Gibbs', 'Policy - Train', 'Policy - No Train']
+    model = 'ner_w2_f2_tc99999'
+    output = 'result_policy/policy_train' 
+    plot_all(path_l, strategy_l, name_l, model, output)
 

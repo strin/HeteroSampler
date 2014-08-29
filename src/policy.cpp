@@ -3,10 +3,10 @@
 #include <boost/lexical_cast.hpp>
 
 #define USE_FEAT_ENTROPY 0
-#define USE_FEAT_CONDENT 0
+#define USE_FEAT_CONDENT 1
 #define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
-#define USE_ORACLE 1 
+#define USE_ORACLE 0
 
 namespace po = boost::program_options;
 
@@ -800,13 +800,13 @@ namespace Tagging {
     size_t pass = 1;
     while(true) {
       if(node->time_stamp >= pass * node->tag->size()) {
-	lg->begin("pass_"+boost::lexical_cast<string>(pass));
+	lg->begin("pass_"+boost::lexical_cast<string>(node->time_stamp / node->tag->size()));
 	  lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
-	  lg->begin("feat"); 
 	  for(size_t i = 0; i < node->tag->size(); i++) {
+	    lg->begin("feat"); 
 	    *lg << *this->extractFeatures(node, i) << endl;
+	    lg->end(); // </feat> 
 	  }
-	  lg->end(); // </feat> 
 	  lg->begin("resp");
 	  for(size_t i = 0; i < node->tag->size(); i++) {
 	    *lg << node->tag->resp[i] << "\t";            
@@ -827,7 +827,7 @@ namespace Tagging {
 	  lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
 	  lg->end(); // </mask>
 	lg->end(); // </pass>
-	pass += 1;
+	pass = int(node->time_stamp / node->tag->size()) + 1;
       }
       if(node->children.size() > 0)
 	node = node->children[0]; // take final sample.

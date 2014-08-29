@@ -5,6 +5,11 @@ import os, sys
 import numpy.random as npr
 import corpus
 import itertools
+import re
+
+def extract_number(s,notfound='NOT_FOUND'):
+  regex=r'[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?'
+  return [float(x) for x in re.findall(regex,s)]
 
 # policy result without case analysis.
 class PolicyResultLite:
@@ -20,6 +25,11 @@ class PolicyResultLite:
     me.RH = me.root.findall('./test/test_roc_RH')
     if me.RH != []:
       me.RH = me.RH[0].text
+    me.resp_RH = me.root.findall('./test/RH')
+    if me.resp_RH != []:
+      me.resp_RH = me.resp_RH[0].text
+      me.resp_RH = [extract_number(line) for line in me.resp_RH.split('\n') if line != ''] 
+
 
 
 class PolicyResult:

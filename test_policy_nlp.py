@@ -91,7 +91,7 @@ def ocr_multi_policy_shared(f, test_count, notrain=False):
 
 def ocr_multi_policy_unigram_shared(f, test_count, notrain=False):
     cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_unigram_shared --name '''+path
-    cmd += "/ocr_f%d_tc%d_multi_policy " % (f, test_count)
+    cmd += "/ocr_f%d_tc%d_multi_cyclic_value_unigram " % (f, test_count)
     cmd += " --K 1 --numThreads 10 --model model/ocr_f%d.model " % (f)
     cmd += " --unigram_model model/ocr_f1.model " 
     cmd += " --scoring Acc --windowL 0 --trainCount %d --testCount %d " % (test_count, test_count) 

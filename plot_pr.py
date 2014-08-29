@@ -66,15 +66,21 @@ def plot_all(path_l, strategy_l, name_l, model, output):
         plot_pr(1, pathi, test.RH, name)
         plot_pr(2, pathi, test.RL, name)
       else:
-        test = PolicyResultLite(path+'/'+f+'/policy.xml')
-        acc.append(test.acc) 
-        time.append(test.time)
+        try:
+          test = PolicyResultLite(path+'/'+f+'/policy.xml')
+          acc.append(test.acc) 
+          time.append(test.time)
+        except:
+          pass
     plt.figure(num=-1, figsize=(16, 8), dpi=100)
-    (time, acc) = sort_plot(time, acc)
-    p, = plt.plot(time, acc, '%s-' % (color_l[pathi]))
-    plot_l.append(p)
-    acc_l.append(acc)
-    time_l.append(time)
+    try:
+      (time, acc) = sort_plot(time, acc)
+      p, = plt.plot(time, acc, '%s-' % (color_l[pathi]))
+      plot_l.append(p)
+      acc_l.append(acc)
+      time_l.append(time)
+    except:
+      pass
   plt.figure(num=-1)
   plt.legend(plot_l, name_l, loc=4)
   plt.savefig(output+'/main.png')

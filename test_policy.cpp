@@ -166,6 +166,10 @@ int main(int argc, char* argv[]) {
 	throw (vm["unigram_model"].as<string>()+" not found.").c_str();
       file >> *model_unigram;
       file.close();
+      if(dataset == "ocr") {
+	cast<ModelCRFGibbs>(model_unigram)->extractFeatures = extractOCR;
+	cast<ModelCRFGibbs>(model_unigram)->extractFeatAll = extractOCRAll; 
+      }
       string name = vm["name"].as<string>();
       const int fold = 10;
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};

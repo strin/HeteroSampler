@@ -6,6 +6,12 @@ import matplotlib.pyplot as plt
 
 color_l=['r','g','b','k']
 
+def sort_plot(x, y):
+  pair = sorted(zip(x, y), key=lambda x: x[0])
+  x, y = zip(*pair)
+  x, y = (list(x), list(y))
+  return (x, y)
+
 def plot_pr(fig, pathi, text, name):
   num = [] 
   for line in text.split('\n'):
@@ -64,6 +70,7 @@ def plot_all(path_l, strategy_l, name_l, model, output):
         acc.append(test.acc) 
         time.append(test.time)
     plt.figure(num=-1, figsize=(16, 8), dpi=100)
+    (time, acc) = sort_plot(time, acc)
     p, = plt.plot(time, acc, '%s-' % (color_l[pathi]))
     plot_l.append(p)
     acc_l.append(acc)

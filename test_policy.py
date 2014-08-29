@@ -60,6 +60,14 @@ def ner_policy_shared(w, f, test_count):
     print cmd
     os.system(cmd)  
 
+def ner_oracle_shared(w, f, test_count):
+    cmd = '''./policy --inference Gibbs --policy cyclic_oracle_shared --name '''+path+'''/ner_w%d_f%d_tc%d_oracle \
+    --K 1 --numThreads 10 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --trainCount %d --testCount %d \
+    --T 4 --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
+    % (w, f, test_count,  w, f,  w, test_count, test_count, f)
+    print cmd
+    os.system(cmd + ' &')  
+
 def ner_multi_policy_shared(w, f, test_count):
     cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name '''+path+'''/ner_w%d_f%d_tc%d_multi_policy \
     --K 1 --numThreads 10 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --trainCount %d --testCount %d \
@@ -68,11 +76,13 @@ def ner_multi_policy_shared(w, f, test_count):
     print cmd
     os.system(cmd + ' &')  
 
-def ner_oracle_shared(w, f, test_count):
-    cmd = '''./policy --inference Gibbs --policy cyclic_oracle_shared --name '''+path+'''/ner_w%d_f%d_tc%d_oracle \
-    --K 1 --numThreads 10 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --trainCount %d --testCount %d \
-    --T 4 --depthL 2 --factorL %d --verbose false --train data/eng_ner/train --test data/eng_ner/test''' \
-    % (w, f, test_count,  w, f,  w, test_count, test_count, f)
+def ocr_multi_policy_shared(f, test_count):
+    cmd = '''./policy --inference Gibbs --policy multi_cyclic_value_shared --name '''+path
+    cmd += "/ocr_f%d_tc%d_multi_policy " % (f, test_count)
+    cmd += " --K 1 --numThreads 10 --model model/ocr_f%d.model " % (f)
+    cmd += " --scoring Acc --windowL 0 --trainCount %d --testCount %d " % (test_count, test_count) 
+    cmd += " --T 4 --depthL 0 --factorL %d --verbose false --train data/ocr/train0 --test data/ocr/test0 " % f
+    cmd += " --dataset ocr "
     print cmd
     os.system(cmd + ' &')  
 
@@ -207,6 +217,8 @@ for f in [1,2,3,4]:
   farm.add('ner/multi_policy_unigram/w2/full/f%d'%f, lambda f=f: ner_multi_policy_unigram_shared(2, f, FULL)) 
   farm.add('ner/multi_policy/w2/full/f%d'%f, lambda f=f: ner_multi_policy_shared(2, f, FULL)) 
   farm.add('ner/multi_policy/w2/toy/f%d'%f, lambda f=f: ner_multi_policy_shared(2, f, TOY)) 
+  farm.add('ocr/multi_policy/full/f%d'%f, lambda f=f: ocr_multi_policy_shared(f, FULL)) 
+  farm.add('ocr/multi_policy/toy/f%d'%f, lambda f=f: ocr_multi_policy_shared(f, TOY)) 
   '''
   for T in [1.0, 1.25, 1.5, 1.75, 2]:
     farm.add('ner/policy/toy/w2/f%d/T%f' % (f, T), lambda f=f, T=T: ner_policy(2, f, TOY, T))

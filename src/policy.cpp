@@ -698,7 +698,8 @@ namespace Tagging {
     int oldval = tag.tag[pos];
     model_unigram->sampleOne(tag, pos);
     int pass = node->time_stamp / node->tag->size();
-    insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", -tag.sc[oldval]);
+    // insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", -tag.sc[oldval]);
+    insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", tag.entropy[pos]);
     return feat;
   }
 

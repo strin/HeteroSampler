@@ -30,11 +30,13 @@ namespace Tagging {
     };
     struct ROC {
     public:
-      ROC() : TP(0), FP(0), TN(0), FN(0) {}
+      ROC() : TP(0), FP(0), TN(0), FN(0), threshold(0) {}
       double TP, FP, TN, FN;
+      double threshold;
       double prec_sample, prec_stop, recall_sample, recall_stop;
       string str() const {
 	string res = "";
+	res += "threshold (" + std::to_string(threshold) + ")\t";
 	res += "prec/sample (" + std::to_string(prec_sample) + ")\t";
 	res += "recall/sample (" + std::to_string(recall_sample) + ")\t";
 	res += "prec/stop (" + std::to_string(prec_stop) + ")\t";

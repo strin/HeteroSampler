@@ -179,10 +179,10 @@ namespace Tagging {
 	  lg->end(); // </node>
 	}
       }
+      lg->begin("param");
+      *lg << *param;
+      lg->end(); // </param>
       if(verbose) {
-	lg->begin("param");
-	*lg << *param;
-	lg->end(); // </param>
 	lg->end(); // </example>
       }
       count++;
@@ -589,6 +589,7 @@ namespace Tagging {
       const int fold = 10;
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
       auto logRespReward = [&] (vec<pair<double, double> >& p) {
+	cout << endl;
 	for(const ROC& roc : getROC(fold_l, fold, p)) {
 	  cout << roc.str() << endl;
 	  *lg << roc.str() << endl;
@@ -672,6 +673,7 @@ namespace Tagging {
 	roc.FP += pos and !tr;
 	roc.FN += !pos and !tr;
       }
+      roc.threshold = c;
       roc.prec_sample = roc.TP / (roc.TP + roc.FP);
       roc.prec_stop = roc.TN / (roc.TN + roc.FN);
       roc.recall_sample = roc.TP / (roc.TP + roc.FN);

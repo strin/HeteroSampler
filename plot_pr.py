@@ -20,7 +20,8 @@ def plot_pr(fig, pathi, text, name):
     if line.find('nan') == -1:
       num.append(extract_number(line))
   num = np.array(num)
-  plt.figure(num=fig, figsize=(16, 16), dpi=100)
+  print num
+  plt.figure(num=fig, figsize=(8, 8), dpi=100)
   plt.subplot(2,1,1);
   p, = plt.plot(num[:,0], num[:,2], '%s-' % color_l[pathi])
   plt.title('recall (sample)')
@@ -94,7 +95,7 @@ def plot_all(path_l, strategy_l, name_l, model, output):
 
 if __name__ == '__main__':
   if len(sys.argv) < 2:
-    mode = 'normal'
+    mode = ''
   else:
     mode = sys.argv[1]
   if mode == 'normal':
@@ -139,11 +140,11 @@ if __name__ == '__main__':
     model = 'ner_w2_f2_tc99'
     output = 'result_policy/temp' 
     plot_all(path_l, strategy_l, name_l, model, output)
-  else:
-    path_l = ['test_policy', 'test_policy/roc/conditional/0/']
-    strategy_l = ['gibbs', 'multi_policy']
-    name_l = [ 'Gibbs', 'Conditional Entropy']
-    model = 'ner_w2_f2_tc99999'
-    output = 'result_policy/else' 
+  elif mode == '':
+    path_l = ['test_pr/ner/toy/']
+    strategy_l = ['multi_policy']
+    name_l = [ 'Conditional Entropy']
+    model = 'ner_w2_f2_tc1000'
+    output = 'result_policy/ner/toy' 
     plot_all(path_l, strategy_l, name_l, model, output)
 

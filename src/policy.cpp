@@ -610,26 +610,22 @@ namespace Tagging {
 	logRespReward(test_resp_RH);
       lg->end(); // </prec_recall>
       lg->begin("test_word_tag");
-      for(auto& p : test_word_tag) {
-	*lg << p.first << " " << model->corpus->invtags[p.second] << endl;
-      }
-      lg->end(); // </test_word_tag>
       if(verbose) {
-	lg->begin("resp_reward");
-	for(const pair<double, double>& p : test_resp_reward) {
-	  *lg << p.first << " " << p.second << endl; 
+	assert(test_resp_reward.size() == test_resp_RL.size() 
+	    and test_resp_reward.size() == test_resp_RH.size()
+	    and test_resp_reward.size() == test_word_tag.size());
+	lg->begin("resp");
+	for(size_t t = 0; t < test_resp_reward.size(); t++) {
+	  *lg << "resp " << test_resp_reward[t].first << " " 
+	    << "reward " << test_resp_reward[t].second << " " 
+	    << "RL "  
+	    << test_resp_RL[t].second << " "
+	    << "RH "  
+	    << test_resp_RH[t].second << " "
+	    << test_word_tag[t].first << " "
+	    << test_word_tag[t].second << endl;
 	}
-	lg->end();
-	lg->begin("RL");
-	for(const pair<double, double>& p : test_resp_RL) {
-	  *lg << p.first << " " << p.second << endl; 
-	}
-	lg->end();
-	lg->begin("RH");
-	for(const pair<double, double>& p : test_resp_RH) {
-	  *lg << p.first << " " << p.second << endl; 
-	}
-	lg->end();
+	lg->end(); // </resp>
       }
     }
   }

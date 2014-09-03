@@ -2,8 +2,8 @@
 #include "feature.h"
 #include <boost/lexical_cast.hpp>
 
-#define USE_FEAT_ENTROPY 0
-#define USE_FEAT_CONDENT 0
+#define USE_FEAT_ENTROPY 1
+#define USE_FEAT_CONDENT 1
 #define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
 #define USE_ORACLE 0

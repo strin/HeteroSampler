@@ -72,7 +72,7 @@ def plot_all(path_l, strategy_l, name_l, model, output):
           time.append(test.time)
         except:
           pass
-    plt.figure(num=-1, figsize=(16, 8), dpi=100)
+    plt.figure(num=-1, figsize=(8, 4), dpi=100)
     try:
       (time, acc) = sort_plot(time, acc)
       p, = plt.plot(time, acc, '%s-' % (color_l[pathi]))
@@ -110,6 +110,13 @@ if __name__ == '__main__':
     name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
     model = 'wsj_w0_f2_tc99999'
     output = 'result_policy/wsj/roc_w0_f2' 
+    plot_all(path_l, strategy_l, name_l, model, output)
+  elif mode == 'wsj_notrain':
+    path_l = ['test_policy', 'test_policy/wsj/roc/conditional_notrain/0']
+    strategy_l = ['gibbs', 'multi_policy']
+    name_l = ['Gibbs', 'Entropy']
+    model = 'wsj_w0_f2_tc99999'
+    output = 'result_policy/wsj_notrain/roc_w0_f2' 
     plot_all(path_l, strategy_l, name_l, model, output)
   elif mode == 'notrain':
     path_l = ['test_policy', 'test_policy/roc/conditional_notrain/0', 'test_policy/roc/unigram_notrain/0']

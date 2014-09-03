@@ -2,7 +2,7 @@
 #include "feature.h"
 #include <boost/lexical_cast.hpp>
 
-#define USE_FEAT_ENTROPY 1
+#define USE_FEAT_ENTROPY 0
 #define USE_FEAT_CONDENT 1
 #define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
@@ -609,6 +609,11 @@ namespace Tagging {
       lg->begin("test_roc_RH");
 	logRespReward(test_resp_RH);
       lg->end(); // </prec_recall>
+      lg->begin("test_word_tag");
+      for(auto& p : test_word_tag) {
+	*lg << p.first << " " << model->corpus->invtags[p.second] << endl;
+      }
+      lg->end(); // </test_word_tag>
       if(verbose) {
 	lg->begin("resp_reward");
 	for(const pair<double, double>& p : test_resp_reward) {
@@ -746,6 +751,9 @@ namespace Tagging {
 	    cout << "resp = " << resp << endl;
 	  }*/
 	  test_resp_RL.push_back(make_pair(resp, logR));
+	  if(isinstance<CorpusLiteral>(model->corpus)) {
+	    test_word_tag.push_back(make_pair(cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
+	  }
 	  test_thread_pool.unlock();
 	}
 	if(resp > c) { 

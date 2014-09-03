@@ -1,9 +1,36 @@
 import xml.etree.ElementTree as ElementTree
+from lxml import etree as Etree
 import numpy as np
 import os, sys
 import numpy.random as npr
 import corpus
 import itertools
+import re
+
+def extract_number(s,notfound='NOT_FOUND'):
+  regex=r'[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?'
+  return [float(x) for x in re.findall(regex,s)]
+
+# policy result without case analysis.
+class PolicyResultLite:
+  def __init__(me, name):
+    me.name = name
+    me.tree = Etree.parse(me.name)
+    me.root = me.tree.getroot()
+    me.acc = float(me.root.findall('./test/accuracy')[0].text)
+    me.time = float(me.root.findall('./test/time')[0].text)
+    me.RL = me.root.findall('./test/test_roc_RL')
+    if me.RL != []:
+      me.RL = me.RL[0].text
+    me.RH = me.root.findall('./test/test_roc_RH')
+    if me.RH != []:
+      me.RH = me.RH[0].text
+    me.resp_RH = me.root.findall('./test/RH')
+    if me.resp_RH != []:
+      me.resp_RH = me.resp_RH[0].text
+      me.resp_RH = [extract_number(line) for line in me.resp_RH.split('\n') if line != ''] 
+
+
 
 class PolicyResult:
   def __init__(me, name):
@@ -17,7 +44,7 @@ class PolicyResult:
           if item.tag == 'corpus':
             me.corpus = item.text.replace('\n', '')
       if data.tag == 'train':
-        for item in data:
+	pass
       if data.tag == 'test':
         for item in data:
           if item.tag == 'param':

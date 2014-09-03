@@ -28,6 +28,23 @@ namespace Tagging {
       double score;
       double time;
     };
+    struct ROC {
+    public:
+      ROC() : TP(0), FP(0), TN(0), FN(0), threshold(0) {}
+      double TP, FP, TN, FN;
+      double threshold;
+      double prec_sample, prec_stop, recall_sample, recall_stop;
+      string str() const {
+	string res = "";
+	res += "threshold (" + std::to_string(threshold) + ")\t";
+	res += "prec/sample (" + std::to_string(prec_sample) + ")\t";
+	res += "recall/sample (" + std::to_string(recall_sample) + ")\t";
+	res += "prec/stop (" + std::to_string(prec_stop) + ")\t";
+	res += "recall/stop (" + std::to_string(recall_stop) + ")\t";
+	return res;
+      }
+    };
+
     typedef std::shared_ptr<Result> ResultPtr;
     inline static ResultPtr makeResultPtr(ptr<Corpus> corpus) {
       return ResultPtr(new Result(corpus));
@@ -37,6 +54,7 @@ namespace Tagging {
     // return: accuracy on the test set.
     ResultPtr test(ptr<Corpus> testCorpus);
     void test(ResultPtr result);
+    virtual void testPolicy(ResultPtr result);
 
     // apply gradient from samples to policy.
     virtual void gradientPolicy(MarkovTree& tree);
@@ -159,8 +177,17 @@ namespace Tagging {
     // training.
     virtual void trainPolicy(ptr<Corpus> corpus);
 
+    // testing.
+    virtual void testPolicy(Policy::ResultPtr result);
+
+    // response-reward pair.
     bool lets_resp_reward;
-    std::vector<std::pair<double, double> > resp_reward, test_resp_reward; // resp, reward pair.   
+    vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R. 
+    vec<pair<double, double> > resp_RH, test_resp_RH; // whether incorrect, upper bound of R.
+    vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.
+      
+    // compute TP, FP, TN, FN.
+    vec<ROC> getROC(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);
   };
 
   class MultiCyclicValuePolicy : public CyclicValuePolicy {
@@ -179,6 +206,17 @@ namespace Tagging {
 
   protected:
     size_t T;
+  };
+
+  class MultiCyclicValueUnigramPolicy : public MultiCyclicValuePolicy {
+  public:
+    MultiCyclicValueUnigramPolicy(ModelPtr model, ModelPtr model_unigram, const boost::program_options::variables_map& vm);
+
+    // add features inpired by the unigram.
+    virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+
+  protected:
+    ModelPtr model_unigram;
   };
 }
 #endif

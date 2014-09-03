@@ -78,9 +78,6 @@ int main(int argc, char* argv[]) {
     }else if(inference == "AdaTree") {
       model = shared_ptr<ModelAdaTree>(new ModelAdaTree(corpus, vm));
       model->run(testCorpus);
-    }else if(inference == "GibbsIncr") { 
-      model = shared_ptr<Model>(new ModelIncrGibbs(corpus, vm));
-      model->run(testCorpus);
     }
     ofstream file;
     file.open(vm["output"].as<string>());

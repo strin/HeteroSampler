@@ -57,7 +57,15 @@ namespace Tagging {
       sc[t] = this->score(features);
     }
     logNormalize(sc, taglen);
+    // gather stats.
     this->entropy[pos] = logEntropy(sc, taglen);
+    this->sc.clear();
+    for(int t = 0; t < taglen; t++) { 
+      if(std::isnan(sc[t])) 
+	  cout << "nan " << endl;
+      this->sc.push_back(sc[t]);
+    }
+
     int val;
     /*for(int t = 0; t < taglen; t++) {
       cout << "t = " << t << " , " << exp(sc[t]) << endl;

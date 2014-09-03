@@ -102,12 +102,14 @@ namespace Tagging {
     virtual TagVector sample(const Sentence& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
     ParamPointer sampleOne(Tag& tag, int choice);
-    std::function<FeaturePointer(ptr<Model> model, const Tag& tag, int pos)> extractFeatures;
-    // FeaturePointer extractFeatures(const Tag& tag, int pos);
-    FeaturePointer extractFeaturesAll(const Tag& tag);
     double score(const Tag& tag);
-
     virtual void logArgs();
+
+    /* interface for feature extraction. */
+    std::function<FeaturePointer(ptr<Model> model, const Tag& tag, int pos)> extractFeatures;
+    std::function<FeaturePointer(ptr<Model> model, const Tag& tag)> extractFeatAll;
+    FeaturePointer extractFeaturesAll(const Tag& tag);
+
 
     int factorL;
     

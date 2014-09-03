@@ -1,6 +1,7 @@
 #include "corpus.h"
 #include "objcokus.h"
 #include "tag.h"
+#include "feature.h"
 #include "model.h"
 #include "utils.h"
 #include "policy.h"
@@ -8,6 +9,7 @@
 #include <boost/program_options.hpp>
 
 using namespace std;
+using namespace Tagging;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
@@ -17,7 +19,9 @@ int main(int argc, char* argv[]) {
     desc.add_options()
 	("help", "produce help message")
 	("inference", po::value<string>()->default_value("Gibbs"), "inference method (Gibbs)")
+	("dataset", po::value<string>()->default_value("literal"), "type of dataset to use (literal, ocr)")
 	("model", po::value<string>()->default_value("model/gibbs.model"), "use saved model to do the inference")
+	("unigram_model", po::value<string>()->default_value("model/gibbs.model"), "use a unigram (if necessary)")
 	("policy", po::value<string>()->default_value("entropy"), "sampling policy")
 	("name", po::value<string>()->default_value("default"), "name of the run")
 	("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
@@ -41,7 +45,7 @@ int main(int argc, char* argv[]) {
 	("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
 	("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
 	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
-    ;
+	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);    
@@ -50,21 +54,36 @@ int main(int argc, char* argv[]) {
 	return 1;
     }
     string train = vm["train"].as<string>(), test = vm["test"].as<string>();
-    Corpus corpus;
-    corpus.read(train, false);
-    Corpus testCorpus;
-    testCorpus.read(test, false);
+    string dataset = vm["dataset"].as<string>();
+    ptr<Corpus> corpus, testCorpus;
+    if(dataset == "literal") {
+      corpus = ptr<CorpusLiteral>(new CorpusLiteral());
+      testCorpus = ptr<CorpusLiteral>(new CorpusLiteral());
+      cast<CorpusLiteral>(corpus)->computeWordFeat();
+    }else if(dataset == "ocr") {
+      corpus = make_shared<CorpusOCR<16, 8> >();
+      testCorpus = make_shared<CorpusOCR<16, 8> >();
+      // <deprecated>
+      // corpus = ptr<CorpusOCR<16, 8> >(new CorpusOCR<16, 8>());
+      // testCorpus = ptr<CorpusOCR<16,8> >(new CorpusOCR<16, 8>());
+    }
+    corpus->read(train, false);
+    testCorpus->read(test, false);
+
     shared_ptr<Model> model;
     if(vm["inference"].as<string>() == "Gibbs") {
-      model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(&corpus, vm));
+      model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
       std::ifstream file; 
       file.open(vm["model"].as<string>(), std::fstream::in);
       if(!file.is_open()) 
 	throw (vm["model"].as<string>()+" not found.").c_str();
       file >> *model;
       file.close();
+      if(dataset == "ocr") {
+	cast<ModelCRFGibbs>(model)->extractFeatures = extractOCR;
+	cast<ModelCRFGibbs>(model)->extractFeatAll = extractOCRAll; 
+      }
     }
-    corpus.computeWordFeat();
 
     shared_ptr<Policy> policy;
     bool lets_model = vm["lets_model"].as<bool>();
@@ -113,21 +132,67 @@ int main(int argc, char* argv[]) {
       string name = vm["name"].as<string>();
       const int fold = 10;
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
+      system(("rm -r "+name+"*").c_str());
       shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
       policy->lets_resp_reward = true;
+      system(("mkdir -p " + name + "_train").c_str());
+      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
       train_func(policy);
+      if(vm["lets_notrain"].as<bool>()) mapReset(*policy->param, 1);
+      policy->test(testCorpus);
+      policy->resetLog(nullptr);
       shared_ptr<MultiCyclicValuePolicy> ptest;
-      auto compare = [] (pair<double, double> a, pair<double, double> b) {
+      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
 	return (a.first < b.first);
       };
-      sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 
-      system(("rm -r "+name+"*").c_str());
+      sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare); 
       for(int i : fold_l) {
-	double c = policy->resp_reward[i * (policy->resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+	double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
 	// string myname = name+"_i"+to_string(i);
 	string myname = name + "_c" + boost::lexical_cast<string>(c);
 	system(("mkdir -p " + myname).c_str());
 	ptest = shared_ptr<MultiCyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
+	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+	ptest->param = policy->param; 
+	ptest->c = c;
+	ptest->test(testCorpus);
+	ptest->resetLog(nullptr);
+      }
+    }else if(vm["policy"].as<string>() == "multi_cyclic_value_unigram_shared") {
+      shared_ptr<ModelCRFGibbs> model_unigram = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
+      std::ifstream file; 
+      file.open(vm["unigram_model"].as<string>(), std::fstream::in);
+      if(!file.is_open()) 
+	throw (vm["unigram_model"].as<string>()+" not found.").c_str();
+      file >> *model_unigram;
+      file.close();
+      if(dataset == "ocr") {
+	cast<ModelCRFGibbs>(model_unigram)->extractFeatures = extractOCR;
+	cast<ModelCRFGibbs>(model_unigram)->extractFeatAll = extractOCRAll; 
+      }
+      string name = vm["name"].as<string>();
+      const int fold = 10;
+      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
+      system(("rm -r "+name+"*").c_str());
+      shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new MultiCyclicValueUnigramPolicy(model, model_unigram, vm));
+      policy->lets_resp_reward = true;
+      system(("mkdir -p " + name + "_train").c_str());
+      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
+      train_func(policy);
+      if(vm["lets_notrain"].as<bool>()) mapReset(*policy->param, 1);
+      policy->test(testCorpus);
+      policy->resetLog(nullptr);
+      shared_ptr<MultiCyclicValueUnigramPolicy> ptest;
+      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
+	return (a.first < b.first);
+      };
+      sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare); 
+      for(int i : fold_l) {
+	double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+	// string myname = name+"_i"+to_string(i);
+	string myname = name + "_c" + boost::lexical_cast<string>(c);
+	system(("mkdir -p " + myname).c_str());
+	ptest = shared_ptr<MultiCyclicValueUnigramPolicy>(new MultiCyclicValueUnigramPolicy(model, model_unigram, vm));
 	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
 	ptest->param = policy->param; 
 	ptest->c = c;
@@ -142,7 +207,7 @@ int main(int argc, char* argv[]) {
       policy->lets_resp_reward = true;
       train_func(policy);
       shared_ptr<CyclicValuePolicy> ptest;
-      auto compare = [] (pair<double, double> a, pair<double, double> b) {
+      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
 	return (a.first < b.first);
       };
       sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 

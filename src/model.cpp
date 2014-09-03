@@ -148,7 +148,16 @@ namespace Tagging {
     xmllog.begin("test");
     int ex = 0;
     for(const SentencePtr seq : test_corpus->seqs) {
-      shared_ptr<Tag> tag = this->sample(*seq, true).back();
+      TagVector tags = this->sample(*seq, false);
+      double max_lhood = -DBL_MAX;
+      shared_ptr<Tag> tag = tags.back();
+      for(shared_ptr<Tag> this_tag : tags) {
+	double sc = this->score(*this_tag);
+	if(sc > max_lhood) {
+	  max_lhood = sc;
+	  tag = this_tag;
+	}
+      }
       Tag truth(*seq, corpus, &rngs[0], param);
       xmllog.begin("example_"+to_string(ex));
 	xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
@@ -205,7 +214,7 @@ namespace Tagging {
       if(stepsize->find(p.first) != stepsize->end()) {
 	this_eta = (*stepsize)[p.first];
       }
-      mapUpdate(*param, p.first, this_eta * p.second/sqrt(1e-4 + (*G2)[p.first]));
+      mapUpdate(*param, p.first, this_eta * p.second/sqrt(1 + (*G2)[p.first]));
     }
   }
 

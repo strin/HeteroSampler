@@ -219,5 +219,18 @@ namespace Tagging {
   protected:
     ModelPtr model_unigram;
   };
+
+  // Baseline Random Scan Gibbs Sampler.
+  // first take a cyclic sweep, then sample uniform at random.
+  class RandomScanPolicy : public Policy {
+  public:
+    RandomScanPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
+    virtual int policy(MarkovTreeNodePtr node);
+    virtual void sample(int tid, MarkovTreeNodePtr node);
+    virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+  protected:
+    double Tstar;
+    int windowL;
+  };
 }
 #endif

@@ -3,10 +3,13 @@
 #include <boost/lexical_cast.hpp>
 
 #define USE_FEAT_ENTROPY 0
-#define USE_FEAT_CONDENT 0
-#define USE_FEAT_ALL 0
+#define USE_FEAT_CONDENT 1
+#define USE_FEAT_ALL 1
 #define USE_FEAT_BIAS 1
-#define USE_ORACLE 1
+#define USE_ORACLE 0
+#define USE_SELFAVOID 1 
+
+#define USE_WINDOW 0
 
 namespace po = boost::program_options;
 
@@ -144,7 +147,7 @@ namespace Tagging {
     size_t count = 0;
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
-      if(count % 1000 == 0) 
+      if(count % int(0.1 * min(train_count, corpus->seqs.size())) == 0) 
 	cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
       if(verbose)
 	lg->begin("example_"+to_string(count));
@@ -348,12 +351,34 @@ namespace Tagging {
       insertFeature(feat, wordfeat);
     }
 #endif
+#if USE_FEAT_CONDENT == 1
+    insertFeature(feat, "model-ent", node->tag->entropy[pos]);
+#endif
+#if USE_FEAT_ALL == 1
+    if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
+      ptr<Corpus> corpus = model->corpus;
+      string tg = corpus->invtags[node->tag->tag[pos]];
+      if(pos >= 1) {
+	string prev_tg = corpus->invtags[node->tag->tag[pos-1]];
+	if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
+	  insertFeature(feat, "bad");
+      }
+      if(pos < node->tag->size()-1) {
+	string next_tg = corpus->invtags[node->tag->tag[pos+1]];
+	if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
+	  insertFeature(feat, "bad");
+      }
+    }
+#endif
 #if USE_ORACLE == 1
       int oldval = node->tag->tag[pos];
       Tag temp(tag);
       model->sampleOne(temp, pos);          
       // insertFeature(feat, "oracle", -temp.sc[oldval]);
       insertFeature(feat, "oracle", temp.entropy[pos]);
+#endif
+#if USE_SELFAVOID == 1
+      insertFeature(feat, "self-avoid", node->tag->mask[pos]);
 #endif
     return feat;
   }
@@ -458,25 +483,6 @@ namespace Tagging {
 
   FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = Policy::extractFeatures(node, pos);
-#if USE_FEAT_CONDENT == 1
-    insertFeature(feat, "model-ent", node->tag->entropy[pos]);
-#endif
-#if USE_FEAT_ALL == 1
-    if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
-      ptr<Corpus> corpus = model->corpus;
-      string tg = corpus->invtags[node->tag->tag[pos]];
-      if(pos >= 1) {
-	string prev_tg = corpus->invtags[node->tag->tag[pos-1]];
-	if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
-	  insertFeature(feat, "bad");
-      }
-      if(pos < node->tag->size()-1) {
-	string next_tg = corpus->invtags[node->tag->tag[pos+1]];
-	if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
-	  insertFeature(feat, "bad");
-      }
-    }
-#endif
     return feat;
   }
 
@@ -860,5 +866,96 @@ namespace Tagging {
     }
     lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
     lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
+  }
+
+  //////// RandomScanPolicy ////////////////////////////////////////////
+  RandomScanPolicy::RandomScanPolicy(ModelPtr model, const boost::program_options::variables_map& vm) 
+   :Policy(model, vm), 
+    Tstar(vm["Tstar"].as<double>()), 
+    windowL(vm["windowL"].as<int>()) {
+
+  }
+
+  int RandomScanPolicy::policy(MarkovTreeNodePtr node) {
+    if(node->depth == 0) node->time_stamp = -1;
+    int pos = 0;
+    if(node->depth < node->tag->size()) {
+      pos = node->depth;
+      node->tag->mask[pos] = 1;
+    }else{
+      if(node->depth > Tstar * node->tag->size()) 
+	return -1;
+      vec<double> resp = node->tag->resp;
+      logNormalize(&resp[0], resp.size());
+      objcokus* rng = node->tag->rng;
+      pos = rng->sampleCategorical(&resp[0], resp.size());
+      node->tag->mask[pos] += 1;
+    }
+    FeaturePointer feat = this->extractFeatures(node, pos);
+    node->tag->feat[pos] = feat;
+    node->tag->resp[pos] = Tagging::score(this->param, feat);
+    node->time_stamp++;
+    return pos;
+  }
+
+  FeaturePointer RandomScanPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
+    FeaturePointer feat = Policy::extractFeatures(node, pos);
+#if USE_WINDOW == 1
+    for(int p = pos-windowL; p <= pos+windowL; p++) {
+      if(p == pos || p < 0 || p >= node->tag->size()) continue;
+      FeaturePointer this_feat = Policy::extractFeatures(node, p);
+      for(pair<string, double>& f : *this_feat) {
+	insertFeature(feat, "w"+boost::lexical_cast<string>(p-pos)+"-"
+			      +f.first, f.second);
+      }
+    }
+#endif
+    return feat;
+  }
+
+  void RandomScanPolicy::sample(int tid, MarkovTreeNodePtr node) {
+    node->depth = 0;
+    node->choice = -1;
+    try{
+      node->tag->rng = &thread_pool.rngs[tid];
+      for(size_t i = 0; i < node->tag->size(); i++) {
+	model->sampleOne(*node->tag, i);
+	node->tag->mask[i] = 1;
+      }
+      size_t seqlen = node->tag->size();
+      node->depth = seqlen;
+      node->gradient = makeParamPointer();
+      while(node->depth < Tstar * seqlen) {		
+	vec<double> reward(seqlen);
+	vec<double> resp(seqlen);
+	vec<FeaturePointer> feat(seqlen);
+	auto is_equal = [] (Tag& tag, int i) {
+	  return (double)(tag.tag[i] == tag.seq->tag[i]); 
+	};
+	double norm1 = -DBL_MAX, norm2 = -DBL_MAX;
+	for(size_t i = 0; i < seqlen; i++) {
+	  double reward_baseline = is_equal(*node->tag, i);
+	  Tag tag(*node->tag);
+	  model->sampleOne(tag, i);
+	  reward[i] = is_equal(tag, i) - reward_baseline;
+	  feat[i] = extractFeatures(node, i);
+	  resp[i] = Tagging::score(param, feat[i]);
+	  norm1 = logAdd(norm1, reward[i] + resp[i]);
+	  norm2 = logAdd(norm2, resp[i]);
+	}
+	for(size_t i = 0; i < seqlen; i++) {
+	  mapUpdate(*node->gradient, *feat[i], exp(reward[i] + resp[i] - norm1));
+	  mapUpdate(*node->gradient, *feat[i], -exp(resp[i] - norm2));
+	}
+	logNormalize(&resp[0], seqlen);
+	int pos = node->tag->rng->sampleCategorical(&resp[0], seqlen);
+	model->sampleOne(*node->tag, pos);
+	node->tag->mask[pos] += 1;
+	node->depth += 1;
+      }
+      node->log_weight = 0;
+    }catch(const char* ee) {
+      cout << "error: " << ee << endl;
+    }
   }
 }

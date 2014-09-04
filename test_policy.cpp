@@ -128,6 +128,13 @@ int main(int argc, char* argv[]) {
       policy = shared_ptr<Policy>(new MultiCyclicValuePolicy(model, vm));
       train_func(policy);
       policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "random_scan") {
+      policy = shared_ptr<Policy>(new RandomScanPolicy(model, vm));
+      policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "adaptive_random_scan") {
+      policy = shared_ptr<Policy>(new RandomScanPolicy(model, vm));
+      train_func(policy);
+      policy->test(testCorpus);
     }else if(vm["policy"].as<string>() == "multi_cyclic_value_shared") {
       string name = vm["name"].as<string>();
       const int fold = 10;

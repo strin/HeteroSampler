@@ -3,10 +3,10 @@
 #include <boost/lexical_cast.hpp>
 
 #define USE_FEAT_ENTROPY 0
-#define USE_FEAT_CONDENT 1
+#define USE_FEAT_CONDENT 0
 #define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
-#define USE_ORACLE 0
+#define USE_ORACLE 1
 
 namespace po = boost::program_options;
 
@@ -352,7 +352,8 @@ namespace Tagging {
       int oldval = node->tag->tag[pos];
       Tag temp(tag);
       model->sampleOne(temp, pos);          
-      insertFeature(feat, "oracle", -temp.sc[oldval]);
+      // insertFeature(feat, "oracle", -temp.sc[oldval]);
+      insertFeature(feat, "oracle", temp.entropy[pos]);
 #endif
     return feat;
   }
@@ -494,6 +495,7 @@ namespace Tagging {
 	FeaturePointer feat = this->extractFeatures(node, pos);
 	double resp = logisticFunc(Tagging::score(param, feat));
 	node->tag->resp[pos] = resp;
+	node->tag->feat[pos] = feat;
 	if(rng->random01() < resp) {
 	  node->tag->mask[pos] = 1;
 	  mapUpdate(*node->gradient, *feat, (1-resp));
@@ -614,16 +616,20 @@ namespace Tagging {
 	assert(test_resp_reward.size() == test_resp_RL.size() 
 	    and test_resp_reward.size() == test_resp_RH.size()
 	    and test_resp_reward.size() == test_word_tag.size());
+	auto compare = [] (std::tuple<double, double, string, int> a, std::tuple<double, double, string, int> b) {
+	  return (get<0>(a) < get<0>(b));
+	};
+	sort(test_word_tag.begin(), test_word_tag.end(), compare); 
 	lg->begin("resp");
 	for(size_t t = 0; t < test_resp_reward.size(); t++) {
-	  *lg << "resp " << test_resp_reward[t].first << " " 
+	  *lg << "resp " << get<0>(test_word_tag[t]) << " " 
 	    << "reward " << test_resp_reward[t].second << " " 
+	    << "RH "  
+	    << get<1>(test_word_tag[t]) << " "
 	    << "RL "  
 	    << test_resp_RL[t].second << " "
-	    << "RH "  
-	    << test_resp_RH[t].second << " "
-	    << test_word_tag[t].first << " "
-	    << test_word_tag[t].second << endl;
+	    << get<2>(test_word_tag[t]) << " "
+	    << model->corpus->invtags[get<3>(test_word_tag[t])] << endl;
 	}
 	lg->end(); // </resp>
       }
@@ -645,6 +651,7 @@ namespace Tagging {
 	FeaturePointer feat = this->extractFeatures(node, pos);
 	double resp = Tagging::score(param, feat);
 	node->tag->resp[pos] = resp;
+	node->tag->feat[pos] = feat;
 	// if(rng->random01() < resp) { // strategy 1. randomized test.
 	if(resp > c) { // strategy 2. deterministic test.
 	  node->tag->mask[pos] = 1;
@@ -731,6 +738,7 @@ namespace Tagging {
 	FeaturePointer feat = this->extractFeatures(node, pos);
 	double resp = Tagging::score(param, feat);
 	node->tag->resp[pos] = resp;
+	node->tag->feat[pos] = feat;
 	if(lets_resp_reward) {
 	  test_thread_pool.lock();
 	  Tag tag(*node->tag);
@@ -743,12 +751,9 @@ namespace Tagging {
 	  double logR = reward - reward_baseline; 
 	  test_resp_reward.push_back(make_pair(resp, logR));
 	  test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
-	  /*if(reward_baseline == 0) {
-	    cout << "resp = " << resp << endl;
-	  }*/
 	  test_resp_RL.push_back(make_pair(resp, logR));
 	  if(isinstance<CorpusLiteral>(model->corpus)) {
-	    test_word_tag.push_back(make_pair(cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
+	    test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
 	  }
 	  test_thread_pool.unlock();
 	}
@@ -812,14 +817,18 @@ namespace Tagging {
 
 
   void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
-    size_t pass = 1;
+    size_t pass = 0;
     while(true) {
-      if(node->time_stamp >= pass * node->tag->size()) {
+      if(node->time_stamp >= (pass+1) * node->tag->size()-1 || node->children.size() == 0) {
 	lg->begin("pass_"+boost::lexical_cast<string>(node->time_stamp / node->tag->size()));
 	  lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
 	  for(size_t i = 0; i < node->tag->size(); i++) {
 	    lg->begin("feat"); 
-	    *lg << *this->extractFeatures(node, i) << endl;
+	    if(node->tag->feat.size() > i and node->tag->feat[i]) {
+	      *lg << *node->tag->feat[i] << endl;
+	    }else{
+	      *lg << *this->extractFeatures(node, i) << endl;
+	    }
 	    lg->end(); // </feat> 
 	  }
 	  lg->begin("resp");

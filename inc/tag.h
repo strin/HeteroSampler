@@ -26,6 +26,7 @@ namespace Tagging {
     std::vector<double> sc;
     std::vector<double> resp;
     std::vector<int> mask;
+    std::vector<FeaturePointer> feat;
 
     FeaturePointer features; 
     ParamPointer param;

@@ -185,7 +185,7 @@ namespace Tagging {
     vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R. 
     vec<pair<double, double> > resp_RH, test_resp_RH; // whether incorrect, upper bound of R.
     vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.
-    vec<pair<string, int> > test_word_tag;                //  corresponding word, tag pair.
+    vec<tuple<double, double, string, int> > test_word_tag;                //  corresponding word, tag pair.
       
     // compute TP, FP, TN, FN.
     vec<ROC> getROC(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);

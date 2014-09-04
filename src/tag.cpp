@@ -24,6 +24,7 @@ namespace Tagging {
     int seqlen = seq->seq.size();
     tag.resize(seqlen);
     resp.resize(seqlen);
+    feat.resize(seqlen);
     mask.resize(seqlen);
     entropy.resize(seqlen);
     for(int& t : tag) {

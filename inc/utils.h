@@ -41,6 +41,9 @@ namespace Tagging {
   template<class A, class B>
   using pair = std::pair<A, B>;
 
+  template<class... Ts>
+  using tuple = std::tuple<Ts...>;
+
   typedef std::pair<std::string, double> ParamItem;
   typedef ParamItem FeatureItem;
   typedef std::shared_ptr<std::unordered_map<std::string, double> > ParamPointer;

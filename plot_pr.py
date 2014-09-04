@@ -20,9 +20,9 @@ def plot_pr(fig, pathi, text, name):
     if line.find('nan') == -1:
       num.append(extract_number(line))
   num = np.array(num)
-  print num
   plt.figure(num=fig, figsize=(8, 8), dpi=100)
   plt.subplot(2,1,1);
+  print num[:,0]
   p, = plt.plot(num[:,0], num[:,2], '%s-' % color_l[pathi])
   plt.title('recall (sample)')
   plt.xlabel('threshold')
@@ -141,10 +141,10 @@ if __name__ == '__main__':
     output = 'result_policy/temp' 
     plot_all(path_l, strategy_l, name_l, model, output)
   elif mode == '':
-    path_l = ['test_pr/ner/toy/']
+    path_l = ['test_pr/ner_notrain/oracle/full']
     strategy_l = ['multi_policy']
     name_l = [ 'Conditional Entropy']
-    model = 'ner_w2_f2_tc1000'
+    model = 'ner_w2_f2_tc99999'
     output = 'result_policy/ner/toy' 
     plot_all(path_l, strategy_l, name_l, model, output)
 

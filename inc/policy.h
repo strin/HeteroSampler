@@ -228,7 +228,7 @@ namespace Tagging {
     virtual int policy(MarkovTreeNodePtr node);
 
   protected:
-    size_t T;
+    size_t Tstar;
   };
 }
 #endif

@@ -865,26 +865,27 @@ namespace Tagging {
   //////// RandomScanPolicy ////////////////////////////////////////////
   RandomScanPolicy::RandomScanPolicy(ModelPtr model, const boost::program_options::variables_map& vm) 
   :Policy(model, vm), 
-   T(vm["T"].as<size_t>()) {
+   Tstar(vm["Tstar"].as<double>()) {
 
   }
   int RandomScanPolicy::policy(MarkovTreeNodePtr node) {
     if(node->depth == 0) node->time_stamp = -1;
+    int pos = 0;
     if(node->depth < node->tag->size()) {
-      int pos = node->depth;
-      FeaturePointer feat = this->extractFeatures(node, pos);
-      node->tag->feat[pos] = feat;
-      node->tag->resp[pos] = Tagging::score(this->param, feat);
-      node->time_stamp++;
-      return pos;
+      pos = node->depth;
     }else{
-      if(node->depth > T) 
+      if(node->depth > Tstar * node->tag->size()) 
 	return -1;
-      node->time_stamp++;
       vec<double> resp = node->tag->resp;
       logNormalize(&resp[0], resp.size());
       objcokus* rng = node->tag->rng;
-      return rng->sampleCategorical(&resp[0], resp.size());
+      pos = rng->sampleCategorical(&resp[0], resp.size());
+      node->tag->mask[pos] = 1;
     }
+    FeaturePointer feat = this->extractFeatures(node, pos);
+    node->tag->feat[pos] = feat;
+    node->tag->resp[pos] = Tagging::score(this->param, feat);
+    node->time_stamp++;
+    return pos;
   }
 }

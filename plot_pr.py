@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-color_l=['r','g','b','k']
+color_l=['r','g','b','k', 'c']
 
 def sort_plot(x, y):
   pair = sorted(zip(x, y), key=lambda x: x[0])
@@ -139,6 +139,14 @@ if __name__ == '__main__':
     name_l = ['Gibbs', 'Conditional Entropy', 'Unigram Entropy']
     model = 'ner_w2_f2_tc99'
     output = 'result_policy/temp' 
+    plot_all(path_l, strategy_l, name_l, model, output)
+  elif mode == 'learn':
+    path_l = ['test_policy', 'test_pr/ner/learn/bias', 'test_pr/ner/learn/entropy', 'test_pr/ner/learn/all',
+              'test_pr/ner/learn/oracle']
+    strategy_l = ['gibbs', 'multi_policy', 'multi_policy','multi_policy','multi_policy' ]
+    name_l = ['Gibbs', 'Ada-Bias', 'Ada-Ent', 'Ada-All', 'Ada-Oracle']
+    model = 'ner_w2_f2_tc1000'
+    output = 'result_policy/learn' 
     plot_all(path_l, strategy_l, name_l, model, output)
   elif mode == '':
     path_l = ['test_pr/ner_notrain/oracle/full']

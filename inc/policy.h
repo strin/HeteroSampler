@@ -226,9 +226,11 @@ namespace Tagging {
   public:
     RandomScanPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
     virtual int policy(MarkovTreeNodePtr node);
-
+    virtual void sample(int tid, MarkovTreeNodePtr node);
+    virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
   protected:
-    size_t Tstar;
+    double Tstar;
+    int windowL;
   };
 }
 #endif

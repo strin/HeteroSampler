@@ -755,7 +755,8 @@ namespace Tagging {
 	  double reward_baseline = is_equal();
 	  model->sampleOne(tag, pos);
 	  double reward = is_equal();
-	  double logR = reward - reward_baseline; 
+	  // double logR = reward - reward_baseline; 
+	  double logR = tag.reward[pos];
 	  test_resp_reward.push_back(make_pair(resp, logR));
 	  test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
 	  test_resp_RL.push_back(make_pair(resp, logR));

@@ -280,6 +280,8 @@ if len(sys.argv) < 2:
   exit(0)
 if sys.argv[1][-1] == ':':
   farm.visualize(farm.find(sys.argv[1][:-1]))
+  run = lambda cmd : len(cmd)
+  farm.run(sys.argv[1][:-1])
   exit(0)
 if len(sys.argv) >= 3:
   path = sys.argv[2]

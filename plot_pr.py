@@ -145,7 +145,7 @@ if __name__ == '__main__':
               'test_pr/ner/learn/oracle']
     strategy_l = ['gibbs', 'multi_policy', 'multi_policy','multi_policy','multi_policy' ]
     name_l = ['Gibbs', 'Ada-Bias', 'Ada-Ent', 'Ada-All', 'Ada-Oracle']
-    model = 'ner_w2_f2_tc1000'
+    model = 'ner_w2_f2_tc99999'
     output = 'result_policy/learn' 
     plot_all(path_l, strategy_l, name_l, model, output)
   elif mode == '':

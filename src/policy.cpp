@@ -4,10 +4,10 @@
 
 #define USE_FEAT_ENTROPY 0
 #define USE_FEAT_CONDENT 1
-#define USE_FEAT_ALL 1
+#define USE_FEAT_ALL 0
 #define USE_FEAT_BIAS 1
 #define USE_ORACLE 0
-#define USE_SELFAVOID 1 
+#define USE_SELFAVOID 0 
 
 #define USE_WINDOW 0
 

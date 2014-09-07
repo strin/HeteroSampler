@@ -116,6 +116,16 @@ def ner_gibbs(w, f, test_count, T):
     policy = PolicyResult(path+'/ner_w%d_f%d_tc%d_gibbs_T%d' % (w, f, test_count, T))
     print 'time: ', policy.ave_time(), 'acc: ', policy.accuracy
 
+def ner_rand_scan(w, f, test_count):
+    for T in [1, 1.25, 1.5, 1.75, 2, 2.5]:
+      cmd = "./policy --inference Gibbs --policy adaptive_random_scan --name "
+      cmd += " test_policy/ner/adascan/ner_w2_f%d_tc99999_random_scan_%f --K 1 --numThreads 10 " % (f, T)
+      cmd += " --model model/ner_gibbs_w2_d2_f%d.model --scoring NER --windowL 2 " % f
+      cmd += " --trainCount 99999 --testCount 99999 --Tstar %f --depthL 2 " % T
+      cmd += " --factorL 2 --verbose false --train data/eng_ner/train --test data/eng_ner/test --eta 0.1"
+      print cmd
+      os.system(cmd + ' &')
+
 def ner_policy(w, f, count, T):
     cmd = '''./policy --inference Gibbs --policy cyclic_value --name '''+path+'''/ner_w%d_f%d_tc%d_policy_T%f \
     --Tstar %f --numThreads 5 --model model/ner_gibbs_w%d_d2_f%d.model --scoring NER --windowL %d --testCount %d \
@@ -212,6 +222,7 @@ for f in [1,2,3,4]:
   farm.add('ner/gibbs/w2/toy/f%d'%f, lambda f=f: ner_gibbs_shared(2, f, TOY, 4)) 
   farm.add('ner/policy/w2/toy/f%d'%f, lambda f=f: ner_policy_shared(2, f, TOY)) 
   farm.add('ner/gibbs/w2/full/f%d'%f, lambda f=f: ner_gibbs_shared(2, f, FULL, 4)) 
+  farm.add('ner/randscan/w2/full/f%d'%f, lambda f=f: ner_rand_scan(2, f, FULL)) 
   farm.add('ner/policy/w2/full/f%d'%f, lambda f=f: ner_policy_shared(2, f, FULL)) 
   farm.add('ner/oracle/w2/full/f%d'%f, lambda f=f: ner_oracle_shared(2, f, FULL)) 
   farm.add('ner/multi_policy_unigram/w2/full/f%d'%f, lambda f=f: ner_multi_policy_unigram_shared(2, f, FULL)) 

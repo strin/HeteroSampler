@@ -133,6 +133,7 @@ namespace Tagging {
   }
 
   void Policy::trainPolicy(ptr<Corpus> corpus) {
+    lg->begin("commit"); *lg << getGitHash() << endl; lg->end();  
     lg->begin("args");
       if(isinstance<CorpusLiteral>(corpus)) {
 	lg->begin("wordent_mean");

@@ -216,5 +216,19 @@ namespace Tagging {
       std::swap(vec[i], vec[j]);
     }
   }
+
+  // obtain git hash of the current commit under current directory.
+  static string getGitHash() {
+    FILE* pipe = popen("git rev-parse HEAD", "r");
+    if (!pipe) return "ERROR";
+    char buffer[128];
+    std::string result = "";
+    while(!feof(pipe)) {
+      if(fgets(buffer, 128, pipe) != NULL)
+	result += buffer;
+    }
+    pclose(pipe);
+    return result;
+  }
 }
 #endif

@@ -793,7 +793,8 @@ namespace Tagging {
 	  double reward_baseline = is_equal();
 	  model->sampleOne(*node->tag, i);
 	  double reward = is_equal();
-	  double logR = reward - reward_baseline; 
+	  // double logR = reward - reward_baseline; 
+	  double logR = node->tag->reward[i];
 	  FeaturePointer feat = this->extractFeatures(node, i);   
 	  double resp = Tagging::score(param, feat);
 	  if(lets_resp_reward) {

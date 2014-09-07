@@ -25,6 +25,12 @@ elif [ $1 == "WSJ" ]; then
     echo $cmd
     ($cmd) > result/wsj_gibbs_w0_d0_f$factorL.xml &
   done
+elif [ $1 == "stuck" ]; then
+  factorL=2
+  cmd="./pos --inference $2 --T 8 --B 5 --train data/stuck/train --test data/stuck/test --eta 1 --windowL \
+  0 --factorL $factorL --depthL 0 --output model/stuck.model --scoring Acc --Q 3"
+  echo $cmd
+  ($cmd) > result/stuck_gibbs.xml &
 elif [ $1 == "Czech" ]; then 
   factorL=$3
   for windowL in `seq 0 2`

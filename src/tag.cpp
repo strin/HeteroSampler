@@ -15,8 +15,8 @@ namespace Tagging {
   Tag::Tag(const Sentence& seq, ptr<Corpus> corpus, 
 	  objcokus* rng, ParamPointer param)
   :seq(&seq), corpus(corpus), rng(rng), param(param) {
+    this->randomInit();
     this->tag = seq.tag;
-
   }
 
   void Tag::randomInit() {
@@ -25,8 +25,9 @@ namespace Tagging {
     tag.resize(seqlen);
     resp.resize(seqlen);
     feat.resize(seqlen);
-    mask.resize(seqlen);
+    mask.resize(seqlen); 
     entropy.resize(seqlen);
+    reward.resize(seqlen);
     for(int& t : tag) {
       t = rng->randomMT() % taglen;
     }
@@ -49,6 +50,7 @@ namespace Tagging {
     if(pos >= seqlen) 
       throw "Gibbs sampling proposal out of bound.";
     int taglen = corpus->tags.size();
+    int oldval = tag[pos];
     double sc[taglen];
     vector<FeaturePointer> featvec;
     for(int t = 0; t < taglen; t++) {
@@ -58,14 +60,6 @@ namespace Tagging {
       sc[t] = this->score(features);
     }
     logNormalize(sc, taglen);
-    // gather stats.
-    this->entropy[pos] = logEntropy(sc, taglen);
-    this->sc.clear();
-    for(int t = 0; t < taglen; t++) { 
-      if(std::isnan(sc[t])) 
-	  cout << "nan " << endl;
-      this->sc.push_back(sc[t]);
-    }
 
     int val;
     /*for(int t = 0; t < taglen; t++) {
@@ -83,6 +77,18 @@ namespace Tagging {
       val = rng->sampleCategorical(sc, taglen);
     if(val == taglen) throw "Gibbs sample out of bound.";
     tag[pos] = val;
+
+    // gather stats.
+    this->reward[pos] = sc[val] - sc[oldval];
+    this->entropy[pos] = logEntropy(sc, taglen);
+    this->sc.clear();
+    for(int t = 0; t < taglen; t++) { 
+      if(std::isnan(sc[t])) 
+	  cout << "nan " << endl;
+      this->sc.push_back(sc[t]);
+    }
+
+    // compute gradient, if necessary.
     this->features = featExtract(*this);
     ParamPointer gradient = makeParamPointer();
     if(grad_sample)

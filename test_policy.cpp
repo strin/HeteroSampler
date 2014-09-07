@@ -128,6 +128,10 @@ int main(int argc, char* argv[]) {
       policy = shared_ptr<Policy>(new MultiCyclicValuePolicy(model, vm));
       train_func(policy);
       policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "lockdown") {
+      policy = shared_ptr<Policy>(new LockdownPolicy(model, vm));
+      train_func(policy);
+      policy->test(testCorpus);
     }else if(vm["policy"].as<string>() == "random_scan") {
       policy = shared_ptr<Policy>(new RandomScanPolicy(model, vm));
       policy->test(testCorpus);

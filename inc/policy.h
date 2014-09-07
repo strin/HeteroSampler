@@ -232,5 +232,20 @@ namespace Tagging {
     double Tstar;
     int windowL;
   };
+
+  // Lock-down sampler.
+  // lock-down position above the threshold and sample. 
+  // when meta-features are unigram, essentially same as multi-cyclic scan.
+  // but stop is more natural (all positions below thrsehold). 
+  class LockdownPolicy : public Policy {
+  public:
+    LockdownPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
+    virtual int policy(MarkovTreeNodePtr node);
+    FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+    void sample(int tid, MarkovTreeNodePtr node);
+
+    double c;
+    size_t T;
+  };
 }
 #endif

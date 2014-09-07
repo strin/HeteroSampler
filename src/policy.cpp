@@ -961,4 +961,71 @@ namespace Tagging {
       cout << "error: " << ee << endl;
     }
   }
+
+  //////// LockdownPolicy ////////////////////////////
+  LockdownPolicy::LockdownPolicy(ModelPtr model, const boost::program_options::variables_map& vm)
+   :Policy(model, vm), 
+    T(vm["T"].as<size_t>()),
+    c(vm["c"].as<double>())
+  {
+      
+  }
+  
+  FeaturePointer LockdownPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
+    FeaturePointer feat = Policy::extractFeatures(node, pos);
+    insertFeature(feat, "#sample", node->tag->mask[pos]);
+    return feat;
+  }
+
+  int LockdownPolicy::policy(MarkovTreeNodePtr node) {
+    if(node->depth == 0) node->time_stamp = 0;
+    size_t count = node->time_stamp;
+    int seqlen = node->tag->size();
+    for(; count < node->time_stamp + seqlen; count++) {
+      int pos = count % seqlen;
+      if(node->tag->resp[pos] > c) {
+	FeaturePointer feat = this->extractFeatures(node, pos);
+	node->tag->mask[pos] += 1;
+	node->tag->feat[pos] = feat;
+	node->tag->resp[pos] = Tagging::score(this->param, feat);
+	node->time_stamp = count+1;
+	return pos;
+      }
+    }
+    node->time_stamp = count;
+    return -1;
+  }
+
+  void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
+    node->depth = 0;
+    node->choice = -1;
+    try{
+      node->tag->rng = &thread_pool.rngs[tid];
+      for(size_t i = 0; i < node->tag->size(); i++) {
+	model->sampleOne(*node->tag, i);
+	node->tag->mask[i] = 1;
+      }
+      node->gradient = makeParamPointer();
+      for(size_t t = 1; t < T; t++) {
+	for(size_t i = 0; i < node->tag->size(); i++) {
+	  node->time_stamp = t * node->tag->size() + i;
+	  auto is_equal = [&] () {
+	    return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
+	  };
+	  double reward_baseline = is_equal();
+	  model->sampleOne(*node->tag, i);
+	  node->tag->mask[i] += 1;
+	  double reward = is_equal();
+	  double logR = reward - reward_baseline; 
+	  // double logR = node->tag->reward[i];
+	  FeaturePointer feat = this->extractFeatures(node, i);   
+	  double resp = Tagging::score(param, feat);
+	  mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+	}
+      }
+      node->log_weight = 0;
+    }catch(const char* ee) {
+      cout << "error: " << ee << endl;
+    }
+  }
 }

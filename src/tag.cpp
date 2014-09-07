@@ -23,7 +23,7 @@ namespace Tagging {
     int taglen = corpus->tags.size();
     int seqlen = seq->seq.size();
     tag.resize(seqlen);
-    resp.resize(seqlen);
+    resp.resize(seqlen, DBL_MAX);
     feat.resize(seqlen);
     mask.resize(seqlen); 
     entropy.resize(seqlen);

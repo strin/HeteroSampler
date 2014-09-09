@@ -84,6 +84,10 @@ namespace Tagging {
 	}else{
 	  node->log_weight = -DBL_MAX; 
 	  node->gradient = model->sampleOne(*node->tag, node->choice);
+	  FeaturePointer feat = this->extractFeatures(node, pos);
+	  node->tag->mask[pos] += 1;
+	  node->tag->feat[pos] = feat;
+	  node->tag->resp[pos] = Tagging::score(this->param, feat);
 	}
 	node = addChild(node, *node->tag);
       }
@@ -973,7 +977,7 @@ namespace Tagging {
   
   FeaturePointer LockdownPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = Policy::extractFeatures(node, pos);
-    insertFeature(feat, "#sample", node->tag->mask[pos]);
+    insertFeature(feat, "#sp", node->tag->mask[pos]);
     return feat;
   }
 
@@ -984,10 +988,6 @@ namespace Tagging {
     for(; count < node->time_stamp + seqlen; count++) {
       int pos = count % seqlen;
       if(node->tag->resp[pos] > c) {
-	FeaturePointer feat = this->extractFeatures(node, pos);
-	node->tag->mask[pos] += 1;
-	node->tag->feat[pos] = feat;
-	node->tag->resp[pos] = Tagging::score(this->param, feat);
 	node->time_stamp = count+1;
 	return pos;
       }
@@ -1018,9 +1018,16 @@ namespace Tagging {
 	  double reward = is_equal();
 	  double logR = reward - reward_baseline; 
 	  // double logR = node->tag->reward[i];
+	  // logR *= 100; // scale for convenience. 
 	  FeaturePointer feat = this->extractFeatures(node, i);   
 	  double resp = Tagging::score(param, feat);
-	  mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+	  // mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+	  resp = logisticFunc(resp);
+	  if(logR > 0) {
+	    mapUpdate(*node->gradient, *feat, (1-resp));
+	  }else{
+	    mapUpdate(*node->gradient, *feat, -resp);
+	  }
 	}
       }
       node->log_weight = 0;

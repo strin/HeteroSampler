@@ -83,7 +83,8 @@ namespace Tagging {
 	  break;
 	}else{
 	  node->log_weight = -DBL_MAX; 
-	  node->gradient = model->sampleOne(*node->tag, node->choice);
+	  int pos = node->choice;
+	  node->gradient = model->sampleOne(*node->tag, pos);
 	  FeaturePointer feat = this->extractFeatures(node, pos);
 	  node->tag->mask[pos] += 1;
 	  node->tag->feat[pos] = feat;

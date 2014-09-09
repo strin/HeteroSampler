@@ -132,6 +132,36 @@ int main(int argc, char* argv[]) {
       policy = shared_ptr<Policy>(new LockdownPolicy(model, vm));
       train_func(policy);
       policy->test(testCorpus);
+    }else if(vm["policy"].as<string>() == "lockdown_shared") {
+      string name = vm["name"].as<string>();
+      const int fold = 10;
+      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
+      system(("rm -r "+name+"*").c_str());
+      policy = shared_ptr<Policy>(new LockdownPolicy(model, vm));
+      policy->lets_resp_reward = true;
+      system(("mkdir -p " + name + "_train").c_str());
+      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
+      train_func(policy);
+      cast<LockdownPolicy>(policy)->c = -DBL_MAX; // sample every position.
+      policy->test(testCorpus);
+      policy->resetLog(nullptr);
+      shared_ptr<LockdownPolicy> ptest;
+      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
+	return (a.first < b.first);
+      };
+      sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare); 
+      for(int i : fold_l) {
+	double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+	// string myname = name+"_i"+to_string(i);
+	string myname = name + "_c" + boost::lexical_cast<string>(c);
+	system(("mkdir -p " + myname).c_str());
+	ptest = make_shared<LockdownPolicy>(model, vm);
+	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+	ptest->param = policy->param; 
+	ptest->c = c;
+	ptest->test(testCorpus);
+	ptest->resetLog(nullptr);
+      }
     }else if(vm["policy"].as<string>() == "random_scan") {
       policy = shared_ptr<Policy>(new RandomScanPolicy(model, vm));
       policy->test(testCorpus);
@@ -145,6 +175,7 @@ int main(int argc, char* argv[]) {
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
       system(("rm -r "+name+"*").c_str());
       shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
+      cast<CyclicValuePolicy>(policy)->c = -DBL_MAX; // sample every position.
       policy->lets_resp_reward = true;
       system(("mkdir -p " + name + "_train").c_str());
       policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));

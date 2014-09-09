@@ -95,6 +95,16 @@ namespace Tagging {
     void resetLog(std::shared_ptr<XMLlog> new_lg);
 
 
+    // response-reward pair.
+    bool lets_resp_reward;
+    vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R. 
+    vec<pair<double, double> > resp_RH, test_resp_RH; // whether incorrect, upper bound of R.
+    vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.
+    vec<tuple<double, double, string, int> > test_word_tag;                //  corresponding word, tag pair.
+      
+    // compute TP, FP, TN, FN.
+    vec<ROC> getROC(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);
+
     // const environment. 
     ParamPointer wordent, wordfreq;
     double wordent_mean, wordfreq_mean;
@@ -180,15 +190,6 @@ namespace Tagging {
     // testing.
     virtual void testPolicy(Policy::ResultPtr result);
 
-    // response-reward pair.
-    bool lets_resp_reward;
-    vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R. 
-    vec<pair<double, double> > resp_RH, test_resp_RH; // whether incorrect, upper bound of R.
-    vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.
-    vec<tuple<double, double, string, int> > test_word_tag;                //  corresponding word, tag pair.
-      
-    // compute TP, FP, TN, FN.
-    vec<ROC> getROC(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);
   };
 
   class MultiCyclicValuePolicy : public CyclicValuePolicy {

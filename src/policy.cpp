@@ -32,6 +32,7 @@ namespace Tagging {
    test_count(vm["testCount"].as<size_t>()),
    verbose(vm["verbose"].as<bool>()), 
    Q(vm["Q"].as<size_t>()),
+   lets_resp_reward(false),
    param(makeParamPointer()), G2(makeParamPointer()) {
     // init stats.
     if(isinstance<CorpusLiteral>(model->corpus)) {
@@ -89,6 +90,26 @@ namespace Tagging {
 	  node->tag->mask[pos] += 1;
 	  node->tag->feat[pos] = feat;
 	  node->tag->resp[pos] = Tagging::score(this->param, feat);
+	  if(lets_resp_reward) {
+	    double resp = node->tag->resp[pos];
+	    test_thread_pool.lock();
+	    Tag tag(*node->tag);
+	    auto is_equal = [&] () {
+	      return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
+	    };
+	    double reward_baseline = is_equal();
+	    model->sampleOne(tag, pos);
+	    double reward = is_equal();
+	    // double logR = reward - reward_baseline; 
+	    double logR = tag.reward[pos];
+	    test_resp_reward.push_back(make_pair(resp, logR));
+	    test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+	    test_resp_RL.push_back(make_pair(resp, logR));
+	    if(isinstance<CorpusLiteral>(model->corpus)) {
+	      test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
+	    }
+	    test_thread_pool.unlock();
+	  }
 	}
 	node = addChild(node, *node->tag);
       }
@@ -531,7 +552,7 @@ namespace Tagging {
   /////////////////////////////////////////////////////////////////////////////////////
   //////// Cyclic Value Policy /////////////////////////////////////////////////////////////
   CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
-  :CyclicPolicy(model, vm), lets_resp_reward(false) { 
+  :CyclicPolicy(model, vm) { 
   }
 
   // will update gradient of policy.
@@ -679,7 +700,7 @@ namespace Tagging {
   }
 
   // get precision-recall curve. 
-  vec<Policy::ROC> CyclicValuePolicy::getROC(const int fold_l[], const int fold, 
+  vec<Policy::ROC> Policy::getROC(const int fold_l[], const int fold, 
 	std::vector<std::pair<double, double> >& resp_reward) {
     auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
       return (a.first < b.first);
@@ -751,7 +772,7 @@ namespace Tagging {
 	double resp = Tagging::score(param, feat);
 	node->tag->resp[pos] = resp;
 	node->tag->feat[pos] = feat;
-	if(lets_resp_reward) {
+	/*if(lets_resp_reward) {
 	  test_thread_pool.lock();
 	  Tag tag(*node->tag);
 	  auto is_equal = [&] () {
@@ -769,7 +790,7 @@ namespace Tagging {
 	    test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
 	  }
 	  test_thread_pool.unlock();
-	}
+	}*/
 	if(resp > c) { 
 	  node->tag->mask[pos] = 1;
 	  return pos;
@@ -988,7 +1009,8 @@ namespace Tagging {
     int seqlen = node->tag->size();
     for(; count < node->time_stamp + seqlen; count++) {
       int pos = count % seqlen;
-      if(node->tag->resp[pos] > c) {
+      if(node->tag->resp[pos] > c and 
+	  node->tag->mask[pos] <= T) {
 	node->time_stamp = count+1;
 	return pos;
       }
@@ -1022,6 +1044,9 @@ namespace Tagging {
 	  // logR *= 100; // scale for convenience. 
 	  FeaturePointer feat = this->extractFeatures(node, i);   
 	  double resp = Tagging::score(param, feat);
+	  if(lets_resp_reward) {
+	    resp_reward.push_back(make_pair(resp, logR));
+	  }
 	  // mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
 	  resp = logisticFunc(resp);
 	  if(logR > 0) {
@@ -1029,6 +1054,7 @@ namespace Tagging {
 	  }else{
 	    mapUpdate(*node->gradient, *feat, -resp);
 	  }
+
 	}
       }
       node->log_weight = 0;

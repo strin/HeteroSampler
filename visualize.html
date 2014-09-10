@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
+<script type="text/javascript" src="lib/jquery-xpath/jquery.xpath.js"></script>
+<script src="lib/processing.js"></script>
+
+<style type="text/css">
+  .list ol li {
+  padding:10px 10px;
+  margin:10px;
+  
+  border-left:#909090 5px solid;
+    line-height:150%;
+  -webkit-transition: background-color 0.2s, margin-top 0.2s, margin-bottom 0.2s;  /* Saf3.2+, Chrome */
+    -moz-transition: background-color 0.2s, margin-top 0.2s, margin-bottom 0.2s;  /* FF4+ */
+    -ms-transition: background-color 0.2s, margin-top 0.2s, margin-bottom 0.2s;  /* IE10 */
+    -o-transition: background-color 0.2s, margin-top 0.2s, margin-bottom 0.2s;  /* Opera 10.5+ */
+    transition: background-color 0.2s, margin-top 0.2s, margin-bottom 0.2s;
+  }
+</style>
+</head>
+<body>
+
+<br><br>
+<p>
+  <table>
+  <tr><td>
+    <table style="display: inline;">
+      <tr>
+        <td style="font-size: 35px; padding: 10px; " >Visualization</td>
+      </tr>
+      <tr>
+        <td style="font-size: 18px; padding-left: 10px; padding-top: -5px;">Sequence Tagging</td>
+      </tr>
+    </table>
+    <!-- <h3>Sequence Tagging</h3> -->
+  </td><td>
+    <div id="drop_zone" style="margin: 10px; padding: 50px; border: 1px dashed #666666; display:inline; ">Drop Ground Truth (*.XML) here </div>
+    <div id="drop_tag_zone" style="margin: 10px; padding: 50px; border: 1px dashed #666666;  display:inline; ">Drop Result (*.xml) here </div>
+  </td></tr>
+  </table>
+  </div>
+</p>
+<br><br>
+
+<!-- <button type="button" class="btn btn-default" onclick="parse()">add</button> -->
+<output id="list"></output>
+
+<script>
+function myfunc() {
+  document.getElementById('demo').innerHTML = "hello"
+}
+var loading = false;
+function toggleLoad(ld) {
+  loading = ld;
+  var loadlogo = document.getElementById('loading')
+  if(loading == true) {
+    loadlogo.style.visibility = 'visible'
+  }else{
+    loadlogo.style.visibility = 'hidden'
+  }
+}
+function makeScroll() {
+  if(!loading && $(window).scrollTop() >= $(document).height() - $(window).height()) {
+    toggleLoad(true);
+    setTimeout(function() {
+      numShow += lagShow;
+      showExample();
+      showTag();
+      toggleLoad(false);
+    }, 0);
+  }
+}
+$(window).scroll(makeScroll);
+</script>
+
+<script>
+  var output = [];
+  var example = [];
+  var chars = [];
+  var tags = [];
+  var numShow = 20;
+  var lagShow = 10;
+  var canvasId = 0;
+  var ifGTLoaded = false;
+  // show a binary string as a 16 x 8 image.
+  function imshowView(strs) {
+    var writer = [];
+    for(var i = 0; i < strs.length; i++) {
+      var token = strs[i];
+      pair = token.split('/');
+      writer.push('<td><canvas id="canvas'+(canvasId+i)+'" width="16" height="8"></canvas></td>');
+    }
+    return writer.join(' ');
+  }
+  function imshow(strs) {
+    for(var i = 0; i < strs.length; i++) {
+      var token = strs[i];
+      pair = token.split('/');
+      arr = pair[0];
+      var sketch = new Processing.Sketch();
+      sketch.attachFunction = function(processing) {
+        processing.setup = function() {
+          processing.size(16,32);
+          processing.background(255);
+          processing.fill(255);
+          processing.noLoop();
+        }
+        processing.draw = function() {
+          for(var h = 0; h < processing.height; h++) {
+            for(var w = 0; w < processing.width; w++) {
+              var hh = Math.floor(h * 16 / processing.height), 
+                  ww = Math.floor(w * 8 / processing.width);
+              if(arr[ww  + hh * 8] == '1') {
+                processing.stroke(0);  
+              }else{
+                processing.stroke(255);
+              }
+              processing.point(w, h);
+            }
+          }
+          
+        }
+      }
+      var canvas = document.getElementById("canvas"+(canvasId+i));
+      var p = new Processing(canvas, sketch);
+    }
+  }
+  function extractChars(strs) {
+    chs = [];
+    for(var i = 0; i < strs.length; i++) {
+      var token = strs[i];
+      pair = token.split('/');
+      chs.push(pair[1]);
+    }
+    return chs;
+  }
+  function extractStrs(str) {
+    return str.split('\t')
+  }
+  function charshowView(chs, gt) {
+    if(typeof(gt) === 'undefined') gt = chs;
+    var writer = [];
+    for(var i = 0; i < chs.length; i++) {
+      ch = chs[i];
+      if(ch == gt[i]) {
+        writer.push('<td><b style="font-size: 15">',
+                    ch, 
+                    '</b></td>');
+      }else{
+        writer.push('<td><b style="font-size: 15; color: red; ">',
+                    ch,
+                    '</b></td>');
+      }
+    }
+    return writer.join(' ')
+  }
+  // visualize examples [numShow, numShow + lagShow).
+  // incr numShow by lagShow.
+  function showExample() {
+    var oldCanvasId = canvasId;
+    var writer = [];
+    for(var i = 0; i < numShow ; i++) {
+      if(i >= example.length) break;
+      var truth = $(example[i]).find("truth");
+      var strs = extractStrs(truth.text())
+      strs.length -= 1;
+      chars[i] = extractChars(strs);
+      writer.push('<li>',
+                  '<table id="tag'+i+'"><tr><td>Optics: &nbsp; </td>',
+                  imshowView(strs), 
+                  '</tr><tr><td>Truth: &nbsp; </td>',
+                  charshowView(chars[i]),
+                  '</tr>', 
+                  '</table></li>'
+                );
+      canvasId += strs.length;
+      // imshow($(example[i]).find("truth").text());
+    }
+    document.getElementById('content').innerHTML = writer.join(' ');
+    canvasId = oldCanvasId;
+    for(var i = 0; i < numShow ; i++) {
+      if(i >= example.length) break;
+      var truth = $(example[i]).find("truth");
+      var strs = truth.text().split('\t');
+      strs.length -= 1;
+      imshow(strs);
+      canvasId += strs.length;
+    }
+  }
+
+  // visualize the tags.
+  function showTag() {
+    for(var i = 0; i < numShow ; i++) {
+      if(i >= example.length) break;
+      var tagContainer = document.getElementById('tag'+i);
+      var len = tagContainer.rows.length;
+      for(var tagi = 2; tagi < len; tagi++) {
+        tagContainer.deleteRow(-1);
+      }
+      for(var tagi = 0; tagi < tags.length; tagi++) {
+        var tag = tags[tagi];
+        var row = tagContainer.insertRow(-1);
+        console.log(row);
+        var writer = [];
+        writer.push('<tr>');
+        writer.push('<td>'+tag.tid+'</td>',
+                    charshowView(tag.chs[i], chars[i]));
+        writer.push('</tr>');
+        row.innerHTML = writer.join(' ');
+      }
+    }
+  }
+
+  // add a tag.
+  function addTag(nodes) {
+    var tid = tags.length;
+    var len = nodes.length;
+    var chs = [];
+    for(var i = 0; i < nodes.length; i++) {
+      var tag = $(nodes[i]).find("tag");
+      var strs = extractStrs(tag.text());
+      chs.push(extractChars(strs));
+    }
+    var tag = {
+      tid: tid, 
+      len: len, 
+      chs: chs
+    };
+    tags.push(tag);
+  }
+
+  function parseXML(file) {
+    var reader = new FileReader();
+    reader.onload = function(event) {
+      var xml = event.target.result;
+      var xmlDoc = $.parseXML(xml);
+      var exampleNode = $(xmlDoc).find("test > example");
+      example = exampleNode.children();
+      setTimeout(function() { 
+        toggleLoad(true);
+        setTimeout(function() {
+          showExample();
+          ifGTLoaded = true;
+          toggleLoad(false);
+        }, 0); }, 
+       0);
+    };
+    reader.readAsText(file);
+  }
+
+  function parseTagXML(file) {
+    if(!ifGTLoaded ) {
+      alert("please first load ground truth.");
+      return;
+    }
+    var reader = new FileReader(); 
+    reader.onload = function(event) {
+      var xml = event.target.result;
+      var xmlDoc = $.parseXML(xml);
+      output.push('<li><strong>', escape(file.name), '</strong> (', file.type || 'n/a', ') - ',
+                  file.size, ' bytes, last modified: ',
+                  file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a',
+                  '<br>', 
+                  'T = ', $(xmlDoc).find("test > time").text(), ', &nbsp; &nbsp; ', 
+                  'Acc = ', $(xmlDoc).find("test > accuracy").text(), ', &nbsp; &nbsp; ',
+                  '</li>');
+      document.getElementById('list').innerHTML = '<ol>' + output.join('') + '</ol>';
+      var exampleNode = $(xmlDoc).find("test > example");
+      example = exampleNode.children();
+      addTag(example);
+      showTag();
+    };
+    reader.readAsText(file);
+  }
+  function handleFileSelect(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+
+    var files = evt.dataTransfer.files; // FileList object.
+
+    var dropZone = evt.srcElement;
+    dropZone.style.backgroundColor = '';
+
+    if(evt.srcElement.id == 'drop_zone') {
+      parseXML(files[0]);
+    }else{
+      parseTagXML(files[0]);
+    }
+  }
+
+  var dragOverColor = "#72B6F2";
+  function handleDragOver(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+    evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+    var dropZone = evt.srcElement;
+    if(dropZone.style.backgroundColor != dragOverColor) {
+      dropZone.style.backgroundColor = dragOverColor;
+    }    
+  }
+
+  function handleDragLeave(evt) {
+    console.log("dragleave");
+    evt.stopPropagation();
+    evt.preventDefault();
+    evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+    var dropZone = evt.srcElement;
+    dropZone.style.backgroundColor = '';
+  }
+
+  // Setup the dnd listeners.
+  var dropZone = document.getElementById('drop_zone');
+  dropZone.addEventListener('dragover', handleDragOver, false);
+  dropZone.addEventListener('dragleave', handleDragLeave, false);
+  dropZone.addEventListener('drop', handleFileSelect, false);
+  var dropTagZone = document.getElementById('drop_tag_zone');
+  dropTagZone.addEventListener('dragover', handleDragOver, false);
+  dropTagZone.addEventListener('dragleave', handleDragLeave, false);
+  dropTagZone.addEventListener('drop', handleFileSelect, false);
+</script>
+
+<hr>
+<output class="list">
+  <ol id="content">
+  </ol>
+</output>
+
+<center>
+<p style="visibility: hidden" id="loading">Loading...</p>
+</center>
+
+
+</body>
+</html> 

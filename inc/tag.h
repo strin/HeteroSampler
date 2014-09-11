@@ -22,6 +22,8 @@ namespace Tagging {
     objcokus* rng;
 
     std::vector<int> tag;
+    vec<double> timestamp;                  // whenever a position is changed, its timestamp is incremented.
+    vec<double> checksum;                   // if checksum is changes, then the position might be updated.
     std::vector<double> entropy;            // current entropy when sampled.
     std::vector<double> sc;
     std::vector<double> entropy_unigram;    // unigram entropy of positions.

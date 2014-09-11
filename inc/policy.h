@@ -89,6 +89,9 @@ namespace Tagging {
     // extract features from node.
     virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
 
+    // compute the checksum of a node. (determine if the feature needs to be re-extracted due to change in neighbors).
+    virtual double checksum(MarkovTreeNodePtr node, int pos);
+
     // log information about node.
     virtual void logNode(MarkovTreeNodePtr node);
 

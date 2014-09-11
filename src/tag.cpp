@@ -28,6 +28,8 @@ namespace Tagging {
     resp.resize(seqlen, DBL_MAX);
     feat.resize(seqlen);
     mask.resize(seqlen); 
+    timestamp.resize(seqlen, 0);
+    checksum.resize(seqlen, NAN);
     entropy.resize(seqlen);
     entropy_unigram.resize(seqlen, NAN);
     reward.resize(seqlen);
@@ -90,7 +92,7 @@ namespace Tagging {
         cout << "nan " << endl;
       this->sc.push_back(sc[t]);
     }
-
+    this->timestamp[pos] += 1;
     // compute gradient, if necessary.
     this->features = featExtract(*this);
     ParamPointer gradient = makeParamPointer();

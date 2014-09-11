@@ -77,45 +77,46 @@ namespace Tagging {
     node->depth = 0;
     try{
       while(true) {
-	if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH) 
-	  throw "Policy Chain reaches maximum depth.";
-	node->tag->rng = &test_thread_pool.rngs[tid];
-	node->choice = this->policy(node);
-	if(node->choice == -1) {
-	  node->log_weight = this->reward(node); 
-	  node->gradient = makeParamPointer();
-	  break;
-	}else{
-	  node->log_weight = -DBL_MAX; 
-	  int pos = node->choice;
-	  node->gradient = model->sampleOne(*node->tag, pos);
-	  FeaturePointer feat = this->extractFeatures(node, pos);
-	  node->tag->mask[pos] += 1;
-	  node->tag->feat[pos] = feat;
-	  node->tag->resp[pos] = Tagging::score(this->param, feat);
-	  if(lets_resp_reward) {
-	    double resp = node->tag->resp[pos];
-	    test_thread_pool.lock();
-	    Tag tag(*node->tag);
-	    auto is_equal = [&] () {
-	      return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
-	    };
-	    double reward_baseline = is_equal();
-	    model->sampleOne(tag, pos);
-	    double reward = is_equal();
-	    // double logR = reward - reward_baseline; 
-	    double logR = tag.reward[pos];
-	    test_resp_reward.push_back(make_pair(resp, logR));
-	    test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
-	    test_resp_RL.push_back(make_pair(resp, logR));
-	    if(isinstance<CorpusLiteral>(model->corpus)) {
-	      test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
-	    }
-	    test_thread_pool.unlock();
-	  }
-	}
-	node = addChild(node, *node->tag);
-      }
+        if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH) 
+          throw "Policy Chain reaches maximum depth.";
+        node->tag->rng = &test_thread_pool.rngs[tid];
+        node->choice = this->policy(node);
+        if(node->choice == -1) {
+          node->log_weight = this->reward(node); 
+          node->gradient = makeParamPointer();
+          break;
+        }else{
+          node->log_weight = -DBL_MAX; 
+          int pos = node->choice;
+          node->gradient = model->sampleOne(*node->tag, pos);
+          FeaturePointer feat = this->extractFeatures(node, pos);
+          node->tag->mask[pos] += 1;
+          node->tag->feat[pos] = feat;
+          node->tag->resp[pos] = Tagging::score(this->param, feat);
+          node->tag->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
+          if(lets_resp_reward) {
+            double resp = node->tag->resp[pos];
+            test_thread_pool.lock();
+            Tag tag(*node->tag);
+            auto is_equal = [&] () {
+              return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
+            };
+            double reward_baseline = is_equal();
+            model->sampleOne(tag, pos);
+            double reward = is_equal();
+            // double logR = reward - reward_baseline; 
+            double logR = tag.reward[pos];
+            test_resp_reward.push_back(make_pair(resp, logR));
+            test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+            test_resp_RL.push_back(make_pair(resp, logR));
+            if(isinstance<CorpusLiteral>(model->corpus)) {
+              test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
+            }
+            test_thread_pool.unlock();
+          }
+        }
+        node = addChild(node, *node->tag);
+    }
     }catch(const char* ee) {
       cout << "error: " << ee << endl;
     }
@@ -404,6 +405,11 @@ namespace Tagging {
         insertFeature(feat, "unigram-ent", node->tag->entropy_unigram[pos]);
       }
     }
+    if(featoptFind("nb-modify")) {      // if a neighbor has been modified.
+      if(node->tag->checksum[pos] != this->checksum(node, pos)) {
+        insertFeature(feat, "nb-modify", 1.0);
+      }
+    }
     if(featoptFind("unigram-lhood")) {
       if(model_unigram) {
         if(node->tag->sc_unigram[pos].size() == 0) {
@@ -443,6 +449,15 @@ namespace Tagging {
     return feat;
   }
 
+  double Policy::checksum(MarkovTreeNodePtr node, int pos) {
+    size_t checksum = 0;
+    int factorL = cast<ModelCRFGibbs>(model)->factorL;
+    for(int p = max(0, pos-factorL); p <= min(pos+factorL, int(node->tag->size())); p++) {
+      checksum = checksum * 13 + node->tag->timestamp[p];
+    }
+    return (double)checksum;
+  }
+
   void Policy::logNode(MarkovTreeNodePtr node) {
     while(node->children.size() > 0) node = node->children[0]; // take final sample.
     lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
@@ -454,7 +469,7 @@ namespace Tagging {
       *lg << *this->extractFeatures(node, i);
       lg->end(); // </feat> */
       if(node->tag->tag[i] == node->tag->seq->tag[i]) {
-	hits++;
+        hits++;
       }
     }
     lg->begin("resp");
@@ -946,7 +961,7 @@ namespace Tagging {
       node->tag->mask[pos] = 1;
     }else{
       if(node->depth > Tstar * node->tag->size()) 
-	return -1;
+        return -1;
       vec<double> resp = node->tag->resp;
       logNormalize(&resp[0], resp.size());
       objcokus* rng = node->tag->rng;
@@ -1042,10 +1057,18 @@ namespace Tagging {
     int seqlen = node->tag->size();
     for(; count < node->time_stamp + seqlen; count++) {
       int pos = count % seqlen;
+
+      /* TODO: compute feat on demand */
+      if(!isnan(node->tag->checksum[pos])) {
+        FeaturePointer feat = this->extractFeatures(node, pos);
+        node->tag->feat[pos] = feat;
+        node->tag->resp[pos] = Tagging::score(param, feat);
+      }
+
       if(node->tag->resp[pos] > c and 
-	  node->tag->mask[pos] <= T) {
-	node->time_stamp = count+1;
-	return pos;
+          node->tag->mask[pos] <= T) {
+        node->time_stamp = count+1;
+        return pos;
       }
     }
     node->time_stamp = count;
@@ -1058,37 +1081,38 @@ namespace Tagging {
     try{
       node->tag->rng = &thread_pool.rngs[tid];
       for(size_t i = 0; i < node->tag->size(); i++) {
-	model->sampleOne(*node->tag, i);
-	node->tag->mask[i] = 1;
+        model->sampleOne(*node->tag, i);
+        node->tag->mask[i] = 1;
+        node->tag->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
       }
       node->gradient = makeParamPointer();
       for(size_t t = 1; t < T; t++) {
-	for(size_t i = 0; i < node->tag->size(); i++) {
-	  node->time_stamp = t * node->tag->size() + i;
-	  auto is_equal = [&] () {
-	    return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
-	  };
-	  double reward_baseline = is_equal();
-	  model->sampleOne(*node->tag, i);
-	  node->tag->mask[i] += 1;
-	  double reward = is_equal();
-	  double logR = reward - reward_baseline; 
-	  //double logR = node->tag->reward[i];
-	  // logR *= 100; // scale for convenience. 
-	  FeaturePointer feat = this->extractFeatures(node, i);   
-	  double resp = Tagging::score(param, feat);
-	  if(lets_resp_reward) {
-	    resp_reward.push_back(make_pair(resp, logR));
-	  }
-	  // mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
-	  resp = logisticFunc(resp);
-	  if(logR > 0) {
-	    mapUpdate(*node->gradient, *feat, (1-resp));
-	  }else{
-	    mapUpdate(*node->gradient, *feat, -resp);
-	  }
-
-	}
+        for(size_t i = 0; i < node->tag->size(); i++) {
+          node->time_stamp = t * node->tag->size() + i;
+          auto is_equal = [&] () {
+            return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
+          };
+          double reward_baseline = is_equal();
+          model->sampleOne(*node->tag, i);
+          node->tag->mask[i] += 1;
+          node->tag->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
+          double reward = is_equal();
+          double logR = reward - reward_baseline; 
+          //double logR = node->tag->reward[i];
+          // logR *= 100; // scale for convenience. 
+          FeaturePointer feat = this->extractFeatures(node, i);   
+          double resp = Tagging::score(param, feat);
+          if(lets_resp_reward) {
+            resp_reward.push_back(make_pair(resp, logR));
+          }
+          // mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+          resp = logisticFunc(resp);
+          if(logR > 0) {
+            mapUpdate(*node->gradient, *feat, (1-resp));
+          }else{
+            mapUpdate(*node->gradient, *feat, -resp);
+          }
+        }
       }
       node->log_weight = 0;
     }catch(const char* ee) {

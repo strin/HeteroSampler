@@ -150,22 +150,22 @@ namespace Tagging {
     dic.clear();
     total_sig = 0;
     auto mapNewToken = [&] (string token) {
-	dic[token] = total_sig;
-	invdic.push_back(token);
-	total_sig++;
+      dic[token] = total_sig;
+      invdic.push_back(token);
+      total_sig++;
     };
     for(SentencePtr seq : seqs) {
       aveT += seq->size();
       for(const TokenPtr token : seq->seq) {
-	string tg;
-	tg = token->tag;
-	int itg = tags[tg];
-	seq->tag.push_back(itg); 
-	ptr<TokenLiteral> token_literal = cast<TokenLiteral>(token);
+        string tg;
+        tg = token->tag;
+        int itg = tags[tg];
+        seq->tag.push_back(itg); 
+        ptr<TokenLiteral> token_literal = cast<TokenLiteral>(token);
+        string word = token_literal->word;
+        if(not dic.contains(word))
+          mapNewToken(word);
 /*	// map tokens to int.
-	string word = token_literal->word;
-	if(not dic.contains("w-"+word))  
-	  mapNewToken("w-"+word);
 	token_literal->itoken.push_back(dic["w-"+word]);
 	for(size_t t = 1; t < token_literal->token.size(); t++) {
 	  string tk = token_literal->token[t];

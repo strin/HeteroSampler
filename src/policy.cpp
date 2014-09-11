@@ -366,18 +366,18 @@ namespace Tagging {
       string word = cast<TokenLiteral>(seq.seq[pos])->word;
       // feat: entropy and frequency.
       if(wordent->find(word) == wordent->end())
-        insertFeature(feat, "ent", log(taglen)-wordent_mean);
+        insertFeature(feat, "word-ent", log(taglen)-wordent_mean);
       else
-        insertFeature(feat, "ent", (*wordent)[word]);
+        insertFeature(feat, "word-ent", (*wordent)[word]);
     }
     if(featoptFind("word-freq") || featoptFind("all")) {
       if(isinstance<TokenLiteral>(seq.seq[pos])) {
         string word = cast<TokenLiteral>(seq.seq[pos])->word;
         ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(this->model->corpus);
         if(wordfreq->find(word) == wordfreq->end())
-          insertFeature(feat, "freq", log(corpus->total_words)-wordfreq_mean);
+          insertFeature(feat, "word-freq", log(corpus->total_words)-wordfreq_mean);
         else
-          insertFeature(feat, "freq", (*wordfreq)[word]);
+          insertFeature(feat, "word-freq", (*wordfreq)[word]);
         StringVector nlp = corpus->getWordFeat(word);
         for(const string wordfeat : *nlp) {
           if(wordfeat == word) continue; 

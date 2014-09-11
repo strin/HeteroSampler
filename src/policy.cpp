@@ -1040,7 +1040,7 @@ namespace Tagging {
 	  node->tag->mask[i] += 1;
 	  double reward = is_equal();
 	  double logR = reward - reward_baseline; 
-	  // double logR = node->tag->reward[i];
+	  //double logR = node->tag->reward[i];
 	  // logR *= 100; // scale for convenience. 
 	  FeaturePointer feat = this->extractFeatures(node, i);   
 	  double resp = Tagging::score(param, feat);

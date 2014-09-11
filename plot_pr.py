@@ -148,6 +148,27 @@ if __name__ == '__main__':
     model = 'ner_w2_f2_tc99999'
     output = 'result_policy/learn' 
     plot_all(path_l, strategy_l, name_l, model, output)
+  elif mode == 'lhood':
+    path_l = ['test_policy', 'test_pr/lhood/condent']
+    strategy_l = ['gibbs', 'multi_policy']
+    name_l = ['gibbs', 'lhood']
+    model = 'ner_w2_f2_tc99999'
+    output = 'result_policy/lhood' 
+    plot_all(path_l, strategy_l, name_l, model, output)
+  elif mode == 'ontrain':
+    path_l = ['test_policy', 'test_pr/train/condent']
+    strategy_l = ['gibbs', 'multi_policy']
+    name_l = ['gibbs', 'lhood']
+    model = 'ner_w2_f2_tc99999'
+    output = 'result_policy/notrain' 
+    plot_all(path_l, strategy_l, name_l, model, output)
+  elif mode == 'lockdown':
+    path_l = ['test_policy', 'test/lockdown/ner/default/0']
+    strategy_l = ['gibbs', 'multi_policy']
+    name_l = ['gibbs', 'lockdown']
+    model = 'ner_w2_f2_tc99999'
+    output = 'result_policy/lockdown' 
+    plot_all(path_l, strategy_l, name_l, model, output)
   elif mode == '':
     path_l = ['test_pr/ner_notrain/oracle/full']
     strategy_l = ['multi_policy']
@@ -155,4 +176,3 @@ if __name__ == '__main__':
     model = 'ner_w2_f2_tc99999'
     output = 'result_policy/ner/toy' 
     plot_all(path_l, strategy_l, name_l, model, output)
-

@@ -1089,6 +1089,10 @@ namespace Tagging {
       for(size_t t = 1; t < T; t++) {
         for(size_t i = 0; i < node->tag->size(); i++) {
           node->time_stamp = t * node->tag->size() + i;
+          /* extract features */
+          FeaturePointer feat = this->extractFeatures(node, i);
+          double resp = Tagging::score(param, feat);
+          /* estimate reward */
           auto is_equal = [&] () {
             return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
           };
@@ -1097,14 +1101,13 @@ namespace Tagging {
           node->tag->mask[i] += 1;
           node->tag->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
           double reward = is_equal();
-          double logR = reward - reward_baseline; 
-          //double logR = node->tag->reward[i];
-          // logR *= 100; // scale for convenience. 
-          FeaturePointer feat = this->extractFeatures(node, i);   
-          double resp = Tagging::score(param, feat);
+//          double logR = reward - reward_baseline; 
+          double logR = node->tag->reward[i];
+          // logR *= 100; // scale for convenience.
           if(lets_resp_reward) {
             resp_reward.push_back(make_pair(resp, logR));
           }
+          /* update meta-model */
           // mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
           resp = logisticFunc(resp);
           if(logR > 0) {

@@ -35,13 +35,13 @@ namespace Tagging {
       double threshold;
       double prec_sample, prec_stop, recall_sample, recall_stop;
       string str() const {
-	string res = "";
-	res += "threshold (" + std::to_string(threshold) + ")\t";
-	res += "prec/sample (" + std::to_string(prec_sample) + ")\t";
-	res += "recall/sample (" + std::to_string(recall_sample) + ")\t";
-	res += "prec/stop (" + std::to_string(prec_stop) + ")\t";
-	res += "recall/stop (" + std::to_string(recall_stop) + ")\t";
-	return res;
+      	string res = "";
+      	res += "threshold (" + std::to_string(threshold) + ")\t";
+      	res += "prec/sample (" + std::to_string(prec_sample) + ")\t";
+      	res += "recall/sample (" + std::to_string(recall_sample) + ")\t";
+      	res += "prec/stop (" + std::to_string(prec_stop) + ")\t";
+      	res += "recall/stop (" + std::to_string(recall_stop) + ")\t";
+      	return res;
       }
     };
 
@@ -105,7 +105,7 @@ namespace Tagging {
     // compute TP, FP, TN, FN.
     vec<ROC> getROC(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);
 
-    // const environment. 
+    /* const environment. */
     ParamPointer wordent, wordfreq;
     double wordent_mean, wordfreq_mean;
     Vector2d tag_bigram;
@@ -115,14 +115,19 @@ namespace Tagging {
     const size_t test_count, train_count;
     const double eta;
     const bool verbose;
+    // feature option, each string switches a meta-feature to add.
+    vec<string> featopt; 
+    bool featoptFind(string feat) {return std::find(featopt.begin(), featopt.end(), feat) != featopt.end(); }
 
-    // global environment.
-    ModelPtr model;
+    /* global environment. */
+    ModelPtr model;                 // full model.
+    ModelPtr model_unigram;         // unigram/lower-order model.    
+
     objcokus rng;
     std::shared_ptr<XMLlog> lg;
     ParamPointer param, G2;
 
-    // parallel environment.
+    /* parallel environment. */
     ThreadPool<MarkovTreeNodePtr> thread_pool, test_thread_pool;    
   };
 

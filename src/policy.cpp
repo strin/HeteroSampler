@@ -383,7 +383,16 @@ namespace Tagging {
       }
     }
     if(featoptFind("cond-ent") || featoptFind("all")) {
-      insertFeature(feat, "model-ent", node->tag->entropy[pos]);
+      insertFeature(feat, "cond-ent", node->tag->entropy[pos]);
+    }
+    if(featoptFind("unigram-ent")) {
+      if(model_unigram) {
+        Tag tag(*node->tag);
+        int oldval = tag.tag[pos];
+        model_unigram->sampleOne(tag, pos);
+        // insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", -tag.sc[oldval]);
+        insertFeature(feat, "unigram-ent", tag.entropy[pos]);
+      }
     }
     if(featoptFind("word-sig") || featoptFind("all")) {
       if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
@@ -528,20 +537,20 @@ namespace Tagging {
       size_t i = node->time_stamp;
       node->gradient = makeParamPointer();
       for( ; i < 2 * node->tag->size(); i++) {      
-	size_t pos = i % node->tag->size();
-	FeaturePointer feat = this->extractFeatures(node, pos);
-	double resp = logisticFunc(Tagging::score(param, feat));
-	node->tag->resp[pos] = resp;
-	node->tag->feat[pos] = feat;
-	if(rng->random01() < resp) {
-	  node->tag->mask[pos] = 1;
-	  mapUpdate(*node->gradient, *feat, (1-resp));
-	  node->time_stamp = i+1;
-	  return pos;
-	}else{
-	  node->tag->mask[pos] = 0;
-	  mapUpdate(*node->gradient, *feat, -resp);	
-	}
+        size_t pos = i % node->tag->size();
+        FeaturePointer feat = this->extractFeatures(node, pos);
+        double resp = logisticFunc(Tagging::score(param, feat));
+        node->tag->resp[pos] = resp;
+        node->tag->feat[pos] = feat;
+        if(rng->random01() < resp) {
+          node->tag->mask[pos] = 1;
+          mapUpdate(*node->gradient, *feat, (1-resp));
+          node->time_stamp = i+1;
+          return pos;
+        }else{
+          node->tag->mask[pos] = 0;
+          mapUpdate(*node->gradient, *feat, -resp);	
+        }
       }
       node->time_stamp = i;
       return -1;
@@ -566,25 +575,25 @@ namespace Tagging {
     try{
       node->tag->rng = &thread_pool.rngs[tid];
       for(size_t i = 0; i < node->tag->size(); i++) {
-	model->sampleOne(*node->tag, i);
+        model->sampleOne(*node->tag, i);
       }
       node->gradient = makeParamPointer();
       Tag old_tag(*node->tag);
       for(size_t i = 0; i < node->tag->size(); i++) {
-	auto is_equal = [&] () {
-	  return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
-	};
-	double reward_baseline = is_equal();
-	model->sampleOne(*node->tag, i);
-	double reward = is_equal();
-	double logR = reward - reward_baseline; 
-	FeaturePointer feat = this->extractFeatures(node, i);   
-	double resp = Tagging::score(param, feat);
-	if(lets_resp_reward) {
-	  resp_reward.push_back(make_pair(resp, logR));
-	}
-  //      cout << "logR: " << logR << ", resp: " << resp << endl;
-	mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+        auto is_equal = [&] () {
+        return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
+      };
+      double reward_baseline = is_equal();
+      model->sampleOne(*node->tag, i);
+      double reward = is_equal();
+      double logR = reward - reward_baseline; 
+      FeaturePointer feat = this->extractFeatures(node, i);   
+      double resp = Tagging::score(param, feat);
+      if(lets_resp_reward) {
+        resp_reward.push_back(make_pair(resp, logR));
+      }
+      //      cout << "logR: " << logR << ", resp: " << resp << endl;
+      mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
       }
       node->log_weight = 0;
     }catch(const char* ee) {

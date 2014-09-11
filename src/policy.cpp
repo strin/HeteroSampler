@@ -396,7 +396,7 @@ namespace Tagging {
     }
     if(featoptFind("unigram-ent")) {
       if(model_unigram) {
-        if(isnan(node->tag->entropy_unigram[pos])) {
+        if(std::isnan(node->tag->entropy_unigram[pos])) {
           Tag tag(*node->tag);
           model_unigram->sampleOne(tag, pos);
           node->tag->entropy_unigram[pos] = tag.entropy[pos];

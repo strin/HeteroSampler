@@ -200,28 +200,28 @@ int main(int argc, char* argv[]) {
       };
       sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare); 
       for(int i : fold_l) {
-	double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
-	// string myname = name+"_i"+to_string(i);
-	string myname = name + "_c" + boost::lexical_cast<string>(c);
-	system(("mkdir -p " + myname).c_str());
-	ptest = shared_ptr<MultiCyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
-	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-	ptest->param = policy->param; 
-	ptest->c = c;
-	ptest->test(testCorpus);
-	ptest->resetLog(nullptr);
+        double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+        // string myname = name+"_i"+to_string(i);
+        string myname = name + "_c" + boost::lexical_cast<string>(c);
+        system(("mkdir -p " + myname).c_str());
+        ptest = shared_ptr<MultiCyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
+        ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+        ptest->param = policy->param; 
+        ptest->c = c;
+        ptest->test(testCorpus);
+        ptest->resetLog(nullptr);
       }
     }else if(vm["policy"].as<string>() == "multi_cyclic_value_unigram_shared") {
       shared_ptr<ModelCRFGibbs> model_unigram = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
       std::ifstream file; 
       file.open(vm["unigram_model"].as<string>(), std::fstream::in);
       if(!file.is_open()) 
-	throw (vm["unigram_model"].as<string>()+" not found.").c_str();
+        throw (vm["unigram_model"].as<string>()+" not found.").c_str();
       file >> *model_unigram;
       file.close();
       if(dataset == "ocr") {
-	cast<ModelCRFGibbs>(model_unigram)->extractFeatures = extractOCR;
-	cast<ModelCRFGibbs>(model_unigram)->extractFeatAll = extractOCRAll; 
+        cast<ModelCRFGibbs>(model_unigram)->extractFeatures = extractOCR;
+        cast<ModelCRFGibbs>(model_unigram)->extractFeatAll = extractOCRAll; 
       }
       string name = vm["name"].as<string>();
       const int fold = 10;
@@ -237,20 +237,20 @@ int main(int argc, char* argv[]) {
       policy->resetLog(nullptr);
       shared_ptr<MultiCyclicValueUnigramPolicy> ptest;
       auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
-	return (a.first < b.first);
+        return (a.first < b.first);
       };
       sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare); 
       for(int i : fold_l) {
-	double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+        double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
 	// string myname = name+"_i"+to_string(i);
-	string myname = name + "_c" + boost::lexical_cast<string>(c);
-	system(("mkdir -p " + myname).c_str());
-	ptest = shared_ptr<MultiCyclicValueUnigramPolicy>(new MultiCyclicValueUnigramPolicy(model, model_unigram, vm));
-	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-	ptest->param = policy->param; 
-	ptest->c = c;
-	ptest->test(testCorpus);
-	ptest->resetLog(nullptr);
+        string myname = name + "_c" + boost::lexical_cast<string>(c);
+        system(("mkdir -p " + myname).c_str());
+        ptest = shared_ptr<MultiCyclicValueUnigramPolicy>(new MultiCyclicValueUnigramPolicy(model, model_unigram, vm));
+        ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+        ptest->param = policy->param; 
+        ptest->c = c;
+        ptest->test(testCorpus);
+        ptest->resetLog(nullptr);
       }
       system(("rm -r "+name).c_str());
     }else if(vm["policy"].as<string>() == "cyclic_value_shared") {

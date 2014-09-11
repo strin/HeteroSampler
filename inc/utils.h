@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <sstream>
 #include <fstream>
+#include <ctime>
 #include "log.h"
 #include "stdlib.h"
 #include "objcokus.h"

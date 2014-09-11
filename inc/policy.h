@@ -27,6 +27,7 @@ namespace Tagging {
       ptr<Corpus> corpus;
       double score;
       double time;
+      double wallclock;
     };
     struct ROC {
     public:

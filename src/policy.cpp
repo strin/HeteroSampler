@@ -33,6 +33,7 @@ namespace Tagging {
    verbose(vm["verbose"].as<bool>()), 
    Q(vm["Q"].as<size_t>()),
    lets_resp_reward(false),
+   model_unigram(nullptr), 
    param(makeParamPointer()), G2(makeParamPointer()) {
     // feature switch.
     split(featopt, vm["feat"].as<string>(), boost::is_any_of(" "));

@@ -35,13 +35,13 @@ namespace Tagging {
       double threshold;
       double prec_sample, prec_stop, recall_sample, recall_stop;
       string str() const {
-	string res = "";
-	res += "threshold (" + std::to_string(threshold) + ")\t";
-	res += "prec/sample (" + std::to_string(prec_sample) + ")\t";
-	res += "recall/sample (" + std::to_string(recall_sample) + ")\t";
-	res += "prec/stop (" + std::to_string(prec_stop) + ")\t";
-	res += "recall/stop (" + std::to_string(recall_stop) + ")\t";
-	return res;
+      	string res = "";
+      	res += "threshold (" + std::to_string(threshold) + ")\t";
+      	res += "prec/sample (" + std::to_string(prec_sample) + ")\t";
+      	res += "recall/sample (" + std::to_string(recall_sample) + ")\t";
+      	res += "prec/stop (" + std::to_string(prec_stop) + ")\t";
+      	res += "recall/stop (" + std::to_string(recall_stop) + ")\t";
+      	return res;
       }
     };
 
@@ -120,7 +120,9 @@ namespace Tagging {
     bool featoptFind(string feat) {return std::find(featopt.begin(), featopt.end(), feat) != featopt.end(); }
 
     /* global environment. */
-    ModelPtr model;
+    ModelPtr model;                 // full model.
+    ModelPtr model_unigram;         // unigram/lower-order model.    
+
     objcokus rng;
     std::shared_ptr<XMLlog> lg;
     ParamPointer param, G2;

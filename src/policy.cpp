@@ -391,13 +391,27 @@ namespace Tagging {
     if(featoptFind("cond-ent") || featoptFind("all")) {
       insertFeature(feat, "cond-ent", node->tag->entropy[pos]);
     }
+    if(featoptFind("cond-lhood") || featoptFind("all")) {
+      insertFeature(feat, "cond-lhood", node->tag->sc[node->tag->tag[pos]]);
+    }
     if(featoptFind("unigram-ent")) {
       if(model_unigram) {
-        Tag tag(*node->tag);
-        int oldval = tag.tag[pos];
-        model_unigram->sampleOne(tag, pos);
-        // insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", -tag.sc[oldval]);
-        insertFeature(feat, "unigram-ent", tag.entropy[pos]);
+        if(isnan(node->tag->entropy_unigram[pos])) {
+          Tag tag(*node->tag);
+          model_unigram->sampleOne(tag, pos);
+          node->tag->entropy_unigram[pos] = tag.entropy[pos];
+        }
+        insertFeature(feat, "unigram-ent", node->tag->entropy_unigram[pos]);
+      }
+    }
+    if(featoptFind("unigram-lhood")) {
+      if(model_unigram) {
+        if(node->tag->sc_unigram[pos].size() == 0) {
+          Tag tag(*node->tag);
+          model_unigram->sampleOne(tag, pos);
+          node->tag->sc_unigram[pos] = tag.sc;
+        }
+        insertFeature(feat, "unigram-lhood", node->tag->sc_unigram[pos][node->tag->tag[pos]]);
       }
     }
     if(featoptFind("word-sig") || featoptFind("all")) {

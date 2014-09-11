@@ -7,6 +7,7 @@
 #include "policy.h"
 #include <iostream>
 #include <boost/program_options.hpp>
+#include "boost/algorithm/string.hpp"
 
 using namespace std;
 using namespace Tagging;
@@ -45,7 +46,8 @@ int main(int argc, char* argv[]) {
 	("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
 	("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
 	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
-	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy");
+	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
+    ("feat", po::value<std::string>()->default_value("all"), "feature switches");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);    

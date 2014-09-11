@@ -34,6 +34,8 @@ namespace Tagging {
    Q(vm["Q"].as<size_t>()),
    lets_resp_reward(false),
    param(makeParamPointer()), G2(makeParamPointer()) {
+    // feature switch.
+    split(featopt, vm["feat"].as<string>(), boost::is_any_of(" "));
     // init stats.
     if(isinstance<CorpusLiteral>(model->corpus)) {
       ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(model->corpus);
@@ -350,63 +352,64 @@ namespace Tagging {
     size_t seqlen = tag.size();
     size_t taglen = model->corpus->tags.size();
     // bias.
-#if USE_FEAT_BIAS == 1
-    insertFeature(feat, "b");
-#endif
-#if USE_FEAT_ENTROPY == 1
-    string word = cast<TokenLiteral>(seq.seq[pos])->word;
-    // feat: entropy and frequency.
-    if(wordent->find(word) == wordent->end())
-      insertFeature(feat, "ent", log(taglen)-wordent_mean);
-    else
-      insertFeature(feat, "ent", (*wordent)[word]);
-#endif
-#if USE_FEAT_ALL == 1
-    string word = cast<TokenLiteral>(seq.seq[pos])->word;
-    ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(this->model->corpus);
-    if(wordfreq->find(word) == wordfreq->end())
-      insertFeature(feat, "freq", log(corpus->total_words)-wordfreq_mean);
-    else
-      insertFeature(feat, "freq", (*wordfreq)[word]);
-    StringVector nlp = corpus->getWordFeat(word);
-    for(const string wordfeat : *nlp) {
-      if(wordfeat == word) continue; 
-      string lowercase = word;
-      transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
-      if(wordfeat == lowercase) continue;
-      if(wordfeat[0] == 'p' or wordfeat[0] == 's') continue;
-      insertFeature(feat, wordfeat);
+    if(featoptFind("bias") || featoptFind("all")) 
+      insertFeature(feat, "b");
+    if(featoptFind("word-ent") || featoptFind("all")) {
+      string word = cast<TokenLiteral>(seq.seq[pos])->word;
+      // feat: entropy and frequency.
+      if(wordent->find(word) == wordent->end())
+        insertFeature(feat, "ent", log(taglen)-wordent_mean);
+      else
+        insertFeature(feat, "ent", (*wordent)[word]);
     }
-#endif
-#if USE_FEAT_CONDENT == 1
-    insertFeature(feat, "model-ent", node->tag->entropy[pos]);
-#endif
-#if USE_FEAT_ALL == 1
-    if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
-      ptr<Corpus> corpus = model->corpus;
-      string tg = corpus->invtags[node->tag->tag[pos]];
-      if(pos >= 1) {
-	string prev_tg = corpus->invtags[node->tag->tag[pos-1]];
-	if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
-	  insertFeature(feat, "bad");
-      }
-      if(pos < node->tag->size()-1) {
-	string next_tg = corpus->invtags[node->tag->tag[pos+1]];
-	if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
-	  insertFeature(feat, "bad");
+    if(featoptFind("word-freq") || featoptFind("all")) {
+      if(isinstance<TokenLiteral>(seq.seq[pos])) {
+        string word = cast<TokenLiteral>(seq.seq[pos])->word;
+        ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(this->model->corpus);
+        if(wordfreq->find(word) == wordfreq->end())
+          insertFeature(feat, "freq", log(corpus->total_words)-wordfreq_mean);
+        else
+          insertFeature(feat, "freq", (*wordfreq)[word]);
+        StringVector nlp = corpus->getWordFeat(word);
+        for(const string wordfeat : *nlp) {
+          if(wordfeat == word) continue; 
+          string lowercase = word;
+          transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
+          if(wordfeat == lowercase) continue;
+          if(wordfeat[0] == 'p' or wordfeat[0] == 's') continue;
+          insertFeature(feat, wordfeat);
+        }
       }
     }
-#endif
-#if USE_ORACLE == 1
+    if(featoptFind("cond-ent") || featoptFind("all")) {
+      insertFeature(feat, "model-ent", node->tag->entropy[pos]);
+    }
+    if(featoptFind("word-sig") || featoptFind("all")) {
+      if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
+        ptr<Corpus> corpus = model->corpus;
+        string tg = corpus->invtags[node->tag->tag[pos]];
+        if(pos >= 1) {
+  	      string prev_tg = corpus->invtags[node->tag->tag[pos-1]];
+  	      if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
+  	       insertFeature(feat, "bad");
+        }
+        if(pos < node->tag->size()-1) {
+          string next_tg = corpus->invtags[node->tag->tag[pos+1]];
+  	      if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
+  	        insertFeature(feat, "bad");
+        }
+      }
+    }
+    if(featoptFind("oracle")) {
       int oldval = node->tag->tag[pos];
       Tag temp(tag);
       model->sampleOne(temp, pos);          
       // insertFeature(feat, "oracle", -temp.sc[oldval]);
       insertFeature(feat, "oracle", temp.entropy[pos]);
-#endif
-#if USE_SELFAVOID == 1
+    }
+    if(featoptFind("self-avoid")) {
       insertFeature(feat, "self-avoid", node->tag->mask[pos]);
-#endif
+    }
     return feat;
   }
 

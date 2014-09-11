@@ -22,11 +22,14 @@ namespace Tagging {
   void Tag::randomInit() {
     int taglen = corpus->tags.size();
     int seqlen = seq->seq.size();
+    sc.resize(taglen);
+    sc_unigram.resize(seqlen);
     tag.resize(seqlen);
     resp.resize(seqlen, DBL_MAX);
     feat.resize(seqlen);
     mask.resize(seqlen); 
     entropy.resize(seqlen);
+    entropy_unigram.resize(seqlen, NAN);
     reward.resize(seqlen);
     for(int& t : tag) {
       t = rng->randomMT() % taglen;
@@ -68,10 +71,10 @@ namespace Tagging {
     if(argmax) {
       double max_sc = -DBL_MAX;
       for(int t = 0; t < taglen; t++) {
-	if(sc[t] > max_sc) {
-	  max_sc = sc[t];
-	  val = t;
-	}
+        if(sc[t] > max_sc) {
+          max_sc = sc[t];
+          val = t;
+        }
       }
     }else
       val = rng->sampleCategorical(sc, taglen);
@@ -84,7 +87,7 @@ namespace Tagging {
     this->sc.clear();
     for(int t = 0; t < taglen; t++) { 
       if(std::isnan(sc[t])) 
-	  cout << "nan " << endl;
+        cout << "nan " << endl;
       this->sc.push_back(sc[t]);
     }
 
@@ -95,7 +98,7 @@ namespace Tagging {
       mapUpdate<double, double>(*gradient, *this->features);
     if(grad_expect) {
       for(int t = 0; t < taglen; t++) {
-	mapUpdate<double, double>(*gradient, *featvec[t], -exp(sc[t]));
+        mapUpdate<double, double>(*gradient, *featvec[t], -exp(sc[t]));
       }
     }
     return gradient;

@@ -22,8 +22,11 @@ namespace Tagging {
     objcokus* rng;
 
     std::vector<int> tag;
-    std::vector<double> entropy; // current entropy when sampled.
+    std::vector<double> entropy;            // current entropy when sampled.
     std::vector<double> sc;
+    std::vector<double> entropy_unigram;    // unigram entropy of positions.
+    vec<vec<double> > sc_unigram;
+
     std::vector<double> reward;
     std::vector<double> resp;
     std::vector<int> mask;

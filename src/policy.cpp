@@ -1059,7 +1059,7 @@ namespace Tagging {
       int pos = count % seqlen;
 
       /* TODO: compute feat on demand */
-      if(!isnan(node->tag->checksum[pos])) {
+      if(!std::isnan(node->tag->checksum[pos])) {
         FeaturePointer feat = this->extractFeatures(node, pos);
         node->tag->feat[pos] = feat;
         node->tag->resp[pos] = Tagging::score(param, feat);

@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     shared_ptr<Model> model, model_unigram;
     if(vm["inference"].as<string>() == "Gibbs") {
       auto loadGibbsModel = [&] (string name) -> ModelPtr {
-        model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
+        shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
         std::ifstream file; 
         file.open(name, std::fstream::in);
         if(!file.is_open()) 

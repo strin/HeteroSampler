@@ -94,7 +94,7 @@ namespace Tagging {
           node->tag->feat[pos] = feat;
           node->tag->resp[pos] = Tagging::score(this->param, feat);
           node->tag->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
-          if(lets_resp_reward) {
+         /* if(lets_resp_reward) {
             double resp = node->tag->resp[pos];
             test_thread_pool.lock();
             Tag tag(*node->tag);
@@ -113,7 +113,7 @@ namespace Tagging {
               test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
             }
             test_thread_pool.unlock();
-          }
+          }*/
         }
         node = addChild(node, *node->tag);
     }
@@ -1063,6 +1063,26 @@ namespace Tagging {
         FeaturePointer feat = this->extractFeatures(node, pos);
         node->tag->feat[pos] = feat;
         node->tag->resp[pos] = Tagging::score(param, feat);
+        if(lets_resp_reward) {
+	  double resp = node->tag->resp[pos];
+	  test_thread_pool.lock();
+	  Tag tag(*node->tag);
+	  auto is_equal = [&] () {
+	    return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
+	  };
+	  double reward_baseline = is_equal();
+	  model->sampleOne(tag, pos);
+	  double reward = is_equal();
+	  // double logR = reward - reward_baseline; 
+	  double logR = tag.reward[pos];
+	  test_resp_reward.push_back(make_pair(resp, logR));
+	  test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+	  test_resp_RL.push_back(make_pair(resp, logR));
+	  if(isinstance<CorpusLiteral>(model->corpus)) {
+	    test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
+	  }
+	  test_thread_pool.unlock();
+	}
       }
 
       if(node->tag->resp[pos] > c and 

@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
       policy->test(testCorpus);
     }else if(vm["policy"].as<string>() == "lockdown_shared") {
       string name = vm["name"].as<string>();
-      const int fold = 10;
+      const int fold = 20;
 //      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
       system(("rm -r "+name+"*").c_str());
       policy = shared_ptr<Policy>(new LockdownPolicy(model, vm));

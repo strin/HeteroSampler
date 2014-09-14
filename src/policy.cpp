@@ -350,7 +350,7 @@ namespace Tagging {
       lg->end(); // </accuracy>
       result->score = f1;
     }
-    result->score = -1;
+    // result->score = -1;
   }
 
   FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {

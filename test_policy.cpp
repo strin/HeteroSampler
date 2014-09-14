@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
     }else if(vm["policy"].as<string>() == "lockdown_shared") {
       string name = vm["name"].as<string>();
       const int fold = 10;
-      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
+//      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
       system(("rm -r "+name+"*").c_str());
       policy = shared_ptr<Policy>(new LockdownPolicy(model, vm));
       policy->lets_resp_reward = true;
@@ -155,29 +155,58 @@ int main(int argc, char* argv[]) {
       cast<LockdownPolicy>(policy)->c = -DBL_MAX; // sample every position.
       policy->test(testCorpus);
       policy->resetLog(nullptr);
-      shared_ptr<LockdownPolicy> ptest;
       auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
-	return (a.first < b.first);
+        return (a.first < b.first);
       };
-      sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare); 
-      for(int i : fold_l) {
-      	double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
-      	// string myname = name+"_i"+to_string(i);
-      	string myname = name + "_c" + boost::lexical_cast<string>(c);
-      	system(("mkdir -p " + myname).c_str());
-      	ptest = make_shared<LockdownPolicy>(model, vm);
+      auto compare2 = [] (std::pair<double, double> a, std::pair<double, double> b) {
+        return (a.second < b.second);
+      };
+      sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare);
+      double c_max = std::max_element(policy->test_resp_reward.begin(),
+                                            policy->test_resp_reward.end(), compare)->first,
+                    c_min = std::min_element(policy->test_resp_reward.begin(),
+                                            policy->test_resp_reward.end(), compare)->first;
+      std::vector<std::pair<double, double> > acc_c;
+      auto runWithC = [&] (double m_c) {
+        string myname = name + "_c" + boost::lexical_cast<string>(m_c);
+        system(("mkdir -p " + myname).c_str());
+        shared_ptr<LockdownPolicy> ptest = make_shared<LockdownPolicy>(model, vm);
         ptest->model_unigram = model_unigram;
-      	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-      	ptest->param = policy->param; 
-      	ptest->c = c;
-      	ptest->test(testCorpus);
-      	ptest->resetLog(nullptr);
+        ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+        ptest->param = policy->param;
+        ptest->c = m_c;
+        Policy::ResultPtr result = ptest->test(testCorpus);
+        ptest->resetLog(nullptr);
+        acc_c.push_back(make_pair(result->score, m_c));
+        sort(acc_c.rbegin(), acc_c.rend(), compare2);
+      };
+      auto findLargestSeg = [&] () -> double {
+        double segmax = -DBL_MAX, c = 0.0;
+        for(size_t t = 0; t < acc_c.size()-1; t++) {
+          double seg = acc_c[t+1].first - acc_c[t].first;
+          if(seg > segmax) {
+            segmax = seg;
+            c = (acc_c[t+1].second + acc_c[t].second) / 2.0;
+          }
+        }
+        return c;
+      };
+      runWithC(c_min);
+      runWithC(c_max);
+      for(int i = 0; i < fold; i++) {
+        double c = findLargestSeg();
+        runWithC(c);
       }
+//      for(int i : fold_l) {
+//      	double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
+//      	// string myname = name+"_i"+to_string(i);
+//      }
     }else if(vm["policy"].as<string>() == "random_scan") {
       policy = shared_ptr<Policy>(new RandomScanPolicy(model, vm));
       policy->test(testCorpus);
     }else if(vm["policy"].as<string>() == "adaptive_random_scan") {
       policy = shared_ptr<Policy>(new RandomScanPolicy(model, vm));
+      shared_ptr<Policy>(new RandomScanPolicy(model, vm));
       train_func(policy);
       policy->test(testCorpus);
     }else if(vm["policy"].as<string>() == "multi_cyclic_value_shared") {

@@ -23,10 +23,14 @@ namespace Tagging {
   template<class T>
   using ptr = std::shared_ptr<T>;
 
+  
   using string = std::string;
 
   template<class T>
   using vec = std::vector<T>;
+
+  template<class T>
+  using vec2d = vec<vec<T> >;
 
   template<class K, class T>
   class map : public std::unordered_map<K, T> {

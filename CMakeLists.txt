@@ -85,6 +85,9 @@ target_link_libraries(pos
 add_executable(ocr main_ocr.cpp
 )
 
+add_executable(ising main_ising.cpp
+)
+
 target_link_libraries(ocr
   scilog
   tag
@@ -93,10 +96,23 @@ target_link_libraries(ocr
   ${Boost_LIBRARIES}
   ${PYTHON_LIBRARIES}
 )
+
+target_link_libraries(ising
+  scilog
+  tag
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${LIBS}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+)
+
 add_executable(policy test_policy.cpp
 )
 
-target_link_libraries(policy
+add_executable(test-ising test_ising.cpp
+)
+
+target_link_libraries(test-ising
   scilog
   tag
   ${CMAKE_THREAD_LIBS_INIT}

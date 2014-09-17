@@ -112,6 +112,15 @@ add_executable(policy test_policy.cpp
 add_executable(test-ising test_ising.cpp
 )
 
+target_link_libraries(policy
+  scilog
+  tag
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${LIBS}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+)
+
 target_link_libraries(test-ising
   scilog
   tag

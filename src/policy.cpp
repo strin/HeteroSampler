@@ -38,6 +38,8 @@ namespace Tagging {
    param(makeParamPointer()), G2(makeParamPointer()) {
     // feature switch.
     split(featopt, vm["feat"].as<string>(), boost::is_any_of(" "));
+    split(verbose_opt, vm["verbosity"].as<string>(), boost::is_any_of(" "));
+
     // init stats.
     if(isinstance<CorpusLiteral>(model->corpus)) {
       ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(model->corpus);
@@ -51,8 +53,10 @@ namespace Tagging {
       tag_bigram = tag_bigram_unigram.first;
       tag_unigram_start = tag_bigram_unigram.second;
     }
+
     system(("mkdir -p "+name).c_str());
     lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
+
   }
 
   Policy::~Policy() {
@@ -471,11 +475,13 @@ namespace Tagging {
     lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
     int hits = 0;
     for(size_t i = 0; i < node->tag->size(); i++) {
-      lg->begin("feat"); 
-      *lg << *this->extractFeatures(node, i);
-      lg->end(); // </feat> */
-      if(node->tag->tag[i] == node->tag->seq->tag[i]) {
-        hits++;
+      if(verboseOptFind("feat")) {
+        lg->begin("feat"); 
+        *lg << *this->extractFeatures(node, i);
+        lg->end(); // </feat> */
+        if(node->tag->tag[i] == node->tag->seq->tag[i]) {
+          hits++;
+        }
       }
     }
     lg->begin("resp");

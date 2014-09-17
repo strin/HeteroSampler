@@ -118,9 +118,14 @@ namespace Tagging {
     const size_t K, Q; // K: num samples. Q: num epochs.
     const size_t test_count, train_count;
     const double eta;
+
     const bool verbose; 
+    vec<string> verbose_opt;
+    bool verboseOptFind(string verse) {return std::find(verbose_opt.begin(), verbose_opt.end(), verse) != verbose_opt.end(); }
+
     const bool lets_inplace;   // not work with entire history.
     // feature option, each string switches a meta-feature to add.
+
     vec<string> featopt; 
     bool featoptFind(string feat) {return std::find(featopt.begin(), featopt.end(), feat) != featopt.end(); }
 

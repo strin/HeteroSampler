@@ -128,13 +128,13 @@ void CorpusIsing::read(const std::string& filename, bool lets_shuffle) {
   this->tags.clear();
   while(!file.eof()) {
     getline(file, line);
-    if(line == "" and lines_gt.size() == 0) {
-      lines_gt = lines;
+    if(line == "" and lines_basic.size() == 0) {
+      lines_basic = lines;
       lines.clear();
-    }else if(line == "" and lines_gt.size() > 0) {
-      SentencePtr sen = SentencePtr(new ImageIsing(this, lines, lines_gt));
+    }else if(line == "" and lines_basic.size() > 0) {
+      SentencePtr sen = SentencePtr(new ImageIsing(this, lines_basic, lines));
       lines.clear();
-      lines_gt.clear();
+      lines_basic.clear();
       if(sen->seq.size() > 0) {
         seqs.push_back(sen);
       }else continue;

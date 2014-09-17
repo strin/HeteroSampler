@@ -33,6 +33,7 @@ namespace Tagging {
    verbose(vm["verbose"].as<bool>()), 
    Q(vm["Q"].as<size_t>()),
    lets_resp_reward(false),
+   lets_inplace(vm["inplace"].as<bool>()), 
    model_unigram(nullptr), 
    param(makeParamPointer()), G2(makeParamPointer()) {
     // feature switch.
@@ -115,7 +116,11 @@ namespace Tagging {
             test_thread_pool.unlock();
           }*/
         }
-        node = addChild(node, *node->tag);
+        if(lets_inplace) {
+          node->depth++;
+        }else {
+          node = addChild(node, *node->tag);
+        }
     }
     }catch(const char* ee) {
       cout << "error: " << ee << endl;

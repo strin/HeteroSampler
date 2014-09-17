@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
 	("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
 	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
 	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
+  ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
     ("feat", po::value<std::string>()->default_value(""), "feature switches");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);

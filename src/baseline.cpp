@@ -204,8 +204,8 @@ namespace Tagging {
     }
     if(samples)
       samples->push_back(shared_ptr<Tag>(new Tag(tag)));
-    xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-    xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+    // xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
+    // xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
     if(update_grad) {
       FeaturePointer feat = this->extractFeaturesAll(truth);
       mapDivide<double>(*gradient, -(double)(T-B));

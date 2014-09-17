@@ -107,10 +107,10 @@ void ImageIsing::parselines(const vec<string>& lines,
   
 string ImageIsing::str() const {
   string ret = "";
-  for(int w = 0; w < W; w++) {
-    for(int h = 0; h < H; h++) {
-      ret += std::to_string(img[h][w]);
-    }
+  ret += std::to_string(H) + " " + std::to_string(W) + "\n";
+  for(const TokenPtr tk : seq) {
+    ptr<TokenIsing> token = std::dynamic_pointer_cast<TokenIsing>(tk);
+    ret += std::to_string(token->val) +  " / " + token->tag + "\t";
   }
   return ret;
 }
@@ -121,7 +121,7 @@ void CorpusIsing::read(const std::string& filename, bool lets_shuffle) {
   if(!file.is_open()) 
     throw "failed to read corpus file. ";
   std::string line;
-  std::vector<std::string> lines, lines_gt;
+  std::vector<std::string> lines, lines_basic;
   int tagid = 0;
   vec<int> tokenid;
   this->seqs.clear();

@@ -160,7 +160,8 @@ namespace Tagging {
       }
       Tag truth(*seq, corpus, &rngs[0], param);
       xmllog.begin("example_"+to_string(ex));
-	xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
+	// xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
+	xmllog.begin("truth"); xmllog << tag->seq->str() << endl; xmllog.end();
 	xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
 	xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
       xmllog.end();

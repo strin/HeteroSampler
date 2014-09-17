@@ -94,7 +94,8 @@ namespace Tagging {
           node->tag->mask[pos] += 1;
           node->tag->feat[pos] = feat;
           node->tag->resp[pos] = Tagging::score(this->param, feat);
-          node->tag->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
+//          node->tag->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
+          node->tag->checksum[pos] = 0;
          /* if(lets_resp_reward) {
             double resp = node->tag->resp[pos];
             test_thread_pool.lock();
@@ -1069,27 +1070,31 @@ namespace Tagging {
         node->tag->feat[pos] = feat;
         node->tag->resp[pos] = Tagging::score(param, feat);
         if(lets_resp_reward) {
-	  double resp = node->tag->resp[pos];
-	  test_thread_pool.lock();
-	  Tag tag(*node->tag);
-	  auto is_equal = [&] () {
-	    return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
-	  };
-	  double reward_baseline = is_equal();
-	  model->sampleOne(tag, pos);
-	  double reward = is_equal();
-	  // double logR = reward - reward_baseline; 
-	  double logR = tag.reward[pos];
-	  test_resp_reward.push_back(make_pair(resp, logR));
-	  test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
-	  test_resp_RL.push_back(make_pair(resp, logR));
-	  if(isinstance<CorpusLiteral>(model->corpus)) {
-	    test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
-	  }
-	  test_thread_pool.unlock();
-	}
+          double resp = node->tag->resp[pos];
+          test_thread_pool.lock();
+          // collect reward, slow, for debug only.
+//          Tag tag(*node->tag);
+//          auto is_equal = [&] () {
+//            return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
+//          };
+//          double reward_baseline = is_equal();
+//          model->sampleOne(tag, pos);
+//          double reward = is_equal();
+//          // double logR = reward - reward_baseline; 
+//          double logR = tag.reward[pos];
+//          test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+//          test_resp_RL.push_back(make_pair(resp, logR));
+//          if(isinstance<CorpusLiteral>(model->corpus)) {
+//            test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
+//          }
+          
+          // do not collect reward.
+          double logR = 0;
+          test_resp_reward.push_back(make_pair(resp, logR));
+          test_thread_pool.unlock();
+        }
       }
-
+      int mk = node->tag->mask[pos];
       if(node->tag->resp[pos] > c and 
           node->tag->mask[pos] <= T) {
         node->time_stamp = count+1;

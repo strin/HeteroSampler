@@ -89,9 +89,9 @@ int main(int argc, char* argv[]) {
           cast<ModelCRFGibbs>(model)->extractFeatures = extractOCR;
           cast<ModelCRFGibbs>(model)->extractFeatAll = extractOCRAll; 
         }else if(dataset == "ising") {
-	  cast<ModelCRFGibbs>(model)->extractFeatures = extractIsing;
-	  cast<ModelCRFGibbs>(model)->extractFeatAll = extractIsingAll;
-	}
+          cast<ModelCRFGibbs>(model)->extractFeatures = extractIsing;
+          cast<ModelCRFGibbs>(model)->extractFeatAll = extractIsingAll;
+        }
         return model;
       };
       model = loadGibbsModel(vm["model"].as<string>());

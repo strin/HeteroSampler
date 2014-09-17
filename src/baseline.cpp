@@ -149,8 +149,8 @@ namespace Tagging {
   ParamPointer ModelCRFGibbs::sampleOne(Tag& tag, int choice) {
     if(choice >= tag.size())
       throw "kernel choice invalid (>= tag size)";
-    return tag.proposeGibbs(choice, [&] (const Tag& tag) -> FeaturePointer {
-			  return this->extractFeatures(shared_from_this(), tag, choice); 
+      return tag.proposeGibbs(choice, [&] (const Tag& tag) -> FeaturePointer {
+			  return this->extractFeatures(shared_from_this(), tag, choice);
 			}, true, true);
   }
 

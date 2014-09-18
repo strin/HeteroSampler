@@ -1,4 +1,5 @@
 #include "policy.h"
+#include "corpus_ising.h"
 #include "feature.h"
 #include <boost/lexical_cast.hpp>
 
@@ -99,7 +100,8 @@ namespace Tagging {
           node->tag->feat[pos] = feat;
           node->tag->resp[pos] = Tagging::score(this->param, feat);
 //          node->tag->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
-          node->tag->checksum[pos] = 0;
+          node->tag->checksum[pos] = 0; // WARNING: a hack. 
+
          /* if(lets_resp_reward) {
             double resp = node->tag->resp[pos];
             test_thread_pool.lock();
@@ -189,15 +191,15 @@ namespace Tagging {
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
       if(count % int(0.1 * min(train_count, corpus->seqs.size())) == 0) 
-	cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
+        cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
       if(verbose)
-	lg->begin("example_"+to_string(count));
+        lg->begin("example_"+to_string(count));
       MarkovTree tree;
       Tag tag(seq.get(), corpus, &rng, model->param);
       tree.root->log_weight = -DBL_MAX;
       for(size_t k = 0; k < K; k++) {
-	MarkovTreeNodePtr node = addChild(tree.root, tag);
-	this->thread_pool.addWork(node); 
+        MarkovTreeNodePtr node = addChild(tree.root, tag);
+        this->thread_pool.addWork(node); 
       }
       thread_pool.waitFinish();
       /*
@@ -219,19 +221,19 @@ namespace Tagging {
       }*/
       this->gradientPolicy(tree);
       if(verbose) {
-	for(size_t k = 0; k < K; k++) {
-	  MarkovTreeNodePtr node = tree.root->children[k];
-	  while(node->children.size() > 0) node = node->children[0]; // take final sample.
-	  lg->begin("node");
-	  this->logNode(node);
-	  lg->end(); // </node>
-	}
+        for(size_t k = 0; k < K; k++) {
+          MarkovTreeNodePtr node = tree.root->children[k];
+          while(node->children.size() > 0) node = node->children[0]; // take final sample.
+          lg->begin("node");
+          this->logNode(node);
+          lg->end(); // </node>
+        }
       }
       lg->begin("param");
       *lg << *param;
       lg->end(); // </param>
       if(verbose) {
-	lg->end(); // </example>
+        lg->end(); // </example>
       }
       count++;
     }
@@ -243,13 +245,13 @@ namespace Tagging {
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
       if(count % 1000 == 0) 
-	cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
+        cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
       MarkovTree tree;
       Tag tag(seq.get(), corpus, &rng, model->param);
       tree.root->log_weight = -DBL_MAX;
       for(size_t k = 0; k < K; k++) {
-	MarkovTreeNodePtr node = addChild(tree.root, tag);
-	this->thread_pool.addWork(node); 
+        MarkovTreeNodePtr node = addChild(tree.root, tag);
+        this->thread_pool.addWork(node); 
       }
       thread_pool.waitFinish();
       this->gradientKernel(tree);
@@ -445,6 +447,27 @@ namespace Tagging {
   	        insertFeature(feat, "bad");
         }
       }
+    }
+    if(featoptFind("ising-disagree")) {
+      auto image = (const ImageIsing*)(node->tag->seq); // WARNING: Hack, no dynamic check. 
+      if(image == NULL) 
+        throw "cannot use feature 'ising-disagree' on non-ising dataset.";
+      size_t disagree = 0;
+      ImageIsing::Pt pt = image->posToPt(pos);
+      vec2d<int> steer = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+      for(auto steer_it : steer) {
+        ImageIsing::Pt this_pt = pt;
+        this_pt.h += steer_it[0];
+        this_pt.w += steer_it[1];
+        if(this_pt.h >= 0 and this_pt.h < image->H 
+          and this_pt.w >= 0 and this_pt.w < image->W) {
+          size_t pos2 = image->ptToPos(this_pt);
+          if(node->tag->tag[pos2] != node->tag->tag[pos]) {
+            disagree++;
+          }
+        }
+      }
+      insertFeature(feat, "ising-disagree", disagree);
     }
     if(featoptFind("oracle")) {
       int oldval = node->tag->tag[pos];
@@ -1102,7 +1125,7 @@ namespace Tagging {
       }
       int mk = node->tag->mask[pos];
       if(node->tag->resp[pos] > c and 
-          node->tag->mask[pos] <= T) {
+          node->tag->mask[pos] < T) {
         node->time_stamp = count+1;
         return pos;
       }

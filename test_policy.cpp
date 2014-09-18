@@ -49,6 +49,7 @@ int main(int argc, char* argv[]) {
 	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
 	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
   ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
+  ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
   ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
   ("feat", po::value<std::string>()->default_value(""), "feature switches");
     po::variables_map vm;
@@ -92,6 +93,7 @@ int main(int argc, char* argv[]) {
         }else if(dataset == "ising") {
           cast<ModelCRFGibbs>(model)->extractFeatures = extractIsing;
           cast<ModelCRFGibbs>(model)->extractFeatAll = extractIsingAll;
+          cast<ModelCRFGibbs>(model)->extractFeaturesAtInit = extractIsingAtInit;
         }
         return model;
       };
@@ -127,6 +129,7 @@ int main(int argc, char* argv[]) {
       	if(t == 1) {
       	  result = gibbs_policy->test(testCorpus);
       	}else{
+          gibbs_policy->init_method = "";
       	  gibbs_policy->test(result);
       	}
       	gibbs_policy->resetLog(nullptr);

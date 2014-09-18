@@ -204,6 +204,10 @@ namespace Tagging {
     throw "custom kernel choice not implemented."; 
   }
 
+  ParamPointer Model::sampleOneAtInit(Tag& tag, int choice) {
+    return this->sampleOne(tag, choice);
+  }
+
   double Model::score(const Tag& tag) {
     return 0;
   }

@@ -188,6 +188,16 @@ static auto extractIsing = [] (ptr<Model> model, const Tag& tag, int pos) {
   return features;
 };
 
+// feature extraction at *pos* for ising-like model for initialization.
+static auto extractIsingAtInit = [] (ptr<Model> model, const Tag& tag, int pos) {
+  ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model); 
+  auto image = dynamic_cast<const ImageIsing*>(tag.seq);
+  assert(image != NULL);
+  FeaturePointer features = makeFeaturePointer();
+  extractIsingUnigram(features, image, tag, pos);
+  return features;
+};
+
 // extract all features for ising-like model.
 static auto extractIsingAll = [] (ptr<Model> model, const Tag& tag) {
   ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model); 

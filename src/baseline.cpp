@@ -146,12 +146,20 @@ namespace Tagging {
     }
   }
 
-  ParamPointer ModelCRFGibbs::sampleOne(Tag& tag, int choice) {
+  ParamPointer ModelCRFGibbs::sampleOne(Tag& tag, int choice, FeatureExtractOne feat_extract) {
     if(choice >= tag.size())
       throw "kernel choice invalid (>= tag size)";
-      return tag.proposeGibbs(choice, [&] (const Tag& tag) -> FeaturePointer {
-			  return this->extractFeatures(shared_from_this(), tag, choice);
-			}, true, true);
+    return tag.proposeGibbs(choice, [&] (const Tag& tag) -> FeaturePointer {
+      return feat_extract(shared_from_this(), tag, choice);
+    }, true, true);
+  }
+
+  ParamPointer ModelCRFGibbs::sampleOneAtInit(Tag& tag, int choice) {
+    return this->sampleOne(tag, choice, this->extractFeaturesAtInit);
+  }
+
+  ParamPointer ModelCRFGibbs::sampleOne(Tag& tag, int choice) {
+    return this->sampleOne(tag, choice, this->extractFeatures);
   }
 
   TagVector ModelCRFGibbs::sample(const Sentence& seq, bool argmax) { 

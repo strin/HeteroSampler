@@ -35,9 +35,14 @@ namespace Tagging {
     // emulate t-step transition of a markov chain.
     // default: use Model::sample(*tag.seq), i.e. time = T.
     virtual void sample(Tag& tag, int time, bool argmax = false);             // inplace.
+
     // sample using custom kernel choice.
     // return: gradient.
     virtual ParamPointer sampleOne(Tag& tag, int choice);           
+
+    // sample using custom kernel choice at initialization.
+    // only applies if "init" flag is on (not equal to *random*). 
+    virtual ParamPointer sampleOneAtInit(Tag& tag, int choice);           
 
     virtual double score(const Tag& tag);
     // evaluate the accuracy for POS tag aginst truth.
@@ -94,6 +99,9 @@ namespace Tagging {
     int windowL, depthL; // range of unigram features.
   };
 
+  typedef std::function<FeaturePointer(ptr<Model> model, const Tag& tag, int pos)> FeatureExtractOne;
+  typedef std::function<FeaturePointer(ptr<Model> model, const Tag& tag)> FeatureExtractAll;
+
   struct ModelCRFGibbs : public ModelSimple, public std::enable_shared_from_this<Model> {
   public:
     ModelCRFGibbs(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
@@ -101,19 +109,26 @@ namespace Tagging {
     ParamPointer gradient(const Sentence& seq);
     virtual TagVector sample(const Sentence& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
-    ParamPointer sampleOne(Tag& tag, int choice);
+    
     double score(const Tag& tag);
     virtual void logArgs();
 
-    /* interface for feature extraction. */
-    std::function<FeaturePointer(ptr<Model> model, const Tag& tag, int pos)> extractFeatures;
-    std::function<FeaturePointer(ptr<Model> model, const Tag& tag)> extractFeatAll;
+    /* interface for feature extraction. */    
+    FeatureExtractOne extractFeatures;
+    FeatureExtractOne extractFeaturesAtInit;
+    FeatureExtractAll extractFeatAll;
+
+    inline ParamPointer sampleOne(Tag& tag, int choice);
+    inline ParamPointer sampleOneAtInit(Tag& tag, int choice);
+
     FeaturePointer extractFeaturesAll(const Tag& tag);
 
 
     int factorL;
     
   private:
+    ParamPointer sampleOne(Tag& tag, int choice, FeatureExtractOne feat_extract);
+
     void sampleOneSweep(Tag& tag, bool argmax = false);
   };
 

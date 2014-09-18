@@ -119,6 +119,8 @@ namespace Tagging {
     const size_t test_count, train_count;
     const double eta;
 
+    string init_method;
+
     const bool verbose; 
     vec<string> verbose_opt;
     bool verboseOptFind(string verse) {return std::find(verbose_opt.begin(), verbose_opt.end(), verse) != verbose_opt.end(); }

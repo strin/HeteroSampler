@@ -35,6 +35,7 @@ namespace Tagging {
    Q(vm["Q"].as<size_t>()),
    lets_resp_reward(false),
    lets_inplace(vm["inplace"].as<bool>()), 
+   init_method(vm["init"].as<string>()), 
    model_unigram(nullptr), 
    param(makeParamPointer()), G2(makeParamPointer()) {
     // feature switch.
@@ -81,11 +82,19 @@ namespace Tagging {
 
   void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
+    node->tag->rng = &test_thread_pool.rngs[tid];
     try{
+      if(this->init_method == "iid") {
+        for(size_t pos = 0; pos < node->tag->size(); pos++) {
+          model->sampleOneAtInit(*node->tag, pos);
+          node->depth++;
+          node->tag->mask[pos] += 1;
+          node->tag->checksum[pos] = 0; // WARNING: a hack.
+        }
+      }
       while(true) {
         if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH) 
           throw "Policy Chain reaches maximum depth.";
-        node->tag->rng = &test_thread_pool.rngs[tid];
         node->choice = this->policy(node);
         if(node->choice == -1) {
           node->log_weight = this->reward(node); 

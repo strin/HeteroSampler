@@ -4,20 +4,22 @@
 #include <cmath>
 #include <map>
 #include <unordered_map>
-#include "boost/algorithm/string.hpp"
 #include <string>
-#include <iostream>
 #include <list>
-#include "float.h"
+#include <iostream>
 #include <functional>
 #include <algorithm>
 #include <sstream>
 #include <fstream>
 #include <ctime>
+#include <memory>
+#include "float.h"
 #include "log.h"
 #include "stdlib.h"
 #include "objcokus.h"
 #include <vector>
+#include "boost/algorithm/string.hpp"
+#include <boost/random/uniform_int.hpp>
 
 namespace Tagging {
   template<class T>

@@ -41,13 +41,13 @@ namespace Tagging {
       is_doc_start = true;
   }
 
-  Sentence::Sentence(const Corpus* corpus) : corpus(corpus) {}
-  Sentence::Sentence(const Corpus* corpus, const vector<string>& lines)
+  Instance::Instance(const Corpus* corpus) : corpus(corpus) {}
+  Instance::Instance(const Corpus* corpus, const vector<string>& lines)
   :corpus(corpus) {
   }
 
-  SentenceLiteral::SentenceLiteral(const Corpus* corpus) : Sentence(corpus) {}
-  SentenceLiteral::SentenceLiteral(const Corpus* corpus, const std::vector<std::string>& lines) : Sentence(corpus, lines) {
+  SentenceLiteral::SentenceLiteral(const Corpus* corpus) : Instance(corpus) {}
+  SentenceLiteral::SentenceLiteral(const Corpus* corpus, const std::vector<std::string>& lines) : Instance(corpus, lines) {
     this->parselines(lines);
   }
 

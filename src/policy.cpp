@@ -68,7 +68,7 @@ namespace Tagging {
 
   double Policy::reward(MarkovTreeNodePtr node) {
     Tag& tag = *node->tag;
-    const Sentence* seq = tag.seq;
+    const Instance* seq = tag.seq;
     double score = 0.0;
     for(int i = 0; i < tag.size(); i++) {
       score -= (tag.tag[i] != seq->tag[i]);
@@ -377,7 +377,7 @@ namespace Tagging {
   FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = makeFeaturePointer();
     Tag& tag = *node->tag;
-    const Sentence& seq = *tag.seq;
+    const Instance& seq = *tag.seq;
     size_t seqlen = tag.size();
     size_t taglen = model->corpus->tags.size();
     // bias.

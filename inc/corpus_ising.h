@@ -26,12 +26,12 @@ public:
   
 
 
-struct ImageIsing : public Sentence {
+struct ImageIsing : public Instance {
 public:
-  ImageIsing(const Corpus* corpus) : Sentence(corpus) {};
+  ImageIsing(const Corpus* corpus) : Instance(corpus) {};
   ImageIsing(const Corpus* corpus, const vec<string>& lines,
               const vec<string>& lines_gt)
-  : Sentence(corpus) {
+  : Instance(corpus) {
     this->parselines(lines, lines_gt);
   }
 

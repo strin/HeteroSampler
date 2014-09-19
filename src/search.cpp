@@ -119,7 +119,7 @@ namespace Tagging {
     }
   }
 
-  shared_ptr<MarkovTree> ModelTreeUA::explore(const Sentence& seq) {
+  shared_ptr<MarkovTree> ModelTreeUA::explore(const Instance& seq) {
     this->B = seq.size();     // at least one sweep.
     this->eps = 1.0/T;
     shared_ptr<MarkovTree> tree = shared_ptr<MarkovTree>(new MarkovTree());
@@ -144,15 +144,15 @@ namespace Tagging {
     return tree;
   }
 
-  ParamPointer ModelTreeUA::gradient(const Sentence& seq) {
+  ParamPointer ModelTreeUA::gradient(const Instance& seq) {
     return explore(seq)->expectedGradient();
   }
 
-  TagVector ModelTreeUA::sample(const Sentence& seq) {
+  TagVector ModelTreeUA::sample(const Instance& seq) {
     return explore(seq)->getSamples();
   }
   double ModelTreeUA::score(const Tag& tag) {
-    const Sentence* seq = tag.seq;
+    const Instance* seq = tag.seq;
     double score = 0.0;
     for(int i = 0; i < tag.size(); i++) {
       score -= (tag.tag[i] != seq->tag[i]);
@@ -239,7 +239,7 @@ namespace Tagging {
       }
   }
 
-  FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag, int pos) {
+  FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const Instance& seq, const Tag& tag, int pos) {
     Tag mytag(tag);
     ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(this->corpus);
     FeaturePointer feat = makeFeaturePointer();
@@ -264,7 +264,7 @@ namespace Tagging {
     return feat;
   }
 
-  FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag) {
+  FeaturePointer ModelAdaTree::extractStopFeatures(MarkovTreeNodePtr node, const Instance& seq, const Tag& tag) {
     ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(this->corpus);
     FeaturePointer feat = makeFeaturePointer();
     size_t seqlen = tag.size();
@@ -322,7 +322,7 @@ namespace Tagging {
   }
 
   tuple<double, ParamPointer, ParamPointer, FeaturePointer> 
-  ModelAdaTree::logisticStop(shared_ptr<MarkovTreeNode> node, const Sentence& seq, const Tag& tag) {
+  ModelAdaTree::logisticStop(shared_ptr<MarkovTreeNode> node, const Instance& seq, const Tag& tag) {
     ParamPointer posgrad = makeParamPointer(), 
 		  neggrad = makeParamPointer();
     FeaturePointer feat = this->extractStopFeatures(node, seq, tag);
@@ -336,7 +336,7 @@ namespace Tagging {
   }
 
   double ModelAdaTree::score(shared_ptr<MarkovTreeNode> node, const Tag& tag) {
-    const Sentence* seq = tag.seq;
+    const Instance* seq = tag.seq;
     double score = 0.0;
     for(int i = 0; i < tag.size(); i++) {
       score -= (tag.tag[i] != seq->tag[i]);

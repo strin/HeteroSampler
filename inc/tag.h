@@ -14,9 +14,14 @@
 namespace Tagging {
   inline static std::string str(FeaturePointer features);
 
+  struct GraphicalModel {
+
+
+  };
+
   struct Tag {
   public:
-    const Sentence* seq;
+    const Instance* seq;
     ptr<Corpus> corpus;
     
     objcokus* rng;
@@ -40,9 +45,9 @@ namespace Tagging {
     /* corpus should be training corpus, as its tag mapping would be used.
      * DO NOT use the test corpus, as it would confuse the tagging.
      */
-    Tag(const Sentence* seq, ptr<Corpus> corpus, 
+    Tag(const Instance* seq, ptr<Corpus> corpus, 
        objcokus* rng, ParamPointer param); // random init tag.
-    Tag(const Sentence& seq, ptr<Corpus> corpus, 
+    Tag(const Instance& seq, ptr<Corpus> corpus, 
        objcokus* rng, ParamPointer param); // copy tag from seq.
     // length of sequence.
     inline size_t size() const {return this->tag.size(); }
@@ -67,7 +72,7 @@ namespace Tagging {
   inline static TagPtr makeTagPtr(const Tag& tag) {
     return std::shared_ptr<Tag>(new Tag(tag)); 
   }
-  inline static TagPtr makeTagPtr(const Sentence* seq, ptr<Corpus> corpus, objcokus* rng, ParamPointer param) {
+  inline static TagPtr makeTagPtr(const Instance* seq, ptr<Corpus> corpus, objcokus* rng, ParamPointer param) {
     return std::shared_ptr<Tag>(new Tag(seq, corpus, rng, param));
   }
 

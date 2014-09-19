@@ -29,7 +29,7 @@ namespace Tagging {
     }
   }
 
-  TagVector ModelSimple::sample(const Sentence& seq, bool argmax) {
+  TagVector ModelSimple::sample(const Instance& seq, bool argmax) {
     assert(argmax == true);
     TagVector vec;
     gradient(seq, &vec, false);
@@ -53,11 +53,11 @@ namespace Tagging {
     return features;
   }
 
-  ParamPointer ModelSimple::gradient(const Sentence& seq) {
+  ParamPointer ModelSimple::gradient(const Instance& seq) {
     return this->gradient(seq, nullptr, true);
   }
 
-  ParamPointer ModelSimple::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
+  ParamPointer ModelSimple::gradient(const Instance& seq, TagVector* samples, bool update_grad) {
     Tag tag(&seq, corpus, &rngs[0], param);
     Tag truth(seq, corpus, &rngs[0], param);
     ParamPointer gradient = makeParamPointer();
@@ -162,7 +162,7 @@ namespace Tagging {
     return this->sampleOne(tag, choice, this->extractFeatures);
   }
 
-  TagVector ModelCRFGibbs::sample(const Sentence& seq, bool argmax) { 
+  TagVector ModelCRFGibbs::sample(const Instance& seq, bool argmax) { 
     TagVector vec;
     TagPtr tag = makeTagPtr(&seq, corpus, &rngs[0], param);
     for(int t = 0; t < T; t++) {
@@ -196,11 +196,11 @@ namespace Tagging {
     xmllog.begin("factorL"); xmllog << factorL << endl; xmllog.end();
   }
 
-  ParamPointer ModelCRFGibbs::gradient(const Sentence& seq) {
+  ParamPointer ModelCRFGibbs::gradient(const Instance& seq) {
     return this->gradient(seq, nullptr, true);
   }
 
-  ParamPointer ModelCRFGibbs::gradient(const Sentence& seq, TagVector* samples, bool update_grad) {
+  ParamPointer ModelCRFGibbs::gradient(const Instance& seq, TagVector* samples, bool update_grad) {
     Tag tag(&seq, corpus, &rngs[0], param);
     Tag truth(seq, corpus, &rngs[0], param);
     ParamPointer gradient = makeParamPointer();

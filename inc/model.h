@@ -29,8 +29,8 @@ namespace Tagging {
     double test(ptr<Corpus> test_corpus);
 
     /* gradient interface */
-    virtual ParamPointer gradient(const Sentence& seq) = 0; 
-    virtual TagVector sample(const Sentence& seq, bool argmax = false) = 0;
+    virtual ParamPointer gradient(const Instance& seq) = 0; 
+    virtual TagVector sample(const Instance& seq, bool argmax = false) = 0;
     // infer under computational constraints.
     // emulate t-step transition of a markov chain.
     // default: use Model::sample(*tag.seq), i.e. time = T.
@@ -88,9 +88,9 @@ namespace Tagging {
   struct ModelSimple : public Model {
   public:
     ModelSimple(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
-    ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
-    ParamPointer gradient(const Sentence& seq);
-    virtual TagVector sample(const Sentence& seq, bool argmax = false); 
+    ParamPointer gradient(const Instance& seq, TagVector* vec = nullptr, bool update_grad = true);
+    ParamPointer gradient(const Instance& seq);
+    virtual TagVector sample(const Instance& seq, bool argmax = false); 
     virtual void sample(Tag& tag, int time, bool argmax = false);
     FeaturePointer extractFeatures(const Tag& tag, int pos);
     
@@ -105,9 +105,9 @@ namespace Tagging {
   struct ModelCRFGibbs : public ModelSimple, public std::enable_shared_from_this<Model> {
   public:
     ModelCRFGibbs(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
-    ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
-    ParamPointer gradient(const Sentence& seq);
-    virtual TagVector sample(const Sentence& seq, bool argmax = false);
+    ParamPointer gradient(const Instance& seq, TagVector* vec = nullptr, bool update_grad = true);
+    ParamPointer gradient(const Instance& seq);
+    virtual TagVector sample(const Instance& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
     
     double score(const Tag& tag);
@@ -138,9 +138,9 @@ namespace Tagging {
 
     virtual void run(ptr<Corpus> test_corpus);
 
-    virtual std::shared_ptr<MarkovTree> explore(const Sentence& seq);
-    virtual ParamPointer gradient(const Sentence& seq);
-    virtual TagVector sample(const Sentence& seq);
+    virtual std::shared_ptr<MarkovTree> explore(const Instance& seq);
+    virtual ParamPointer gradient(const Instance& seq);
+    virtual TagVector sample(const Instance& seq);
     virtual double score(const Tag& tag);
 
     /* parameters */
@@ -169,14 +169,14 @@ namespace Tagging {
     void workerThreads(int tid, MarkovTreeNodePtr node, Tag tag);
     /* extract posgrad and neggrad for stop-or-not logistic regression */
     std::tuple<double, ParamPointer, ParamPointer, FeaturePointer> logisticStop
-      (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag); 
+      (MarkovTreeNodePtr node, const Instance& seq, const Tag& tag); 
 
     /* stop feature extraction for each word */
     virtual FeaturePointer extractStopFeatures
-      (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag, int pos);
-    /* stop feature extraction for entire sentence */
+      (MarkovTreeNodePtr node, const Instance& seq, const Tag& tag, int pos);
+    /* stop feature extraction for entire Instance */
     virtual FeaturePointer extractStopFeatures
-      (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag);
+      (MarkovTreeNodePtr node, const Instance& seq, const Tag& tag);
 
     double score(MarkovTreeNodePtr node, const Tag& tag);
 

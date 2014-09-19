@@ -6,13 +6,13 @@
 
 using namespace std;
 namespace Tagging {
-  Tag::Tag(const Sentence* seq, ptr<Corpus> corpus, 
+  Tag::Tag(const Instance* seq, ptr<Corpus> corpus, 
 	  objcokus* rng, ParamPointer param) 
   :seq(seq), corpus(corpus), rng(rng), param(param) {
     this->randomInit();
   }
 
-  Tag::Tag(const Sentence& seq, ptr<Corpus> corpus, 
+  Tag::Tag(const Instance& seq, ptr<Corpus> corpus, 
 	  objcokus* rng, ParamPointer param)
   :seq(&seq), corpus(corpus), rng(rng), param(param) {
     this->randomInit();

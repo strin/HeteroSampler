@@ -23,11 +23,11 @@ namespace Tagging {
 
   struct Corpus;
 
-  ///////// Sentence //////////////////////////////////////////
-  struct Sentence {
+  ///////// Instance //////////////////////////////////////////
+  struct Instance {
   public:
-    Sentence(const Corpus* const corpus);
-    Sentence(const Corpus* const corpus, const std::vector<std::string>& lines);
+    Instance(const Corpus* const corpus);
+    Instance(const Corpus* const corpus, const std::vector<std::string>& lines);
     virtual void parselines(const std::vector<std::string>& lines) = 0;
     virtual std::string str() const = 0;
     virtual size_t size() const {return this->seq.size(); }
@@ -36,13 +36,13 @@ namespace Tagging {
     std::vector<int> tag;
     const Corpus* corpus;
   };
-  typedef ptr<Sentence> SentencePtr;
+  typedef ptr<Instance> SentencePtr;
 
   //////// Token for POS/NER tagging ////////////////////////////////////
   struct TokenLiteral : public Token {
   public:
     // old convention, kept for compatibility.
-    std::string word,  // word. use lower case, B-S means beginning of sentence. 
+    std::string word,  // word. use lower case, B-S means beginning of Instance. 
 		pos, pos2, 
 		ner;   // name entity.
     // new, more general convention.
@@ -78,8 +78,8 @@ namespace Tagging {
     int img[height][width];
   };
 
-  /////// Sentence //////////////////////////////////////////////////////
-  struct SentenceLiteral : public Sentence {
+  /////// Instance //////////////////////////////////////////////////////
+  struct SentenceLiteral : public Instance {
   public:
     SentenceLiteral(const Corpus* corpus);
     SentenceLiteral(const Corpus* corpus, const std::vector<std::string>& lines);
@@ -89,11 +89,11 @@ namespace Tagging {
   };
 
   template<size_t height, size_t width>
-  struct SentenceOCR : public Sentence {
+  struct SentenceOCR : public Instance {
   public:
-    SentenceOCR(const Corpus* corpus) : Sentence(corpus) {};
+    SentenceOCR(const Corpus* corpus) : Instance(corpus) {};
     SentenceOCR(const Corpus* corpus, const std::vector<std::string>& lines)
-      : Sentence(corpus, lines) {
+      : Instance(corpus, lines) {
       this->parselines(lines);
     }
     

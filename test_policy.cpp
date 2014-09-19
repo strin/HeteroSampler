@@ -1,4 +1,5 @@
 #include "corpus.h"
+#include "corpus_ising.h"
 #include "objcokus.h"
 #include "tag.h"
 #include "feature.h"
@@ -47,7 +48,10 @@ int main(int argc, char* argv[]) {
 	("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
 	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
 	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
-    ("feat", po::value<std::string>()->default_value("all"), "feature switches");
+  ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
+  ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
+  ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
+  ("feat", po::value<std::string>()->default_value(""), "feature switches");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);    
@@ -65,9 +69,9 @@ int main(int argc, char* argv[]) {
     }else if(dataset == "ocr") {
       corpus = make_shared<CorpusOCR<16, 8> >();
       testCorpus = make_shared<CorpusOCR<16, 8> >();
-      // <deprecated>
-      // corpus = ptr<CorpusOCR<16, 8> >(new CorpusOCR<16, 8>());
-      // testCorpus = ptr<CorpusOCR<16,8> >(new CorpusOCR<16, 8>());
+    }else if(dataset == "ising") {
+      corpus = make_shared<CorpusIsing>();
+      testCorpus = make_shared<CorpusIsing>();
     }
     corpus->read(train, false);
     testCorpus->read(test, false);
@@ -82,10 +86,15 @@ int main(int argc, char* argv[]) {
           throw (name+" not found.").c_str();
         file >> *model;
         file.close();
+	// extract features based on application.
         if(dataset == "ocr") {
           cast<ModelCRFGibbs>(model)->extractFeatures = extractOCR;
           cast<ModelCRFGibbs>(model)->extractFeatAll = extractOCRAll; 
-        }  
+        }else if(dataset == "ising") {
+          cast<ModelCRFGibbs>(model)->extractFeatures = extractIsing;
+          cast<ModelCRFGibbs>(model)->extractFeatAll = extractIsingAll;
+          cast<ModelCRFGibbs>(model)->extractFeaturesAtInit = extractIsingAtInit;
+        }
         return model;
       };
       model = loadGibbsModel(vm["model"].as<string>());
@@ -120,6 +129,7 @@ int main(int argc, char* argv[]) {
       	if(t == 1) {
       	  result = gibbs_policy->test(testCorpus);
       	}else{
+          gibbs_policy->init_method = "";
       	  gibbs_policy->test(result);
       	}
       	gibbs_policy->resetLog(nullptr);

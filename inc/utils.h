@@ -1,32 +1,42 @@
-#ifndef POS_UTIL_H
-#define POS_UTIL_H
+#pragma once
 
 #include <cmath>
 #include <map>
 #include <unordered_map>
-#include "boost/algorithm/string.hpp"
 #include <string>
-#include <iostream>
+#include <vector>
 #include <list>
-#include "float.h"
+#include <iostream>
 #include <functional>
 #include <algorithm>
 #include <sstream>
 #include <fstream>
 #include <ctime>
+#include <memory>
+#include <thread>
+#include <condition_variable>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/program_options.hpp>
+
+#include "float.h"
 #include "log.h"
 #include "stdlib.h"
 #include "objcokus.h"
-#include <vector>
 
 namespace Tagging {
   template<class T>
   using ptr = std::shared_ptr<T>;
 
+  
   using string = std::string;
 
   template<class T>
   using vec = std::vector<T>;
+
+  template<class T>
+  using vec2d = vec<vec<T> >;
 
   template<class K, class T>
   class map : public std::unordered_map<K, T> {
@@ -232,4 +242,4 @@ namespace Tagging {
     return result;
   }
 }
-#endif
+

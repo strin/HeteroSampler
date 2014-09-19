@@ -2,17 +2,9 @@
 #define POS_MODEL_H
 
 #include "tag.h"
+#include "gm.h"
 #include "corpus.h"
-#include "objcokus.h"
-#include "log.h"
 #include "MarkovTree.h"
-
-#include <vector>
-#include <list>
-#include <thread>
-#include <condition_variable>
-
-#include <boost/program_options.hpp>
 
 namespace Tagging {
   inline static void adagrad(ParamPointer param, ParamPointer G2, ParamPointer gradient, double eta) {
@@ -29,17 +21,24 @@ namespace Tagging {
     double test(ptr<Corpus> test_corpus);
 
     /* gradient interface */
-    virtual ParamPointer gradient(const Sentence& seq) = 0; 
-    virtual TagVector sample(const Sentence& seq, bool argmax = false) = 0;
+    virtual ParamPointer gradient(const Instance& seq) = 0; 
+    virtual TagVector sample(const Instance& seq, bool argmax = false) = 0;
     // infer under computational constraints.
     // emulate t-step transition of a markov chain.
     // default: use Model::sample(*tag.seq), i.e. time = T.
     virtual void sample(Tag& tag, int time, bool argmax = false);             // inplace.
+
     // sample using custom kernel choice.
     // return: gradient.
-    virtual ParamPointer sampleOne(Tag& tag, int choice);           
+    virtual ParamPointer sampleOne(GraphicalModel& gm, objcokus& rng, int choice);           
 
+    // sample using custom kernel choice at initialization.
+    // only applies if "init" flag is on (not equal to *random*). 
+    virtual ParamPointer sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice);           
+
+    // <deprecated> score a tag ? 
     virtual double score(const Tag& tag);
+
     // evaluate the accuracy for POS tag aginst truth.
     // return 0: hit count.
     // return 1: pred count.
@@ -79,13 +78,15 @@ namespace Tagging {
   };
 
   typedef std::shared_ptr<Model> ModelPtr;
+  typedef std::function<FeaturePointer(ptr<Model> model, const GraphicalModel& tag, int pos)> FeatureExtractOne;
+  typedef std::function<FeaturePointer(ptr<Model> model, const GraphicalModel& tag)> FeatureExtractAll;
 
   struct ModelSimple : public Model {
   public:
     ModelSimple(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
-    ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
-    ParamPointer gradient(const Sentence& seq);
-    virtual TagVector sample(const Sentence& seq, bool argmax = false); 
+    ParamPointer gradient(const Instance& seq, TagVector* vec = nullptr, bool update_grad = true);
+    ParamPointer gradient(const Instance& seq);
+    virtual TagVector sample(const Instance& seq, bool argmax = false); 
     virtual void sample(Tag& tag, int time, bool argmax = false);
     FeaturePointer extractFeatures(const Tag& tag, int pos);
     
@@ -97,23 +98,31 @@ namespace Tagging {
   struct ModelCRFGibbs : public ModelSimple, public std::enable_shared_from_this<Model> {
   public:
     ModelCRFGibbs(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
-    ParamPointer gradient(const Sentence& seq, TagVector* vec = nullptr, bool update_grad = true);
-    ParamPointer gradient(const Sentence& seq);
-    virtual TagVector sample(const Sentence& seq, bool argmax = false);
+    ParamPointer gradient(const Instance& seq, TagVector* vec = nullptr, bool update_grad = true);
+    ParamPointer gradient(const Instance& seq);
+    virtual TagVector sample(const Instance& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
-    ParamPointer sampleOne(Tag& tag, int choice);
+    
     double score(const Tag& tag);
     virtual void logArgs();
 
-    /* interface for feature extraction. */
-    std::function<FeaturePointer(ptr<Model> model, const Tag& tag, int pos)> extractFeatures;
-    std::function<FeaturePointer(ptr<Model> model, const Tag& tag)> extractFeatAll;
-    FeaturePointer extractFeaturesAll(const Tag& tag);
+    /* interface for feature extraction. */    
+    FeatureExtractOne extractFeatures;
+    FeatureExtractOne extractFeaturesAtInit;
+    FeatureExtractAll extractFeatAll;
 
+    ParamPointer sampleOne(GraphicalModel& tag, objcokus& rng, int choice);
+    ParamPointer sampleOneAtInit(GraphicalModel& tag, objcokus& rng, int choice);
+
+    ParamPointer proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract, bool grad_expect, bool grad_sample);
 
     int factorL;
     
   private:
+    ParamPointer sampleOne(GraphicalModel& gm, objcokus& rng, int choice, FeatureExtractOne feat_extract);
+
+    FeaturePointer extractFeaturesAll(const Tag& tag);
+
     void sampleOneSweep(Tag& tag, bool argmax = false);
   };
 
@@ -123,9 +132,9 @@ namespace Tagging {
 
     virtual void run(ptr<Corpus> test_corpus);
 
-    virtual std::shared_ptr<MarkovTree> explore(const Sentence& seq);
-    virtual ParamPointer gradient(const Sentence& seq);
-    virtual TagVector sample(const Sentence& seq);
+    virtual std::shared_ptr<MarkovTree> explore(const Instance& seq);
+    virtual ParamPointer gradient(const Instance& seq);
+    virtual TagVector sample(const Instance& seq);
     virtual double score(const Tag& tag);
 
     /* parameters */
@@ -154,14 +163,14 @@ namespace Tagging {
     void workerThreads(int tid, MarkovTreeNodePtr node, Tag tag);
     /* extract posgrad and neggrad for stop-or-not logistic regression */
     std::tuple<double, ParamPointer, ParamPointer, FeaturePointer> logisticStop
-      (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag); 
+      (MarkovTreeNodePtr node, const Instance& seq, const Tag& tag); 
 
     /* stop feature extraction for each word */
     virtual FeaturePointer extractStopFeatures
-      (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag, int pos);
-    /* stop feature extraction for entire sentence */
+      (MarkovTreeNodePtr node, const Instance& seq, const Tag& tag, int pos);
+    /* stop feature extraction for entire Instance */
     virtual FeaturePointer extractStopFeatures
-      (MarkovTreeNodePtr node, const Sentence& seq, const Tag& tag);
+      (MarkovTreeNodePtr node, const Instance& seq, const Tag& tag);
 
     double score(MarkovTreeNodePtr node, const Tag& tag);
 

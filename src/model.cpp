@@ -152,27 +152,28 @@ namespace Tagging {
       double max_lhood = -DBL_MAX;
       shared_ptr<Tag> tag = tags.back();
       for(shared_ptr<Tag> this_tag : tags) {
-	double sc = this->score(*this_tag);
-	if(sc > max_lhood) {
-	  max_lhood = sc;
-	  tag = this_tag;
-	}
+        double sc = this->score(*this_tag);
+        if(sc > max_lhood) {
+          max_lhood = sc;
+          tag = this_tag;
+        }
       }
       Tag truth(*seq, corpus, &rngs[0], param);
       xmllog.begin("example_"+to_string(ex));
-	xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
-	xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
-	xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
+      // xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
+      xmllog.begin("truth"); xmllog << tag->seq->str() << endl; xmllog.end();
+      xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
+      xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
       xmllog.end();
       if(this->scoring == SCORING_ACCURACY) {
-	tuple<int, int> hit_pred = this->evalPOS(*tag);
-	hit_count += get<0>(hit_pred);
-	pred_count += get<1>(hit_pred);
+        tuple<int, int> hit_pred = this->evalPOS(*tag);
+        hit_count += get<0>(hit_pred);
+        pred_count += get<1>(hit_pred);
       }else if(this->scoring == SCORING_NER) {
-	tuple<int, int, int> hit_pred_truth = this->evalNER(*tag);
-	hit_count += get<0>(hit_pred_truth);
-	pred_count += get<1>(hit_pred_truth);
-	truth_count += get<2>(hit_pred_truth);
+        tuple<int, int, int> hit_pred_truth = this->evalNER(*tag);
+        hit_count += get<0>(hit_pred_truth);
+        pred_count += get<1>(hit_pred_truth);
+        truth_count += get<2>(hit_pred_truth);
       }
       ex++;
     }
@@ -199,8 +200,12 @@ namespace Tagging {
     tag = *this->sample(*tag.seq, argmax).back();
   }
 
-  ParamPointer Model::sampleOne(Tag& tag, int choice) {
+  ParamPointer Model::sampleOne(GraphicalModel& gm, objcokus& rng, int choice) {
     throw "custom kernel choice not implemented."; 
+  }
+
+  ParamPointer Model::sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice) {
+    return this->sampleOne(gm, rng, choice);
   }
 
   double Model::score(const Tag& tag) {

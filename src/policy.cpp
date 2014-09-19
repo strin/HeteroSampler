@@ -1,4 +1,5 @@
 #include "policy.h"
+#include "corpus_ising.h"
 #include "feature.h"
 #include <boost/lexical_cast.hpp>
 
@@ -33,10 +34,14 @@ namespace Tagging {
    verbose(vm["verbose"].as<bool>()), 
    Q(vm["Q"].as<size_t>()),
    lets_resp_reward(false),
+   lets_inplace(vm["inplace"].as<bool>()), 
+   init_method(vm["init"].as<string>()), 
    model_unigram(nullptr), 
    param(makeParamPointer()), G2(makeParamPointer()) {
     // feature switch.
     split(featopt, vm["feat"].as<string>(), boost::is_any_of(" "));
+    split(verbose_opt, vm["verbosity"].as<string>(), boost::is_any_of(" "));
+
     // init stats.
     if(isinstance<CorpusLiteral>(model->corpus)) {
       ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(model->corpus);
@@ -50,8 +55,10 @@ namespace Tagging {
       tag_bigram = tag_bigram_unigram.first;
       tag_unigram_start = tag_bigram_unigram.second;
     }
+
     system(("mkdir -p "+name).c_str());
     lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
+
   }
 
   Policy::~Policy() {
@@ -61,7 +68,7 @@ namespace Tagging {
 
   double Policy::reward(MarkovTreeNodePtr node) {
     Tag& tag = *node->tag;
-    const Sentence* seq = tag.seq;
+    const Instance* seq = tag.seq;
     double score = 0.0;
     for(int i = 0; i < tag.size(); i++) {
       score -= (tag.tag[i] != seq->tag[i]);
@@ -75,11 +82,20 @@ namespace Tagging {
 
   void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
+    objcokus& rng = test_thread_pool.rngs[tid];
+    node->tag->rng = &rng;
     try{
+      if(this->init_method == "iid") {
+        for(size_t pos = 0; pos < node->tag->size(); pos++) {
+          model->sampleOneAtInit(*node->tag, rng, pos);
+          node->depth++;
+          node->tag->mask[pos] += 1;
+          node->tag->checksum[pos] = 0; // WARNING: a hack.
+        }
+      }
       while(true) {
         if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH) 
           throw "Policy Chain reaches maximum depth.";
-        node->tag->rng = &test_thread_pool.rngs[tid];
         node->choice = this->policy(node);
         if(node->choice == -1) {
           node->log_weight = this->reward(node); 
@@ -88,12 +104,14 @@ namespace Tagging {
         }else{
           node->log_weight = -DBL_MAX; 
           int pos = node->choice;
-          node->gradient = model->sampleOne(*node->tag, pos);
+          node->gradient = model->sampleOne(*node->tag, rng, pos);
           FeaturePointer feat = this->extractFeatures(node, pos);
           node->tag->mask[pos] += 1;
           node->tag->feat[pos] = feat;
           node->tag->resp[pos] = Tagging::score(this->param, feat);
-          node->tag->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
+//          node->tag->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
+          node->tag->checksum[pos] = 0; // WARNING: a hack. 
+
          /* if(lets_resp_reward) {
             double resp = node->tag->resp[pos];
             test_thread_pool.lock();
@@ -115,7 +133,11 @@ namespace Tagging {
             test_thread_pool.unlock();
           }*/
         }
-        node = addChild(node, *node->tag);
+        if(lets_inplace) {
+          node->depth++;
+        }else {
+          node = addChild(node, *node->tag);
+        }
     }
     }catch(const char* ee) {
       cout << "error: " << ee << endl;
@@ -179,15 +201,15 @@ namespace Tagging {
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
       if(count % int(0.1 * min(train_count, corpus->seqs.size())) == 0) 
-	cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
+        cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
       if(verbose)
-	lg->begin("example_"+to_string(count));
+        lg->begin("example_"+to_string(count));
       MarkovTree tree;
       Tag tag(seq.get(), corpus, &rng, model->param);
       tree.root->log_weight = -DBL_MAX;
       for(size_t k = 0; k < K; k++) {
-	MarkovTreeNodePtr node = addChild(tree.root, tag);
-	this->thread_pool.addWork(node); 
+        MarkovTreeNodePtr node = addChild(tree.root, tag);
+        this->thread_pool.addWork(node); 
       }
       thread_pool.waitFinish();
       /*
@@ -209,19 +231,19 @@ namespace Tagging {
       }*/
       this->gradientPolicy(tree);
       if(verbose) {
-	for(size_t k = 0; k < K; k++) {
-	  MarkovTreeNodePtr node = tree.root->children[k];
-	  while(node->children.size() > 0) node = node->children[0]; // take final sample.
-	  lg->begin("node");
-	  this->logNode(node);
-	  lg->end(); // </node>
-	}
+        for(size_t k = 0; k < K; k++) {
+          MarkovTreeNodePtr node = tree.root->children[k];
+          while(node->children.size() > 0) node = node->children[0]; // take final sample.
+          lg->begin("node");
+          this->logNode(node);
+          lg->end(); // </node>
+        }
       }
       lg->begin("param");
       *lg << *param;
       lg->end(); // </param>
       if(verbose) {
-	lg->end(); // </example>
+        lg->end(); // </example>
       }
       count++;
     }
@@ -233,13 +255,13 @@ namespace Tagging {
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
       if(count % 1000 == 0) 
-	cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
+        cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
       MarkovTree tree;
       Tag tag(seq.get(), corpus, &rng, model->param);
       tree.root->log_weight = -DBL_MAX;
       for(size_t k = 0; k < K; k++) {
-	MarkovTreeNodePtr node = addChild(tree.root, tag);
-	this->thread_pool.addWork(node); 
+        MarkovTreeNodePtr node = addChild(tree.root, tag);
+        this->thread_pool.addWork(node); 
       }
       thread_pool.waitFinish();
       this->gradientKernel(tree);
@@ -356,7 +378,7 @@ namespace Tagging {
   FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = makeFeaturePointer();
     Tag& tag = *node->tag;
-    const Sentence& seq = *tag.seq;
+    const Instance& seq = *tag.seq;
     size_t seqlen = tag.size();
     size_t taglen = model->corpus->tags.size();
     // bias.
@@ -399,7 +421,7 @@ namespace Tagging {
       if(model_unigram) {
         if(std::isnan(node->tag->entropy_unigram[pos])) {
           Tag tag(*node->tag);
-          model_unigram->sampleOne(tag, pos);
+          model_unigram->sampleOne(tag, *tag.rng, pos);
           node->tag->entropy_unigram[pos] = tag.entropy[pos];
         }
         insertFeature(feat, "unigram-ent", node->tag->entropy_unigram[pos]);
@@ -414,7 +436,7 @@ namespace Tagging {
       if(model_unigram) {
         if(node->tag->sc_unigram[pos].size() == 0) {
           Tag tag(*node->tag);
-          model_unigram->sampleOne(tag, pos);
+          model_unigram->sampleOne(tag, *tag.rng, pos);
           node->tag->sc_unigram[pos] = tag.sc;
         }
         insertFeature(feat, "unigram-lhood", node->tag->sc_unigram[pos][node->tag->tag[pos]]);
@@ -436,10 +458,31 @@ namespace Tagging {
         }
       }
     }
+    if(featoptFind("ising-disagree")) {
+      auto image = (const ImageIsing*)(node->tag->seq); // WARNING: Hack, no dynamic check. 
+      if(image == NULL) 
+        throw "cannot use feature 'ising-disagree' on non-ising dataset.";
+      size_t disagree = 0;
+      ImageIsing::Pt pt = image->posToPt(pos);
+      vec2d<int> steer = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+      for(auto steer_it : steer) {
+        ImageIsing::Pt this_pt = pt;
+        this_pt.h += steer_it[0];
+        this_pt.w += steer_it[1];
+        if(this_pt.h >= 0 and this_pt.h < image->H 
+          and this_pt.w >= 0 and this_pt.w < image->W) {
+          size_t pos2 = image->ptToPos(this_pt);
+          if(node->tag->tag[pos2] != node->tag->tag[pos]) {
+            disagree++;
+          }
+        }
+      }
+      insertFeature(feat, "ising-disagree", disagree);
+    }
     if(featoptFind("oracle")) {
       int oldval = node->tag->tag[pos];
       Tag temp(tag);
-      model->sampleOne(temp, pos);          
+      model->sampleOne(temp, *temp.rng, pos);          
       // insertFeature(feat, "oracle", -temp.sc[oldval]);
       insertFeature(feat, "oracle", temp.entropy[pos]);
     }
@@ -465,11 +508,13 @@ namespace Tagging {
     lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
     int hits = 0;
     for(size_t i = 0; i < node->tag->size(); i++) {
-      lg->begin("feat"); 
-      *lg << *this->extractFeatures(node, i);
-      lg->end(); // </feat> */
-      if(node->tag->tag[i] == node->tag->seq->tag[i]) {
-        hits++;
+      if(verboseOptFind("feat")) {
+        lg->begin("feat"); 
+        *lg << *this->extractFeatures(node, i);
+        lg->end(); // </feat> */
+        if(node->tag->tag[i] == node->tag->seq->tag[i]) {
+          hits++;
+        }
       }
     }
     lg->begin("resp");
@@ -607,10 +652,11 @@ namespace Tagging {
   void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
     node->choice = -1;
+    objcokus& rng = thread_pool.rngs[tid];
+    node->tag->rng = &rng;
     try{
-      node->tag->rng = &thread_pool.rngs[tid];
       for(size_t i = 0; i < node->tag->size(); i++) {
-        model->sampleOne(*node->tag, i);
+        model->sampleOne(*node->tag, rng, i);
       }
       node->gradient = makeParamPointer();
       Tag old_tag(*node->tag);
@@ -619,7 +665,7 @@ namespace Tagging {
         return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
       };
       double reward_baseline = is_equal();
-      model->sampleOne(*node->tag, i);
+      model->sampleOne(*node->tag, rng, i);
       double reward = is_equal();
       double logR = reward - reward_baseline; 
       FeaturePointer feat = this->extractFeatures(node, i);   
@@ -790,7 +836,7 @@ namespace Tagging {
     FeaturePointer feat = MultiCyclicValuePolicy::extractFeatures(node, pos);
     Tag tag(*node->tag);
     int oldval = tag.tag[pos];
-    model_unigram->sampleOne(tag, pos);
+    model_unigram->sampleOne(tag, *tag.rng, pos);
     int pass = node->time_stamp / node->tag->size();
     // insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", -tag.sc[oldval]);
     insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", tag.entropy[pos]);
@@ -857,7 +903,7 @@ namespace Tagging {
     try{
       node->tag->rng = &thread_pool.rngs[tid];
       for(size_t i = 0; i < node->tag->size(); i++) {
-	model->sampleOne(*node->tag, i);
+        model->sampleOne(*node->tag, *node->tag->rng, i);
       }
       node->gradient = makeParamPointer();
       for(size_t t = 1; t < T; t++) {
@@ -867,7 +913,7 @@ namespace Tagging {
 	    return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
 	  };
 	  double reward_baseline = is_equal();
-	  model->sampleOne(*node->tag, i);
+	  model->sampleOne(*node->tag, *node->tag->rng, i);
 	  double reward = is_equal();
 	  // double logR = reward - reward_baseline; 
 	  double logR = node->tag->reward[i];
@@ -993,11 +1039,12 @@ namespace Tagging {
   void RandomScanPolicy::sample(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
     node->choice = -1;
+    objcokus& rng = thread_pool.rngs[tid];
+    node->tag->rng = &rng;
     try{
-      node->tag->rng = &thread_pool.rngs[tid];
       for(size_t i = 0; i < node->tag->size(); i++) {
-	model->sampleOne(*node->tag, i);
-	node->tag->mask[i] = 1;
+        model->sampleOne(*node->tag, rng, i);
+        node->tag->mask[i] = 1;
       }
       size_t seqlen = node->tag->size();
       node->depth = seqlen;
@@ -1013,7 +1060,7 @@ namespace Tagging {
 	for(size_t i = 0; i < seqlen; i++) {
 	  double reward_baseline = is_equal(*node->tag, i);
 	  Tag tag(*node->tag);
-	  model->sampleOne(tag, i);
+	  model->sampleOne(tag, rng, i);
 	  reward[i] = is_equal(tag, i) - reward_baseline;
 	  feat[i] = extractFeatures(node, i);
 	  resp[i] = Tagging::score(param, feat[i]);
@@ -1026,7 +1073,7 @@ namespace Tagging {
 	}
 	logNormalize(&resp[0], seqlen);
 	int pos = node->tag->rng->sampleCategorical(&resp[0], seqlen);
-	model->sampleOne(*node->tag, pos);
+	model->sampleOne(*node->tag, rng, pos);
 	node->tag->mask[pos] += 1;
 	node->depth += 1;
       }
@@ -1064,29 +1111,33 @@ namespace Tagging {
         node->tag->feat[pos] = feat;
         node->tag->resp[pos] = Tagging::score(param, feat);
         if(lets_resp_reward) {
-	  double resp = node->tag->resp[pos];
-	  test_thread_pool.lock();
-	  Tag tag(*node->tag);
-	  auto is_equal = [&] () {
-	    return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
-	  };
-	  double reward_baseline = is_equal();
-	  model->sampleOne(tag, pos);
-	  double reward = is_equal();
-	  // double logR = reward - reward_baseline; 
-	  double logR = tag.reward[pos];
-	  test_resp_reward.push_back(make_pair(resp, logR));
-	  test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
-	  test_resp_RL.push_back(make_pair(resp, logR));
-	  if(isinstance<CorpusLiteral>(model->corpus)) {
-	    test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
-	  }
-	  test_thread_pool.unlock();
-	}
+          double resp = node->tag->resp[pos];
+          test_thread_pool.lock();
+          // collect reward, slow, for debug only.
+//          Tag tag(*node->tag);
+//          auto is_equal = [&] () {
+//            return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
+//          };
+//          double reward_baseline = is_equal();
+//          model->sampleOne(tag, pos);
+//          double reward = is_equal();
+//          // double logR = reward - reward_baseline; 
+//          double logR = tag.reward[pos];
+//          test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+//          test_resp_RL.push_back(make_pair(resp, logR));
+//          if(isinstance<CorpusLiteral>(model->corpus)) {
+//            test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
+//          }
+          
+          // do not collect reward.
+          double logR = 0;
+          test_resp_reward.push_back(make_pair(resp, logR));
+          test_thread_pool.unlock();
+        }
       }
-
+      int mk = node->tag->mask[pos];
       if(node->tag->resp[pos] > c and 
-          node->tag->mask[pos] <= T) {
+          node->tag->mask[pos] < T) {
         node->time_stamp = count+1;
         return pos;
       }
@@ -1099,9 +1150,10 @@ namespace Tagging {
     node->depth = 0;
     node->choice = -1;
     try{
-      node->tag->rng = &thread_pool.rngs[tid];
+      objcokus& rng = thread_pool.rngs[tid];
+      node->tag->rng = &rng; 
       for(size_t i = 0; i < node->tag->size(); i++) {
-        model->sampleOne(*node->tag, i);
+        model->sampleOne(*node->tag, rng, i);
         node->tag->mask[i] = 1;
         node->tag->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
       }
@@ -1117,7 +1169,7 @@ namespace Tagging {
             return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
           };
           double reward_baseline = is_equal();
-          model->sampleOne(*node->tag, i);
+          model->sampleOne(*node->tag, rng, i);
           node->tag->mask[i] += 1;
           node->tag->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
           double reward = is_equal();

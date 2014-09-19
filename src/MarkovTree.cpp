@@ -13,7 +13,7 @@ namespace Tagging {
       time_stamp = parent->time_stamp;
     }
     gradient = posgrad = neggrad = nullptr;
-    tag = nullptr;
+    gm = nullptr;
     compute_stop = false;
   }
 
@@ -59,7 +59,6 @@ namespace Tagging {
     return aggregateGradient(root, logSumWeights(root)).first;
   }
 
-  /* Generate stop datset */
   double MarkovTree::logSumPriorWeights(shared_ptr<MarkovTreeNode> node, size_t max_level) {
     double weight = node->log_prior_weight;
     if(node->depth < max_level) {
@@ -79,80 +78,33 @@ namespace Tagging {
     return reward;
   }
 
-  vector<shared_ptr<Tag> > MarkovTree::aggregateTag(MarkovTreeNodePtr node, size_t max_level) {
-    vector<shared_ptr<Tag> > ret;
-    if(node->is_leaf() || node->depth == max_level) ret.push_back(node->tag);
+  ptrs<GraphicalModel> MarkovTree::aggregateSample(MarkovTreeNodePtr node, size_t max_level) {
+    ptrs<GraphicalModel> ret;
+    if(node->is_leaf() || node->depth == max_level) ret.push_back(node->gm);
     else if(node->depth < max_level) {
       for(MarkovTreeNodePtr child : node->children) {
-	vector<shared_ptr<Tag> > this_ret = aggregateTag(child, max_level);
-	ret.insert(ret.end(), this_ret.begin(), this_ret.end());
+        auto this_ret = aggregateSample(child, max_level);
+        ret.insert(ret.end(), this_ret.begin(), this_ret.end());
       }
     }
     return ret;
   }
 
-  StopDatasetPtr MarkovTree::generateStopDataset(MarkovTreeNodePtr node, int mode) {
-    StopDatasetPtr stop_data = makeStopDataset();
-    auto getFutureReward = [&] (MarkovTreeNodePtr node, size_t max_level) {
-      double reward = -DBL_MAX;
-      for(MarkovTreeNodePtr child : node->children) { 
-	double weight = logSumPriorWeights(child, max_level);
-	reward = logAdd(reward, aggregateReward(child, weight, max_level));
-      }
-      reward = reward-log(node->children.size());
-      return reward;
-    };
-    TagVector child_vec, grandson_vec;
-    if(node->compute_stop) {
-      double reward_now, reward_future;
-      TagVector vec;
-      switch(mode) {
-      case -1:
-	throw "not implemented";
-	break;
-      case 0:
-	reward_now = node->log_weight;
-	reward_future = getFutureReward(node, -1);
-	vec.push_back(node->tag);
-	vec.push_back(nullptr);
-	child_vec = aggregateTag(node);
-	vec.insert(vec.end(), child_vec.begin(), child_vec.end());
-	break;
-      case 1:
-	reward_now = getFutureReward(node, node->depth+1);
-	reward_future = getFutureReward(node, -1); 
-	child_vec = aggregateTag(node, node->depth+1); 
-	vec.insert(vec.end(), child_vec.begin(), child_vec.end());
-	vec.push_back(nullptr); // sentinel.
-	grandson_vec = aggregateTag(node, -1);
-	vec.insert(vec.end(), grandson_vec.begin(), grandson_vec.end());
-	break;
-      }
-      incrStopDataset(stop_data, node->stop_feat, reward_now, reward_future, vec); 
-      return stop_data;
-    }
-    for(MarkovTreeNodePtr child : node->children) {
-      mergeStopDataset(stop_data, generateStopDataset(child, mode));
-    }
-    return stop_data;
-  }
 
-
-  TagVector MarkovTree::getSamples(shared_ptr<MarkovTreeNode> node) { 
+  ptrs<GraphicalModel> MarkovTree::getSamples(shared_ptr<MarkovTreeNode> node) { 
+    ptrs<GraphicalModel> vec;
     if(node->children.size() > 0) {
-      TagVector vec;
       for(auto child : node->children) {
-	TagVector res = getSamples(child); 
-	vec.insert(vec.begin(), res.begin(), res.end()); 
+        auto res = getSamples(child); 
+        vec.insert(vec.begin(), res.begin(), res.end()); 
       }
       return vec;
     }
-    TagVector vec;
-    vec.push_back(node->tag);
+    vec.push_back(node->gm);
     return vec;
   }
 
-  TagVector MarkovTree::getSamples() {
+  ptrs<GraphicalModel> MarkovTree::getSamples() {
     return this->getSamples(this->root);
   }
 }

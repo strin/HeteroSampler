@@ -67,7 +67,8 @@ namespace Tagging {
   }
 
   double Policy::reward(MarkovTreeNodePtr node) {
-    Tag& tag = *node->tag;
+    auto& tag = *cast<Tag>(node->gm);
+    // Tag& tag = *node->gm;
     const Instance* seq = tag.seq;
     double score = 0.0;
     for(int i = 0; i < tag.size(); i++) {
@@ -83,14 +84,14 @@ namespace Tagging {
   void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
     objcokus& rng = test_thread_pool.rngs[tid];
-    node->tag->rng = &rng;
+    node->gm->rng = &rng;
     try{
       if(this->init_method == "iid") {
-        for(size_t pos = 0; pos < node->tag->size(); pos++) {
-          model->sampleOneAtInit(*node->tag, rng, pos);
+        for(size_t pos = 0; pos < node->gm->size(); pos++) {
+          model->sampleOneAtInit(*node->gm, rng, pos);
           node->depth++;
-          node->tag->mask[pos] += 1;
-          node->tag->checksum[pos] = 0; // WARNING: a hack.
+          node->gm->mask[pos] += 1;
+          node->gm->checksum[pos] = 0; // WARNING: a hack.
         }
       }
       while(true) {
@@ -104,18 +105,18 @@ namespace Tagging {
         }else{
           node->log_weight = -DBL_MAX; 
           int pos = node->choice;
-          node->gradient = model->sampleOne(*node->tag, rng, pos);
+          node->gradient = model->sampleOne(*node->gm, rng, pos);
           FeaturePointer feat = this->extractFeatures(node, pos);
-          node->tag->mask[pos] += 1;
-          node->tag->feat[pos] = feat;
-          node->tag->resp[pos] = Tagging::score(this->param, feat);
-//          node->tag->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
-          node->tag->checksum[pos] = 0; // WARNING: a hack. 
+          node->gm->mask[pos] += 1;
+          node->gm->feat[pos] = feat;
+          node->gm->resp[pos] = Tagging::score(this->param, feat);
+//          node->gm->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
+          node->gm->checksum[pos] = 0; // WARNING: a hack. 
 
          /* if(lets_resp_reward) {
-            double resp = node->tag->resp[pos];
+            double resp = node->gm->resp[pos];
             test_thread_pool.lock();
-            Tag tag(*node->tag);
+            Tag tag(*node->gm);
             auto is_equal = [&] () {
               return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
             };
@@ -136,7 +137,7 @@ namespace Tagging {
         if(lets_inplace) {
           node->depth++;
         }else {
-          node = addChild(node, *node->tag);
+          node = addChild(node, *node->gm);
         }
     }
     }catch(const char* ee) {
@@ -257,10 +258,11 @@ namespace Tagging {
       if(count % 1000 == 0) 
         cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
       MarkovTree tree;
-      Tag tag(seq.get(), corpus, &rng, model->param);
+      // Tag tag(seq.get(), corpus, &rng, model->param);
+      ptr<GraphicalModel> gm = model->makeSample(*seq, corpus, &rng);
       tree.root->log_weight = -DBL_MAX;
       for(size_t k = 0; k < K; k++) {
-        MarkovTreeNodePtr node = addChild(tree.root, tag);
+        MarkovTreeNodePtr node = addChild(tree.root, *gm);
         this->thread_pool.addWork(node); 
       }
       thread_pool.waitFinish();
@@ -310,7 +312,7 @@ namespace Tagging {
       MarkovTreeNodePtr node;
       if(result->nodes[count] == nullptr) {
         node = makeMarkovTreeNode(nullptr);
-        node->tag = makeTagPtr(seq.get(), model->corpus, &rng, model->param);
+        node->gm = makeTagPtr(seq.get(), model->corpus, &rng, model->param);
       }else{
         node = result->nodes[count];
       }
@@ -329,11 +331,11 @@ namespace Tagging {
           result->nodes[id[i]] = node;
           ave_time += node->depth+1;
           if(model->scoring == Model::SCORING_ACCURACY) {
-            tuple<int, int> hit_pred = model->evalPOS(*node->tag);
+            tuple<int, int> hit_pred = model->evalPOS(*cast<Tag>(node->gm));
             hit_count += get<0>(hit_pred);
             pred_count += get<1>(hit_pred);
           }else if(model->scoring == Model::SCORING_NER) {
-            tuple<int, int, int> hit_pred_truth = model->evalNER(*node->tag);
+            tuple<int, int, int> hit_pred_truth = model->evalNER(*cast<Tag>(node->gm));
             hit_count += get<0>(hit_pred_truth);
             pred_count += get<1>(hit_pred_truth);
             truth_count += get<2>(hit_pred_truth);
@@ -377,9 +379,9 @@ namespace Tagging {
 
   FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = makeFeaturePointer();
-    Tag& tag = *node->tag;
-    const Instance& seq = *tag.seq;
-    size_t seqlen = tag.size();
+    GraphicalModel& gm = *node->gm;
+    size_t seqlen = gm.size();
+    const Instance& seq = *gm.seq;
     size_t taglen = model->corpus->tags.size();
     // bias.
     if(featoptFind("bias") || featoptFind("all")) 
@@ -412,54 +414,57 @@ namespace Tagging {
       }
     }
     if(featoptFind("cond-ent") || featoptFind("all")) {
-      insertFeature(feat, "cond-ent", node->tag->entropy[pos]);
+      insertFeature(feat, "cond-ent", node->gm->entropy[pos]);
     }
-    if(featoptFind("cond-lhood") || featoptFind("all")) {
-      insertFeature(feat, "cond-lhood", node->tag->sc[node->tag->tag[pos]]);
-    }
+    // if(featoptFind("cond-lhood") || featoptFind("all")) {
+    //   insertFeature(feat, "cond-lhood", node->gm->sc[node->gm->tag[pos]]);
+    // }
     if(featoptFind("unigram-ent")) {
       if(model_unigram) {
-        if(std::isnan(node->tag->entropy_unigram[pos])) {
-          Tag tag(*node->tag);
-          model_unigram->sampleOne(tag, *tag.rng, pos);
-          node->tag->entropy_unigram[pos] = tag.entropy[pos];
+        if(std::isnan(node->gm->entropy_unigram[pos])) {
+          auto& gm = *model->copySample(*node->gm);
+          model_unigram->sampleOne(gm, *gm.rng, pos);
+          node->gm->entropy_unigram[pos] = gm.entropy[pos];
         }
-        insertFeature(feat, "unigram-ent", node->tag->entropy_unigram[pos]);
+        insertFeature(feat, "unigram-ent", node->gm->entropy_unigram[pos]);
       }
     }
     if(featoptFind("nb-modify")) {      // if a neighbor has been modified.
-      if(node->tag->checksum[pos] != this->checksum(node, pos)) {
+      if(node->gm->checksum[pos] != this->checksum(node, pos)) {
         insertFeature(feat, "nb-modify", 1.0);
       }
     }
-    if(featoptFind("unigram-lhood")) {
-      if(model_unigram) {
-        if(node->tag->sc_unigram[pos].size() == 0) {
-          Tag tag(*node->tag);
-          model_unigram->sampleOne(tag, *tag.rng, pos);
-          node->tag->sc_unigram[pos] = tag.sc;
-        }
-        insertFeature(feat, "unigram-lhood", node->tag->sc_unigram[pos][node->tag->tag[pos]]);
-      }
-    }
-    if(featoptFind("word-sig") || featoptFind("all")) {
+    // if(featoptFind("unigram-lhood")) {
+    //   if(model_unigram) {
+    //     if(node->gm->sc_unigram[pos].size() == 0) {
+    //       // Tag tag(*node->gm);
+    //       auto& gm = model->copySample(*node->gm);
+    //       model_unigram->sampleOne(gm, *gm.rng, pos);
+    //       node->gm->sc_unigram[pos] = gm.sc;
+    //     }
+    //     insertFeature(feat, "unigram-lhood", node->gm->sc_unigram[pos][node->gm->tag[pos]]);
+    //   }
+    // }
+    if(featoptFind("ner-disagree") || featoptFind("all")) {
       if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
+        auto& tag = *cast<Tag>(node->gm);
         ptr<Corpus> corpus = model->corpus;
-        string tg = corpus->invtags[node->tag->tag[pos]];
+        string tg = corpus->invtags[tag.tag[pos]];
         if(pos >= 1) {
-  	      string prev_tg = corpus->invtags[node->tag->tag[pos-1]];
+  	      string prev_tg = corpus->invtags[tag.tag[pos-1]];
   	      if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
   	       insertFeature(feat, "bad");
         }
-        if(pos < node->tag->size()-1) {
-          string next_tg = corpus->invtags[node->tag->tag[pos+1]];
+        if(pos < node->gm->size()-1) {
+          string next_tg = corpus->invtags[tag.tag[pos+1]];
   	      if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
   	        insertFeature(feat, "bad");
         }
       }
     }
     if(featoptFind("ising-disagree")) {
-      auto image = (const ImageIsing*)(node->tag->seq); // WARNING: Hack, no dynamic check. 
+      auto image = (const ImageIsing*)(node->gm->seq); // WARNING: Hack, no dynamic check. 
+      auto& tag = *cast<Tag>(node->gm);
       if(image == NULL) 
         throw "cannot use feature 'ising-disagree' on non-ising dataset.";
       size_t disagree = 0;
@@ -472,7 +477,7 @@ namespace Tagging {
         if(this_pt.h >= 0 and this_pt.h < image->H 
           and this_pt.w >= 0 and this_pt.w < image->W) {
           size_t pos2 = image->ptToPos(this_pt);
-          if(node->tag->tag[pos2] != node->tag->tag[pos]) {
+          if(tag.tag[pos2] != tag.tag[pos]) {
             disagree++;
           }
         }
@@ -480,14 +485,14 @@ namespace Tagging {
       insertFeature(feat, "ising-disagree", disagree);
     }
     if(featoptFind("oracle")) {
-      int oldval = node->tag->tag[pos];
-      Tag temp(tag);
+      int oldval = cast<Tag>(node->gm)->tag[pos];
+      auto& temp = *model->copySample(*node->gm);
       model->sampleOne(temp, *temp.rng, pos);          
       // insertFeature(feat, "oracle", -temp.sc[oldval]);
       insertFeature(feat, "oracle", temp.entropy[pos]);
     }
     if(featoptFind("self-avoid")) {
-      insertFeature(feat, "self-avoid", node->tag->mask[pos]);
+      insertFeature(feat, "self-avoid", node->gm->mask[pos]);
     }
     return feat;
   }
@@ -495,8 +500,8 @@ namespace Tagging {
   double Policy::checksum(MarkovTreeNodePtr node, int pos) {
     size_t checksum = 0;
     int factorL = cast<ModelCRFGibbs>(model)->factorL;
-    for(int p = max(0, pos-factorL); p <= min(pos+factorL, int(node->tag->size())); p++) {
-      checksum = checksum * 13 + node->tag->timestamp[p];
+    for(int p = max(0, pos-factorL); p <= min(pos+factorL, int(node->gm->size())); p++) {
+      checksum = checksum * 13 + node->gm->timestamp[p];
     }
     return (double)checksum;
   }
@@ -504,32 +509,32 @@ namespace Tagging {
   void Policy::logNode(MarkovTreeNodePtr node) {
     while(node->children.size() > 0) node = node->children[0]; // take final sample.
     lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
-    lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
-    lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
-    int hits = 0;
-    for(size_t i = 0; i < node->tag->size(); i++) {
+    lg->begin("truth"); *lg << node->gm->seq->str() << endl; lg->end();
+    lg->begin("tag"); *lg << node->gm->str() << endl; lg->end();
+    // int hits = 0;
+    for(size_t i = 0; i < node->gm->size(); i++) {
       if(verboseOptFind("feat")) {
         lg->begin("feat"); 
         *lg << *this->extractFeatures(node, i);
         lg->end(); // </feat> */
-        if(node->tag->tag[i] == node->tag->seq->tag[i]) {
-          hits++;
-        }
+        // if(node->gm->tag[i] == node->gm->seq->tag[i]) {
+        //   hits++;
+        // }
       }
     }
     lg->begin("resp");
-    for(size_t i = 0; i < node->tag->size(); i++) {
-      *lg << node->tag->resp[i] << "\t";            
+    for(size_t i = 0; i < node->gm->size(); i++) {
+      *lg << node->gm->resp[i] << "\t";            
     }
     *lg << endl;
     lg->end();
     lg->begin("mask");
-    for(size_t i = 0; i < node->tag->size(); i++) {
-      *lg << node->tag->mask[i] << "\t";            
+    for(size_t i = 0; i < node->gm->size(); i++) {
+      *lg << node->gm->mask[i] << "\t";            
     }
     *lg << endl;
     lg->end();
-    lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
+    // lg->begin("dist"); *lg << node->gm->size()-hits << endl; lg->end();
   }
 
   void Policy::resetLog(std::shared_ptr<XMLlog> new_lg) {
@@ -546,9 +551,9 @@ namespace Tagging {
 
   int GibbsPolicy::policy(MarkovTreeNodePtr node) {
     if(node->depth == 0) node->time_stamp = 0;
-    if(node->depth < T * node->tag->size()) {
+    if(node->depth < T * node->gm->size()) {
       node->time_stamp++;
-      return node->depth % node->tag->size();
+      return node->depth % node->gm->size();
     }
     return -1; // stop.
   }
@@ -565,26 +570,26 @@ namespace Tagging {
 
   int EntropyPolicy::policy(MarkovTreeNodePtr node) {
     if(node->depth == 0) node->time_stamp = 0;
-    if(node->depth < node->tag->size()) { // first pass.
+    if(node->depth < node->gm->size()) { // first pass.
       node->time_stamp++;
       return node->depth;
     }else{
       assert(!node->parent.expired());
       size_t i = node->time_stamp;
-      for(; i < 2 * node->tag->size(); i++) {
-	size_t pos = i % node->tag->size();
-	const string& word = cast<TokenLiteral>(node->tag->seq->seq[pos])->word;  
+      for(; i < 2 * node->gm->size(); i++) {
+	size_t pos = i % node->gm->size();
+	const string& word = cast<TokenLiteral>(node->gm->seq->seq[pos])->word;  
 	double ent = 0;
 	if(wordent->find(word) == wordent->end()) 
 	  ent = log(model->corpus->tags.size());
 	else
 	  ent = (*wordent)[word]+wordent_mean;
 	if(ent > log(threshold)) {
-	  node->tag->mask[pos] = 1;
+	  node->gm->mask[pos] = 1;
 	  node->time_stamp = i+1;
 	  return pos;
 	}else{
-	  node->tag->mask[pos] = 0;
+	  node->gm->mask[pos] = 0;
 	}
       }
       node->time_stamp = i;
@@ -608,27 +613,27 @@ namespace Tagging {
 
   int CyclicPolicy::policy(MarkovTreeNodePtr node) {
     if(node->depth == 0) node->time_stamp = 0;
-    if(node->depth < node->tag->size()) {
+    if(node->depth < node->gm->size()) {
       node->time_stamp++;
       return node->depth;
     }else{
-      objcokus* rng = node->tag->rng;
+      objcokus* rng = node->gm->rng;
       assert(!node->parent.expired());
       size_t i = node->time_stamp;
       node->gradient = makeParamPointer();
-      for( ; i < 2 * node->tag->size(); i++) {      
-        size_t pos = i % node->tag->size();
+      for( ; i < 2 * node->gm->size(); i++) {      
+        size_t pos = i % node->gm->size();
         FeaturePointer feat = this->extractFeatures(node, pos);
         double resp = logisticFunc(Tagging::score(param, feat));
-        node->tag->resp[pos] = resp;
-        node->tag->feat[pos] = feat;
+        node->gm->resp[pos] = resp;
+        node->gm->feat[pos] = feat;
         if(rng->random01() < resp) {
-          node->tag->mask[pos] = 1;
+          node->gm->mask[pos] = 1;
           mapUpdate(*node->gradient, *feat, (1-resp));
           node->time_stamp = i+1;
           return pos;
         }else{
-          node->tag->mask[pos] = 0;
+          node->gm->mask[pos] = 0;
           mapUpdate(*node->gradient, *feat, -resp);	
         }
       }
@@ -653,19 +658,19 @@ namespace Tagging {
     node->depth = 0;
     node->choice = -1;
     objcokus& rng = thread_pool.rngs[tid];
-    node->tag->rng = &rng;
+    node->gm->rng = &rng;
     try{
-      for(size_t i = 0; i < node->tag->size(); i++) {
-        model->sampleOne(*node->tag, rng, i);
+      for(size_t i = 0; i < node->gm->size(); i++) {
+        model->sampleOne(*node->gm, rng, i);
       }
       node->gradient = makeParamPointer();
-      Tag old_tag(*node->tag);
-      for(size_t i = 0; i < node->tag->size(); i++) {
+      ptr<Tag> tag = cast<Tag>(node->gm);
+      for(size_t i = 0; i < node->gm->size(); i++) {
         auto is_equal = [&] () {
-        return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
+        return (double)(tag->tag[i] == tag->seq->tag[i]); 
       };
       double reward_baseline = is_equal();
-      model->sampleOne(*node->tag, rng, i);
+      model->sampleOne(*node->gm, rng, i);
       double reward = is_equal();
       double logR = reward - reward_baseline; 
       FeaturePointer feat = this->extractFeatures(node, i);   
@@ -766,26 +771,26 @@ namespace Tagging {
   // will update gradient of transition.
   int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {
     if(node->depth == 0) node->time_stamp = 0;
-    if(node->depth < node->tag->size()) {
+    if(node->depth < node->gm->size()) {
       node->time_stamp++;
       return node->depth;
     }else{
-      objcokus* rng = node->tag->rng;
+      objcokus* rng = node->gm->rng;
       assert(!node->parent.expired());
       size_t i = node->time_stamp;
-      for(; i < 2 * node->tag->size(); i++) {      
-	size_t pos = i % node->tag->size();
+      for(; i < 2 * node->gm->size(); i++) {      
+	size_t pos = i % node->gm->size();
 	FeaturePointer feat = this->extractFeatures(node, pos);
 	double resp = Tagging::score(param, feat);
-	node->tag->resp[pos] = resp;
-	node->tag->feat[pos] = feat;
+	node->gm->resp[pos] = resp;
+	node->gm->feat[pos] = feat;
 	// if(rng->random01() < resp) { // strategy 1. randomized test.
 	if(resp > c) { // strategy 2. deterministic test.
-	  node->tag->mask[pos] = 1;
+	  node->gm->mask[pos] = 1;
 	  node->time_stamp = i+1;
 	  return pos;
 	}else{
-	  node->tag->mask[pos] = 0;
+	  node->gm->mask[pos] = 0;
 	}
       }
       node->time_stamp = i;
@@ -834,10 +839,12 @@ namespace Tagging {
 
   FeaturePointer MultiCyclicValueUnigramPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = MultiCyclicValuePolicy::extractFeatures(node, pos);
-    Tag tag(*node->tag);
+    ptr<Tag> tag_ptr = cast<Tag>(model->copySample(*node->gm));
+    Tag& tag = *tag_ptr;
+    // Tag tag(*node->gm);
     int oldval = tag.tag[pos];
     model_unigram->sampleOne(tag, *tag.rng, pos);
-    int pass = node->time_stamp / node->tag->size();
+    int pass = node->time_stamp / node->gm->size();
     // insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", -tag.sc[oldval]);
     insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", tag.entropy[pos]);
     return feat;
@@ -851,24 +858,24 @@ namespace Tagging {
 
   int MultiCyclicValuePolicy::policy(MarkovTreeNodePtr node) {
     if(node->depth == 0) node->time_stamp = -1;
-    if(node->depth < node->tag->size()) {
+    if(node->depth < node->gm->size()) {
       node->time_stamp++;
       return node->depth;
     }else{
-      objcokus* rng = node->tag->rng;
+      objcokus* rng = node->gm->rng;
       assert(!node->parent.expired());
       size_t i = node->time_stamp + 1;
       node->gradient = makeParamPointer();
-      for(; i < T * node->tag->size(); i++) {      
+      for(; i < T * node->gm->size(); i++) {      
 	node->time_stamp = i;
-	size_t pos = i % node->tag->size();
+	size_t pos = i % node->gm->size();
 	FeaturePointer feat = this->extractFeatures(node, pos);
 	double resp = Tagging::score(param, feat);
-	node->tag->resp[pos] = resp;
-	node->tag->feat[pos] = feat;
+	node->gm->resp[pos] = resp;
+	node->gm->feat[pos] = feat;
 	/*if(lets_resp_reward) {
 	  test_thread_pool.lock();
-	  Tag tag(*node->tag);
+	  Tag tag(*node->gm);
 	  auto is_equal = [&] () {
 	    return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
 	  };
@@ -886,10 +893,10 @@ namespace Tagging {
 	  test_thread_pool.unlock();
 	}*/
 	if(resp > c) { 
-	  node->tag->mask[pos] = 1;
+	  node->gm->mask[pos] = 1;
 	  return pos;
 	}else{
-	  node->tag->mask[pos] = 0;
+	  node->gm->mask[pos] = 0;
 	}
       }
       // node->time_stamp = i;
@@ -901,33 +908,34 @@ namespace Tagging {
     node->depth = 0;
     node->choice = -1;
     try{
-      node->tag->rng = &thread_pool.rngs[tid];
-      for(size_t i = 0; i < node->tag->size(); i++) {
-        model->sampleOne(*node->tag, *node->tag->rng, i);
+      node->gm->rng = &thread_pool.rngs[tid];
+      for(size_t i = 0; i < node->gm->size(); i++) {
+        model->sampleOne(*node->gm, *node->gm->rng, i);
       }
       node->gradient = makeParamPointer();
       for(size_t t = 1; t < T; t++) {
-	for(size_t i = 0; i < node->tag->size(); i++) {
-	  node->time_stamp = t * node->tag->size() + i;
-	  auto is_equal = [&] () {
-	    return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
-	  };
-	  double reward_baseline = is_equal();
-	  model->sampleOne(*node->tag, *node->tag->rng, i);
-	  double reward = is_equal();
-	  // double logR = reward - reward_baseline; 
-	  double logR = node->tag->reward[i];
-	  FeaturePointer feat = this->extractFeatures(node, i);   
-	  double resp = Tagging::score(param, feat);
-	  if(lets_resp_reward) {
-	    thread_pool.lock();
-	    resp_reward.push_back(make_pair(resp, logR));
-	    resp_RH.push_back(make_pair(resp, 1-reward_baseline));
-	    resp_RL.push_back(make_pair(resp, logR));
-	    thread_pool.unlock();
-	  }
-	  mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
-	}
+        for(size_t i = 0; i < node->gm->size(); i++) {
+          node->time_stamp = t * node->gm->size() + i;
+          ptr<Tag> tag = cast<Tag>(node->gm);
+          auto is_equal = [&] () {
+            return (double)(tag->tag[i] == tag->seq->tag[i]); 
+          };
+          double reward_baseline = is_equal();
+          model->sampleOne(*node->gm, *node->gm->rng, i);
+          double reward = is_equal();
+          // double logR = reward - reward_baseline; 
+          double logR = node->gm->reward[i];
+          FeaturePointer feat = this->extractFeatures(node, i);   
+          double resp = Tagging::score(param, feat);
+          if(lets_resp_reward) {
+            thread_pool.lock();
+            resp_reward.push_back(make_pair(resp, logR));
+            resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+            resp_RL.push_back(make_pair(resp, logR));
+            thread_pool.unlock();
+          }
+          mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+}
       }
       node->log_weight = 0;
     }catch(const char* ee) {
@@ -937,7 +945,7 @@ namespace Tagging {
 
   FeaturePointer MultiCyclicValuePolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = CyclicValuePolicy::extractFeatures(node, pos);
-    int pass = node->time_stamp / node->tag->size();
+    int pass = node->time_stamp / node->gm->size();
     for(pair<string, double>& p : *feat) {
       p.first = boost::lexical_cast<string>(pass) + "-" + p.first;
     }
@@ -948,47 +956,50 @@ namespace Tagging {
   void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
     size_t pass = 0;
     while(true) {
-      if(node->time_stamp >= (pass+1) * node->tag->size()-1 || node->children.size() == 0) {
-	lg->begin("pass_"+boost::lexical_cast<string>(node->time_stamp / node->tag->size()));
-	  lg->begin("tag"); *lg << node->tag->str() << endl; lg->end();
-	  for(size_t i = 0; i < node->tag->size(); i++) {
-	    lg->begin("feat"); 
-	    if(node->tag->feat.size() > i and node->tag->feat[i]) {
-	      *lg << *node->tag->feat[i] << endl;
-	    }else{
-	      *lg << *this->extractFeatures(node, i) << endl;
-	    }
-	    lg->end(); // </feat> 
-	  }
-	  lg->begin("resp");
-	  for(size_t i = 0; i < node->tag->size(); i++) {
-	    *lg << node->tag->resp[i] << "\t";            
-	  }
-	  *lg << endl;
-	  lg->end(); // </resp>
-	  lg->begin("mask");
-	  for(size_t i = 0; i < node->tag->size(); i++) {
-	    *lg << node->tag->mask[i] << "\t";            
-	  }
-	  *lg << endl;
-	  int hits = 0;
-	  for(size_t i = 0; i < node->tag->size(); i++) {
-	    if(node->tag->tag[i] == node->tag->seq->tag[i]) {
-	      hits++;
-	    }
-	  }
-	  lg->begin("dist"); *lg << node->tag->size()-hits << endl; lg->end();
-	  lg->end(); // </mask>
-	lg->end(); // </pass>
-	pass = int(node->time_stamp / node->tag->size()) + 1;
+      if(node->time_stamp >= (pass+1) * node->gm->size()-1 || node->children.size() == 0) {
+        lg->begin("pass_"+boost::lexical_cast<string>(node->time_stamp / node->gm->size()));
+          lg->begin("tag"); *lg << node->gm->str() << endl; lg->end();
+          for(size_t i = 0; i < node->gm->size(); i++) {
+            lg->begin("feat"); 
+            if(node->gm->feat.size() > i and node->gm->feat[i]) {
+              *lg << *node->gm->feat[i] << endl;
+            }else{
+              *lg << *this->extractFeatures(node, i) << endl;
+            }
+            lg->end(); // </feat> 
+          }
+          lg->begin("resp");
+          for(size_t i = 0; i < node->gm->size(); i++) {
+            *lg << node->gm->resp[i] << "\t";            
+          }
+          *lg << endl;
+          lg->end(); // </resp>
+          lg->begin("mask");
+          for(size_t i = 0; i < node->gm->size(); i++) {
+            *lg << node->gm->mask[i] << "\t";            
+          }
+          *lg << endl;
+          if(isinstance<Tag>(node->gm)) {
+            ptr<Tag> tag = cast<Tag>(node->gm);
+            int hits = 0;
+            for(size_t i = 0; i < node->gm->size(); i++) {
+              if(tag->tag[i] == tag->seq->tag[i]) {
+                hits++;
+              }
+            }
+            lg->begin("dist"); *lg << node->gm->size()-hits << endl; lg->end();
+          }
+          lg->end(); // </mask>
+        lg->end(); // </pass>
+        pass = int(node->time_stamp / node->gm->size()) + 1;
       }
       if(node->children.size() > 0)
-	node = node->children[0]; // take final sample.
+        node = node->children[0]; // take final sample.
       else
-	break;
+        break;
     }
     lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
-    lg->begin("truth"); *lg << node->tag->seq->str() << endl; lg->end();
+    lg->begin("truth"); *lg << node->gm->seq->str() << endl; lg->end();
   }
 
   //////// RandomScanPolicy ////////////////////////////////////////////
@@ -1002,21 +1013,21 @@ namespace Tagging {
   int RandomScanPolicy::policy(MarkovTreeNodePtr node) {
     if(node->depth == 0) node->time_stamp = -1;
     int pos = 0;
-    if(node->depth < node->tag->size()) {
+    if(node->depth < node->gm->size()) {
       pos = node->depth;
-      node->tag->mask[pos] = 1;
+      node->gm->mask[pos] = 1;
     }else{
-      if(node->depth > Tstar * node->tag->size()) 
+      if(node->depth > Tstar * node->gm->size()) 
         return -1;
-      vec<double> resp = node->tag->resp;
+      vec<double> resp = node->gm->resp;
       logNormalize(&resp[0], resp.size());
-      objcokus* rng = node->tag->rng;
+      objcokus* rng = node->gm->rng;
       pos = rng->sampleCategorical(&resp[0], resp.size());
-      node->tag->mask[pos] += 1;
+      node->gm->mask[pos] += 1;
     }
     FeaturePointer feat = this->extractFeatures(node, pos);
-    node->tag->feat[pos] = feat;
-    node->tag->resp[pos] = Tagging::score(this->param, feat);
+    node->gm->feat[pos] = feat;
+    node->gm->resp[pos] = Tagging::score(this->param, feat);
     node->time_stamp++;
     return pos;
   }
@@ -1025,7 +1036,7 @@ namespace Tagging {
     FeaturePointer feat = Policy::extractFeatures(node, pos);
 #if USE_WINDOW == 1
     for(int p = pos-windowL; p <= pos+windowL; p++) {
-      if(p == pos || p < 0 || p >= node->tag->size()) continue;
+      if(p == pos || p < 0 || p >= node->gm->size()) continue;
       FeaturePointer this_feat = Policy::extractFeatures(node, p);
       for(pair<string, double>& f : *this_feat) {
 	insertFeature(feat, "w"+boost::lexical_cast<string>(p-pos)+"-"
@@ -1040,42 +1051,45 @@ namespace Tagging {
     node->depth = 0;
     node->choice = -1;
     objcokus& rng = thread_pool.rngs[tid];
-    node->tag->rng = &rng;
+    node->gm->rng = &rng;
     try{
-      for(size_t i = 0; i < node->tag->size(); i++) {
-        model->sampleOne(*node->tag, rng, i);
-        node->tag->mask[i] = 1;
+      for(size_t i = 0; i < node->gm->size(); i++) {
+        model->sampleOne(*node->gm, rng, i);
+        node->gm->mask[i] = 1;
       }
-      size_t seqlen = node->tag->size();
+      size_t seqlen = node->gm->size();
       node->depth = seqlen;
       node->gradient = makeParamPointer();
       while(node->depth < Tstar * seqlen) {		
-	vec<double> reward(seqlen);
-	vec<double> resp(seqlen);
-	vec<FeaturePointer> feat(seqlen);
-	auto is_equal = [] (Tag& tag, int i) {
-	  return (double)(tag.tag[i] == tag.seq->tag[i]); 
-	};
-	double norm1 = -DBL_MAX, norm2 = -DBL_MAX;
-	for(size_t i = 0; i < seqlen; i++) {
-	  double reward_baseline = is_equal(*node->tag, i);
-	  Tag tag(*node->tag);
-	  model->sampleOne(tag, rng, i);
-	  reward[i] = is_equal(tag, i) - reward_baseline;
-	  feat[i] = extractFeatures(node, i);
-	  resp[i] = Tagging::score(param, feat[i]);
-	  norm1 = logAdd(norm1, reward[i] + resp[i]);
-	  norm2 = logAdd(norm2, resp[i]);
-	}
-	for(size_t i = 0; i < seqlen; i++) {
-	  mapUpdate(*node->gradient, *feat[i], exp(reward[i] + resp[i] - norm1));
-	  mapUpdate(*node->gradient, *feat[i], -exp(resp[i] - norm2));
-	}
-	logNormalize(&resp[0], seqlen);
-	int pos = node->tag->rng->sampleCategorical(&resp[0], seqlen);
-	model->sampleOne(*node->tag, rng, pos);
-	node->tag->mask[pos] += 1;
-	node->depth += 1;
+        vec<double> reward(seqlen);
+        vec<double> resp(seqlen);
+        vec<FeaturePointer> feat(seqlen);
+        auto is_equal = [] (Tag& tag, int i) {
+          return (double)(tag.tag[i] == tag.seq->tag[i]); 
+        };
+        ptr<Tag> old_tag = cast<Tag>(node->gm);
+        double norm1 = -DBL_MAX, norm2 = -DBL_MAX;
+        for(size_t i = 0; i < seqlen; i++) {
+          double reward_baseline = is_equal(*old_tag, i);
+          // Tag tag(*node->gm);
+          ptr<Tag> tag_ptr = cast<Tag>(model->copySample(*node->gm));
+          Tag& tag = *tag_ptr;
+          model->sampleOne(tag, rng, i);
+          reward[i] = is_equal(tag, i) - reward_baseline;
+          feat[i] = extractFeatures(node, i);
+          resp[i] = Tagging::score(param, feat[i]);
+          norm1 = logAdd(norm1, reward[i] + resp[i]);
+          norm2 = logAdd(norm2, resp[i]);
+        }
+        for(size_t i = 0; i < seqlen; i++) {
+          mapUpdate(*node->gradient, *feat[i], exp(reward[i] + resp[i] - norm1));
+          mapUpdate(*node->gradient, *feat[i], -exp(resp[i] - norm2));
+        }
+        logNormalize(&resp[0], seqlen);
+        int pos = node->gm->rng->sampleCategorical(&resp[0], seqlen);
+        model->sampleOne(*node->gm, rng, pos);
+        node->gm->mask[pos] += 1;
+node->depth += 1;
       }
       node->log_weight = 0;
     }catch(const char* ee) {
@@ -1094,27 +1108,27 @@ namespace Tagging {
   
   FeaturePointer LockdownPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = Policy::extractFeatures(node, pos);
-    insertFeature(feat, "#sp", node->tag->mask[pos]);
+    insertFeature(feat, "#sp", node->gm->mask[pos]);
     return feat;
   }
 
   int LockdownPolicy::policy(MarkovTreeNodePtr node) {
     if(node->depth == 0) node->time_stamp = 0;
     size_t count = node->time_stamp;
-    int seqlen = node->tag->size();
+    int seqlen = node->gm->size();
     for(; count < node->time_stamp + seqlen; count++) {
       int pos = count % seqlen;
 
       /* TODO: compute feat on demand */
-      if(!std::isnan(node->tag->checksum[pos])) {
+      if(!std::isnan(node->gm->checksum[pos])) {
         FeaturePointer feat = this->extractFeatures(node, pos);
-        node->tag->feat[pos] = feat;
-        node->tag->resp[pos] = Tagging::score(param, feat);
+        node->gm->feat[pos] = feat;
+        node->gm->resp[pos] = Tagging::score(param, feat);
         if(lets_resp_reward) {
-          double resp = node->tag->resp[pos];
+          double resp = node->gm->resp[pos];
           test_thread_pool.lock();
           // collect reward, slow, for debug only.
-//          Tag tag(*node->tag);
+//          Tag tag(*node->gm);
 //          auto is_equal = [&] () {
 //            return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
 //          };
@@ -1135,9 +1149,9 @@ namespace Tagging {
           test_thread_pool.unlock();
         }
       }
-      int mk = node->tag->mask[pos];
-      if(node->tag->resp[pos] > c and 
-          node->tag->mask[pos] < T) {
+      int mk = node->gm->mask[pos];
+      if(node->gm->resp[pos] > c and 
+          node->gm->mask[pos] < T) {
         node->time_stamp = count+1;
         return pos;
       }
@@ -1151,30 +1165,31 @@ namespace Tagging {
     node->choice = -1;
     try{
       objcokus& rng = thread_pool.rngs[tid];
-      node->tag->rng = &rng; 
-      for(size_t i = 0; i < node->tag->size(); i++) {
-        model->sampleOne(*node->tag, rng, i);
-        node->tag->mask[i] = 1;
-        node->tag->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
+      node->gm->rng = &rng; 
+      for(size_t i = 0; i < node->gm->size(); i++) {
+        model->sampleOne(*node->gm, rng, i);
+        node->gm->mask[i] = 1;
+        node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
       }
       node->gradient = makeParamPointer();
       for(size_t t = 1; t < T; t++) {
-        for(size_t i = 0; i < node->tag->size(); i++) {
-          node->time_stamp = t * node->tag->size() + i;
+        for(size_t i = 0; i < node->gm->size(); i++) {
+          node->time_stamp = t * node->gm->size() + i;
           /* extract features */
           FeaturePointer feat = this->extractFeatures(node, i);
           double resp = Tagging::score(param, feat);
+          ptr<Tag> old_tag = cast<Tag>(node->gm);
           /* estimate reward */
           auto is_equal = [&] () {
-            return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
+            return (double)(old_tag->tag[i] == old_tag->seq->tag[i]); 
           };
           double reward_baseline = is_equal();
-          model->sampleOne(*node->tag, rng, i);
-          node->tag->mask[i] += 1;
-          node->tag->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
+          model->sampleOne(*node->gm, rng, i);
+          node->gm->mask[i] += 1;
+          node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
           double reward = is_equal();
 //          double logR = reward - reward_baseline; 
-          double logR = node->tag->reward[i];
+          double logR = node->gm->reward[i];
           // logR *= 100; // scale for convenience.
           if(lets_resp_reward) {
             resp_reward.push_back(make_pair(resp, logR));

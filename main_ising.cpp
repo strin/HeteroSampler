@@ -54,9 +54,9 @@ int main(int argc, char* argv[]) {
     string train = "data/ising/train", test = "data/ising/test";
     if(vm.count("train")) train = vm["train"].as<string>();
     if(vm.count("test")) test = vm["test"].as<string>();  
-    auto corpus = make_shared<CorpusIsing>();
+    auto corpus = std::make_shared<CorpusIsing>();
     corpus->read(train);
-    auto testCorpus = make_shared<CorpusIsing>();
+    auto testCorpus = std::make_shared<CorpusIsing>();
     testCorpus->read(test);
 
     /* run. */

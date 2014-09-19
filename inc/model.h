@@ -36,6 +36,22 @@ namespace Tagging {
     // only applies if "init" flag is on (not equal to *random*). 
     virtual ParamPointer sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice);           
 
+
+    // create a new sample from an instance.
+    virtual ptr<GraphicalModel> makeSample(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const {
+      throw "Model::makeSample not supported.";
+    }
+
+    // create a new sample with value equal to ground truth.
+    virtual ptr<GraphicalModel> makeTruth(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const {
+      throw "Model::makeTruth not supported.";
+    }
+
+    // create a new sample by copying an old one.
+    virtual ptr<GraphicalModel> copySample(const GraphicalModel& gm) const {
+      throw "Model::copySample not supported.";
+    }
+
     // <deprecated> score a tag ? 
     virtual double score(const Tag& tag);
 
@@ -111,14 +127,20 @@ namespace Tagging {
     FeatureExtractOne extractFeaturesAtInit;
     FeatureExtractAll extractFeatAll;
 
-    ParamPointer sampleOne(GraphicalModel& tag, objcokus& rng, int choice);
-    ParamPointer sampleOneAtInit(GraphicalModel& tag, objcokus& rng, int choice);
+    /* implement inferface for Gibbs sampling */
+    virtual ParamPointer sampleOne(GraphicalModel& tag, objcokus& rng, int choice);
+    virtual ParamPointer sampleOneAtInit(GraphicalModel& tag, objcokus& rng, int choice);
 
+    /* implement interface for making samples */
+    virtual ptr<GraphicalModel> makeSample(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const;
+    virtual ptr<GraphicalModel> makeTruth(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const;
+    virtual ptr<GraphicalModel> copySample(const GraphicalModel& gm) const;
+
+    /* properties */
+    int factorL;    
+
+  protected:
     ParamPointer proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract, bool grad_expect, bool grad_sample);
-
-    int factorL;
-    
-  private:
     ParamPointer sampleOne(GraphicalModel& gm, objcokus& rng, int choice, FeatureExtractOne feat_extract);
 
     FeaturePointer extractFeaturesAll(const Tag& tag);

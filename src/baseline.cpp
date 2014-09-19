@@ -198,6 +198,19 @@ namespace Tagging {
     return gradient;
   }
 
+  ptr<GraphicalModel> ModelCRFGibbs::makeSample(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const {
+    return std::make_shared<Tag>(&instance, corpus, rng, param);
+  }
+
+  ptr<GraphicalModel> ModelCRFGibbs::makeTruth(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const {
+    return std::make_shared<Tag>(instance, corpus, rng, param);
+  }
+
+  ptr<GraphicalModel> ModelCRFGibbs::copySample(const GraphicalModel& gm) const {
+    auto tag = dynamic_cast<const Tag&>(gm);
+    return make_shared<Tag>(tag);
+  }
+
   ParamPointer ModelCRFGibbs::sampleOne(GraphicalModel& gm, objcokus& rng, int choice, FeatureExtractOne feat_extract) {
     Tag& tag = dynamic_cast<Tag&>(gm);
     if(choice >= tag.size())

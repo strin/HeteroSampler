@@ -22,7 +22,7 @@ public:
   Tag(const Instance& seq, ptr<Corpus> corpus, 
      objcokus* rng, ParamPointer param); // copy tag from seq.
   // length of sequence.
-  inline size_t size() const {return this->tag.size(); }
+  size_t size() const {return this->tag.size(); }
   // initialize the sequence tags uniformly at random.
   void randomInit();
   // propose Gibbs-style modification to *pos*

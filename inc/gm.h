@@ -29,14 +29,10 @@ public:
   ptr<Corpus> corpus;
 
   // to string. 
-  virtual string str() {
-    throw "GraphicalModel::str not defined.";
-  } 
+  virtual string str() = 0;
 
   // get size of the graphical model.
-  virtual size_t size() const {
-    throw "GraphicalModel::size not defined.";
-  }
+  virtual size_t size() const = 0;
 };
 
 }

@@ -19,7 +19,7 @@ namespace Tagging {
     // default feature extraction, support literal sequence tagging.
     assert(isinstance<ModelCRFGibbs>(model));
     ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
-    auto tag = dynamic_cast<const Tag&>(gm);
+    auto& tag = dynamic_cast<const Tag&>(gm);
     size_t windowL = this_model->windowL;
     size_t depthL = this_model->depthL;
     size_t factorL = this_model->factorL;
@@ -57,7 +57,7 @@ namespace Tagging {
     // default feature extraction, support literal sequence tagging.
     assert(isinstance<ModelCRFGibbs>(model));
     ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
-    auto tag = dynamic_cast<const Tag&>(gm);
+    auto& tag = dynamic_cast<const Tag&>(gm);
     size_t windowL = this_model->windowL;
     size_t depthL = this_model->depthL;
     size_t factorL = this_model->factorL;

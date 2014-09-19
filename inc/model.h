@@ -148,6 +148,9 @@ namespace Tagging {
     void sampleOneSweep(Tag& tag, bool argmax = false);
   };
 
+  struct MarkovTree;
+  struct MarkovTreeNode;
+
   struct ModelTreeUA : public ModelCRFGibbs {
   public:
     ModelTreeUA(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
@@ -182,19 +185,19 @@ namespace Tagging {
   public:
     ModelAdaTree(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
     /* implement components necessary */  
-    void workerThreads(int tid, MarkovTreeNodePtr node, Tag tag);
+    void workerThreads(int tid, ptr<MarkovTreeNode> node, Tag tag);
     /* extract posgrad and neggrad for stop-or-not logistic regression */
     std::tuple<double, ParamPointer, ParamPointer, FeaturePointer> logisticStop
-      (MarkovTreeNodePtr node, const Instance& seq, const Tag& tag); 
+      (ptr<MarkovTreeNode> node, const Instance& seq, const Tag& tag); 
 
     /* stop feature extraction for each word */
     virtual FeaturePointer extractStopFeatures
-      (MarkovTreeNodePtr node, const Instance& seq, const Tag& tag, int pos);
+      (ptr<MarkovTreeNode> node, const Instance& seq, const Tag& tag, int pos);
     /* stop feature extraction for entire Instance */
     virtual FeaturePointer extractStopFeatures
-      (MarkovTreeNodePtr node, const Instance& seq, const Tag& tag);
+      (ptr<MarkovTreeNode> node, const Instance& seq, const Tag& tag);
 
-    double score(MarkovTreeNodePtr node, const Tag& tag);
+    double score(ptr<MarkovTreeNode> node, const Tag& tag);
 
     /* parameters */
     double etaT;

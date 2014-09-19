@@ -82,11 +82,12 @@ namespace Tagging {
 
   void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
-    node->tag->rng = &test_thread_pool.rngs[tid];
+    objcokus& rng = test_thread_pool.rngs[tid];
+    node->tag->rng = &rng;
     try{
       if(this->init_method == "iid") {
         for(size_t pos = 0; pos < node->tag->size(); pos++) {
-          model->sampleOneAtInit(*node->tag, pos);
+          model->sampleOneAtInit(*node->tag, rng, pos);
           node->depth++;
           node->tag->mask[pos] += 1;
           node->tag->checksum[pos] = 0; // WARNING: a hack.
@@ -103,7 +104,7 @@ namespace Tagging {
         }else{
           node->log_weight = -DBL_MAX; 
           int pos = node->choice;
-          node->gradient = model->sampleOne(*node->tag, pos);
+          node->gradient = model->sampleOne(*node->tag, rng, pos);
           FeaturePointer feat = this->extractFeatures(node, pos);
           node->tag->mask[pos] += 1;
           node->tag->feat[pos] = feat;
@@ -420,7 +421,7 @@ namespace Tagging {
       if(model_unigram) {
         if(std::isnan(node->tag->entropy_unigram[pos])) {
           Tag tag(*node->tag);
-          model_unigram->sampleOne(tag, pos);
+          model_unigram->sampleOne(tag, *tag.rng, pos);
           node->tag->entropy_unigram[pos] = tag.entropy[pos];
         }
         insertFeature(feat, "unigram-ent", node->tag->entropy_unigram[pos]);
@@ -435,7 +436,7 @@ namespace Tagging {
       if(model_unigram) {
         if(node->tag->sc_unigram[pos].size() == 0) {
           Tag tag(*node->tag);
-          model_unigram->sampleOne(tag, pos);
+          model_unigram->sampleOne(tag, *tag.rng, pos);
           node->tag->sc_unigram[pos] = tag.sc;
         }
         insertFeature(feat, "unigram-lhood", node->tag->sc_unigram[pos][node->tag->tag[pos]]);
@@ -481,7 +482,7 @@ namespace Tagging {
     if(featoptFind("oracle")) {
       int oldval = node->tag->tag[pos];
       Tag temp(tag);
-      model->sampleOne(temp, pos);          
+      model->sampleOne(temp, *temp.rng, pos);          
       // insertFeature(feat, "oracle", -temp.sc[oldval]);
       insertFeature(feat, "oracle", temp.entropy[pos]);
     }
@@ -651,10 +652,11 @@ namespace Tagging {
   void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
     node->choice = -1;
+    objcokus& rng = thread_pool.rngs[tid];
+    node->tag->rng = &rng;
     try{
-      node->tag->rng = &thread_pool.rngs[tid];
       for(size_t i = 0; i < node->tag->size(); i++) {
-        model->sampleOne(*node->tag, i);
+        model->sampleOne(*node->tag, rng, i);
       }
       node->gradient = makeParamPointer();
       Tag old_tag(*node->tag);
@@ -663,7 +665,7 @@ namespace Tagging {
         return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
       };
       double reward_baseline = is_equal();
-      model->sampleOne(*node->tag, i);
+      model->sampleOne(*node->tag, rng, i);
       double reward = is_equal();
       double logR = reward - reward_baseline; 
       FeaturePointer feat = this->extractFeatures(node, i);   
@@ -834,7 +836,7 @@ namespace Tagging {
     FeaturePointer feat = MultiCyclicValuePolicy::extractFeatures(node, pos);
     Tag tag(*node->tag);
     int oldval = tag.tag[pos];
-    model_unigram->sampleOne(tag, pos);
+    model_unigram->sampleOne(tag, *tag.rng, pos);
     int pass = node->time_stamp / node->tag->size();
     // insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", -tag.sc[oldval]);
     insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", tag.entropy[pos]);
@@ -901,7 +903,7 @@ namespace Tagging {
     try{
       node->tag->rng = &thread_pool.rngs[tid];
       for(size_t i = 0; i < node->tag->size(); i++) {
-	model->sampleOne(*node->tag, i);
+        model->sampleOne(*node->tag, *node->tag->rng, i);
       }
       node->gradient = makeParamPointer();
       for(size_t t = 1; t < T; t++) {
@@ -911,7 +913,7 @@ namespace Tagging {
 	    return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
 	  };
 	  double reward_baseline = is_equal();
-	  model->sampleOne(*node->tag, i);
+	  model->sampleOne(*node->tag, *node->tag->rng, i);
 	  double reward = is_equal();
 	  // double logR = reward - reward_baseline; 
 	  double logR = node->tag->reward[i];
@@ -1037,11 +1039,12 @@ namespace Tagging {
   void RandomScanPolicy::sample(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
     node->choice = -1;
+    objcokus& rng = thread_pool.rngs[tid];
+    node->tag->rng = &rng;
     try{
-      node->tag->rng = &thread_pool.rngs[tid];
       for(size_t i = 0; i < node->tag->size(); i++) {
-	model->sampleOne(*node->tag, i);
-	node->tag->mask[i] = 1;
+        model->sampleOne(*node->tag, rng, i);
+        node->tag->mask[i] = 1;
       }
       size_t seqlen = node->tag->size();
       node->depth = seqlen;
@@ -1057,7 +1060,7 @@ namespace Tagging {
 	for(size_t i = 0; i < seqlen; i++) {
 	  double reward_baseline = is_equal(*node->tag, i);
 	  Tag tag(*node->tag);
-	  model->sampleOne(tag, i);
+	  model->sampleOne(tag, rng, i);
 	  reward[i] = is_equal(tag, i) - reward_baseline;
 	  feat[i] = extractFeatures(node, i);
 	  resp[i] = Tagging::score(param, feat[i]);
@@ -1070,7 +1073,7 @@ namespace Tagging {
 	}
 	logNormalize(&resp[0], seqlen);
 	int pos = node->tag->rng->sampleCategorical(&resp[0], seqlen);
-	model->sampleOne(*node->tag, pos);
+	model->sampleOne(*node->tag, rng, pos);
 	node->tag->mask[pos] += 1;
 	node->depth += 1;
       }
@@ -1147,9 +1150,10 @@ namespace Tagging {
     node->depth = 0;
     node->choice = -1;
     try{
-      node->tag->rng = &thread_pool.rngs[tid];
+      objcokus& rng = thread_pool.rngs[tid];
+      node->tag->rng = &rng; 
       for(size_t i = 0; i < node->tag->size(); i++) {
-        model->sampleOne(*node->tag, i);
+        model->sampleOne(*node->tag, rng, i);
         node->tag->mask[i] = 1;
         node->tag->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
       }
@@ -1165,7 +1169,7 @@ namespace Tagging {
             return (double)(node->tag->tag[i] == node->tag->seq->tag[i]); 
           };
           double reward_baseline = is_equal();
-          model->sampleOne(*node->tag, i);
+          model->sampleOne(*node->tag, rng, i);
           node->tag->mask[i] += 1;
           node->tag->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
           double reward = is_equal();

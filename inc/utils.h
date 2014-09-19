@@ -1,10 +1,10 @@
-#ifndef POS_UTIL_H
-#define POS_UTIL_H
+#pragma once
 
 #include <cmath>
 #include <map>
 #include <unordered_map>
 #include <string>
+#include <vector>
 #include <list>
 #include <iostream>
 #include <functional>
@@ -13,13 +13,17 @@
 #include <fstream>
 #include <ctime>
 #include <memory>
+#include <thread>
+#include <condition_variable>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/program_options.hpp>
+
 #include "float.h"
 #include "log.h"
 #include "stdlib.h"
 #include "objcokus.h"
-#include <vector>
-#include "boost/algorithm/string.hpp"
-#include <boost/random/uniform_int.hpp>
 
 namespace Tagging {
   template<class T>
@@ -238,4 +242,4 @@ namespace Tagging {
     return result;
   }
 }
-#endif
+

@@ -2,17 +2,9 @@
 #define POS_MODEL_H
 
 #include "tag.h"
+#include "gm.h"
 #include "corpus.h"
-#include "objcokus.h"
-#include "log.h"
 #include "MarkovTree.h"
-
-#include <vector>
-#include <list>
-#include <thread>
-#include <condition_variable>
-
-#include <boost/program_options.hpp>
 
 namespace Tagging {
   inline static void adagrad(ParamPointer param, ParamPointer G2, ParamPointer gradient, double eta) {
@@ -38,13 +30,15 @@ namespace Tagging {
 
     // sample using custom kernel choice.
     // return: gradient.
-    virtual ParamPointer sampleOne(Tag& tag, int choice);           
+    virtual ParamPointer sampleOne(GraphicalModel& gm, objcokus& rng, int choice);           
 
     // sample using custom kernel choice at initialization.
     // only applies if "init" flag is on (not equal to *random*). 
-    virtual ParamPointer sampleOneAtInit(Tag& tag, int choice);           
+    virtual ParamPointer sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice);           
 
+    // <deprecated> score a tag ? 
     virtual double score(const Tag& tag);
+
     // evaluate the accuracy for POS tag aginst truth.
     // return 0: hit count.
     // return 1: pred count.
@@ -84,6 +78,8 @@ namespace Tagging {
   };
 
   typedef std::shared_ptr<Model> ModelPtr;
+  typedef std::function<FeaturePointer(ptr<Model> model, const GraphicalModel& tag, int pos)> FeatureExtractOne;
+  typedef std::function<FeaturePointer(ptr<Model> model, const GraphicalModel& tag)> FeatureExtractAll;
 
   struct ModelSimple : public Model {
   public:
@@ -98,9 +94,6 @@ namespace Tagging {
 
     int windowL, depthL; // range of unigram features.
   };
-
-  typedef std::function<FeaturePointer(ptr<Model> model, const Tag& tag, int pos)> FeatureExtractOne;
-  typedef std::function<FeaturePointer(ptr<Model> model, const Tag& tag)> FeatureExtractAll;
 
   struct ModelCRFGibbs : public ModelSimple, public std::enable_shared_from_this<Model> {
   public:
@@ -118,16 +111,17 @@ namespace Tagging {
     FeatureExtractOne extractFeaturesAtInit;
     FeatureExtractAll extractFeatAll;
 
-    inline ParamPointer sampleOne(Tag& tag, int choice);
-    inline ParamPointer sampleOneAtInit(Tag& tag, int choice);
+    ParamPointer sampleOne(GraphicalModel& tag, objcokus& rng, int choice);
+    ParamPointer sampleOneAtInit(GraphicalModel& tag, objcokus& rng, int choice);
 
-    FeaturePointer extractFeaturesAll(const Tag& tag);
-
+    ParamPointer proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract, bool grad_expect, bool grad_sample);
 
     int factorL;
     
   private:
-    ParamPointer sampleOne(Tag& tag, int choice, FeatureExtractOne feat_extract);
+    ParamPointer sampleOne(GraphicalModel& gm, objcokus& rng, int choice, FeatureExtractOne feat_extract);
+
+    FeaturePointer extractFeaturesAll(const Tag& tag);
 
     void sampleOneSweep(Tag& tag, bool argmax = false);
   };

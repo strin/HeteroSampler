@@ -1,4 +1,5 @@
 #pragma once
+#include "gm.h"
 #include "corpus.h"
 #include "model.h"
 #include "boost/algorithm/string.hpp"
@@ -165,8 +166,9 @@ static auto extractIsingBigram =
 };
 
 // feature extraction at *pos* for ising-like model.
-static auto extractIsing = [] (ptr<Model> model, const Tag& tag, int pos) {
+static auto extractIsing = [] (ptr<Model> model, const GraphicalModel& gm, int pos) {
   ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model); 
+  auto tag = dynamic_cast<const Tag&>(gm);
   auto image = dynamic_cast<const ImageIsing*>(tag.seq);
   assert(image != NULL);
   FeaturePointer features = makeFeaturePointer();
@@ -189,8 +191,9 @@ static auto extractIsing = [] (ptr<Model> model, const Tag& tag, int pos) {
 };
 
 // feature extraction at *pos* for ising-like model for initialization.
-static auto extractIsingAtInit = [] (ptr<Model> model, const Tag& tag, int pos) {
+static auto extractIsingAtInit = [] (ptr<Model> model, const GraphicalModel& gm, int pos) {
   ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model); 
+  auto tag = dynamic_cast<const Tag&>(gm);
   auto image = dynamic_cast<const ImageIsing*>(tag.seq);
   assert(image != NULL);
   FeaturePointer features = makeFeaturePointer();
@@ -199,8 +202,9 @@ static auto extractIsingAtInit = [] (ptr<Model> model, const Tag& tag, int pos) 
 };
 
 // extract all features for ising-like model.
-static auto extractIsingAll = [] (ptr<Model> model, const Tag& tag) {
+static auto extractIsingAll = [] (ptr<Model> model, const GraphicalModel& gm) {
   ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model); 
+  auto tag = dynamic_cast<const Tag&>(gm);
   auto image = dynamic_cast<const ImageIsing*>(tag.seq);
   assert(image != NULL);
   FeaturePointer features = makeFeaturePointer();

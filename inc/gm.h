@@ -6,6 +6,9 @@ namespace Tagging {
 
 struct GraphicalModel {
 public:
+  GraphicalModel() {}
+  virtual ~GraphicalModel() {}
+
   /* statistics for variables */
   std::vector<int> tag;
   vec<double> timestamp;                  // whenever a position is changed, its timestamp is incremented.
@@ -18,7 +21,9 @@ public:
   std::vector<double> resp;
   std::vector<int> mask;
   std::vector<FeaturePointer> feat;
-  
+
+  /* randomness */
+  objcokus* rng;  
 };
 
 }

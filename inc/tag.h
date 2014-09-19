@@ -11,7 +11,6 @@ struct Tag : public GraphicalModel {
 public:
   const Instance* seq;
   
-  objcokus* rng;
   ptr<Corpus> corpus;
 
   FeaturePointer features; 

@@ -89,10 +89,11 @@ namespace Tagging {
   //////// Model CRF Gibbs ///////////////////////////////
   ModelCRFGibbs::ModelCRFGibbs(ptr<Corpus> corpus, const po::variables_map& vm)
    :ModelSimple(corpus, vm), factorL(vm["factorL"].as<int>()), 
-    extractFeatures([] (ptr<Model> model, const Tag& tag, int pos) {
+    extractFeatures([] (ptr<Model> model, const GraphicalModel& gm, int pos) {
       // default feature extraction, support literal sequence tagging.
       assert(isinstance<ModelCRFGibbs>(model));
       ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
+      const Tag& tag = dynamic_cast<const Tag&>(gm);
       size_t windowL = this_model->windowL;
       size_t depthL = this_model->depthL;
       size_t factorL = this_model->factorL;
@@ -112,10 +113,11 @@ namespace Tagging {
       }
       return features;
     }),
-    extractFeatAll([] (ptr<Model> model, const Tag& tag) {
+    extractFeatAll([] (ptr<Model> model, const GraphicalModel& gm) {
       // default feature extraction, support literal sequence tagging.
       assert(isinstance<ModelCRFGibbs>(model));
       ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
+      auto tag = dynamic_cast<const Tag&>(gm);
       size_t windowL = this_model->windowL;
       size_t depthL = this_model->depthL;
       size_t factorL = this_model->factorL;
@@ -146,20 +148,69 @@ namespace Tagging {
     }
   }
 
-  ParamPointer ModelCRFGibbs::sampleOne(Tag& tag, int choice, FeatureExtractOne feat_extract) {
+  ParamPointer ModelCRFGibbs::
+  proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract, 
+               bool grad_expect, bool grad_sample) {
+    int seqlen = tag.size();
+    if(pos >= seqlen) 
+      throw "Gibbs sampling proposal out of bound.";
+    int taglen = corpus->tags.size();
+    int oldval = tag.tag[pos];
+
+    // Enumerative Gibbs sampling.
+    double sc[taglen];
+    vector<FeaturePointer> featvec;
+    for(int t = 0; t < taglen; t++) {
+      tag.tag[pos] = t;
+      FeaturePointer features = feat_extract(shared_from_this(), tag, pos);
+      featvec.push_back(features);
+      sc[t] = Tagging::score(this->param, features);
+    }
+    logNormalize(sc, taglen);
+
+    int val;
+    val = rng.sampleCategorical(sc, taglen);
+    if(val == taglen) throw "Gibbs sample out of bound.";
+    tag.tag[pos] = val;
+
+    // compute statistics.
+    tag.reward[pos] = sc[val] - sc[oldval];
+    tag.entropy[pos] = logEntropy(sc, taglen);
+    tag.sc.clear();
+    for(int t = 0; t < taglen; t++) { 
+      if(std::isnan(sc[t])) 
+        cout << "nan " << endl;
+      tag.sc.push_back(sc[t]);
+    }
+    tag.timestamp[pos] += 1;
+
+    // compute gradient, if necessary.
+    tag.features = feat_extract(shared_from_this(), tag, pos);
+    ParamPointer gradient = makeParamPointer();
+    if(grad_sample)
+      mapUpdate<double, double>(*gradient, *tag.features);
+    if(grad_expect) {
+      for(int t = 0; t < taglen; t++) {
+        mapUpdate<double, double>(*gradient, *featvec[t], -exp(sc[t]));
+      }
+    }
+
+    return gradient;
+  }
+
+  ParamPointer ModelCRFGibbs::sampleOne(GraphicalModel& gm, objcokus& rng, int choice, FeatureExtractOne feat_extract) {
+    Tag& tag = dynamic_cast<Tag&>(gm);
     if(choice >= tag.size())
       throw "kernel choice invalid (>= tag size)";
-    return tag.proposeGibbs(choice, [&] (const Tag& tag) -> FeaturePointer {
-      return feat_extract(shared_from_this(), tag, choice);
-    }, true, true);
+    return this->proposeGibbs(tag, rng, choice, feat_extract, true, true);
   }
 
-  ParamPointer ModelCRFGibbs::sampleOneAtInit(Tag& tag, int choice) {
-    return this->sampleOne(tag, choice, this->extractFeaturesAtInit);
+  ParamPointer ModelCRFGibbs::sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice) {
+    return this->sampleOne(gm, rng, choice, this->extractFeaturesAtInit);
   }
 
-  ParamPointer ModelCRFGibbs::sampleOne(Tag& tag, int choice) {
-    return this->sampleOne(tag, choice, this->extractFeatures);
+  ParamPointer ModelCRFGibbs::sampleOne(GraphicalModel& gm, objcokus& rng, int choice) {
+    return this->sampleOne(gm, rng, choice, this->extractFeatures);
   }
 
   TagVector ModelCRFGibbs::sample(const Instance& seq, bool argmax) { 
@@ -208,7 +259,7 @@ namespace Tagging {
       this->sampleOneSweep(tag);
       if(t < B) continue;
       if(update_grad)
-	mapUpdate<double, double>(*gradient, *this->extractFeaturesAll(tag));
+        mapUpdate<double, double>(*gradient, *this->extractFeaturesAll(tag));
     }
     if(samples)
       samples->push_back(shared_ptr<Tag>(new Tag(tag)));

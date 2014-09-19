@@ -200,12 +200,12 @@ namespace Tagging {
     tag = *this->sample(*tag.seq, argmax).back();
   }
 
-  ParamPointer Model::sampleOne(Tag& tag, int choice) {
+  ParamPointer Model::sampleOne(GraphicalModel& gm, objcokus& rng, int choice) {
     throw "custom kernel choice not implemented."; 
   }
 
-  ParamPointer Model::sampleOneAtInit(Tag& tag, int choice) {
-    return this->sampleOne(tag, choice);
+  ParamPointer Model::sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice) {
+    return this->sampleOne(gm, rng, choice);
   }
 
   double Model::score(const Tag& tag) {

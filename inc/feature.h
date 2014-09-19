@@ -14,10 +14,12 @@ namespace Tagging {
   void extractBigramFeature(const Tag& tag, int pos, FeaturePointer output);
   // extract X-gram feature, i.e. factor connecting pos-factorL+1:pos.
   void extractXgramFeature(const Tag& tag, int pos, int factorL, FeaturePointer output);
-  static auto extractOCR = [] (ptr<Model> model, const Tag& tag, int pos) {
+
+  static auto extractOCR = [] (ptr<Model> model, const GraphicalModel& gm, int pos) {
     // default feature extraction, support literal sequence tagging.
     assert(isinstance<ModelCRFGibbs>(model));
     ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
+    auto tag = dynamic_cast<const Tag&>(gm);
     size_t windowL = this_model->windowL;
     size_t depthL = this_model->depthL;
     size_t factorL = this_model->factorL;
@@ -51,10 +53,11 @@ namespace Tagging {
     }
     return features;
   };
-  static auto extractOCRAll = [] (ptr<Model> model, const Tag& tag) {
+  static auto extractOCRAll = [] (ptr<Model> model, const GraphicalModel& gm) {
     // default feature extraction, support literal sequence tagging.
     assert(isinstance<ModelCRFGibbs>(model));
     ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
+    auto tag = dynamic_cast<const Tag&>(gm);
     size_t windowL = this_model->windowL;
     size_t depthL = this_model->depthL;
     size_t factorL = this_model->factorL;

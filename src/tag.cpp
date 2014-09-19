@@ -8,14 +8,18 @@ using namespace std;
 namespace Tagging {
   Tag::Tag(const Instance* seq, ptr<Corpus> corpus, 
 	  objcokus* rng, ParamPointer param) 
-  :seq(seq), corpus(corpus), param(param) {
+  : param(param) {
+    this->seq = seq;
+    this->corpus = corpus;
     this->rng = rng;
     this->randomInit();
   }
 
   Tag::Tag(const Instance& seq, ptr<Corpus> corpus, 
 	  objcokus* rng, ParamPointer param)
-  :seq(&seq), corpus(corpus), param(param) {
+  : param(param) {
+    this->seq = &seq;
+    this->corpus = corpus;
     this->rng = rng;
     this->randomInit();
     this->tag = seq.tag;

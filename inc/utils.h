@@ -38,6 +38,14 @@ namespace Tagging {
   template<class T>
   using vec2d = vec<vec<T> >;
 
+  template<class T>
+  using ptrs = vec<ptr<T> >;
+
+  template<class T, class... Args>
+  ptr<T> make_shared(Args&&... args) {
+    return ptr<T>(new T(std::forward<Args>(args)...));
+  }
+
   template<class K, class T>
   class map : public std::unordered_map<K, T> {
   public:
@@ -119,6 +127,16 @@ namespace Tagging {
   static inline ptr<T> cast(K t) {
     assert(isinstance<T>(t));
     return std::dynamic_pointer_cast<T>(t);
+  }
+
+  template<class T, class K>
+  static inline ptrs<T> castVector(ptrs<K> t) {
+    ptrs<T> ret;
+    for(auto p : t) {
+      assert(isinstance<T>(p));
+      ret.push_back(cast<T>(p));
+    }
+    return ret;
   }
 
   static long getFingerPrint(long iterations, long startSeed) { // random hash function taken from 6.816.

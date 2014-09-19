@@ -12,6 +12,7 @@
 
 using namespace std;
 using namespace Tagging;
+
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
@@ -67,11 +68,11 @@ int main(int argc, char* argv[]) {
       testCorpus = ptr<CorpusLiteral>(new CorpusLiteral());
       cast<CorpusLiteral>(corpus)->computeWordFeat();
     }else if(dataset == "ocr") {
-      corpus = make_shared<CorpusOCR<16, 8> >();
-      testCorpus = make_shared<CorpusOCR<16, 8> >();
+      corpus = std::make_shared<CorpusOCR<16, 8> >();
+      testCorpus = std::make_shared<CorpusOCR<16, 8> >();
     }else if(dataset == "ising") {
-      corpus = make_shared<CorpusIsing>();
-      testCorpus = make_shared<CorpusIsing>();
+      corpus = std::make_shared<CorpusIsing>();
+      testCorpus = std::make_shared<CorpusIsing>();
     }
     corpus->read(train, false);
     testCorpus->read(test, false);
@@ -180,7 +181,7 @@ int main(int argc, char* argv[]) {
       auto runWithC = [&] (double m_c) {
         string myname = name + "_c" + boost::lexical_cast<string>(m_c);
         system(("mkdir -p " + myname).c_str());
-        shared_ptr<LockdownPolicy> ptest = make_shared<LockdownPolicy>(model, vm);
+        shared_ptr<LockdownPolicy> ptest = std::make_shared<LockdownPolicy>(model, vm);
         ptest->model_unigram = model_unigram;
         ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
         ptest->param = policy->param;

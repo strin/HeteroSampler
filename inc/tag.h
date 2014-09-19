@@ -9,10 +9,8 @@ inline static std::string str(FeaturePointer features);
 
 struct Tag : public GraphicalModel {
 public:
-  const Instance* seq;
+  std::vector<int> tag;
   
-  ptr<Corpus> corpus;
-
   FeaturePointer features; 
   ParamPointer param;
 

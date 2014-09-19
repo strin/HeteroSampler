@@ -80,7 +80,7 @@ namespace Tagging {
 	  lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
 	  lg.begin("weight"); lg << node->log_weight << endl; lg.end();
 	  lg.begin("time"); lg << node->depth << endl; lg.end();
-	  node->tag = shared_ptr<Tag>(new Tag(tag));
+	  node->gm = shared_ptr<Tag>(new Tag(tag));
 	  unique_lock<mutex> lock(th_mutex);
 	  active_work--;
 	  lock.unlock();
@@ -149,7 +149,7 @@ namespace Tagging {
   }
 
   TagVector ModelTreeUA::sample(const Instance& seq) {
-    return explore(seq)->getSamples();
+    return castVector<Tag>(explore(seq)->getSamples());
   }
   double ModelTreeUA::score(const Tag& tag) {
     const Instance* seq = tag.seq;
@@ -186,7 +186,7 @@ namespace Tagging {
 					  [&] (const Tag& tag) -> FeaturePointer {
 					    return this->extractFeatures(shared_from_this(), tag, pos);  
 					  }, true);
-	node->tag = shared_ptr<Tag>(new Tag(tag));
+	node->gm = shared_ptr<Tag>(new Tag(tag));
 	auto predT = this->logisticStop(node, *tag.seq, tag); 
 	double prob = get<0>(predT);
 	node->posgrad = get<1>(predT);
@@ -307,7 +307,7 @@ namespace Tagging {
     while(p->depth >= 1 && L >= 0) {
       auto pf = p->parent.lock();
       if(pf == nullptr) throw "MarkovTreeNode father is expired.";
-      dist += p->tag->distance(*pf->tag);
+      dist += cast<Tag>(p->gm)->distance(*cast<Tag>(pf->gm));
       l++; L--;
       p = pf;
     }

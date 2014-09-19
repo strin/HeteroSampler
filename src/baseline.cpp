@@ -117,7 +117,7 @@ namespace Tagging {
       // default feature extraction, support literal sequence tagging.
       assert(isinstance<ModelCRFGibbs>(model));
       ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
-      auto tag = dynamic_cast<const Tag&>(gm);
+      auto& tag = dynamic_cast<const Tag&>(gm);
       size_t windowL = this_model->windowL;
       size_t depthL = this_model->depthL;
       size_t factorL = this_model->factorL;
@@ -196,6 +196,19 @@ namespace Tagging {
     }
 
     return gradient;
+  }
+
+  ptr<GraphicalModel> ModelCRFGibbs::makeSample(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const {
+    return std::make_shared<Tag>(&instance, corpus, rng, param);
+  }
+
+  ptr<GraphicalModel> ModelCRFGibbs::makeTruth(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const {
+    return std::make_shared<Tag>(instance, corpus, rng, param);
+  }
+
+  ptr<GraphicalModel> ModelCRFGibbs::copySample(const GraphicalModel& gm) const {
+    auto& tag = dynamic_cast<const Tag&>(gm);
+    return make_shared<Tag>(tag);
   }
 
   ParamPointer ModelCRFGibbs::sampleOne(GraphicalModel& gm, objcokus& rng, int choice, FeatureExtractOne feat_extract) {

@@ -422,7 +422,8 @@ namespace Tagging {
     if(featoptFind("unigram-ent")) {
       if(model_unigram) {
         if(std::isnan(node->gm->entropy_unigram[pos])) {
-          auto& gm = *model->copySample(*node->gm);
+          ptr<GraphicalModel> gm_ptr = model->copySample(*node->gm);
+          auto& gm = *gm_ptr;
           model_unigram->sampleOne(gm, *gm.rng, pos);
           node->gm->entropy_unigram[pos] = gm.entropy[pos];
         }
@@ -486,7 +487,8 @@ namespace Tagging {
     }
     if(featoptFind("oracle")) {
       int oldval = cast<Tag>(node->gm)->tag[pos];
-      auto& temp = *model->copySample(*node->gm);
+      auto temp_ptr = model->copySample(*node->gm);
+      auto& temp = *temp_ptr;
       model->sampleOne(temp, *temp.rng, pos);          
       // insertFeature(feat, "oracle", -temp.sc[oldval]);
       insertFeature(feat, "oracle", temp.entropy[pos]);

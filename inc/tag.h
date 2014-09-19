@@ -10,7 +10,7 @@ inline static std::string str(FeaturePointer features);
 struct Tag : public GraphicalModel {
 public:
   std::vector<int> tag;
-  
+
   FeaturePointer features; 
   ParamPointer param;
 

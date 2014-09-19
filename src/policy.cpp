@@ -208,6 +208,7 @@ namespace Tagging {
       MarkovTree tree;
       Tag tag(seq.get(), corpus, &rng, model->param);
       tree.root->log_weight = -DBL_MAX;
+      tree.root->model = this->model;
       for(size_t k = 0; k < K; k++) {
         MarkovTreeNodePtr node = addChild(tree.root, tag);
         this->thread_pool.addWork(node); 
@@ -312,6 +313,7 @@ namespace Tagging {
       MarkovTreeNodePtr node;
       if(result->nodes[count] == nullptr) {
         node = makeMarkovTreeNode(nullptr);
+        node->model = model;
         node->gm = makeTagPtr(seq.get(), model->corpus, &rng, model->param);
       }else{
         node = result->nodes[count];

@@ -2,8 +2,11 @@
 
 #include "tag.h"
 #include "utils.h"
+#include "model.h"
 
 namespace Tagging {
+  struct Model; 
+  
   /* warning: this class is not thread safe */
   struct MarkovTreeNode {
   public:
@@ -15,6 +18,7 @@ namespace Tagging {
        posgrad : weight of node. 
        neggrad : sum weights of descendants */
     ParamPointer gradient, posgrad, neggrad;
+    ptr<Model> model;
     std::shared_ptr<GraphicalModel> gm; // tag after the transition.
     double log_weight;        // posterior weight for gradient.
     double log_prior_weight;  // prior weight from proposal.
@@ -34,11 +38,7 @@ namespace Tagging {
     return std::shared_ptr<MarkovTreeNode>(new MarkovTreeNode(parent));
   }
 
-  static ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent, const GraphicalModel& gm) {
-    auto node = MarkovTreeNodePtr(new MarkovTreeNode(parent));
-    node->gm = make_shared<GraphicalModel>(gm);
-    return node;
-  }
+  ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent, const GraphicalModel& gm);
 
   /* add a child to the node */
   static MarkovTreeNodePtr addChild(MarkovTreeNodePtr node, const GraphicalModel& gm) {

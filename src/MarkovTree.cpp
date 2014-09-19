@@ -3,14 +3,24 @@
 using namespace std;
 
 namespace Tagging {
+  ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent, const GraphicalModel& gm) {
+    auto node = MarkovTreeNodePtr(new MarkovTreeNode(parent));
+    assert(node->model != nullptr);
+    node->gm = node->model->copySample(gm);
+    return node;
+  }
+
+
   MarkovTreeNode::MarkovTreeNode(shared_ptr<MarkovTreeNode> parent)
   :parent(parent), log_weight(-DBL_MAX) {
     if(parent == nullptr) {
       depth = 0;
       time_stamp = 0;
+      model = nullptr;
     }else{
       depth = parent->depth+1;
       time_stamp = parent->time_stamp;
+      model = parent->model;
     }
     gradient = posgrad = neggrad = nullptr;
     gm = nullptr;

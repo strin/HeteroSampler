@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils.h"
+#include "corpus.h"
 
 namespace Tagging {
 
@@ -36,6 +37,11 @@ public:
   // get size of the graphical model.
   virtual size_t size() const {
     throw "GraphicalModel::size not defined.";
+  }
+
+  // get number of labels for variable i.
+  virtual size_t numLabels(int id) const {
+    throw "GraphicalModel::numLabels not defined.";
   }
 };
 

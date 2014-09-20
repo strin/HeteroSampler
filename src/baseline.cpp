@@ -238,7 +238,8 @@ namespace Tagging {
     return vec;
   }
 
-  double ModelCRFGibbs::score(const Tag& tag) {
+  double ModelCRFGibbs::score(const GraphicalModel& gm) {
+    auto& tag = dynamic_cast<const Tag&>(gm);
     FeaturePointer feat = this->extractFeaturesAll(tag);
     return Tagging::score(this->param, feat);
   }

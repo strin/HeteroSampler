@@ -12,8 +12,10 @@ set(CMAKE_PREFIX_PATH /opt/local ${CMAKE_PREFIX_PATH})
 
 ENDIF()
 
+# Thread.
 find_package (Threads)
 
+# Boost.
 ADD_DEFINITIONS(-DBoost_USE_STATIC_LIBS=ON)
 set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
@@ -21,9 +23,18 @@ find_package(Boost COMPONENTS program_options REQUIRED)
 message("Include dirs of boost: " ${Boost_INCLUDE_DIRS} )
 message("Libs of boost: " ${Boost_LIBRARIES} )
 
+# Python.
 find_package(PythonLibs REQUIRED)
 message("Include dirs of Python: " ${PYTHON_INCLUDE_DIRS} )
 message("Libs of Python: " ${PYTHON_LIBRARIES} )
+
+# HDF5.
+message(STATUS "build with HDF5 support")
+find_package(HDF5 REQUIRED)
+include_directories(${HDF5_INCLUDE_DIR})
+add_definitions(${HDF5_CPPFLAGS})
+add_definitions(-DWITH_HDF5)
+message("Libs of HDF5: " ${HDF5_LIBRARIES} )
 
 include_directories(
   "inc"
@@ -112,6 +123,9 @@ add_executable(policy test_policy.cpp
 add_executable(test-ising test_ising.cpp
 )
 
+add_executable(test-opengm test_opengm.cpp
+)
+
 target_link_libraries(policy
   scilog
   tag
@@ -129,6 +143,17 @@ target_link_libraries(test-ising
   ${Boost_LIBRARIES}
   ${PYTHON_LIBRARIES}
 )
+
+target_link_libraries(test-opengm
+  scilog
+  tag
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${LIBS}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+  ${HDF5_LIBRARIES}
+)
+
 
 add_executable(test-thread test_thread.cpp
 src/ThreadPool.cpp

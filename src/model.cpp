@@ -208,7 +208,7 @@ namespace Tagging {
     return this->sampleOne(gm, rng, choice);
   }
 
-  double Model::score(const Tag& tag) {
+  double Model::score(const GraphicalModel& tag) {
     return 0;
   }
 

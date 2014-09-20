@@ -23,6 +23,10 @@ public:
      objcokus* rng, ParamPointer param); // copy tag from seq.
   // length of sequence.
   inline size_t size() const {return this->tag.size(); }
+
+  // overide: number of possible tags.
+  inline size_t numLabels(int id) const {return this->corpus->tags.size();}
+
   // initialize the sequence tags uniformly at random.
   void randomInit();
   // propose Gibbs-style modification to *pos*

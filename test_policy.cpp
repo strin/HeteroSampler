@@ -4,14 +4,14 @@
 #include "tag.h"
 #include "feature.h"
 #include "model.h"
+#include "model_opengm.h"
 #include "utils.h"
 #include "policy.h"
-#include <iostream>
-#include <boost/program_options.hpp>
-#include "boost/algorithm/string.hpp"
+#include "opengm.h"
 
 using namespace std;
 using namespace Tagging;
+using namespace opengm;
 
 namespace po = boost::program_options;
 

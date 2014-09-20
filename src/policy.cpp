@@ -189,12 +189,12 @@ namespace Tagging {
     lg->begin("commit"); *lg << getGitHash() << endl; lg->end();  
     lg->begin("args");
       if(isinstance<CorpusLiteral>(corpus)) {
-	lg->begin("wordent_mean");
-	  *lg << wordent_mean << endl;
-	lg->end();
-	lg->begin("wordfreq_mean");
-	  *lg << wordfreq_mean << endl;
-	lg->end();
+        lg->begin("wordent_mean");
+          *lg << wordent_mean << endl;
+        lg->end();
+        lg->begin("wordfreq_mean");
+          *lg << wordfreq_mean << endl;
+        lg->end();
       }
     lg->end();
     corpus->retag(model->corpus);

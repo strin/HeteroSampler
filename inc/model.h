@@ -53,7 +53,7 @@ namespace Tagging {
     }
 
     // <deprecated> score a tag ? 
-    virtual double score(const Tag& tag);
+    virtual double score(const GraphicalModel& gm);
 
     // evaluate the accuracy for POS tag aginst truth.
     // return 0: hit count.
@@ -119,7 +119,7 @@ namespace Tagging {
     virtual TagVector sample(const Instance& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
     
-    double score(const Tag& tag);
+    double score(const GraphicalModel& tag);
     virtual void logArgs();
 
     /* interface for feature extraction. */    
@@ -160,7 +160,7 @@ namespace Tagging {
     virtual std::shared_ptr<MarkovTree> explore(const Instance& seq);
     virtual ParamPointer gradient(const Instance& seq);
     virtual TagVector sample(const Instance& seq);
-    virtual double score(const Tag& tag);
+    virtual double score(const GraphicalModel& tag);
 
     /* parameters */
     double eps, eps_split;

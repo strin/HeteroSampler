@@ -151,7 +151,8 @@ namespace Tagging {
   TagVector ModelTreeUA::sample(const Instance& seq) {
     return castVector<Tag>(explore(seq)->getSamples());
   }
-  double ModelTreeUA::score(const Tag& tag) {
+  double ModelTreeUA::score(const GraphicalModel& gm) {
+    auto& tag = dynamic_cast<const Tag&>(gm);
     const Instance* seq = tag.seq;
     double score = 0.0;
     for(int i = 0; i < tag.size(); i++) {

@@ -9,6 +9,14 @@
 #include "policy.h"
 #include "opengm.h"
 
+#include <opengm/graphicalmodel/graphicalmodel.hxx>
+#include <opengm/graphicalmodel/space/simplediscretespace.hxx>
+#include <opengm/functions/potts.hxx>
+#include <opengm/operations/adder.hxx>
+#include <opengm/inference/messagepassing/messagepassing.hxx>
+#include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
+#include "model_opengm.h"
+
 using namespace std;
 using namespace Tagging;
 using namespace opengm;
@@ -20,39 +28,43 @@ int main(int argc, char* argv[]) {
     // parse args.
     po::options_description desc("Allowed options");
     desc.add_options()
-	("help", "produce help message")
-	("inference", po::value<string>()->default_value("Gibbs"), "inference method (Gibbs)")
-	("dataset", po::value<string>()->default_value("literal"), "type of dataset to use (literal, ocr)")
-	("model", po::value<string>()->default_value("model/gibbs.model"), "use saved model to do the inference")
-	("unigram_model", po::value<string>(), "use a unigram (if necessary)")
-	("policy", po::value<string>()->default_value("entropy"), "sampling policy")
-	("name", po::value<string>()->default_value("default"), "name of the run")
-	("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
-	("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
-	("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
-	("threshold", po::value<double>()->default_value(0.8), "theshold for entropy policy")
-	("T", po::value<size_t>()->default_value(4), "number of sweeps in Gibbs sampling")
-	("Tstar", po::value<double>()->default_value(1.5), "computational resource constraint (used to compute c)")
-	("B", po::value<size_t>()->default_value(0), "number of burnin steps")
-	("Q", po::value<size_t>()->default_value(1), "number of passes")
-	("Q0", po::value<int>()->default_value(1), "number of passes for smart init")
-	("K", po::value<size_t>()->default_value(5), "number of samples in policy gradient")
-	("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
-	("c", po::value<double>()->default_value(0.1), "time regularization")
-	("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
-	("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
-	("factorL", po::value<int>()->default_value(2), "up to what order of gram should be used")
-	("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
-	("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
-	("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")
-	("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
-	("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
-	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
-	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
-  ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
-  ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
-  ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
-  ("feat", po::value<std::string>()->default_value(""), "feature switches");
+  	("help", "produce help message")
+  	("inference", po::value<string>()->default_value("Gibbs"), "inference method (Gibbs)")
+  	("dataset", po::value<string>()->default_value("literal"), "type of dataset to use (literal, ocr)")
+  	("model", po::value<string>()->default_value("model/gibbs.model"), "use saved model to do the inference")
+  	("unigram_model", po::value<string>(), "use a unigram (if necessary)")
+  	("policy", po::value<string>()->default_value("entropy"), "sampling policy")
+  	("name", po::value<string>()->default_value("default"), "name of the run")
+  	("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
+  	("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
+  	("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
+  	("threshold", po::value<double>()->default_value(0.8), "theshold for entropy policy")
+  	("T", po::value<size_t>()->default_value(4), "number of sweeps in Gibbs sampling")
+  	("Tstar", po::value<double>()->default_value(1.5), "computational resource constraint (used to compute c)")
+  	("B", po::value<size_t>()->default_value(0), "number of burnin steps")
+  	("Q", po::value<size_t>()->default_value(1), "number of passes")
+  	("Q0", po::value<int>()->default_value(1), "number of passes for smart init")
+  	("K", po::value<size_t>()->default_value(5), "number of samples in policy gradient")
+  	("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
+  	("c", po::value<double>()->default_value(0.1), "time regularization")
+  	("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
+  	("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
+  	("factorL", po::value<int>()->default_value(2), "up to what order of gram should be used")
+  	("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
+  	("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
+  	("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")
+  	("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
+  	("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
+  	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
+  	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
+    ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
+    ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
+    ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
+    ("feat", po::value<std::string>()->default_value(""), "feature switches")
+    ("temp", po::value<string>()->default_value("scanline"), "the annealing scheme to use.")
+    ("temp_decay", po::value<double>()->default_value(0.9), "decay of temperature.")
+    ("temp_magnify", po::value<double>()->default_value(0.1), "magnifying factor of init temperature.");
+
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);    
@@ -87,7 +99,7 @@ int main(int argc, char* argv[]) {
           throw (name+" not found.").c_str();
         file >> *model;
         file.close();
-	// extract features based on application.
+        // extract features based on application.
         if(dataset == "ocr") {
           cast<ModelCRFGibbs>(model)->extractFeatures = extractOCR;
           cast<ModelCRFGibbs>(model)->extractFeatAll = extractOCRAll; 
@@ -96,6 +108,11 @@ int main(int argc, char* argv[]) {
           cast<ModelCRFGibbs>(model)->extractFeatAll = extractIsingAll;
           cast<ModelCRFGibbs>(model)->extractFeaturesAtInit = extractIsingAtInit;
         }
+        // }else if(dataset == "opengm") {
+        //   typedef SimpleDiscreteSpace<size_t, size_t> Space;
+        //   typedef opengm::GraphicalModel<double, opengm::Adder, OPENGM_TYPELIST_2(ExplicitFunction<double> ,PottsFunction<double>), Space> GraphicalModelType;
+        //   opengm::hdf5::load(instance, "../data/opengm/inpainting-n/inpainting-n4/triplepoint4-plain-ring.h5","gm");
+        // }
         return model;
       };
       model = loadGibbsModel(vm["model"].as<string>());

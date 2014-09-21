@@ -3,12 +3,7 @@
 #include "feature.h"
 #include <boost/lexical_cast.hpp>
 
-#define USE_FEAT_ENTROPY 0
-#define USE_FEAT_CONDENT 1
-#define USE_FEAT_ALL 0
-#define USE_FEAT_BIAS 1
-#define USE_ORACLE 0
-#define USE_SELFAVOID 0 
+#define REWARD_SCHEME LIKELIHOOD      // LIKELIHOOD, ACCURACY
 
 #define USE_WINDOW 0
 
@@ -1183,23 +1178,35 @@ node->depth += 1;
           FeaturePointer feat = this->extractFeatures(node, i);
           double resp = Tagging::score(param, feat);
           ptr<Tag> old_tag = cast<Tag>(node->gm);
+          auto sample = [&] () {
+            model->sampleOne(*node->gm, rng, i);
+            node->gm->mask[i] += 1;
+            node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
+          };
           /* estimate reward */
+#if REWARD_SCHEME == ACCURACY
           auto is_equal = [&] () {
             return (double)(old_tag->tag[i] == old_tag->seq->tag[i]); 
           };
           double reward_baseline = is_equal();
-          model->sampleOne(*node->gm, rng, i);
-          node->gm->mask[i] += 1;
-          node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
+          sample();
           double reward = is_equal();
-//          double logR = reward - reward_baseline; 
+          double logR = reward - reward_baseline; 
+
+#elif REWARD_SCHEME == LIKELIHOOD
+          sample();
           double logR = node->gm->reward[i];
-          // logR *= 100; // scale for convenience.
+          
+#endif
+
           if(lets_resp_reward) {
             resp_reward.push_back(make_pair(resp, logR));
           }
-          /* update meta-model */
+
+          /* update meta-model (strategy 1) */
           // mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+
+          /* update meta-model (strategy 2) */
           resp = logisticFunc(resp);
           if(logR > 0) {
             mapUpdate(*node->gradient, *feat, (1-resp));

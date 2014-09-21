@@ -66,6 +66,7 @@ namespace Tagging {
       }
       logNormalize(&gm.sc[0], gm.numLabels(choice));
     };
+
     /* estimate temperature */
     if(gm.time == 0) {    // compute initial temperature.
       temp = 1;
@@ -84,10 +85,21 @@ namespace Tagging {
         temp = temp * temp_decay;
       }
     }
+
+    /* sampling */
     computeSc(choice);
     size_t val = rng.sampleCategorical(&gm.sc[0], gm.numLabels(choice));
+    size_t oldval = opengm_.state(choice);
+    gm.reward[choice] = gm.sc[val] - gm.sc[oldval];
+    gm.entropy[choice] = logEntropy(&gm.sc[0], gm.numLabels(choice));
+    gm.timestamp[choice]++;
+
+    /* compute stats */
     opengm_.move(&choice, &choice + 1, &val);
     opengm_.time++;
+
+    /* no gradient would be returned, 
+       because model_opengm has no training */
     return nullptr;
   }
 

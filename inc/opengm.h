@@ -32,7 +32,14 @@ public:
 template<class GM>
 OpenGM<GM>::OpenGM(const GraphicalModelType& gm)
 : MovemakerType(gm) {
-
+  size_t size = gm.numberOfVariables();
+  timestamp.resize(size, 0);
+  checksum.resize(size);
+  entropy.resize(size);
+  entropy_unigram.resize(size);
+  resp.resize(size, 0);
+  mask.resize(size, 0);
+  feat.resize(size);
 }
 
 template<class GM>

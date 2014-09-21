@@ -183,6 +183,7 @@ namespace Tagging {
       tag.sc.push_back(sc[t]);
     }
     tag.timestamp[pos] += 1;
+    
 
     // compute gradient, if necessary.
     tag.features = feat_extract(shared_from_this(), tag, pos);

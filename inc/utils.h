@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TAGGING_UTILS
+#define TAGGING_UTILS
 
 #include <cmath>
 #include <map>
@@ -19,6 +20,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/random/uniform_int.hpp>
 #include <boost/program_options.hpp>
+
+#include "dirent.h"
 
 #include "float.h"
 #include "log.h"
@@ -261,3 +264,4 @@ namespace Tagging {
   }
 }
 
+#endif

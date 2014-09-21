@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "model.h"
 #include "opengm.h"
+#include "corpus_opengm.h"
 
 namespace Tagging {
   // OpenGM inference algorithms invoke existing trained graphical model. 

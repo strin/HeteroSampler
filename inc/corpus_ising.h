@@ -2,7 +2,6 @@
 #include "gm.h"
 #include "corpus.h"
 #include "model.h"
-#include "boost/algorithm/string.hpp"
 #include <boost/lexical_cast.hpp>
 
 namespace Tagging {

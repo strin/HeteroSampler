@@ -15,7 +15,7 @@
 #include <opengm/operations/adder.hxx>
 #include <opengm/inference/messagepassing/messagepassing.hxx>
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
-#include "model_opengm.h"
+
 
 using namespace std;
 using namespace Tagging;
@@ -85,6 +85,12 @@ int main(int argc, char* argv[]) {
     }else if(dataset == "ising") {
       corpus = std::make_shared<CorpusIsing>();
       testCorpus = std::make_shared<CorpusIsing>();
+    }else if(dataset == "opengm") {
+      typedef opengm::SimpleDiscreteSpace<size_t, size_t> Space;
+      typedef opengm::GraphicalModel<double, opengm::Adder, OPENGM_TYPELIST_2(ExplicitFunction<double> ,PottsFunction<double>), Space> GraphicalModelType;
+      typedef CorpusOpenGM<GraphicalModelType> CorpusOpenGMType;
+      corpus = std::make_shared<CorpusOpenGMType>();
+      testCorpus = std::make_shared<CorpusOpenGMType>();
     }
     corpus->read(train, false);
     testCorpus->read(test, false);
@@ -108,11 +114,6 @@ int main(int argc, char* argv[]) {
           cast<ModelCRFGibbs>(model)->extractFeatAll = extractIsingAll;
           cast<ModelCRFGibbs>(model)->extractFeaturesAtInit = extractIsingAtInit;
         }
-        // }else if(dataset == "opengm") {
-        //   typedef SimpleDiscreteSpace<size_t, size_t> Space;
-        //   typedef opengm::GraphicalModel<double, opengm::Adder, OPENGM_TYPELIST_2(ExplicitFunction<double> ,PottsFunction<double>), Space> GraphicalModelType;
-        //   opengm::hdf5::load(instance, "../data/opengm/inpainting-n/inpainting-n4/triplepoint4-plain-ring.h5","gm");
-        // }
         return model;
       };
       model = loadGibbsModel(vm["model"].as<string>());

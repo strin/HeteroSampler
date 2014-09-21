@@ -133,6 +133,7 @@ target_link_libraries(policy
   ${LIBS}
   ${Boost_LIBRARIES}
   ${PYTHON_LIBRARIES}
+  ${HDF5_LIBRARIES}
 )
 
 target_link_libraries(test-ising

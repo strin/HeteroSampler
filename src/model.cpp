@@ -27,6 +27,7 @@ namespace Tagging {
 	string scoring_str = vm["scoring"].as<string>();
 	if(scoring_str == "Acc") scoring = SCORING_ACCURACY;
 	else if(scoring_str == "NER") scoring = SCORING_NER;
+  else if(scoring_str == "Lhood") scoring = SCORING_LHOOD;
 	else throw "scoring method invalid";
       }
     }catch(char const* warn) {

@@ -81,7 +81,7 @@ namespace Tagging {
     XMLlog xmllog;
     virtual void logArgs(); 
     /* const environment */
-    enum Scoring {SCORING_NER, SCORING_ACCURACY };
+    enum Scoring {SCORING_NER, SCORING_ACCURACY, SCORING_LHOOD };
     Scoring scoring;
     const boost::program_options::variables_map& vm;
 

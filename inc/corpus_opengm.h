@@ -14,8 +14,8 @@ template<class GM>
 struct InstanceOpenGM : public Instance {
 public:
   typedef GM GraphicalModelType;
-  InstanceOpenGM(const Corpus* corpus, const GraphicalModelType& gm);
-  GraphicalModelType gm;
+  InstanceOpenGM(const Corpus* corpus, ptr<GraphicalModelType> gm);
+  ptr<GraphicalModelType> gm;
 
   virtual void 
   parselines(const vec<string>& lines) {}
@@ -27,9 +27,9 @@ public:
 };
 
 template<class GM>
-InstanceOpenGM<GM>::InstanceOpenGM(const Corpus* corpus, const GraphicalModelType& gm) 
+InstanceOpenGM<GM>::InstanceOpenGM(const Corpus* corpus, ptr<GraphicalModelType> gm) 
 : Instance(corpus), gm(gm) {
-
+  
 }
 
 template<class GM>
@@ -40,6 +40,8 @@ public:
   CorpusOpenGM() {}
 
   void read(const std::string& dirname, bool lets_shuffle = false);
+
+  virtual void retag(ptr<Corpus> corpus) {}
 };
 
 template<class GM>
@@ -47,8 +49,9 @@ void CorpusOpenGM<GM>::read(const std::string& dirname, bool lets_shuffle) {
   DIR *dir;struct dirent *ent;
   if ((dir = opendir(dirname.c_str())) != NULL) {
     while((ent = readdir (dir)) != NULL) {
-      GraphicalModelType instance;
-      opengm::hdf5::load(instance, ent->d_name,"gm");
+      ptr<GraphicalModelType> instance = std::make_shared<GraphicalModelType>();
+      if(ent->d_name[0] == '.') continue;
+      opengm::hdf5::load(*instance, dirname+"/"+ent->d_name,"gm");
       this->seqs.push_back(ptr<InstanceOpenGM<GM> >(new InstanceOpenGM<GM>(this, instance)));
     }
     closedir (dir);

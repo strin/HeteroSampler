@@ -93,8 +93,14 @@ namespace Tagging {
         if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH) 
           throw "Policy Chain reaches maximum depth.";
         node->choice = this->policy(node);
+        if(node->choice == 0) {
+          cout << model->score(*node->gm) << endl;
+        }
         if(node->choice == -1) {
-          node->log_weight = this->reward(node); 
+          /* strategy 1 */
+//          node->log_weight = this->reward(node);
+          /* strategy 2 */
+          node->log_weight = model->score(*node->gm);
           node->gradient = makeParamPointer();
           break;
         }else{
@@ -309,7 +315,8 @@ namespace Tagging {
       if(result->nodes[count] == nullptr) {
         node = makeMarkovTreeNode(nullptr);
         node->model = model;
-        node->gm = makeTagPtr(seq.get(), model->corpus, &rng, model->param);
+//        node->gm = makeTagPtr(seq.get(), model->corpus, &rng, model->param);
+        node->gm = model->makeSample(*seq, model->corpus, &rng);
       }else{
         node = result->nodes[count];
       }
@@ -336,6 +343,9 @@ namespace Tagging {
             hit_count += get<0>(hit_pred_truth);
             pred_count += get<1>(hit_pred_truth);
             truth_count += get<2>(hit_pred_truth);
+          }else if(model->scoring == Model::SCORING_LHOOD) {
+            hit_count += model->score(*node->gm);
+            pred_count++;
           }
           lg->end(); // </example_i>
         }
@@ -370,6 +380,12 @@ namespace Tagging {
       cout << "f1: " << f1 << endl;
       lg->end(); // </accuracy>
       result->score = f1;
+    }else if(model->scoring == Model::SCORING_LHOOD) {
+      lg->begin("accuracy");
+      *lg << accuracy << endl;
+      cout << "lhood: " << accuracy << endl;
+      lg->end(); // </accuracy>
+      result->score = accuracy;
     }
     // result->score = -1;
   }
@@ -379,11 +395,11 @@ namespace Tagging {
     GraphicalModel& gm = *node->gm;
     size_t seqlen = gm.size();
     const Instance& seq = *gm.seq;
-    size_t taglen = model->corpus->tags.size();
     // bias.
     if(featoptFind("bias") || featoptFind("all")) 
       insertFeature(feat, "b");
     if(featoptFind("word-ent") || featoptFind("all")) {
+      size_t taglen = model->corpus->tags.size();
       string word = cast<TokenLiteral>(seq.seq[pos])->word;
       // feat: entropy and frequency.
       if(wordent->find(word) == wordent->end())

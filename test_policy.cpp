@@ -120,6 +120,11 @@ int main(int argc, char* argv[]) {
       if(vm.count("unigram_model")) {
         model_unigram = loadGibbsModel(vm["unigram_model"].as<string>());
       }
+    }else if(vm["inference"].as<string>() == "OpenGibbs") {
+      typedef opengm::SimpleDiscreteSpace<size_t, size_t> Space;
+      typedef opengm::GraphicalModel<double, opengm::Adder, OPENGM_TYPELIST_2(ExplicitFunction<double> ,PottsFunction<double>), Space> GraphicalModelType;
+      typedef CorpusOpenGM<GraphicalModelType> CorpusOpenGMType;
+      model = std::make_shared<ModelEnumerativeGibbs<GraphicalModelType, opengm::Minimizer> >(vm);
     }
 
     shared_ptr<Policy> policy;

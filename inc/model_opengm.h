@@ -28,6 +28,15 @@ namespace Tagging {
       throw "not implemented.";
     }
 
+    // create a new sample from an instance.
+    virtual ptr<GraphicalModel> makeSample(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const;
+
+    // create a new sample with value equal to ground truth.
+    virtual ptr<GraphicalModel> makeTruth(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const;
+
+    // create a new sample by copying an old one.
+    virtual ptr<GraphicalModel> copySample(const GraphicalModel& gm) const;
+
     string annealing;
     double temp, temp_decay, temp_magnify;
   };
@@ -47,6 +56,25 @@ namespace Tagging {
     auto& opengm_ = dynamic_cast<const OpenGM<GraphicalModelType>& >(gm);
     return opengm_.gm_.evaluate(opengm_.getLabels());
   }
+
+  template<class GM, class ACC> 
+  ptr<GraphicalModel> ModelEnumerativeGibbs<GM, ACC>::makeSample(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const {
+    auto instance_opengm = dynamic_cast<const InstanceOpenGM<GM>& >(instance);
+    return std::make_shared<OpenGM<GM> >(&instance, *instance_opengm.gm);
+  }
+
+  template<class GM, class ACC>
+  ptr<GraphicalModel> ModelEnumerativeGibbs<GM, ACC>::makeTruth(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const {
+    throw "no truth available in opengm.";
+  }
+
+  template<class GM, class ACC>
+  ptr<GraphicalModel> ModelEnumerativeGibbs<GM, ACC>::copySample(const GraphicalModel& gm) const {
+    auto opengm_ = dynamic_cast<const OpenGM<GraphicalModelType>& >(gm);
+    return std::make_shared<OpenGM<GraphicalModelType> >(opengm_);
+  }
+
+
 
   template<class GM, class ACC>
   ParamPointer ModelEnumerativeGibbs<GM, ACC>::sampleOne(GraphicalModel& gm, objcokus& rng, int choice) {

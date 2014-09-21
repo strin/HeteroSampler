@@ -17,7 +17,7 @@ public:
   typedef GM GraphicalModelType;
   OPENGM_GM_TYPE_TYPEDEFS;
 
-  OpenGM(const GraphicalModelType& gm);
+  OpenGM(const Instance* seq, const GraphicalModelType& gm);
 
   vec<LabelType> getLabels() const;
 
@@ -30,11 +30,13 @@ public:
 };
 
 template<class GM>
-OpenGM<GM>::OpenGM(const GraphicalModelType& gm)
+OpenGM<GM>::OpenGM(const Instance* seq, const GraphicalModelType& gm)
 : MovemakerType(gm) {
+  this->seq = seq;
   size_t size = gm.numberOfVariables();
   timestamp.resize(size, 0);
   checksum.resize(size);
+  reward.resize(size, 0);
   entropy.resize(size);
   entropy_unigram.resize(size);
   resp.resize(size, 0);

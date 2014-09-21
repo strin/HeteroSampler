@@ -3,7 +3,9 @@
 #include "feature.h"
 #include <boost/lexical_cast.hpp>
 
-#define REWARD_SCHEME LIKELIHOOD      // LIKELIHOOD, ACCURACY
+#define REWARD_LHOOD 1
+#define REWARD_ACCURACY 2
+#define REWARD_SCHEME REWARD_LHOOD      // LIKELIHOOD, ACCURACY
 
 #define USE_WINDOW 0
 
@@ -202,16 +204,19 @@ namespace Tagging {
     size_t count = 0;
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
-      if(count % int(0.1 * min(train_count, corpus->seqs.size())) == 0) 
+      cout << corpus->seqs.size() << endl;
+      size_t display_lag = int(0.1 * min(train_count, corpus->seqs.size()));
+      if(display_lag == 0 or count % display_lag == 0)
         cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
       if(verbose)
         lg->begin("example_"+to_string(count));
       MarkovTree tree;
-      Tag tag(seq.get(), corpus, &rng, model->param);
+//      Tag tag(seq.get(), corpus, &rng, model->param);
+      ptr<GraphicalModel> gm = model->makeSample(*seq, model->corpus, &rng);
       tree.root->log_weight = -DBL_MAX;
       tree.root->model = this->model;
       for(size_t k = 0; k < K; k++) {
-        MarkovTreeNodePtr node = addChild(tree.root, tag);
+        MarkovTreeNodePtr node = addChild(tree.root, *gm);
         this->thread_pool.addWork(node); 
       }
       thread_pool.waitFinish();
@@ -1184,23 +1189,24 @@ node->depth += 1;
       for(size_t i = 0; i < node->gm->size(); i++) {
         model->sampleOne(*node->gm, rng, i);
         node->gm->mask[i] = 1;
-        node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
+        // node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
       }
       node->gradient = makeParamPointer();
+      node->G2 = makeParamPointer();
       for(size_t t = 1; t < T; t++) {
         for(size_t i = 0; i < node->gm->size(); i++) {
           node->time_stamp = t * node->gm->size() + i;
           /* extract features */
           FeaturePointer feat = this->extractFeatures(node, i);
           double resp = Tagging::score(param, feat);
-          ptr<Tag> old_tag = cast<Tag>(node->gm);
           auto sample = [&] () {
             model->sampleOne(*node->gm, rng, i);
             node->gm->mask[i] += 1;
-            node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
+            // node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
           };
           /* estimate reward */
-#if REWARD_SCHEME == ACCURACY
+#if REWARD_SCHEME == REWARD_ACCURACY
+          ptr<Tag> old_tag = cast<Tag>(node->gm);
           auto is_equal = [&] () {
             return (double)(old_tag->tag[i] == old_tag->seq->tag[i]); 
           };
@@ -1209,12 +1215,12 @@ node->depth += 1;
           double reward = is_equal();
           double logR = reward - reward_baseline; 
 
-#elif REWARD_SCHEME == LIKELIHOOD
+#elif REWARD_SCHEME == REWARD_LHOOD
           sample();
           double logR = node->gm->reward[i];
           
 #endif
-
+          thread_pool.lock();
           if(lets_resp_reward) {
             resp_reward.push_back(make_pair(resp, logR));
           }
@@ -1224,11 +1230,14 @@ node->depth += 1;
 
           /* update meta-model (strategy 2) */
           resp = logisticFunc(resp);
+          auto grad = makeParamPointer();
           if(logR > 0) {
-            mapUpdate(*node->gradient, *feat, (1-resp));
+            mapUpdate(*grad, *feat, (1-resp));
           }else{
-            mapUpdate(*node->gradient, *feat, -resp);
+            mapUpdate(*grad, *feat, -resp);
           }
+          adagrad(param, G2, grad, eta);   // overwrite adagrad, for fine-grain gradients. (return node->gradient empty).
+          thread_pool.unlock();
         }
       }
       node->log_weight = 0;

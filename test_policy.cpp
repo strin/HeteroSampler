@@ -144,10 +144,10 @@ int main(int argc, char* argv[]) {
       string name = vm["name"].as<string>();
       const size_t T = vm["T"].as<size_t>();
       shared_ptr<GibbsPolicy> gibbs_policy;
+      gibbs_policy = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
+      gibbs_policy->T = 1;  // do one sweep after another.
       for(size_t t = 1; t <= T; t++) {
       	string myname = name+"_T"+to_string(t);
-      	gibbs_policy = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
-      	gibbs_policy->T = 1;  // do one sweep after another.
       	system(("mkdir -p "+myname).c_str());
       	gibbs_policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname+"/policy.xml")));  
       	if(t == 1) {

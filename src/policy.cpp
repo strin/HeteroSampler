@@ -553,7 +553,7 @@ namespace Tagging {
   }
 
   void Policy::resetLog(std::shared_ptr<XMLlog> new_lg) {
-    while(lg->depth() > 0) lg->end();
+    while(lg != nullptr and lg->depth() > 0) lg->end();
     lg = new_lg;
   }
   /////////////////////////////////////////////////////////////////////////////

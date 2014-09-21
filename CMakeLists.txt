@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-PROJECT (POSTag)
+PROJECT (AdaInfer)
 
 include_directories("inc")
 include_directories("scilog/inc")

@@ -7,10 +7,13 @@ namespace Tagging {
 
 struct GraphicalModel {
 public:
-  GraphicalModel() {}
+  GraphicalModel() {
+    time = 0;    
+  }
   virtual ~GraphicalModel() {}
 
   /* statistics for variables */
+  int time;                               // how many times have spent on sampling this graphical model. 
   vec<double> timestamp;                  // whenever a position is changed, its timestamp is incremented.
   vec<double> checksum;                   // if checksum is changes, then the position might be updated.
   std::vector<double> entropy;            // current entropy when sampled.

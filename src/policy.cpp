@@ -1129,6 +1129,12 @@ node->depth += 1;
   FeaturePointer LockdownPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = Policy::extractFeatures(node, pos);
     insertFeature(feat, "#sp", node->gm->mask[pos]);
+    if(featoptFind("#sp-cond-ent")) {
+      insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos])+"-cond-ent", node->gm->entropy[pos]);
+    }
+    if(featoptFind("#sp-unigram-ent")) {
+      insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos])+"unigram-ent", node->gm->entropy_unigram[pos]);
+    }
     return feat;
   }
 

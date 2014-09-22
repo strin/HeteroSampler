@@ -5,6 +5,7 @@
 #include <opengm/inference/messagepassing/messagepassing.hxx>
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 #include "model_opengm.h"
+#include "corpus_opengm.h"
 
 using namespace std; // 'using' is used only in example code
 using namespace opengm;
@@ -37,12 +38,13 @@ int main(int argc, char* argv[]) {
   // build a graphical model (other examples have more details)
   typedef SimpleDiscreteSpace<size_t, size_t> Space;
   typedef opengm::GraphicalModel<double, opengm::Adder, OPENGM_TYPELIST_2(ExplicitFunction<double> ,PottsFunction<double>), Space> GraphicalModelType;
-  GraphicalModelType instance;
+  ptr<GraphicalModelType> instance;
   
   // load the graphical model from the hdf5 dataset
-  opengm::hdf5::load(instance, "../data/opengm/inpainting-n/inpainting-n4/triplepoint4-plain-ring.h5","gm");
+  opengm::hdf5::load(instance, "../data/opengm/image-seg/train/3096.bmp.h5","gm");
   
-  OpenGM<GraphicalModelType> sample(instance);
+  auto seq = ptr<InstanceOpenGM<GraphicalModelType> >(new InstanceOpenGM<GraphicalModelType>(NULL, instance));
+  OpenGM<GraphicalModelType> sample(seq.get(), *instance);
   ModelEnumerativeGibbs<GraphicalModelType, opengm::Minimizer> model(vm);
   objcokus rng;
   rng.seedMT(0);

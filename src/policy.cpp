@@ -95,9 +95,9 @@ namespace Tagging {
         if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH) 
           throw "Policy Chain reaches maximum depth.";
         node->choice = this->policy(node);
-        if(node->choice == 0) {
+        /*if(node->choice == 0) {
           cout << model->score(*node->gm) << endl;
-        }
+        }*/
         if(node->choice == -1) {
           /* strategy 1 */
 //          node->log_weight = this->reward(node);
@@ -204,7 +204,7 @@ namespace Tagging {
     size_t count = 0;
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
-      cout << corpus->seqs.size() << endl;
+      // cout << corpus->seqs.size() << endl;
       size_t display_lag = int(0.1 * min(train_count, corpus->seqs.size()));
       if(display_lag == 0 or count % display_lag == 0)
         cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;

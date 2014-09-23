@@ -210,7 +210,7 @@ namespace Tagging {
   }
 
   double Model::score(const GraphicalModel& tag) {
-    return 0;
+    throw "Model::score not implemented.";
   }
 
   void Model::adagrad(ParamPointer gradient) {

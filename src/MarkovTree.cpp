@@ -25,6 +25,7 @@ namespace Tagging {
     gradient = posgrad = neggrad = nullptr;
     gm = nullptr;
     compute_stop = false;
+    max_log_prior_weight = -DBL_MAX;
   }
 
   bool MarkovTreeNode::is_split() {

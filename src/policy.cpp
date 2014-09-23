@@ -90,6 +90,7 @@ namespace Tagging {
           node->gm->mask[pos] += 1;
           node->gm->checksum[pos] = 0; // WARNING: a hack.
         }
+        node->max_gm = model->copySample(*node->gm);
       }
       while(true) {
         if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH) 
@@ -109,6 +110,11 @@ namespace Tagging {
           node->log_weight = -DBL_MAX; 
           int pos = node->choice;
           node->gradient = model->sampleOne(*node->gm, rng, pos);
+          node->log_prior_weight += node->gm->reward[pos];
+          if(node->log_prior_weight > node->max_log_prior_weight) {
+            node->max_log_prior_weight = node->log_prior_weight;
+            node->max_gm = model->copySample(*node->gm);
+          }
           FeaturePointer feat = this->extractFeatures(node, pos);
           node->gm->mask[pos] += 1;
           node->gm->feat[pos] = feat;
@@ -322,6 +328,7 @@ namespace Tagging {
         node->model = model;
 //        node->gm = makeTagPtr(seq.get(), model->corpus, &rng, model->param);
         node->gm = model->makeSample(*seq, model->corpus, &rng);
+        node->log_prior_weight = model->score(*node->gm);
       }else{
         node = result->nodes[count];
       }
@@ -340,16 +347,16 @@ namespace Tagging {
           result->nodes[id[i]] = node;
           ave_time += node->depth+1;
           if(model->scoring == Model::SCORING_ACCURACY) {
-            tuple<int, int> hit_pred = model->evalPOS(*cast<Tag>(node->gm));
+            tuple<int, int> hit_pred = model->evalPOS(*cast<Tag>(node->max_gm));
             hit_count += get<0>(hit_pred);
             pred_count += get<1>(hit_pred);
           }else if(model->scoring == Model::SCORING_NER) {
-            tuple<int, int, int> hit_pred_truth = model->evalNER(*cast<Tag>(node->gm));
+            tuple<int, int, int> hit_pred_truth = model->evalNER(*cast<Tag>(node->max_gm));
             hit_count += get<0>(hit_pred_truth);
             pred_count += get<1>(hit_pred_truth);
             truth_count += get<2>(hit_pred_truth);
           }else if(model->scoring == Model::SCORING_LHOOD) {
-            hit_count += model->score(*node->gm);
+            hit_count += model->score(*node->max_gm);
             pred_count++;
           }
           lg->end(); // </example_i>

@@ -7,6 +7,7 @@
 #include "model_opengm.h"
 #include "utils.h"
 #include "policy.h"
+#include "blockpolicy.h"
 #include "opengm.h"
 
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
@@ -328,17 +329,73 @@ int main(int argc, char* argv[]) {
       };
       sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 
       for(int i = 0; i <= fold; i++) {
-	double c = policy->resp_reward[i * (policy->resp_reward.size()-1)/(double)fold].first;
-	string myname = name+"_i"+to_string(i);
-	system(("mkdir -p " + myname).c_str());
-	ptest = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
-	ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-	ptest->param = policy->param; 
-	ptest->c = c;
-	ptest->test(testCorpus);
-	ptest->resetLog(nullptr);
+        double c = policy->resp_reward[i * (policy->resp_reward.size()-1)/(double)fold].first;
+        string myname = name+"_i"+to_string(i);
+        system(("mkdir -p " + myname).c_str());
+        ptest = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
+        ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+        ptest->param = policy->param; 
+        ptest->c = c;
+        ptest->test(testCorpus);
+        ptest->resetLog(nullptr);
       }
       system(("rm -r "+name).c_str());
+    }else if(vm["policy"].as<string>() == "blockpolicy") {
+      string name = vm["name"].as<string>();
+      const int fold = 20;
+      system(("rm -r "+name+"*").c_str());
+      auto policy = std::make_shared<BlockPolicy<LockdownPolicy> >(model, vm);
+      policy->lets_resp_reward = true;
+      policy->model_unigram = model_unigram;
+      system(("mkdir -p " + name + "_train").c_str());
+      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
+      train_func(policy);
+      int testCount = vm["testCount"].as<size_t>();
+      int count = testCorpus->count(testCount);
+      size_t T = vm["T"].as<size_t>();
+      ptr<BlockPolicy<LockdownPolicy>::Result> result = policy->test(testCorpus, 0);
+      policy->resetLog(nullptr);
+      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
+        return (a.first < b.first);
+      };
+      auto compare2 = [] (std::pair<double, double> a, std::pair<double, double> b) {
+        return (a.second < b.second);
+      };
+      std::vector<std::pair<double, double> > budget_acc;
+      auto runWithBudget = [&] (double budget) {
+        string myname = name + "_b" + boost::lexical_cast<string>(budget);
+        system(("mkdir -p " + myname).c_str());
+        policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+        policy->test(result, budget); 
+        policy->resetLog(nullptr);
+        budget_acc.push_back(make_pair(budget, result->score));
+        sort(budget_acc.begin(), budget_acc.end(), compare);
+      };
+      auto findLargestSeg = [&] () -> double {
+        double segmax = -DBL_MAX, budget = 0.0;
+        for(size_t t = 0; t < budget_acc.size()-1; t++) {
+          double seg = budget_acc[t+1].second - budget_acc[t].second;
+          if(seg > segmax) {
+            segmax = seg;
+            budget = (budget_acc[t+1].first + budget_acc[t].first) / 2.0;
+          }
+        }
+        return budget;
+      };
+      runWithBudget(count);
+      for(int t = 0; t < T; t++) {
+        if(t == 0) {
+          const int segs = 10;
+          for(int i = 0; i < segs; i++) {
+              runWithBudget(count/(double)segs);
+          }
+        }else{
+          const int segs = 3;
+          for(int i = 0; i < segs; i++) {
+            runWithBudget(count / (double)segs);
+          }
+        }
+      }
     }
   }catch(char const* ee) {
     cout << "error: " << ee << endl;

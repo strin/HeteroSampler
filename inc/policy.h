@@ -28,6 +28,13 @@ namespace Tagging {
       double score;
       double time;
       double wallclock;
+
+      size_t size() const {
+        return nodes.size();
+      }
+      MarkovTreeNodePtr getNode(size_t i) const {
+        return nodes[i];
+      }
     };
     struct ROC {
     public:

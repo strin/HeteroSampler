@@ -20,6 +20,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/random/uniform_int.hpp>
 #include <boost/program_options.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
 
 #include "dirent.h"
 

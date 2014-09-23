@@ -54,7 +54,13 @@ namespace Tagging {
   template<class GM, class ACC> 
   double ModelEnumerativeGibbs<GM, ACC>::score(const GraphicalModel& gm) {
     auto& opengm_ = dynamic_cast<const OpenGM<GraphicalModelType>& >(gm);
-    return opengm_.gm_.evaluate(opengm_.getLabels());
+    double score = opengm_.gm_.evaluate(opengm_.getLabels());
+    if(typeid(AccumulationType) == typeid(opengm::Maximizer)) { // Maximum probability.
+      score = log(score);
+    }else if(typeid(AccumulationType) == typeid(opengm::Minimizer)) { // Minimize energe.
+      score = -score;
+    }
+    return score;
   }
 
   template<class GM, class ACC> 

@@ -17,15 +17,21 @@ namespace Tagging {
       depth = 0;
       time_stamp = 0;
       model = nullptr;
+      log_prior_weight = 0;
+      max_log_prior_weight = -DBL_MAX;
+      gm = nullptr;
+      max_gm = nullptr;
     }else{
       depth = parent->depth+1;
       time_stamp = parent->time_stamp;
       model = parent->model;
+      log_prior_weight = parent->log_prior_weight;
+      max_log_prior_weight = parent->max_log_prior_weight;
+      max_gm = parent->max_gm;
+      gm = parent->gm;
     }
     gradient = posgrad = neggrad = nullptr;
-    gm = nullptr;
     compute_stop = false;
-    max_log_prior_weight = -DBL_MAX;
   }
 
   bool MarkovTreeNode::is_split() {

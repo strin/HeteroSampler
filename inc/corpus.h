@@ -127,7 +127,7 @@ namespace Tagging {
 
     int size() const {return seqs.size(); }
     int count(int test_count = -1) const {
-      if(test_count == -1) test_count = seqs.size();
+      if(test_count < 0 || test_count >= seqs.size()) test_count = seqs.size();
       int c = 0;
       for(int i = 0; i < test_count; i++) {
         c += seqs[i]->size();

@@ -362,7 +362,9 @@ int main(int argc, char* argv[]) {
         return (a.second < b.second);
       };
       std::vector<std::pair<double, double> > budget_acc;
-      auto runWithBudget = [&] (double budget) {
+      double budget = 0;
+      auto runWithBudget = [&] (double b) {
+	budget += b;
         string myname = name + "_b" + boost::lexical_cast<string>(budget);
         system(("mkdir -p " + myname).c_str());
         policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));

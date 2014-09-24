@@ -368,7 +368,7 @@ int main(int argc, char* argv[]) {
         string myname = name + "_b" + boost::lexical_cast<string>(budget);
         system(("mkdir -p " + myname).c_str());
         policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-        policy->test(result, budget); 
+        policy->test(result, b); 
         policy->resetLog(nullptr);
         budget_acc.push_back(make_pair(budget, result->score));
         sort(budget_acc.begin(), budget_acc.end(), compare);

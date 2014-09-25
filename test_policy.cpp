@@ -384,17 +384,17 @@ int main(int argc, char* argv[]) {
         }
         return budget;
       };
-      runWithBudget(count);
+      runWithBudget(1);
       for(int t = 0; t < T; t++) {
         if(t == 0) {
           const int segs = 10;
           for(int i = 0; i < segs; i++) {
-              runWithBudget(count/(double)segs);
+              runWithBudget(1/(double)segs);
           }
         }else{
           const int segs = 3;
           for(int i = 0; i < segs; i++) {
-            runWithBudget(count / (double)segs);
+            runWithBudget(1/(double)segs);
           }
         }
       }

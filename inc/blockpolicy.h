@@ -125,7 +125,8 @@ void
 BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result, double budget) {
   clock_t time_start = clock(), time_end;
   assert(result != nullptr);
-  for(size_t b = 0; b < budget; b++) {
+  double total_budget = result->corpus->count(PolicyType::test_count) * budget;
+  for(size_t b = 0; b < total_budget; b++) {
     auto p = policy(result);
     this->sampleOne(result, this->rng, p);
   }
@@ -156,7 +157,7 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
   time_end = clock();
   double accuracy = (double)hit_count / pred_count;
   double recall = (double)hit_count / truth_count;
-  result->time += budget;
+  result->time += total_budget / result->size();
   result->wallclock += (double)(time_end - time_start) / CLOCKS_PER_SEC;
   lg->begin("time");
     std::cout << "time: " << result->time << std::endl;

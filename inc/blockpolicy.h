@@ -96,7 +96,8 @@ BlockPolicy<PolicyType>::test(ptr<Corpus> corpus, double budget) {
     node->gm = PolicyType::model->makeSample(*corpus->seqs[i], PolicyType::model->corpus, &rng);
     node->log_prior_weight = PolicyType::model->score(*node->gm);
     result->nodes[i] = node;
-    for(size_t t = 0; t < node->gm->size(); t++) {
+    for(int t = 0; t < node->gm->size(); t++) {
+      node->gm->resp[t] = 1e8 - t; // this is a hack.
       result->heap.push(Value(Location(i, t), node->gm->resp[t]));
     }
   }
@@ -128,6 +129,7 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
   double total_budget = result->corpus->count(PolicyType::test_count) * budget;
   for(size_t b = 0; b < total_budget; b++) {
     auto p = policy(result);
+    std::cout << p.index << " , " << p.pos << std::endl;
     this->sampleOne(result, this->rng, p);
   }
   auto lg = PolicyType::lg;
@@ -215,6 +217,7 @@ typename BlockPolicy<PolicyType>::Location
 BlockPolicy<PolicyType>::policy(ptr<BlockPolicy<PolicyType>::Result> result) {
   BlockPolicy<PolicyType>::Location loc;
   Value val = result->heap.top();
+  std::cout << "val : " << val.resp << std::endl;
   result->heap.pop();
   return val.loc;
 }

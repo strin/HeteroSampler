@@ -97,6 +97,7 @@ BlockPolicy<PolicyType>::test(ptr<Corpus> corpus, double budget) {
     node->log_prior_weight = PolicyType::model->score(*node->gm);
     result->nodes[i] = node;
     for(size_t t = 0; t < node->gm->size(); t++) {
+      node->gm->resp[t] = DBL_MAX - t;
       result->heap.push(Value(Location(i, t), node->gm->resp[t]));
     }
   }

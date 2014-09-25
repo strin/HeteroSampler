@@ -1151,7 +1151,7 @@ node->depth += 1;
       insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos])+"-cond-ent", node->gm->entropy[pos]);
     }
     if(featoptFind("#sp-unigram-ent")) {
-      insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos])+"unigram-ent", node->gm->entropy_unigram[pos]);
+      insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos])+"-unigram-ent", node->gm->entropy_unigram[pos]);
     }
     return feat;
   }

@@ -477,6 +477,17 @@ namespace Tagging {
         insertFeature(feat, "01-unigram-ent", node->gm->entropy_unigram[pos] < 1e-8);
       }
     }
+    if(featoptFind("logistic-unigram-ent")) {
+      if(model_unigram) {
+        if(std::isnan(node->gm->entropy_unigram[pos])) {
+          ptr<GraphicalModel> gm_ptr = model->copySample(*node->gm);
+          auto& gm = *gm_ptr;
+          model_unigram->sampleOne(gm, *gm.rng, pos);
+          node->gm->entropy_unigram[pos] = gm.entropy[pos];
+        }
+        insertFeature(feat, "logistic-unigram-ent", logisticFunc(node->gm->entropy_unigram[pos]));
+      }
+    }
     if(featoptFind("nb-modify")) {      // if a neighbor has been modified.
       if(node->gm->checksum[pos] != this->checksum(node, pos)) {
         insertFeature(feat, "nb-modify", 1.0);

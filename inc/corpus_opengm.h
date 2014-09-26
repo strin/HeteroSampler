@@ -24,12 +24,20 @@ public:
   str() const {
     return "";
   };
+
+  virtual vec<int> markovBlanket(int id) const {
+    auto adj_set = adjacencyList[id];
+    return vec<int>(adj_set.begin(), adj_set.end());
+  }
+
+private:
+  vec<set<size_t> > adjacencyList;
 };
 
 template<class GM>
 InstanceOpenGM<GM>::InstanceOpenGM(const Corpus* corpus, ptr<GraphicalModelType> gm) 
 : Instance(corpus), gm(gm) {
-  
+  gm->variableAdjacencyList(this->adjacencyList);
 }
 
 template<class GM>

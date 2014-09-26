@@ -287,6 +287,10 @@ namespace Tagging {
   Policy::Result::Result(ptr<Corpus> corpus) 
   :corpus(corpus) {
     nodes.clear();
+    time = 0;
+    wallclock = 0;
+    wallclock_sample = 0;
+    wallclock_policy = 0;
   }
 
   Policy::ResultPtr Policy::test(ptr<Corpus> testCorpus) {

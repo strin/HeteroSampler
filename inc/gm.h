@@ -46,6 +46,19 @@ public:
   virtual size_t numLabels(int id) const {
     throw "GraphicalModel::numLabels not defined.";
   }
+
+  // get the label of node *id*.
+  virtual int getLabel(int id) const = 0;
+
+  // get the Markov blanket of a variable. 
+  // default implementation returns all variables except id.
+  virtual map<int, int> markovBlanket(int id) const {
+    map<int, int> mb;
+    for(int i = 0; i < this->size(); i++) {
+      if(i == id) continue;
+      mb[i] = getLabel(i);
+    }
+  }
 };
 
 }

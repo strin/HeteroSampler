@@ -35,6 +35,19 @@ public:
     this->parselines(lines, lines_gt);
   }
 
+  virtual vec<int> markovBlanket(int id) const {
+    Pt pt = this->posToPt(id);
+    const int shift[4][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+    vec<int> ret;
+    for(auto sf : shift) {
+      if(pt.h + sf[0] >= 0 and pt.h + sf[0] < H
+        and pt.w + sf[1] >= 0 and pt.w + sf[1] < W) {
+        ret.push_back(ptToPos(Pt(pt.h + sf[0], pt.w + sf[1])));
+      }
+    }
+    return ret;
+  }
+
   virtual void parselines(const vec<string>& lines) {}
   
   virtual void

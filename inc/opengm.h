@@ -19,6 +19,9 @@ public:
 
   OpenGM(const Instance* seq, const GraphicalModelType& gm);
 
+  virtual int getLabel(int id) const {
+    return (int)opengm::Movemaker<GM>::state(id);
+  }
   vec<LabelType> getLabels() const;
 
   /* implement GraphicalModel interface */
@@ -50,7 +53,7 @@ vec<typename OpenGM<GM>::LabelType> OpenGM<GM>::getLabels() const { // why canno
   for(size_t j = 0; j < ret.size(); ++j) {
      // if(!inInference_)
      //    x[j] = currentBestState_[j];
-    ret[j] = opengm::Movemaker<GM>::state(j);
+    ret[j] = this->getLabel(j);
   }
   return ret;
 }

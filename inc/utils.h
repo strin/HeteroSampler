@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <set>
 #include <list>
 #include <iostream>
 #include <functional>
@@ -38,6 +39,9 @@ namespace Tagging {
 
   template<class T>
   using vec = std::vector<T>;
+
+  template<class T>
+  using set = std::set<T>;
 
   template<class T>
   using vec2d = vec<vec<T> >;

@@ -28,6 +28,7 @@ namespace Tagging {
       double score;
       double time;
       double wallclock;
+      double wallclock_policy, wallclock_sample;
 
       size_t size() const {
         return nodes.size();

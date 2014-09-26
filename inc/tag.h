@@ -37,6 +37,13 @@ public:
   // distance to another tag.
   // warning: both tags should have same length and dict. 
   double distance(const Tag& tag);  
+
+  // get tag of a node.
+  virtual int getLabel(int id) const {
+    assert(id >= 0 and id < this->size());
+    return tag[id];
+  }
+
   // return the string of a tag.
   std::string getTag(size_t pos) const;
   // to string. 

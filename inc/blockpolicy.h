@@ -169,6 +169,12 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
     std::cout << "wallclock: " << result->wallclock << std::endl;
     *lg << result->wallclock << std::endl;
   lg->end(); // </wallclock>
+  lg->begin("wallclock_sample");
+    *lg << result->wallclock_sample << std::endl;
+  lg->end();
+  lg->begin("wallclock_policy");
+    *lg << result->wallclock_policy << std::endl;
+  lg->end();
   if(this->model->scoring == Model::SCORING_ACCURACY) {
     lg->begin("accuracy");
     *lg << accuracy << std::endl;
@@ -195,6 +201,7 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
 template<class PolicyType>
 void
 BlockPolicy<PolicyType>::sampleOne(ptr<BlockPolicy<PolicyType>::Result> result, objcokus& rng, const Location& loc) {
+  clock_t clock_start = clock(), clock_end;
   int index = loc.index, pos = loc.pos;
   MarkovTreeNodePtr node = result->getNode(index);
   node->gradient = PolicyType::model->sampleOne(*node->gm, rng, pos);
@@ -203,6 +210,9 @@ BlockPolicy<PolicyType>::sampleOne(ptr<BlockPolicy<PolicyType>::Result> result, 
     node->max_log_prior_weight = node->log_prior_weight;
     node->max_gm = PolicyType::model->copySample(*node->gm);
   }
+  clock_end = clock();
+  result->wallclock_sample += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
+  clock_start = clock();
   FeaturePointer feat = this->extractFeatures(node, pos);
   node->gm->mask[pos] += 1;
   node->gm->feat[pos] = feat;
@@ -210,15 +220,20 @@ BlockPolicy<PolicyType>::sampleOne(ptr<BlockPolicy<PolicyType>::Result> result, 
   node->gm->checksum[pos] = 0; // WARNING: a hack.
 //  std::cout << node->gm->resp[pos] << std::endl;
   result->heap.push(Value(loc, node->gm->resp[pos]));
+  clock_end = clock();
+  result->wallclock_policy += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
 }
 
 template<class PolicyType>
 typename BlockPolicy<PolicyType>::Location
 BlockPolicy<PolicyType>::policy(ptr<BlockPolicy<PolicyType>::Result> result) {
+  clock_t clock_start = clock(), clock_end;
   BlockPolicy<PolicyType>::Location loc;
   Value val = result->heap.top();
   // std::cout << "val : " << val.resp << std::endl;
   result->heap.pop();
+  clock_end = clock();
+  result->wallclock_policy += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
   return val.loc;
 }
 

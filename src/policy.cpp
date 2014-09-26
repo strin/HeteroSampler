@@ -548,8 +548,8 @@ namespace Tagging {
       auto temp_ptr = model->copySample(*node->gm);
       auto& temp = *temp_ptr;
       model->sampleOne(temp, *temp.rng, pos);          
-      // insertFeature(feat, "oracle", -temp.sc[oldval]);
-      insertFeature(feat, "oracle", temp.entropy[pos]);
+      insertFeature(feat, "oracle", -temp.sc[oldval]);
+      // insertFeature(feat, "oracle", temp.entropy[pos]);
     }
     if(featoptFind("self-avoid")) {
       insertFeature(feat, "self-avoid", node->gm->mask[pos]);
@@ -1168,7 +1168,12 @@ node->depth += 1;
   
   FeaturePointer LockdownPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = Policy::extractFeatures(node, pos);
-    insertFeature(feat, "#sp", node->gm->mask[pos]);
+    if(featoptFind("log-#sp")) {
+      insertFeature(feat, "log-#sp", log(1+node->gm->mask[pos]));
+    }
+    if(featoptFind("#sp")) {
+      insertFeature(feat, "#sp", node->gm->mask[pos]);
+    }
     if(featoptFind("#sp-cond-ent")) {
       insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos])+"-cond-ent", node->gm->entropy[pos]);
     }

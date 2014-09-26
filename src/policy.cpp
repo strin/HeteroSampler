@@ -463,7 +463,7 @@ namespace Tagging {
           model_unigram->sampleOne(gm, *gm.rng, pos);
           node->gm->entropy_unigram[pos] = gm.entropy[pos];
         }
-        insertFeature(feat, "inv-unigram-ent", 1/(1e-2+node->gm->entropy_unigram[pos]));
+        insertFeature(feat, "inv-unigram-ent", 1/(1e-8+node->gm->entropy_unigram[pos]));
       }
     }
     if(featoptFind("nb-modify")) {      // if a neighbor has been modified.

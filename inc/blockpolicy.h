@@ -25,33 +25,6 @@ public:
   }
 
 
-  class Location {
-  public:
-    int index, pos;
-    Location() {}
-    Location(int index, int pos)
-    : index(index), pos(pos) {
-    }
-  };
-
-  class Value {
-  public:
-    Location loc;
-    double resp;
-    Value() {}
-    Value(Location loc, double resp)
-    : loc(loc), resp(resp) {
-    }
-  };
-
-  struct compare_value {
-    bool operator()(const Value& n1, const Value& n2) const {
-      return n1.resp < n2.resp;
-    }
-  };
-
-  typedef boost::heap::fibonacci_heap<Value, boost::heap::compare<compare_value>> Heap;
-
 
   class Result : public PolicyType::Result {
   public:
@@ -98,7 +71,8 @@ BlockPolicy<PolicyType>::test(ptr<Corpus> corpus, double budget) {
     result->nodes[i] = node;
     for(int t = 0; t < node->gm->size(); t++) {
       node->gm->resp[t] = 1e8 - t; // this is a hack.
-      result->heap.push(Value(Location(i, t), node->gm->resp[t]));
+      Heap::handle_type handle = result->heap.push(Value(Location(i, t), node->gm->resp[t]));
+      node->gm->handle[t] = handle;
     }
   }
   result->time = 0;
@@ -170,9 +144,11 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
     *lg << result->wallclock << std::endl;
   lg->end(); // </wallclock>
   lg->begin("wallclock_sample");
+    std::cout << "wallclock_sample: " << result->wallclock_sample << std::endl;
     *lg << result->wallclock_sample << std::endl;
   lg->end();
   lg->begin("wallclock_policy");
+    std::cout << "wallclock_policy: " << result->wallclock_policy << std::endl;
     *lg << result->wallclock_policy << std::endl;
   lg->end();
   if(this->model->scoring == Model::SCORING_ACCURACY) {
@@ -204,34 +180,23 @@ BlockPolicy<PolicyType>::sampleOne(ptr<BlockPolicy<PolicyType>::Result> result, 
   clock_t clock_start = clock(), clock_end;
   int index = loc.index, pos = loc.pos;
   MarkovTreeNodePtr node = result->getNode(index);
-  node->gradient = PolicyType::model->sampleOne(*node->gm, rng, pos);
-  node->log_prior_weight += node->gm->reward[pos];
-  if(node->log_prior_weight > node->max_log_prior_weight) {
-    node->max_log_prior_weight = node->log_prior_weight;
-    node->max_gm = PolicyType::model->copySample(*node->gm);
-  }
+  PolicyType::sampleOne(node, rng, pos);
   clock_end = clock();
   result->wallclock_sample += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
   clock_start = clock();
-  FeaturePointer feat = this->extractFeatures(node, pos);
-  node->gm->mask[pos] += 1;
-  node->gm->feat[pos] = feat;
-  node->gm->resp[pos] = Tagging::score(this->param, feat);
-  node->gm->checksum[pos] = 0; // WARNING: a hack.
-//  std::cout << node->gm->resp[pos] << std::endl;
-  result->heap.push(Value(loc, node->gm->resp[pos]));
+  PolicyType::updateResp(node, rng, pos, &result->heap);
   clock_end = clock();
   result->wallclock_policy += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
 }
 
 template<class PolicyType>
-typename BlockPolicy<PolicyType>::Location
+Location
 BlockPolicy<PolicyType>::policy(ptr<BlockPolicy<PolicyType>::Result> result) {
   clock_t clock_start = clock(), clock_end;
-  BlockPolicy<PolicyType>::Location loc;
+  Location loc;
   Value val = result->heap.top();
   // std::cout << "val : " << val.resp << std::endl;
-  result->heap.pop();
+  //  result->heap.pop();
   clock_end = clock();
   result->wallclock_policy += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
   return val.loc;

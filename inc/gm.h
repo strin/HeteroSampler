@@ -5,6 +5,33 @@
 
 namespace Tagging {
 
+class Location {
+  public:
+    int index, pos;
+    Location() {}
+    Location(int index, int pos)
+    : index(index), pos(pos) {
+    }
+  };
+
+class Value {
+public:
+  Location loc;
+  double resp;
+  Value() {}
+  Value(Location loc, double resp)
+  : loc(loc), resp(resp) {
+  }
+};
+
+struct compare_value {
+  bool operator()(const Value& n1, const Value& n2) const {
+    return n1.resp < n2.resp;
+  }
+};
+
+typedef boost::heap::fibonacci_heap<Value, boost::heap::compare<compare_value>> Heap;
+
 struct GraphicalModel {
 public:
   GraphicalModel() {
@@ -13,6 +40,13 @@ public:
   virtual ~GraphicalModel() {}
 
   /* statistics for variables */
+  void initStats() {
+    feat.resize(this->size());
+    blanket.resize(this->size());
+    changed.resize(this->size());
+    handle.resize(this->size());
+  }
+
   int time;                               // how many times have spent on sampling this graphical model. 
   vec<double> timestamp;                  // whenever a position is changed, its timestamp is incremented.
   vec<double> checksum;                   // if checksum is changes, then the position might be updated.
@@ -23,6 +57,9 @@ public:
   std::vector<double> reward;
   std::vector<double> resp;
   std::vector<int> mask;
+  vec<map<int, int> > blanket;             // Markov blanket.
+  vec<map<int, bool> > changed;                       // whether a location has changed.
+  vec<typename Heap::handle_type> handle;
   std::vector<FeaturePointer> feat;
 
   /* randomness */
@@ -50,15 +87,15 @@ public:
   // get the label of node *id*.
   virtual int getLabel(int id) const = 0;
 
-  // get the Markov blanket of a variable. 
-  // default implementation returns all variables except id.
-  virtual map<int, int> markovBlanket(int id) const {
+  // get the labels of some nodes in blanket.
+  virtual map<int, int> getLabels(vec<int> blanket) const {
     map<int, int> mb;
-    for(int i = 0; i < this->size(); i++) {
-      if(i == id) continue;
-      mb[i] = getLabel(i);
+    for(auto id : blanket) {
+      mb[id] = getLabel(id);
     }
+    return mb;
   }
+
 };
 
 }

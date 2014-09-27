@@ -39,6 +39,7 @@ namespace Tagging {
     entropy.resize(seqlen);
     entropy_unigram.resize(seqlen, NAN);
     reward.resize(seqlen);
+    this->initStats();
     for(int& t : tag) {
       t = rng->randomMT() % taglen;
     }

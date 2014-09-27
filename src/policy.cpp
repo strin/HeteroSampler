@@ -243,7 +243,14 @@ namespace Tagging {
 	*lg << node->log_weight << endl;
 	lg->end(); 
       }*/
-      this->gradientPolicy(tree);
+      
+//      /* strategy 1. use Markov Tree to compute grad */
+//      this->gradientPolicy(tree);
+      
+      /* strategy 2. compute gradient when sample */
+      // pass
+      
+      /* log nodes */
       if(verbose) {
         for(size_t k = 0; k < K; k++) {
           MarkovTreeNodePtr node = tree.root->children[k];
@@ -492,11 +499,6 @@ namespace Tagging {
         insertFeature(feat, "logistic-unigram-ent", logisticFunc(node->gm->entropy_unigram[pos]));
       }
     }
-    if(featoptFind("nb-modify")) {      // if a neighbor has been modified.
-      if(node->gm->checksum[pos] != this->checksum(node, pos)) {
-        insertFeature(feat, "nb-modify", 1.0);
-      }
-    }
     // if(featoptFind("unigram-lhood")) {
     //   if(model_unigram) {
     //     if(node->gm->sc_unigram[pos].size() == 0) {
@@ -508,7 +510,7 @@ namespace Tagging {
     //     insertFeature(feat, "unigram-lhood", node->gm->sc_unigram[pos][node->gm->tag[pos]]);
     //   }
     // }
-    if(featoptFind("ner-disagree") || featoptFind("all")) {
+    if(featoptFind(NER_DISAGREE) || featoptFind("all")) {
       if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
         auto& tag = *cast<Tag>(node->gm);
         ptr<Corpus> corpus = model->corpus;
@@ -516,12 +518,12 @@ namespace Tagging {
         if(pos >= 1) {
   	      string prev_tg = corpus->invtags[tag.tag[pos-1]];
   	      if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
-  	       insertFeature(feat, "bad");
+  	        insertFeature(feat, NER_DISAGREE);
         }
         if(pos < node->gm->size()-1) {
           string next_tg = corpus->invtags[tag.tag[pos+1]];
   	      if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
-  	        insertFeature(feat, "bad");
+  	        insertFeature(feat, NER_DISAGREE);
         }
       }
     }
@@ -547,6 +549,11 @@ namespace Tagging {
       }
       insertFeature(feat, "ising-disagree", disagree);
     }
+    // features based on neighbors.
+    if(featoptFind("nb-#vary")) {
+      insertFeature(feat, "nb-#vary", 0); // to be modified dynamically.
+    }
+
     if(featoptFind("oracle")) {
       int oldval = cast<Tag>(node->gm)->tag[pos];
       auto temp_ptr = model->copySample(*node->gm);
@@ -559,6 +566,68 @@ namespace Tagging {
       insertFeature(feat, "self-avoid", node->gm->mask[pos]);
     }
     return feat;
+  }
+
+  void Policy::sampleOne(MarkovTreeNodePtr node, objcokus& rng, int pos) {
+    node->gradient = model->sampleOne(*node->gm, rng, pos);
+    node->log_prior_weight += node->gm->reward[pos];
+    if(node->log_prior_weight > node->max_log_prior_weight) {
+      node->max_log_prior_weight = node->log_prior_weight;
+      node->max_gm = model->copySample(*node->gm);
+    }
+    node->gm->mask[pos] += 1;
+  }
+
+  void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* heap) {
+    FeaturePointer feat = this->extractFeatures(node, pos);
+    node->gm->feat[pos] = feat;
+    node->gm->resp[pos] = Tagging::score(this->param, feat);
+    node->gm->checksum[pos] = 0; // WARNING: a hack.
+    int val = node->gm->getLabel(pos);
+    auto updateRespByHandle = [&] (int id) {
+      if(heap == nullptr) return;
+      Value& val = *node->gm->handle[id];
+      val.resp = node->gm->resp[id];
+      heap->update(node->gm->handle[id]);
+    };
+    if(featoptFind(NB_VARY)) {
+      /* update the nodes in inv Markov blanket */
+      for(auto id : node->gm->seq->invMarkovBlanket(pos)) {
+        if(node->gm->blanket[id].size() > 0) {
+          assert(node->gm->blanket[id].contains(pos));
+          double* feat_nb_vary = findFeature(node->gm->feat[id], NB_VARY);
+          if(node->gm->blanket[id][pos] != val and node->gm->changed[id][pos] == false) {
+            node->gm->changed[id][pos] = true;
+            (*feat_nb_vary)++;
+            node->gm->resp[id] += (*param)[NB_VARY];
+            updateRespByHandle(id);
+          }
+          if(node->gm->blanket[id][pos] == val and node->gm->changed[id][pos] == true) {
+            node->gm->changed[id][pos] = false;
+            (*feat_nb_vary)--;
+            node->gm->resp[id] -= (*param)[NB_VARY];
+            updateRespByHandle(id);
+          }
+        }
+      }
+      /* update Markov blanket */
+      node->gm->changed[pos].clear();
+      for(auto pair : node->gm->blanket[pos]) {
+        node->gm->changed[pos][pair.first] = false;
+      }
+    }
+    if(featoptFind(NER_DISAGREE)) {
+      for(auto id : node->gm->seq->invMarkovBlanket(pos)) {
+        if(node->gm->blanket[id].size() > 0) {
+          double disagree = getFeature(feat, NER_DISAGREE);
+          insertFeature(node->gm->feat[id], NER_DISAGREE, disagree);
+          node->gm->resp[id] += (*param)[NER_DISAGREE];
+          updateRespByHandle(id);
+        }
+      }
+    }
+    updateRespByHandle(pos);
+    node->gm->blanket[pos] = node->gm->getLabels(node->gm->seq->markovBlanket(pos));
   }
 
   double Policy::checksum(MarkovTreeNodePtr node, int pos) {
@@ -1153,7 +1222,7 @@ namespace Tagging {
         int pos = node->gm->rng->sampleCategorical(&resp[0], seqlen);
         model->sampleOne(*node->gm, rng, pos);
         node->gm->mask[pos] += 1;
-node->depth += 1;
+        node->depth += 1;
       }
       node->log_weight = 0;
     }catch(const char* ee) {
@@ -1242,23 +1311,20 @@ node->depth += 1;
       objcokus& rng = thread_pool.rngs[tid];
       node->gm->rng = &rng; 
       for(size_t i = 0; i < node->gm->size(); i++) {
-        model->sampleOne(*node->gm, rng, i);
-        node->gm->mask[i] = 1;
-        // node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
+        this->sampleOne(node, rng, i);
+        updateResp(node, rng, i, nullptr);
       }
-      node->gradient = makeParamPointer();
-      node->G2 = makeParamPointer();
+//      node->gradient = makeParamPointer();
+//      node->G2 = makeParamPointer();
       for(size_t t = 1; t < T; t++) {
         for(size_t i = 0; i < node->gm->size(); i++) {
           node->time_stamp = t * node->gm->size() + i;
           /* extract features */
-          FeaturePointer feat = this->extractFeatures(node, i);
-          double resp = Tagging::score(param, feat);
-          auto sample = [&] () {
-            model->sampleOne(*node->gm, rng, i);
-            node->gm->mask[i] += 1;
-            // node->gm->checksum[i] = this->checksum(node, i);    // compute checksum after sample.
-          };
+          // FeaturePointer feat = this->extractFeatures(node, i);
+          // double resp = Tagging::score(param, feat);
+          FeaturePointer feat = node->gm->feat[i];
+          double resp = node->gm->resp[i];
+
           /* estimate reward */
 #if REWARD_SCHEME == REWARD_ACCURACY
           ptr<Tag> old_tag = cast<Tag>(node->gm);
@@ -1266,16 +1332,19 @@ node->depth += 1;
             return (double)(old_tag->tag[i] == old_tag->seq->tag[i]); 
           };
           double reward_baseline = is_equal();
-          sample();
+          this->sampleOne(node, rng, i);
           double reward = is_equal();
           double logR = reward - reward_baseline; 
 
 #elif REWARD_SCHEME == REWARD_LHOOD
-          sample();
+          this->sampleOne(node, rng, i);
           double logR = node->gm->reward[i];
           
 #endif
+          updateResp(node, rng, i, nullptr);
+
           thread_pool.lock();
+
           if(lets_resp_reward) {
             resp_reward.push_back(make_pair(resp, logR));
           }

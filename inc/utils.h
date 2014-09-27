@@ -91,6 +91,24 @@ namespace Tagging {
     feat->push_back(std::make_pair(key, val));
   }
 
+  inline static double* findFeature(FeaturePointer feat, const std::string& key) {
+    for(auto& pair : *feat) {
+      if(pair.first == key) {
+        return &pair.second;
+      }
+    }
+    return nullptr;
+  }
+
+  inline static double getFeature(FeaturePointer feat, const std::string& key) {
+    for(auto& pair : *feat) {
+      if(pair.first == key) {
+        return pair.second;
+      }
+    }
+    return 0;
+  }
+
   inline static void insertFeature(FeaturePointer featA, FeaturePointer featB) {
     featA->insert(featA->end(), featB->begin(), featB->end());
   }

@@ -45,6 +45,7 @@ OpenGM<GM>::OpenGM(const Instance* seq, const GraphicalModelType& gm)
   resp.resize(size, DBL_MAX);
   mask.resize(size, 0);
   feat.resize(size);
+  this->initStats();
 }
 
 template<class GM>

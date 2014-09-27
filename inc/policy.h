@@ -13,6 +13,8 @@
 #define POLICY_MARKOV_CHAIN_MAXDEPTH 10000000
 
 namespace Tagging {
+  const static string NB_VARY = "nb-#vary";
+  const static string NER_DISAGREE = "ner-disagree";
 
   class Policy {
   public:
@@ -86,6 +88,12 @@ namespace Tagging {
     // sample node, for training. default: call sampleTest.
     virtual void sample(int tid, MarkovTreeNodePtr node);
     
+    // wrap model->sampleOne.
+    void sampleOne(MarkovTreeNodePtr, objcokus& rng, int pos);
+
+    // update resp of the meta-features.
+    void updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* heap);
+
     // return a number referring to the transition kernel to use.
     // return = -1 : stop the markov chain.
     // o.w. return a natural number representing a choice.
@@ -105,7 +113,6 @@ namespace Tagging {
 
     // reset log.
     void resetLog(std::shared_ptr<XMLlog> new_lg);
-
 
     // response-reward pair.
     bool lets_resp_reward;

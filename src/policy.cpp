@@ -517,13 +517,17 @@ namespace Tagging {
         string tg = corpus->invtags[tag.tag[pos]];
         if(pos >= 1) {
   	      string prev_tg = corpus->invtags[tag.tag[pos-1]];
-  	      if(prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1)) 
-  	        insertFeature(feat, NER_DISAGREE);
+  	      if((prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))
+            or (prev_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))) { 
+  	        insertFeature(feat, NER_DISAGREE_L);
+          }
         }
         if(pos < node->gm->size()-1) {
           string next_tg = corpus->invtags[tag.tag[pos+1]];
-  	      if(next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
-  	        insertFeature(feat, NER_DISAGREE);
+  	      if((next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
+            or (next_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != next_tg.substr(1))) { 
+  	        insertFeature(feat, NER_DISAGREE_R);
+          }
         }
       }
     }
@@ -617,13 +621,15 @@ namespace Tagging {
       }
     }
     if(featoptFind(NER_DISAGREE)) {
-      for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
-        if(node->gm->blanket[id].size() > 0) {
-          double disagree = getFeature(feat, NER_DISAGREE);
-          insertFeature(node->gm->feat[id], NER_DISAGREE, disagree);
-          node->gm->resp[id] += (*param)[NER_DISAGREE];
-          updateRespByHandle(id);
-        }
+      if(getFeature(feat, NER_DISAGREE_L) and node->gm->blanket[pos-1].size() > 0 
+        and getFeature(node->gm->feat[pos-1], NER_DISAGREE_R) == 0) {
+        insertFeature(node->gm->feat[pos-1], NER_DISAGREE_R);
+        updateRespByHandle(pos-1);
+      }
+      if(getFeature(feat, NER_DISAGREE_R) and node->gm->blanket[pos+1].size() > 0
+        and getFeature(node->gm->feat[pos+1], NER_DISAGREE_L) == 0) {
+        insertFeature(node->gm->feat[pos+1], NER_DISAGREE_L);
+        updateRespByHandle(pos+1);
       }
     }
     updateRespByHandle(pos);

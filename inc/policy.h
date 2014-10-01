@@ -15,6 +15,8 @@
 namespace Tagging {
   const static string NB_VARY = "nb-#vary";
   const static string NER_DISAGREE = "ner-disagree";
+  const static string NER_DISAGREE_L = "ner-disagree-l";
+  const static string NER_DISAGREE_R = "ner-disagree-r";
 
   class Policy {
   public:

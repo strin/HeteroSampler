@@ -35,19 +35,6 @@ public:
     this->parselines(lines, lines_gt);
   }
 
-  virtual vec<int> markovBlanket(int id) const {
-    Pt pt = this->posToPt(id);
-    const int shift[4][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
-    vec<int> ret;
-    for(auto sf : shift) {
-      if(pt.h + sf[0] >= 0 and pt.h + sf[0] < H
-        and pt.w + sf[1] >= 0 and pt.w + sf[1] < W) {
-        ret.push_back(ptToPos(Pt(pt.h + sf[0], pt.w + sf[1])));
-      }
-    }
-    return ret;
-  }
-
   virtual void parselines(const vec<string>& lines) {}
   
   virtual void
@@ -242,5 +229,24 @@ static auto extractIsingAll = [] (ptr<Model> model, const GraphicalModel& gm) {
   }
   return features;
 };
+
+static auto getIsingMarkovBlanket = [] (ptr<Model> model, const GraphicalModel& gm, int pos) {
+  assert(isinstance<ModelCRFGibbs>(model));
+  ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
+  auto& tag = dynamic_cast<const Tag&>(gm);
+  auto image = dynamic_cast<const ImageIsing*>(tag.seq);
+  assert(image != NULL);
+  ImageIsing::Pt pt = image->posToPt(pos);
+  const int shift[4][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+  vec<int> ret;
+  for(auto sf : shift) {
+    if(pt.h + sf[0] >= 0 and pt.h + sf[0] < image->H
+      and pt.w + sf[1] >= 0 and pt.w + sf[1] < image->W) {
+      ret.push_back(image->ptToPos(ImageIsing::Pt(pt.h + sf[0], pt.w + sf[1])));
+    }
+  }
+  return ret;
+};
+
 
 } // namespace Tagging.

@@ -138,6 +138,17 @@ namespace Tagging {
       }
       return features;
    }) {
+    getMarkovBlanket = [] (ptr<Model> model, const GraphicalModel& gm, int pos) {
+      assert(isinstance<ModelCRFGibbs>(model));
+      ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
+      vec<int> ret;
+      for(int p = fmax(0, pos - this_model->factorL + 1); p <= fmin(pos + this_model->factorL -1, gm.size()-1); p++) {
+        if(p == pos) continue;
+        ret.push_back(p);
+      }
+      return ret;
+    };
+    getInvMarkovBlanket = getMarkovBlanket;
     if(isinstance<CorpusLiteral>(corpus))
       cast<CorpusLiteral>(corpus)->computeWordFeat();
    }

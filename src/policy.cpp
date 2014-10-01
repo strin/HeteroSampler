@@ -592,7 +592,7 @@ namespace Tagging {
     };
     if(featoptFind(NB_VARY)) {
       /* update the nodes in inv Markov blanket */
-      for(auto id : node->gm->seq->invMarkovBlanket(pos)) {
+      for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
         if(node->gm->blanket[id].size() > 0) {
           assert(node->gm->blanket[id].contains(pos));
           double* feat_nb_vary = findFeature(node->gm->feat[id], NB_VARY);
@@ -617,7 +617,7 @@ namespace Tagging {
       }
     }
     if(featoptFind(NER_DISAGREE)) {
-      for(auto id : node->gm->seq->invMarkovBlanket(pos)) {
+      for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
         if(node->gm->blanket[id].size() > 0) {
           double disagree = getFeature(feat, NER_DISAGREE);
           insertFeature(node->gm->feat[id], NER_DISAGREE, disagree);
@@ -627,7 +627,7 @@ namespace Tagging {
       }
     }
     updateRespByHandle(pos);
-    node->gm->blanket[pos] = node->gm->getLabels(node->gm->seq->markovBlanket(pos));
+    node->gm->blanket[pos] = node->gm->getLabels(model->markovBlanket(*node->gm, pos));
   }
 
   double Policy::checksum(MarkovTreeNodePtr node, int pos) {

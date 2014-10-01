@@ -32,23 +32,6 @@ namespace Tagging {
     virtual std::string str() const = 0;
     virtual size_t size() const {return this->seq.size(); }
 
-    // returns the Markov blanket of a node.
-    // default: return all nodes.
-    virtual vec<int> markovBlanket(int id) const {
-      vec<int> ret;
-      for(int i = 0; i < this->size(); i++) {
-        if(i == id) continue;
-        ret.push_back(i);
-      }
-      return ret;
-    }
-
-    // return the nodes whose Markov blanket include the node. 
-    // default: return the Markov blanket of node *id*
-    virtual vec<int> invMarkovBlanket(int id) const {
-      return markovBlanket(id);
-    }
-
     std::vector<TokenPtr> seq;
     std::vector<int> tag;
     const Corpus* corpus;
@@ -103,12 +86,6 @@ namespace Tagging {
 
     virtual void parselines(const std::vector<std::string>& lines);
     virtual std::string str() const;
-    virtual vec<int> markovBlanket(int id) const {
-      vec<int> ret;
-      if(id >= 1) ret.push_back(id-1);
-      if(id < this->size()-1) ret.push_back(id+1);
-      return ret;
-    }
   };
 
   template<size_t height, size_t width>

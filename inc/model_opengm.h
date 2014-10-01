@@ -37,6 +37,21 @@ namespace Tagging {
     // create a new sample by copying an old one.
     virtual ptr<GraphicalModel> copySample(const GraphicalModel& gm) const;
 
+
+    // return the Markov blanket of the node.
+    // default: return the Markov blanket of node *id*
+    virtual vec<int> markovBlanket(const GraphicalModel& gm, int pos) {
+      auto inst = dynamic_cast<const InstanceOpenGM<GM>* >(gm.seq);
+      return inst->markovBlanket(pos);
+    }
+
+    // return the nodes whose Markov blanket include the node. 
+    // default: return the Markov blanket of node *id*
+    virtual vec<int> invMarkovBlanket(const GraphicalModel& gm, int pos) {
+      auto inst = dynamic_cast<const InstanceOpenGM<GM>* >(gm.seq);
+      return inst->invMarkovBlanket(pos);
+    }
+
     string annealing;
     double temp, temp_decay, temp_magnify;
   };

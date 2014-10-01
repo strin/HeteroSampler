@@ -114,6 +114,8 @@ int main(int argc, char* argv[]) {
           cast<ModelCRFGibbs>(model)->extractFeatures = extractIsing;
           cast<ModelCRFGibbs>(model)->extractFeatAll = extractIsingAll;
           cast<ModelCRFGibbs>(model)->extractFeaturesAtInit = extractIsingAtInit;
+          cast<ModelCRFGibbs>(model)->getMarkovBlanket = getIsingMarkovBlanket;
+          cast<ModelCRFGibbs>(model)->getInvMarkovBlanket = getIsingMarkovBlanket;
         }
         return model;
       };

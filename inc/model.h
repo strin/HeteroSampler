@@ -14,6 +14,9 @@ namespace Tagging {
     }
   }
 
+
+
+
   struct Model {
   public:
     Model(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
@@ -65,6 +68,23 @@ namespace Tagging {
     // return 2: truth count.
     std::tuple<int, int, int> evalNER(const Tag& tag);
 
+    // return the Markov blanket of the node.
+    // default: return the Markov blanket of node *id*
+    virtual vec<int> markovBlanket(const GraphicalModel& gm, int pos) {
+      vec<int> ret;
+      for(int i = 0; i < gm.size(); i++) {
+        if(i == pos) continue;
+        ret.push_back(i);
+      }
+      return ret;
+    }
+
+    // return the nodes whose Markov blanket include the node. 
+    // default: return the Markov blanket of node *id*
+    virtual vec<int> invMarkovBlanket(const GraphicalModel& gm, int pos) {
+      markovBlanket(gm, pos);
+    }
+    
     /* parameters */
     size_t T, B, Q;
     int Q0;
@@ -94,8 +114,9 @@ namespace Tagging {
   };
 
   typedef std::shared_ptr<Model> ModelPtr;
-  typedef std::function<FeaturePointer(ptr<Model> model, const GraphicalModel& tag, int pos)> FeatureExtractOne;
-  typedef std::function<FeaturePointer(ptr<Model> model, const GraphicalModel& tag)> FeatureExtractAll;
+  typedef std::function<FeaturePointer(ptr<Model> model, const GraphicalModel& gm, int pos)> FeatureExtractOne;
+  typedef std::function<FeaturePointer(ptr<Model> model, const GraphicalModel& gm)> FeatureExtractAll;
+  typedef std::function<vec<int>(ptr<Model> model, const GraphicalModel& gm, int pos)> MarkovBlanketGet;
 
   struct ModelSimple : public Model {
   public:
@@ -122,10 +143,6 @@ namespace Tagging {
     double score(const GraphicalModel& tag);
     virtual void logArgs();
 
-    /* interface for feature extraction. */    
-    FeatureExtractOne extractFeatures;
-    FeatureExtractOne extractFeaturesAtInit;
-    FeatureExtractAll extractFeatAll;
 
     /* implement inferface for Gibbs sampling */
     virtual ParamPointer sampleOne(GraphicalModel& tag, objcokus& rng, int choice);
@@ -135,6 +152,21 @@ namespace Tagging {
     virtual ptr<GraphicalModel> makeSample(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const;
     virtual ptr<GraphicalModel> makeTruth(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const;
     virtual ptr<GraphicalModel> copySample(const GraphicalModel& gm) const;
+
+    /* interface for feature extraction. */    
+    FeatureExtractOne extractFeatures;
+    FeatureExtractOne extractFeaturesAtInit;
+    FeatureExtractAll extractFeatAll;
+
+    MarkovBlanketGet getMarkovBlanket;
+    virtual vec<int> markovBlanket(const GraphicalModel& gm, int pos) {
+      return getMarkovBlanket(shared_from_this(), gm, pos);
+    }
+    
+    MarkovBlanketGet getInvMarkovBlanket; 
+    virtual vec<int> invMarkovBlanket(const GraphicalModel& gm, int pos) {
+      return getInvMarkovBlanket(shared_from_this(), gm, pos);
+    }
 
     /* properties */
     int factorL;    

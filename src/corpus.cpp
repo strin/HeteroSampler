@@ -56,7 +56,7 @@ namespace Tagging {
     BOOST_FOREACH(const string& line, lines) {
       ptr<TokenLiteral> token = ptr<TokenLiteral>(new TokenLiteral(line));
       if(!token->is_doc_start)
-	this->seq.push_back(token); 
+        this->seq.push_back(token); 
     }
   }
 

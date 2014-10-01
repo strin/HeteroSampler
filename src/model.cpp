@@ -22,13 +22,13 @@ namespace Tagging {
    testFrequency(vm["testFrequency"].as<double>()) {
     try {
       if(vm.count("scoring") == 0) {
-	throw "no scoring specified";
+        throw "no scoring specified";
       }else{
-	string scoring_str = vm["scoring"].as<string>();
-	if(scoring_str == "Acc") scoring = SCORING_ACCURACY;
-	else if(scoring_str == "NER") scoring = SCORING_NER;
-  else if(scoring_str == "Lhood") scoring = SCORING_LHOOD;
-	else throw "scoring method invalid";
+        string scoring_str = vm["scoring"].as<string>();
+        if(scoring_str == "Acc") scoring = SCORING_ACCURACY;
+        else if(scoring_str == "NER") scoring = SCORING_NER;
+        else if(scoring_str == "Lhood") scoring = SCORING_LHOOD;
+        else throw "scoring method invalid";
       }
     }catch(char const* warn) {
       cout << warn << " - use accuracy" << endl;
@@ -54,16 +54,16 @@ namespace Tagging {
     for(int q = 0; q < Q; q++) {
       xmllog.begin("pass "+to_string(q));
       for(const SentencePtr seq : corpus->seqs) {
-	xmllog.begin("example_"+to_string(num_ob));
-	ParamPointer gradient = this->gradient(*seq);
-	this->adagrad(gradient);
-	xmllog.end();
-	num_ob++;
-	if(lets_test) {
-	  if(num_ob % testLag == 0) {
-	    test(test_corpus);
-	  }
-	}
+        xmllog.begin("example_"+to_string(num_ob));
+        ParamPointer gradient = this->gradient(*seq);
+        this->adagrad(gradient);
+        xmllog.end();
+        num_ob++;
+        if(lets_test) {
+          if(num_ob % testLag == 0) {
+            test(test_corpus);
+          }
+        }
       }
       xmllog.end();
     }

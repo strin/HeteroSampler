@@ -25,9 +25,13 @@ public:
     return "";
   };
 
-  virtual vec<int> markovBlanket(int id) const {
+  vec<int> markovBlanket(int id) const {
     auto adj_set = adjacencyList[id];
     return vec<int>(adj_set.begin(), adj_set.end());
+  }
+
+  vec<int> invMarkovBlanket(int id) const {
+    return markovBlanket(id);
   }
 
 private:

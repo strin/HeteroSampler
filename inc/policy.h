@@ -91,7 +91,7 @@ namespace Tagging {
     virtual void sample(int tid, MarkovTreeNodePtr node);
     
     // wrap model->sampleOne.
-    void sampleOne(MarkovTreeNodePtr, objcokus& rng, int pos);
+    MarkovTreeNodePtr sampleOne(MarkovTreeNodePtr, objcokus& rng, int pos);
 
     // update resp of the meta-features.
     void updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* heap);
@@ -142,7 +142,9 @@ namespace Tagging {
     vec<string> verbose_opt;
     bool verboseOptFind(string verse) {return std::find(verbose_opt.begin(), verbose_opt.end(), verse) != verbose_opt.end(); }
 
-    const bool lets_inplace;   // not work with entire history.
+    const bool lets_inplace;              // not work with entire history.
+    const bool lets_lazymax;              // take max sample only after each sweep. 
+    int lazymax_lag;        // the lag to take max, default(-1, entire instance).
     // feature option, each string switches a meta-feature to add.
 
     vec<string> featopt; 

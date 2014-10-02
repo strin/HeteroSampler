@@ -59,6 +59,7 @@ int main(int argc, char* argv[]) {
   	("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
   	("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
     ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
+    ("lets_lazymax", po::value<bool>()->default_value(false), "lazymax is true, the algorithm takes max sample only after each sweep.")
     ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
     ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
     ("feat", po::value<std::string>()->default_value(""), "feature switches")
@@ -366,7 +367,7 @@ int main(int argc, char* argv[]) {
       std::vector<std::pair<double, double> > budget_acc;
       double budget = 0;
       auto runWithBudget = [&] (double b) {
-	budget += b;
+        budget += b;
         string myname = name + "_b" + boost::lexical_cast<string>(budget);
         system(("mkdir -p " + myname).c_str());
         policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
@@ -390,6 +391,7 @@ int main(int argc, char* argv[]) {
       for(int t = 0; t < T; t++) {
         if(t == 0) {
           const int segs = 10;
+          policy->lazymax_lag = segs;
           for(int i = 0; i < segs; i++) {
               runWithBudget(1/(double)segs);
           }

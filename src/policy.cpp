@@ -32,7 +32,9 @@ namespace Tagging {
    Q(vm["Q"].as<size_t>()),
    lets_resp_reward(false),
    lets_inplace(vm["inplace"].as<bool>()), 
-   init_method(vm["init"].as<string>()), 
+   lets_lazymax(vm["lets_lazymax"].as<bool>()),
+   lazymax_lag(-1),
+   init_method(vm["init"].as<string>()),
    model_unigram(nullptr), 
    param(makeParamPointer()), G2(makeParamPointer()) {
     // feature switch.
@@ -96,9 +98,6 @@ namespace Tagging {
         if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH) 
           throw "Policy Chain reaches maximum depth.";
         node->choice = this->policy(node);
-        /*if(node->choice == 0) {
-          cout << model->score(*node->gm) << endl;
-        }*/
         if(node->choice == -1) {
           /* strategy 1 */
 //          node->log_weight = this->reward(node);
@@ -109,19 +108,8 @@ namespace Tagging {
         }else{
           node->log_weight = -DBL_MAX; 
           int pos = node->choice;
-          node->gradient = model->sampleOne(*node->gm, rng, pos);
-          node->log_prior_weight += node->gm->reward[pos];
-          if(node->log_prior_weight > node->max_log_prior_weight) {
-            node->max_log_prior_weight = node->log_prior_weight;
-            node->max_gm = model->copySample(*node->gm);
-          }
-          FeaturePointer feat = this->extractFeatures(node, pos);
-          node->gm->mask[pos] += 1;
-          node->gm->feat[pos] = feat;
-          node->gm->resp[pos] = Tagging::score(this->param, feat);
-//          node->gm->checksum[pos] = this->checksum(node, pos);    // compute checksum after sample.
-          node->gm->checksum[pos] = 0; // WARNING: a hack. 
-
+          this->sampleOne(node, rng, pos);
+          this->updateResp(node, rng, pos, nullptr);
          /* if(lets_resp_reward) {
             double resp = node->gm->resp[pos];
             test_thread_pool.lock();
@@ -142,11 +130,6 @@ namespace Tagging {
             }
             test_thread_pool.unlock();
           }*/
-        }
-        if(lets_inplace) {
-          node->depth++;
-        }else {
-          node = addChild(node, *node->gm);
         }
     }
     }catch(const char* ee) {
@@ -327,8 +310,8 @@ namespace Tagging {
 
     lg->begin("example");
     count = 0;
-    size_t hit_count = 0, pred_count = 0, truth_count = 0; 
-    size_t ave_time = 0;
+    double hit_count = 0, pred_count = 0, truth_count = 0;
+    double ave_time = 0;
     vector<MarkovTreeNodePtr> stack;
     vector<int> id;
     for(const SentencePtr seq : result->corpus->seqs) {
@@ -572,14 +555,23 @@ namespace Tagging {
     return feat;
   }
 
-  void Policy::sampleOne(MarkovTreeNodePtr node, objcokus& rng, int pos) {
+  MarkovTreeNodePtr Policy::sampleOne(MarkovTreeNodePtr node, objcokus& rng, int pos) {
     node->gradient = model->sampleOne(*node->gm, rng, pos);
     node->log_prior_weight += node->gm->reward[pos];
-    if(node->log_prior_weight > node->max_log_prior_weight) {
-      node->max_log_prior_weight = node->log_prior_weight;
-      node->max_gm = model->copySample(*node->gm);
+    if(!lets_lazymax || (lazymax_lag == -1 and pos == 0)
+      || (lazymax_lag != -1 and node->depth % (int)(node->gm->size() / lazymax_lag) == 0)) {// lazy copy
+      if(node->log_prior_weight > node->max_log_prior_weight) {
+        node->max_log_prior_weight = node->log_prior_weight;
+        node->max_gm = model->copySample(*node->gm);
+      }
     }
     node->gm->mask[pos] += 1;
+    if(lets_inplace) {
+      node->depth++;
+    }else {
+      node = addChild(node, *node->gm);
+    }
+    return node;
   }
 
   void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* heap) {
@@ -1318,7 +1310,7 @@ namespace Tagging {
       node->gm->rng = &rng; 
       for(size_t i = 0; i < node->gm->size(); i++) {
         this->sampleOne(node, rng, i);
-        updateResp(node, rng, i, nullptr);
+        this->updateResp(node, rng, i, nullptr);
       }
 //      node->gradient = makeParamPointer();
 //      node->G2 = makeParamPointer();
@@ -1347,7 +1339,7 @@ namespace Tagging {
           double logR = node->gm->reward[i];
           
 #endif
-          updateResp(node, rng, i, nullptr);
+          this->updateResp(node, rng, i, nullptr);
 
           thread_pool.lock();
 

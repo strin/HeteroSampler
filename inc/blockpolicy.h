@@ -103,11 +103,11 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
   double total_budget = result->corpus->count(PolicyType::test_count) * budget;
   for(size_t b = 0; b < total_budget; b++) {
     auto p = policy(result);
-    // std::cout << p.index << " , " << p.pos << std::endl;
+//     std::cout << p.index << " , " << p.pos << std::endl;
     this->sampleOne(result, this->rng, p);
   }
   auto lg = PolicyType::lg;
-  size_t hit_count = 0, pred_count = 0, truth_count = 0;
+  double hit_count = 0, pred_count = 0, truth_count = 0;
   this->lg->begin("example");
   for(size_t i = 0; i < result->size(); i++) {
     MarkovTreeNodePtr node = result->getNode(i);

@@ -25,6 +25,10 @@ public:
     return "";
   };
 
+  virtual size_t size() const {
+    return gm->numberOfVariables();
+  }
+
   vec<int> markovBlanket(int id) const {
     auto adj_set = adjacencyList[id];
     return vec<int>(adj_set.begin(), adj_set.end());

@@ -40,6 +40,9 @@ namespace Tagging {
       MarkovTreeNodePtr getNode(size_t i) const {
         return nodes[i];
       }
+      void setNode(size_t i, MarkovTreeNodePtr node) {
+        nodes[i] = node;
+      }
     };
     struct ROC {
     public:

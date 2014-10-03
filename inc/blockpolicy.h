@@ -45,7 +45,7 @@ public:
 
   virtual void testPolicy(ptr<Result> result, double budget);
 
-  void sampleOne(ptr<Result> result, objcokus& rng, const Location& loc);
+  MarkovTreeNodePtr sampleOne(ptr<Result> result, objcokus& rng, const Location& loc);
 
   /* Given a forest of MarkovTreeNode 
    * return which node and which position of the node to sample.
@@ -103,8 +103,8 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
   double total_budget = result->corpus->count(PolicyType::test_count) * budget;
   for(size_t b = 0; b < total_budget; b++) {
     auto p = policy(result);
-//     std::cout << p.index << " , " << p.pos << std::endl;
-    this->sampleOne(result, this->rng, p);
+    // std::cout << p.index << " , " << p.pos << std::endl;
+    result->setNode(p.index, this->sampleOne(result, this->rng, p));
   }
   auto lg = PolicyType::lg;
   double hit_count = 0, pred_count = 0, truth_count = 0;
@@ -175,18 +175,19 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
 
 
 template<class PolicyType>
-void
+MarkovTreeNodePtr
 BlockPolicy<PolicyType>::sampleOne(ptr<BlockPolicy<PolicyType>::Result> result, objcokus& rng, const Location& loc) {
   clock_t clock_start = clock(), clock_end;
   int index = loc.index, pos = loc.pos;
   MarkovTreeNodePtr node = result->getNode(index);
-  PolicyType::sampleOne(node, rng, pos);
+  node = PolicyType::sampleOne(node, rng, pos);
   clock_end = clock();
   result->wallclock_sample += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
   clock_start = clock();
   PolicyType::updateResp(node, rng, pos, &result->heap);
   clock_end = clock();
   result->wallclock_policy += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
+  return node;
 }
 
 template<class PolicyType>

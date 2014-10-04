@@ -118,7 +118,7 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
   double total_budget = result->corpus->count(PolicyType::test_count) * budget;
   for(size_t b = 0; b < total_budget; b++) {
     auto p = policy(result);
-    // std::cout << p.index << " , " << p.pos << std::endl;
+     std::cout << p.index << " , " << p.pos << std::endl;
     result->setNode(p.index, this->sampleOne(result, this->rng, p));
   }
   auto lg = PolicyType::lg;

@@ -40,6 +40,7 @@ namespace Tagging {
   using std::cin;
   using std::cerr;
   using std::endl;
+  using std::to_string;
 
   template<class T>
   using vec = std::vector<T>;

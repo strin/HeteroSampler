@@ -118,7 +118,7 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
   double total_budget = result->corpus->count(PolicyType::test_count) * budget;
   for(size_t b = 0; b < total_budget; b++) {
     auto p = policy(result);
-     std::cout << p.index << " , " << p.pos << std::endl;
+//    std::cout << p.index << " , " << p.pos << std::endl;
     result->setNode(p.index, this->sampleOne(result, this->rng, p));
   }
   auto lg = PolicyType::lg;
@@ -213,7 +213,6 @@ BlockPolicy<PolicyType>::policy(ptr<BlockPolicy<PolicyType>::Result> result) {
   Location loc;
   Value val = result->heap.top();
   // std::cout << "val : " << val.resp << std::endl;
-  //  result->heap.pop();
   clock_end = clock();
   result->wallclock_policy += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
   return val.loc;

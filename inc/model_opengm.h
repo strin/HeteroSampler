@@ -116,7 +116,6 @@ namespace Tagging {
       }
       logNormalize(&gm.sc[0], gm.numLabels(choice));
     };
-
     /* estimate temperature */
     if(gm.time == 0) {    // compute initial temperature.
       temp = 1;

@@ -61,7 +61,12 @@ vec<typename OpenGM<GM>::LabelType> OpenGM<GM>::getLabels() const { // why canno
 
 template<class GM>
 string OpenGM<GM>::str() {
-  return "not available";
+  auto ret = getLabels();
+  string res;
+  for(auto& val : ret) {
+    res += to_string(val) + "\t";
+  }
+  return res;
 }
 
 template<class GM>

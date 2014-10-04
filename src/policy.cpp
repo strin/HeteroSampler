@@ -538,6 +538,28 @@ namespace Tagging {
       insertFeature(feat, "nb-#vary", 0); // to be modified dynamically.
     }
 
+    if(featoptFind("nb-sure")) {
+      double nb_sure = 0;
+      int count = 0;
+      for(auto id : model->markovBlanket(*node->gm, pos)) {
+        nb_sure += node->gm->entropy[id];
+        count++;
+      }
+      nb_sure /= (double)count;
+      insertFeature(feat, "nb-sure", nb_sure);
+    }
+
+    if(featoptFind("nb-sure*cond-ent")) {
+      double nb_sure = 0;
+      int count = 0;
+      for(auto id : model->markovBlanket(*node->gm, pos)) {
+        nb_sure += node->gm->entropy[id];
+        count++;
+      }
+      nb_sure /= (double)count;
+      insertFeature(feat, "nb-sure*cond-ent", nb_sure * node->gm->entropy[pos]);
+    }
+
     if(featoptFind("oracle")) {
       int oldval = cast<Tag>(node->gm)->tag[pos];
       auto temp_ptr = model->copySample(*node->gm);
@@ -640,15 +662,11 @@ namespace Tagging {
     lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
     lg->begin("truth"); *lg << node->gm->seq->str() << endl; lg->end();
     lg->begin("tag"); *lg << node->gm->str() << endl; lg->end();
-    // int hits = 0;
     for(size_t i = 0; i < node->gm->size(); i++) {
       if(verboseOptFind("feat")) {
         lg->begin("feat"); 
         *lg << *this->extractFeatures(node, i);
         lg->end(); // </feat> */
-        // if(node->gm->tag[i] == node->gm->seq->tag[i]) {
-        //   hits++;
-        // }
       }
     }
     lg->begin("resp");

@@ -34,8 +34,12 @@ namespace Tagging {
   template<class T>
   using ptr = std::shared_ptr<T>;
 
-  
   using string = std::string;
+
+  using std::cout;
+  using std::cin;
+  using std::cerr;
+  using std::endl;
 
   template<class T>
   using vec = std::vector<T>;

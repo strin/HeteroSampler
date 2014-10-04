@@ -165,15 +165,12 @@ namespace Tagging {
     cout << "> train " << endl;
     lg->begin("train");
       for(size_t q = 0; q < Q; q++) {
-	cout << "\t epoch " << q << endl;
-	cout << "\t update policy " <<  endl;
-	this->trainPolicy(corpus);
-	cout << "\t update kernel " << endl;
-	this->trainKernel(corpus);
+        cout << "\t epoch " << q << endl;
+        cout << "\t update policy " <<  endl;
+        this->trainPolicy(corpus);
+        cout << "\t update kernel " << endl;
+        this->trainKernel(corpus);
       }
-      lg->begin("param");
-      *lg << *param;
-      lg->end();
     lg->end(); // </train>
   }
 
@@ -320,7 +317,6 @@ namespace Tagging {
       if(result->nodes[count] == nullptr) {
         node = makeMarkovTreeNode(nullptr);
         node->model = model;
-//        node->gm = makeTagPtr(seq.get(), model->corpus, &rng, model->param);
         node->gm = model->makeSample(*seq, model->corpus, &rng);
         node->log_prior_weight = model->score(*node->gm);
       }else{
@@ -360,6 +356,7 @@ namespace Tagging {
       }
     }
     lg->end(); // </example>
+    /* log summary stats */
     time_end = clock();
     double accuracy = (double)hit_count / pred_count;
     double recall = (double)hit_count / truth_count;
@@ -1308,6 +1305,7 @@ namespace Tagging {
   void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
     node->choice = -1;
+    examples.clear();
     try{
       objcokus& rng = thread_pool.rngs[tid];
       node->gm->rng = &rng; 
@@ -1315,16 +1313,14 @@ namespace Tagging {
         this->sampleOne(node, rng, i);
         this->updateResp(node, rng, i, nullptr);
       }
-//      node->gradient = makeParamPointer();
-//      node->G2 = makeParamPointer();
       for(size_t t = 1; t < T; t++) {
         for(size_t i = 0; i < node->gm->size(); i++) {
           node->time_stamp = t * node->gm->size() + i;
           /* extract features */
-          // FeaturePointer feat = this->extractFeatures(node, i);
-          // double resp = Tagging::score(param, feat);
           FeaturePointer feat = node->gm->feat[i];
-          double resp = node->gm->resp[i];
+
+          // double resp = node->gm->resp[i];
+          double resp = Tagging::score(param, feat); // fix: param always changes, so does resp. 
 
           /* estimate reward */
 #if REWARD_SCHEME == REWARD_ACCURACY
@@ -1346,10 +1342,6 @@ namespace Tagging {
 
           thread_pool.lock();
 
-          if(lets_resp_reward) {
-            resp_reward.push_back(make_pair(resp, logR));
-          }
-
           /* update meta-model (strategy 1) */
           // mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
 
@@ -1362,6 +1354,18 @@ namespace Tagging {
             mapUpdate(*grad, *feat, -resp);
           }
           adagrad(param, G2, grad, eta);   // overwrite adagrad, for fine-grain gradients. (return node->gradient empty).
+          
+          if(lets_resp_reward) {
+            resp_reward.push_back(make_pair(resp, logR));
+            PolicyExample example;
+            example.reward = logR;
+            example.resp = resp;
+            example.feat = makeFeaturePointer();
+            example.param = makeParamPointer();
+            *example.feat = *feat;
+            *example.param = *param;
+            this->examples.push_back(example);
+          }
           thread_pool.unlock();
         }
       }

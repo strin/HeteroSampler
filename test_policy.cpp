@@ -352,7 +352,7 @@ int main(int argc, char* argv[]) {
       policy->model_unigram = model_unigram;
       system(("mkdir -p " + name + "_train").c_str());
       policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
-      train_func(policy);
+      policy->train(corpus);
       int testCount = vm["testCount"].as<size_t>();
       int count = testCorpus->count(testCount);
       size_t T = vm["T"].as<size_t>();

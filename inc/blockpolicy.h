@@ -24,8 +24,6 @@ public:
   ~BlockPolicy() {
   }
 
-
-
   class Result : public PolicyType::Result {
   public:
     Result(ptr<Corpus> corpus)
@@ -35,8 +33,25 @@ public:
     Heap heap;
   };
 
+  using PolicyType::lg;
+  using PolicyType::Q;
+  using PolicyType::param;
+
   virtual void train(ptr<Corpus> corpus) {
-    PolicyType::train(corpus);
+    lg->begin("train");
+      /* train the model */
+      for(size_t q = 0; q < Q; q++) {
+        cout << "\t epoch " << q << endl;
+        cout << "\t update policy " <<  endl;
+        PolicyType::trainPolicy(corpus);
+      }
+      /* log policy examples */
+      lg->begin("policy_example");
+        for(auto example : this->examples) {
+          example.serialize(lg);
+        }
+      lg->end(); // </policy_example>
+    lg->end(); // </train>
   }
 
   ptr<Result> test(ptr<Corpus> corpus, double budget);
@@ -130,6 +145,7 @@ BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result,
     lg->end(); // </example_i>
   }
   lg->end(); // </example>
+  /* log summary stats */
   time_end = clock();
   double accuracy = (double)hit_count / pred_count;
   double recall = (double)hit_count / truth_count;

@@ -1315,7 +1315,9 @@ namespace Tagging {
           node->time_stamp = t * node->gm->size() + i;
           /* extract features */
           FeaturePointer feat = node->gm->feat[i];
-          double resp = node->gm->resp[i];
+
+          // double resp = node->gm->resp[i];
+          double resp = Tagging::score(param, feat); // fix: param always changes, so does resp. 
 
           /* estimate reward */
 #if REWARD_SCHEME == REWARD_ACCURACY

@@ -1243,6 +1243,9 @@ namespace Tagging {
     if(featoptFind("#sp")) {
       insertFeature(feat, "#sp", node->gm->mask[pos]);
     }
+    if(featoptFind("#sp-norm")) {
+      insertFeature(feat, "#sp-norm", node->gm->mask[pos] * 10.0 / (double)T);
+    }
     if(featoptFind("#sp-cond-ent")) {
       insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos])+"-cond-ent", node->gm->entropy[pos]);
     }

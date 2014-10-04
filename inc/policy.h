@@ -120,7 +120,26 @@ namespace Tagging {
     void resetLog(std::shared_ptr<XMLlog> new_lg);
 
     // response-reward pair.
+    struct PolicyExample {  // examples used to train policy.
+      double reward;
+      double resp;
+      FeaturePointer feat;
+      ParamPointer param;
+      void serialize(ptr<XMLlog> lg) {
+        lg->begin("example");
+          lg->logAttr("item", "reward", reward);
+          lg->logAttr("item", "resp", resp);
+          for(auto& p : *feat) {
+            lg->logAttr("feat", p.first, p.second);
+          }
+          for(auto& p : *param) {
+            lg->logAttr("param", p.first, p.second);
+          }
+        lg->end(); // <example>
+      }
+    };
     bool lets_resp_reward;
+    vec<PolicyExample> examples;
     vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R. 
     vec<pair<double, double> > resp_RH, test_resp_RH; // whether incorrect, upper bound of R.
     vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.

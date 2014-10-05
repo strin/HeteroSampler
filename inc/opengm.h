@@ -40,7 +40,6 @@ OpenGM<GM>::OpenGM(const Instance* seq, const GraphicalModelType& gm)
   timestamp.resize(size, 0);
   checksum.resize(size);
   reward.resize(size, 0);
-  entropy.resize(size);
   entropy_unigram.resize(size);
   resp.resize(size, DBL_MAX);
   mask.resize(size, 0);

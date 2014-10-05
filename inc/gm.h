@@ -41,6 +41,8 @@ public:
 
   /* statistics for variables */
   void initStats() {
+    entropy.resize(this->size(), log(this->numLabels(0)));
+    prev_entropy.resize(this->size());
     feat.resize(this->size());
     blanket.resize(this->size());
     changed.resize(this->size());
@@ -50,7 +52,8 @@ public:
   int time;                               // how many times have spent on sampling this graphical model. 
   vec<double> timestamp;                  // whenever a position is changed, its timestamp is incremented.
   vec<double> checksum;                   // if checksum is changes, then the position might be updated.
-  std::vector<double> entropy;            // current entropy when sampled.
+  std::vector<double> entropy;            // current entropy when being sampled.
+  std::vector<double> prev_entropy;       // previous entropy before being sampled.
   std::vector<double> sc;                 
   std::vector<double> entropy_unigram;    // unigram entropy of positions.
   vec<vec<double> > sc_unigram;

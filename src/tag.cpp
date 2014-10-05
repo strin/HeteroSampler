@@ -36,7 +36,6 @@ namespace Tagging {
     mask.resize(seqlen); 
     timestamp.resize(seqlen, 0);
     checksum.resize(seqlen, NAN);
-    entropy.resize(seqlen);
     entropy_unigram.resize(seqlen, NAN);
     reward.resize(seqlen);
     this->initStats();

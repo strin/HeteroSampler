@@ -17,6 +17,9 @@ namespace Tagging {
   const static string NER_DISAGREE = "ner-disagree";
   const static string NER_DISAGREE_L = "ner-disagree-l";
   const static string NER_DISAGREE_R = "ner-disagree-r";
+  const static string NB_ENT = "nb-ent";
+  const static string NB_ENT__COND = "nb-ent--cond-ent";
+  const static string COND = "cond-ent";
 
   class Policy {
   public:

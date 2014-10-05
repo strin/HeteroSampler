@@ -429,8 +429,8 @@ namespace Tagging {
         }
       }
     }
-    if(featoptFind("cond-ent") || featoptFind("all")) {
-      insertFeature(feat, "cond-ent", node->gm->entropy[pos]);
+    if(featoptFind(COND) || featoptFind(NB_ENT__COND) || featoptFind("all")) {
+      insertFeature(feat, COND, node->gm->entropy[pos]);
     }
     // if(featoptFind("cond-lhood") || featoptFind("all")) {
     //   insertFeature(feat, "cond-lhood", node->gm->sc[node->gm->tag[pos]]);
@@ -533,12 +533,13 @@ namespace Tagging {
       }
       insertFeature(feat, "ising-disagree", disagree);
     }
-    // features based on neighbors.
+
+    /* features based on neighbors. */
     if(featoptFind(NB_VARY)) {
       insertFeature(feat, NB_VARY, 0); // to be modified dynamically.
     }
 
-    if(featoptFind("nb-sure")) {
+    if(featoptFind(NB_ENT) || featoptFind(NB_ENT__COND)) {
       double nb_sure = 0;
       int count = 0;
       for(auto id : model->markovBlanket(*node->gm, pos)) {
@@ -546,18 +547,11 @@ namespace Tagging {
         count++;
       }
       nb_sure /= (double)count;
-      insertFeature(feat, "nb-sure", nb_sure);
+      insertFeature(feat, NB_ENT, nb_sure);
     }
 
-    if(featoptFind("nb-sure--cond-ent")) {
-      double nb_sure = 0;
-      int count = 0;
-      for(auto id : model->markovBlanket(*node->gm, pos)) {
-        nb_sure += node->gm->entropy[id];
-        count++;
-      }
-      nb_sure /= (double)count;
-      insertFeature(feat, "nb-sure--cond-ent", nb_sure * node->gm->entropy[pos]);
+    if(featoptFind(NB_ENT__COND)) {
+      insertFeature(feat, NB_ENT__COND, getFeature(feat, NB_ENT) * node->gm->entropy[pos]);
     }
 
     if(featoptFind("oracle")) {
@@ -602,13 +596,14 @@ namespace Tagging {
     node->gm->resp[pos] = Tagging::score(this->param, feat);
     node->gm->checksum[pos] = 0; // WARNING: a hack.
     int val = node->gm->getLabel(pos);
-    /* update my friends' response */
     auto updateRespByHandle = [&] (int id) {
       if(heap == nullptr) return;
       Value& val = *node->gm->handle[id];
       val.resp = node->gm->resp[id];
       heap->update(node->gm->handle[id]);
     };
+    updateRespByHandle(pos);
+    /* update my friends' response */
     if(featoptFind(NB_VARY)) {
       /* update the nodes in inv Markov blanket */
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
@@ -629,10 +624,25 @@ namespace Tagging {
           }
         }
       }
-      /* update Markov blanket */
       node->gm->changed[pos].clear();
       for(auto pair : node->gm->blanket[pos]) {
         node->gm->changed[pos][pair.first] = false;
+      }
+    }
+    if(featoptFind(NB_ENT) || featoptFind(NB_ENT__COND)) {
+      for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
+        if(node->gm->blanket[id].size() > 0) {
+          double* feat_nb_ent = findFeature(node->gm->feat[id], NB_ENT);
+          double ent_diff = node->gm->entropy[pos] - node->gm->prev_entropy[pos];
+          (*feat_nb_ent) += ent_diff;
+          node->gm->resp[id] += (*param)[NB_ENT] * ent_diff;
+          if(featoptFind(NB_ENT__COND)) {
+            double* feat_nb_ent__cond = findFeature(node->gm->feat[id], NB_ENT__COND);
+            double ent = getFeature(node->gm->feat[id], COND);
+            (*feat_nb_ent__cond) += ent_diff * ent;
+            node->gm->resp[id] += (*param)[NB_ENT__COND] * ent_diff * ent;
+          }   
+        }
       }
     }
     if(featoptFind(NER_DISAGREE)) {
@@ -647,7 +657,7 @@ namespace Tagging {
         updateRespByHandle(pos+1);
       }
     }
-    updateRespByHandle(pos);
+    /* update Markov blanket */
     node->gm->blanket[pos] = node->gm->getLabels(model->markovBlanket(*node->gm, pos));
   }
 

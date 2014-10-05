@@ -186,6 +186,7 @@ namespace Tagging {
 
     // compute statistics.
     tag.reward[pos] = sc[val] - sc[oldval];
+    tag.prev_entropy[pos] = tag.entropy[pos];
     tag.entropy[pos] = logEntropy(sc, taglen);
     tag.sc.clear();
     for(int t = 0; t < taglen; t++) { 

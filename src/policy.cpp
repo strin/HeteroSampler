@@ -172,6 +172,7 @@ namespace Tagging {
         this->trainKernel(corpus);
       }
     lg->end(); // </train>
+    cout << "> completed." << endl;
   }
 
   void Policy::trainPolicy(ptr<Corpus> corpus) {
@@ -1410,6 +1411,13 @@ namespace Tagging {
             *example.param = *param;
             this->examples.push_back(example);
           }
+          
+          if(verbose) {
+            lg->begin("T_" + to_string(t) + "_i_" + to_string(i));
+            logNode(node);
+            lg->end();
+          }
+          
           thread_pool.unlock();
         }
       }

@@ -78,6 +78,7 @@ target_link_libraries(tag
   ${LIBS}
   ${Boost_LIBRARIES}
   ${PYTHON_LIBRARIES}
+  ${HDF5_LIBRARIES}
 )
 
 add_executable(pos main.cpp
@@ -169,3 +170,17 @@ target_link_libraries(test-thread
   ${PYTHON_LIBRARIES}
 )
 
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY check)
+
+add_executable(check-opengm-chain check/check_opengm_chain.cpp
+)
+
+target_link_libraries(check-opengm-chain
+  scilog
+  tag
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${LIBS}
+  ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+  ${HDF5_LIBRARIES}
+)

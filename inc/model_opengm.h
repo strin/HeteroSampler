@@ -53,7 +53,7 @@ namespace Tagging {
     }
 
     string annealing;
-    double temp, temp_decay, temp_magnify;
+    double temp, temp_decay, temp_magnify, temp_init;
   };
 
   template<class GM, class ACC>
@@ -64,6 +64,7 @@ namespace Tagging {
       temp_decay = vm["temp_decay"].as<double>();
       temp_magnify = vm["temp_magnify"].as<double>();
     }
+    temp_init = vm["temp_init"].as<double>();
   }
 
   template<class GM, class ACC> 
@@ -118,7 +119,7 @@ namespace Tagging {
     };
     /* estimate temperature */
     if(gm.time == 0) {    // compute initial temperature.
-      temp = 1;
+      temp = temp_init;
       if(annealing == "scanline") {
         double q = 0;
         vec<LabelType> labels = opengm_.getLabels();
@@ -145,7 +146,7 @@ namespace Tagging {
 
     /* compute stats */
     opengm_.move(&choice, &choice + 1, &val);
-    opengm_.time++;
+    gm.time++;
 
     /* no gradient would be returned, 
        because model_opengm has no training */

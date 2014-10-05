@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
     ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
     ("feat", po::value<std::string>()->default_value(""), "feature switches")
     ("temp", po::value<string>()->default_value("scanline"), "the annealing scheme to use.")
+    ("temp_init", po::value<double>()->default_value(1), "initial temperature")
     ("temp_decay", po::value<double>()->default_value(0.9), "decay of temperature.")
     ("temp_magnify", po::value<double>()->default_value(0.1), "magnifying factor of init temperature.");
 

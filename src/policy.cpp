@@ -534,8 +534,8 @@ namespace Tagging {
       insertFeature(feat, "ising-disagree", disagree);
     }
     // features based on neighbors.
-    if(featoptFind("nb-#vary")) {
-      insertFeature(feat, "nb-#vary", 0); // to be modified dynamically.
+    if(featoptFind(NB_VARY)) {
+      insertFeature(feat, NB_VARY, 0); // to be modified dynamically.
     }
 
     if(featoptFind("nb-sure")) {
@@ -549,7 +549,7 @@ namespace Tagging {
       insertFeature(feat, "nb-sure", nb_sure);
     }
 
-    if(featoptFind("nb-sure*cond-ent")) {
+    if(featoptFind("nb-sure--cond-ent")) {
       double nb_sure = 0;
       int count = 0;
       for(auto id : model->markovBlanket(*node->gm, pos)) {
@@ -557,7 +557,7 @@ namespace Tagging {
         count++;
       }
       nb_sure /= (double)count;
-      insertFeature(feat, "nb-sure*cond-ent", nb_sure * node->gm->entropy[pos]);
+      insertFeature(feat, "nb-sure--cond-ent", nb_sure * node->gm->entropy[pos]);
     }
 
     if(featoptFind("oracle")) {
@@ -594,12 +594,15 @@ namespace Tagging {
     return node;
   }
 
+  /* update resp has two parts: update features, compute new responses */
   void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* heap) {
+    /* update my response */
     FeaturePointer feat = this->extractFeatures(node, pos);
     node->gm->feat[pos] = feat;
     node->gm->resp[pos] = Tagging::score(this->param, feat);
     node->gm->checksum[pos] = 0; // WARNING: a hack.
     int val = node->gm->getLabel(pos);
+    /* update my friends' response */
     auto updateRespByHandle = [&] (int id) {
       if(heap == nullptr) return;
       Value& val = *node->gm->handle[id];
@@ -675,6 +678,18 @@ namespace Tagging {
     }
     *lg << endl;
     lg->end();
+    if(node->gm->size() > 0) {
+      lg->begin("feat");
+        for(auto& p : *node->gm->feat[0]) {
+          lg->begin(p.first);
+          for(size_t i = 0; i < node->gm->size(); i++) {
+            *lg << getFeature(node->gm->feat[i], p.first) << "\t";
+          }
+          *lg << endl;
+          lg->end();
+        }
+      lg->end();
+    }
     lg->begin("mask");
     for(size_t i = 0; i < node->gm->size(); i++) {
       *lg << node->gm->mask[i] << "\t";            
@@ -1255,19 +1270,19 @@ namespace Tagging {
   
   FeaturePointer LockdownPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     FeaturePointer feat = Policy::extractFeatures(node, pos);
-    if(featoptFind("log-#sp")) {
-      insertFeature(feat, "log-#sp", log(1+node->gm->mask[pos]));
+    if(featoptFind("log-sp")) {
+      insertFeature(feat, "log-sp", log(1+node->gm->mask[pos]));
     }
-    if(featoptFind("#sp")) {
-      insertFeature(feat, "#sp", node->gm->mask[pos]);
+    if(featoptFind("sp")) {
+      insertFeature(feat, "sp", node->gm->mask[pos]);
     }
-    if(featoptFind("#sp-norm")) {
-      insertFeature(feat, "#sp-norm", node->gm->mask[pos] * 10.0 / (double)T);
+    if(featoptFind("sp-norm")) {
+      insertFeature(feat, "sp-norm", node->gm->mask[pos] * 10.0 / (double)T);
     }
-    if(featoptFind("#sp-cond-ent")) {
+    if(featoptFind("sp-cond-ent")) {
       insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos])+"-cond-ent", node->gm->entropy[pos]);
     }
-    if(featoptFind("#sp-unigram-ent")) {
+    if(featoptFind("sp-unigram-ent")) {
       insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos])+"-unigram-ent", node->gm->entropy_unigram[pos]);
     }
     return feat;

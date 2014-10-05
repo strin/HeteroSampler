@@ -106,6 +106,7 @@ namespace Tagging {
   }
 
   inline static double getFeature(FeaturePointer feat, const std::string& key) {
+    if(feat == nullptr) return 0;
     for(auto& pair : *feat) {
       if(pair.first == key) {
         return pair.second;

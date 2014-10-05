@@ -634,7 +634,8 @@ namespace Tagging {
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
         if(node->gm->blanket[id].size() > 0) {
           double* feat_nb_ent = findFeature(node->gm->feat[id], NB_ENT);
-          double ent_diff = node->gm->entropy[pos] - node->gm->prev_entropy[pos];
+          double ent_diff = (node->gm->entropy[pos] - node->gm->prev_entropy[pos]) 
+                                / (double)node->gm->blanket[id].size();;
           (*feat_nb_ent) += ent_diff;
           node->gm->resp[id] += (*param)[NB_ENT] * ent_diff;
           if(featoptFind(NB_ENT__COND)) {
@@ -676,13 +677,6 @@ namespace Tagging {
     lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
     lg->begin("truth"); *lg << node->gm->seq->str() << endl; lg->end();
     lg->begin("tag"); *lg << node->gm->str() << endl; lg->end();
-    for(size_t i = 0; i < node->gm->size(); i++) {
-      if(verboseOptFind("feat")) {
-        lg->begin("feat"); 
-        *lg << *this->extractFeatures(node, i);
-        lg->end(); // </feat> */
-      }
-    }
     lg->begin("resp");
     for(size_t i = 0; i < node->gm->size(); i++) {
       *lg << node->gm->resp[i] << "\t";            
@@ -1357,6 +1351,11 @@ namespace Tagging {
       for(size_t i = 0; i < node->gm->size(); i++) {
         this->sampleOne(node, rng, i);
         this->updateResp(node, rng, i, nullptr);
+        if(verbose) {
+          lg->begin("T_0_i_" + to_string(i));
+          logNode(node);
+          lg->end();
+        }
       }
       for(size_t t = 1; t < T; t++) {
         for(size_t i = 0; i < node->gm->size(); i++) {

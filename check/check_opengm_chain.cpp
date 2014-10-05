@@ -69,18 +69,18 @@ int main(int argc, char* argv[]) {
     ptr<GraphicalModelType> instance = std::make_shared<GraphicalModelType>(space);
     const size_t shape[] = {numLabels};
     ExplicitFunction<double> u(shape, shape + 1), u0(shape, shape+1);
-    auto u_id = instance->addFunction(u), u0_id = instance->addFunction(u0);
     u(0) = 10;
     u(1) = 10;
-    u0(0) = 20;
+    u0(0) = -20;
     u0(1) = 0;
-    PottsFunction<double> f(numLabels, numLabels, 10, 0);
+    auto u_id = instance->addFunction(u), u0_id = instance->addFunction(u0);
+    PottsFunction<double> f(numLabels, numLabels, -10, 0);
     auto f_id = instance->addFunction(f);
-    for(size_t id = 1; id < numVars; id++) {
-      size_t vars123[] = {id};
-      instance->addFactor(u_id, vars123, vars123+1);
+    for(size_t id = 0; id < numVars-1; id++) {
+      size_t vars[] = {id};
+      instance->addFactor(u_id, vars, vars+1);
     }
-    size_t vars0[] = {0};
+    size_t vars0[] = {numVars-1};
     instance->addFactor(u0_id, vars0, vars0+1);
     for(size_t id = 0; id < numVars-1; id++) {
       size_t vars_pair[] = {id, id+1};

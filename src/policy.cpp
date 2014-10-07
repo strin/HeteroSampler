@@ -573,8 +573,11 @@ namespace Tagging {
     node->gradient = model->sampleOne(*node->gm, rng, pos);
     node->log_prior_weight += node->gm->reward[pos];
     auto lag = (int)(node->gm->size() / lazymax_lag);
-    if(!lets_lazymax || (lazymax_lag == -1 and pos == node->gm->size() - 1)
-      || (lazymax_lag != -1 and (node->depth % lag == lag-1 || pos == node->gm->size() - 1))) {// lazy copy
+    if(!lets_lazymax
+       || (lazymax_lag == -1 and pos == node->gm->size() - 1)
+       || (lazymax_lag != -1 and
+           ((lag != 0 and node->depth % lag == lag-1)
+            || pos == node->gm->size() - 1))) {   // lazy copy
       if(node->log_prior_weight > node->max_log_prior_weight) {
         node->max_log_prior_weight = node->log_prior_weight;
         node->max_gm = model->copySample(*node->gm);

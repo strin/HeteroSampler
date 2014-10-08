@@ -20,7 +20,7 @@ namespace Tagging {
       throw "OpenGM does not support gradient.";
     }
 
-    virtual ParamPointer sampleOne(GraphicalModel& gm, objcokus& rng, int choice);
+    virtual void sampleOne(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature = true);
 
     virtual double score(const GraphicalModel& gm);
 
@@ -97,14 +97,14 @@ namespace Tagging {
   }
 
 
-  
+
   template<class GM, class ACC>
-  ParamPointer ModelEnumerativeGibbs<GM, ACC>::sampleOne(GraphicalModel& gm, objcokus& rng, int choice) {
+  void ModelEnumerativeGibbs<GM, ACC>::sampleOne(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature) {
     if(choice >= (int)gm.size()) 
       throw "Gibbs sampling proposal out of bound.";
     auto& opengm_ = dynamic_cast<OpenGM<GraphicalModelType>& >(gm);
+    vec<double> sc(gm.numLabels(choice));
     auto computeSc = [&] (int choice) {
-      gm.sc.clear();
       for(size_t t = 0; t < gm.numLabels(choice); t++) {
         ValueType value = opengm_.valueAfterMove(&choice, &choice + 1, &t);
         double score = (double)value;
@@ -113,9 +113,9 @@ namespace Tagging {
         }else if(typeid(AccumulationType) == typeid(opengm::Minimizer)) { // Minimize energe.
           score = -score;
         }
-        gm.sc.push_back(score / temp);
+        sc[t] = score / temp;
       }
-      logNormalize(&gm.sc[0], gm.numLabels(choice));
+      logNormalize(&sc[0], gm.numLabels(choice));
     };
     /* estimate temperature */
     if(gm.time == 0) {    // compute initial temperature.
@@ -125,7 +125,7 @@ namespace Tagging {
         vec<LabelType> labels = opengm_.getLabels();
         for(int i = 0; i < (int)gm.size(); i++) {
           computeSc(i);
-          q -= gm.sc[labels[i]];
+          q -= sc[labels[i]];
         }
         q /= (double)gm.size();
         temp = temp_magnify * q;
@@ -138,20 +138,20 @@ namespace Tagging {
 
     /* sampling */
     computeSc(choice);
-    size_t val = rng.sampleCategorical(&gm.sc[0], gm.numLabels(choice));
+    size_t val = rng.sampleCategorical(&sc[0], gm.numLabels(choice));
     size_t oldval = opengm_.state(choice);
-    gm.reward[choice] = (gm.sc[val] - gm.sc[oldval]) * temp;  // use reward without temperature.
-    gm.prev_entropy[choice] = gm.entropy[choice];
-    gm.entropy[choice] = logEntropy(&gm.sc[0], gm.numLabels(choice));
-    gm.timestamp[choice]++;
+    gm.reward[choice] = (sc[val] - sc[oldval]) * temp;  // use reward without temperature.
+
+    if(use_meta_feature) {
+      gm.prev_entropy[choice] = gm.entropy[choice];
+      gm.entropy[choice] = logEntropy(&sc[0], gm.numLabels(choice));
+      gm.timestamp[choice]++;
+      gm.sc = sc;
+    }
 
     /* compute stats */
     opengm_.move(&choice, &choice + 1, &val);
     gm.time++;
-
-    /* no gradient would be returned, 
-       because model_opengm has no training */
-    return nullptr;
   }
 
 }

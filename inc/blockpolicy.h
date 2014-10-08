@@ -36,21 +36,29 @@ public:
   using PolicyType::lg;
   using PolicyType::Q;
   using PolicyType::param;
-
+  using Policy::featopt;
+  
   virtual void train(ptr<Corpus> corpus) {
     lg->begin("train");
       /* train the model */
-      for(size_t q = 0; q < Q; q++) {
-        cout << "\t epoch " << q << endl;
-        cout << "\t update policy " <<  endl;
-        PolicyType::trainPolicy(corpus);
+    cout << "start training ... " << endl;
+    for(size_t q = 0; q < Q; q++) {
+      cout << "\t epoch " << q << endl;
+      cout << "\t update policy " <<  endl;
+      PolicyType::trainPolicy(corpus);
+    }
+    if(Q == 0) { // notraining is needed.
+      // set all feature weights to 1.
+      for(const string& opt : featopt) {
+        (*param)[opt] = 1;
       }
-      /* log policy examples */
-      lg->begin("policy_example");
-        for(auto example : this->examples) {
-          example.serialize(lg);
-        }
-      lg->end(); // </policy_example>
+    }
+    /* log policy examples */
+    lg->begin("policy_example");
+      for(auto example : this->examples) {
+        example.serialize(lg);
+      }
+    lg->end(); // </policy_example>
     lg->end(); // </train>
   }
 

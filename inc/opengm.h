@@ -22,6 +22,11 @@ public:
   virtual int getLabel(int id) const {
     return (int)opengm::Movemaker<GM>::state(id);
   }
+
+  virtual void setLabel(int id, int val) {
+    this->move(&id, &id + 1, &val);
+  }
+  
   vec<LabelType> getLabels() const;
 
   /* implement GraphicalModel interface */

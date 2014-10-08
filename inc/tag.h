@@ -44,6 +44,11 @@ public:
     return tag[id];
   }
 
+  // set tag of a node.
+  virtual void setLabel(int id, int val) {
+    tag[id] = val;
+  }
+
   // return the string of a tag.
   std::string getTag(size_t pos) const;
   // to string. 

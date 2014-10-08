@@ -42,6 +42,7 @@ public:
   /* statistics for variables */
   void initStats() {
     entropy.resize(this->size(), log(this->numLabels(0)));
+    staleness.resize(this->size(), log(this->numLabels(0)));
     prev_entropy.resize(this->size());
     feat.resize(this->size());
     blanket.resize(this->size());
@@ -54,6 +55,7 @@ public:
   vec<double> timestamp;                  // whenever a position is changed, its timestamp is incremented.
   vec<double> checksum;                   // if checksum is changes, then the position might be updated.
   std::vector<double> entropy;            // current entropy when being sampled.
+  std::vector<double> staleness;          // how stale a position is.
   std::vector<double> prev_entropy;       // previous entropy before being sampled.
   std::vector<double> sc;                 
   std::vector<double> entropy_unigram;    // unigram entropy of positions.
@@ -90,6 +92,9 @@ public:
 
   // get the label of node *id*.
   virtual int getLabel(int id) const = 0;
+
+  // set the label of node *id*.
+  virtual void setLabel(int id, int val) = 0;
 
   // get the labels of some nodes in blanket.
   virtual map<int, int> getLabels(vec<int> blanket) const {

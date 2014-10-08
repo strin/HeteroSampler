@@ -25,6 +25,7 @@ namespace Tagging {
 		     }),
    name(vm["name"].as<string>()),
    K(vm["K"].as<size_t>()),
+   J(vm["J"].as<size_t>()),
    eta(vm["eta"].as<double>()),
    train_count(vm["trainCount"].as<size_t>()), 
    test_count(vm["testCount"].as<size_t>()),
@@ -189,6 +190,7 @@ namespace Tagging {
     lg->end();
     corpus->retag(model->corpus);
     size_t count = 0;
+    examples.clear();
     for(const SentencePtr seq : corpus->seqs) {
       if(count >= train_count) break;
       // cout << corpus->seqs.size() << endl;
@@ -689,17 +691,15 @@ namespace Tagging {
     if(node->gm->size() > 0) {
       lg->begin("feat");
       /* take the uninon of features from all positions */
-      std::set<string> feat_name;
-      /* take the uninon of features from all positions */
+      std::set<string> feat_names;
       for(size_t t = 0; t < node->gm->size(); t++) {
         if(node->gm->feat[t] == nullptr) continue;
         for(auto& p : *node->gm->feat[t]) {
-          feat_name.insert(string(p.first));
+          feat_names.insert(string(p.first));
         }
       }
-      
       /* log each position */
-      for(auto& p : feat_name) {
+      for(auto& p : feat_names) {
           lg->begin(p);
           for(size_t i = 0; i < node->gm->size(); i++) {
             *lg << getFeature(node->gm->feat[i], p) << "\t";
@@ -1358,7 +1358,6 @@ namespace Tagging {
   void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
     node->depth = 0;
     node->choice = -1;
-    examples.clear();
     try{
       objcokus& rng = thread_pool.rngs[tid];
       node->gm->rng = &rng; 
@@ -1387,13 +1386,30 @@ namespace Tagging {
             return (double)(old_tag->tag[i] == old_tag->seq->tag[i]); 
           };
           double reward_baseline = is_equal();
-          this->sampleOne(node, rng, i);
-          double reward = is_equal();
-          double logR = reward - reward_baseline; 
+          int oldval = node->gm->getLabel(i);
+          double logR = 0;
+          for(size_t j = 0; j < J; j++) {
+            this->sampleOne(node, rng, i);
+            double reward = is_equal();
+            logR += reward - reward_baseline; 
+            if(j < J-1)  // reset.
+              node->gm->setLabel(i, oldval);
+          }
+          logR /= (double)J;
 
 #elif REWARD_SCHEME == REWARD_LHOOD
-          this->sampleOne(node, rng, i);
-          double logR = node->gm->reward[i];
+          int oldval = node->gm->getLabel(i);
+          double logR = 0;
+          for(size_t j = 0; j < J; j++) {
+            if(j < J-1) {
+              model->sampleOne(*node->gm, rng, i);
+              node->gm->setLabel(i, oldval);
+            }else{
+              this->sampleOne(node, rng, i);
+            }
+            logR += node->gm->reward[i];
+          }
+          logR /= (double)J;
           
 #endif
           /* use gradients to update model */

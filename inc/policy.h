@@ -157,7 +157,8 @@ namespace Tagging {
     Vector2d tag_bigram;
     std::vector<double> tag_unigram_start;
     const std::string name;
-    const size_t K, Q; // K: num samples. Q: num epochs.
+    const size_t K, Q; // K: num trajectories. Q: num epochs.
+    const size_t J;    // J: num samples.
     const size_t test_count, train_count;
     const double eta;
 

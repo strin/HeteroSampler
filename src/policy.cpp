@@ -1378,7 +1378,9 @@ namespace Tagging {
 
           // double resp = node->gm->resp[i];
           double resp = Tagging::score(param, feat); // fix: param always changes, so does resp. 
-
+          double logR = 0;
+          double staleness = 0;
+          
           /* estimate reward */
 #if REWARD_SCHEME == REWARD_ACCURACY
           ptr<Tag> old_tag = cast<Tag>(node->gm);
@@ -1387,7 +1389,6 @@ namespace Tagging {
           };
           double reward_baseline = is_equal();
           int oldval = node->gm->getLabel(i);
-          double logR = 0;
           for(size_t j = 0; j < J; j++) {
             this->sampleOne(node, rng, i);
             double reward = is_equal();
@@ -1399,13 +1400,15 @@ namespace Tagging {
 
 #elif REWARD_SCHEME == REWARD_LHOOD
           int oldval = node->gm->getLabel(i);
-          double logR = 0;
           for(size_t j = 0; j < J; j++) {
             if(j < J-1) {
               model->sampleOne(*node->gm, rng, i);
               node->gm->setLabel(i, oldval);
             }else{
               this->sampleOne(node, rng, i);
+            }
+            if(j  == 0) {
+              staleness = node->gm->staleness[i];
             }
             logR += node->gm->reward[i];
           }
@@ -1444,6 +1447,7 @@ namespace Tagging {
             resp_reward.push_back(make_pair(resp, logR));
             PolicyExample example;
             example.reward = logR;
+            example.staleness = staleness;
             example.resp = resp;
             example.feat = makeFeaturePointer();
             example.param = makeParamPointer();

@@ -72,9 +72,7 @@ namespace Tagging {
     logNormalize(sc, taglen);
 
     int val;
-    /*for(int t = 0; t < taglen; t++) {
-      cout << "t = " << t << " , " << exp(sc[t]) << endl;
-    }*/
+    
     if(argmax) {
       double max_sc = -DBL_MAX;
       for(int t = 0; t < taglen; t++) {
@@ -98,6 +96,7 @@ namespace Tagging {
       this->sc.push_back(sc[t]);
     }
     this->timestamp[pos] += 1;
+
     // compute gradient, if necessary.
     this->features = featExtract(*this);
     ParamPointer gradient = makeParamPointer();

@@ -169,31 +169,31 @@ namespace Tagging {
     int oldval = tag.tag[pos];
 
     // Enumerative Gibbs sampling.
-    double sc[taglen];
+    tag.prev_sc = tag.sc;
+    tag.staleness[pos] = 0;
+
     vector<FeaturePointer> featvec;
     for(int t = 0; t < taglen; t++) {
       tag.tag[pos] = t;
       FeaturePointer features = feat_extract(shared_from_this(), tag, pos);
       featvec.push_back(features);
-      sc[t] = Tagging::score(this->param, features);
+      tag.sc[t] = Tagging::score(this->param, features);
     }
-    logNormalize(sc, taglen);
+    logNormalize(&tag.sc[0], taglen);
+    for(int t = 0; t < taglen; t++) {
+      tag.staleness[pos] += fabs(tag.sc[t] - tag.prev_sc[t]);
+    }
 
     int val;
-    val = rng.sampleCategorical(sc, taglen);
+    val = rng.sampleCategorical(&tag.sc[0], taglen);
     if(val == taglen) throw "Gibbs sample out of bound.";
     tag.tag[pos] = val;
 
     // compute statistics.
-    tag.reward[pos] = sc[val] - sc[oldval];
+    tag.reward[pos] = tag.sc[val] - tag.sc[oldval];
     tag.prev_entropy[pos] = tag.entropy[pos];
-    tag.entropy[pos] = logEntropy(sc, taglen);
-    tag.sc.clear();
-    for(int t = 0; t < taglen; t++) { 
-      if(std::isnan(sc[t])) 
-        cout << "nan " << endl;
-      tag.sc.push_back(sc[t]);
-    }
+    tag.entropy[pos] = logEntropy(&tag.sc[0], taglen);
+    
     tag.timestamp[pos] += 1;
     
 
@@ -204,7 +204,7 @@ namespace Tagging {
       mapUpdate<double, double>(*gradient, *tag.features);
     if(grad_expect) {
       for(int t = 0; t < taglen; t++) {
-        mapUpdate<double, double>(*gradient, *featvec[t], -exp(sc[t]));
+        mapUpdate<double, double>(*gradient, *featvec[t], -exp(tag.sc[t]));
       }
     }
 

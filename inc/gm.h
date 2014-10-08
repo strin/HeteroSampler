@@ -41,14 +41,18 @@ public:
 
   /* statistics for variables */
   void initStats() {
-    entropy.resize(this->size(), log(this->numLabels(0)));
-    staleness.resize(this->size(), log(this->numLabels(0)));
+    int num_tags = this->numLabels(0);
+    entropy.resize(this->size(), log(num_tags));
+    staleness.resize(this->size(), log(num_tags));
     prev_entropy.resize(this->size());
     feat.resize(this->size());
     blanket.resize(this->size());
     changed.resize(this->size());
     handle.resize(this->size());
     feat.resize(this->size(), nullptr);
+
+    sc.resize(num_tags, 0);
+    prev_sc.resize(num_tags, -log(num_tags));
   }
 
   int time;                               // how many times have spent on sampling this graphical model. 
@@ -57,7 +61,7 @@ public:
   std::vector<double> entropy;            // current entropy when being sampled.
   std::vector<double> staleness;          // how stale a position is.
   std::vector<double> prev_entropy;       // previous entropy before being sampled.
-  std::vector<double> sc;                 
+  std::vector<double> sc, prev_sc;                 
   std::vector<double> entropy_unigram;    // unigram entropy of positions.
   vec<vec<double> > sc_unigram;
   std::vector<double> reward;

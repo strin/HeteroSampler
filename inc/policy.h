@@ -126,11 +126,13 @@ namespace Tagging {
     struct PolicyExample {  // examples used to train policy.
       double reward;
       double resp;
+      double staleness;
       FeaturePointer feat;
       ParamPointer param;
       void serialize(ptr<XMLlog> lg) {
         lg->begin("example");
           lg->logAttr("item", "reward", reward);
+        lg->logAttr("item", "staleness", staleness);
           lg->logAttr("item", "resp", resp);
           for(auto& p : *feat) {
             lg->logAttr("feat", p.first, p.second);

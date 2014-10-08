@@ -172,6 +172,12 @@ namespace Tagging {
         cout << "\t update kernel " << endl;
         this->trainKernel(corpus);
       }
+    if(Q == 0) { // notraining is needed.
+      // set all feature weights to 1.
+      for(const string& opt : featopt) {
+        (*param)[opt] = 1;
+      }
+    }
     lg->end(); // </train>
     cout << "> completed." << endl;
   }

@@ -43,7 +43,6 @@ OpenGM<GM>::OpenGM(const Instance* seq, const GraphicalModelType& gm)
   entropy_unigram.resize(size);
   resp.resize(size, DBL_MAX);
   mask.resize(size, 0);
-  feat.resize(size);
   this->initStats();
 }
 

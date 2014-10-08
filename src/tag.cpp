@@ -32,7 +32,6 @@ namespace Tagging {
     sc_unigram.resize(seqlen);
     tag.resize(seqlen);
     resp.resize(seqlen, DBL_MAX);
-    feat.resize(seqlen);
     mask.resize(seqlen); 
     timestamp.resize(seqlen, 0);
     checksum.resize(seqlen, NAN);

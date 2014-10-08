@@ -47,6 +47,7 @@ public:
     blanket.resize(this->size());
     changed.resize(this->size());
     handle.resize(this->size());
+    feat.resize(this->size(), nullptr);
   }
 
   int time;                               // how many times have spent on sampling this graphical model. 

@@ -688,10 +688,21 @@ namespace Tagging {
     lg->end();
     if(node->gm->size() > 0) {
       lg->begin("feat");
-        for(auto& p : *node->gm->feat[0]) {
-          lg->begin(p.first);
+      /* take the uninon of features from all positions */
+      std::set<string> feat_name;
+      /* take the uninon of features from all positions */
+      for(size_t t = 0; t < node->gm->size(); t++) {
+        if(node->gm->feat[t] == nullptr) continue;
+        for(auto& p : *node->gm->feat[t]) {
+          feat_name.insert(string(p.first));
+        }
+      }
+      
+      /* log each position */
+      for(auto& p : feat_name) {
+          lg->begin(p);
           for(size_t i = 0; i < node->gm->size(); i++) {
-            *lg << getFeature(node->gm->feat[i], p.first) << "\t";
+            *lg << getFeature(node->gm->feat[i], p) << "\t";
           }
           *lg << endl;
           lg->end();
@@ -1385,21 +1396,32 @@ namespace Tagging {
           double logR = node->gm->reward[i];
           
 #endif
-          this->updateResp(node, rng, i, nullptr);
+          /* use gradients to update model */
 
           thread_pool.lock();
 
+          auto grad = makeParamPointer();
           /* update meta-model (strategy 1) */
-          // mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
+//           mapUpdate(*grad, *feat, (logR - resp));
+          
+//          /* update meta-model (strategy 1.5) */
+//          mapUpdate(*grad, *feat, ((logR > 0) - resp));
+
+          /* update meta-model (strategy 1.6) */
+//          if(logR > 0) {
+//            mapUpdate(*grad, *feat, (1 - resp));
+//          }else{
+//            mapUpdate(*grad, *feat, (-1 - resp));
+//          }
 
           /* update meta-model (strategy 2) */
           resp = logisticFunc(resp);
-          auto grad = makeParamPointer();
           if(logR > 0) {
             mapUpdate(*grad, *feat, (1-resp));
           }else{
             mapUpdate(*grad, *feat, -resp);
           }
+          
           adagrad(param, G2, grad, eta);   // overwrite adagrad, for fine-grain gradients. (return node->gradient empty).
           
           if(lets_resp_reward) {
@@ -1421,6 +1443,9 @@ namespace Tagging {
           }
           
           thread_pool.unlock();
+
+          /* update response */
+          this->updateResp(node, rng, i, nullptr);
         }
       }
       node->log_weight = 0;

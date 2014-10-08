@@ -20,6 +20,7 @@ namespace Tagging {
   const static string NB_ENT = "nb-ent";
   const static string NB_ENT__COND = "nb-ent--cond-ent";
   const static string COND = "cond-ent";
+  const static string ORACLE = "oracle";
 
   class Policy {
   public:

@@ -557,17 +557,10 @@ namespace Tagging {
       insertFeature(feat, NB_ENT__COND, getFeature(feat, NB_ENT) * node->gm->entropy[pos]);
     }
 
-    if(featoptFind("oracle")) {
-      int oldval = cast<Tag>(node->gm)->tag[pos];
-      auto temp_ptr = model->copySample(*node->gm);
-      auto& temp = *temp_ptr;
-      model->sampleOne(temp, *temp.rng, pos);          
-      insertFeature(feat, "oracle", -temp.sc[oldval]);
-      // insertFeature(feat, "oracle", temp.entropy[pos]);
+    if(featoptFind(ORACLE)) {
+      insertFeature(feat, ORACLE, 0);
     }
-    if(featoptFind("self-avoid")) {
-      insertFeature(feat, "self-avoid", node->gm->mask[pos]);
-    }
+
     return feat;
   }
 
@@ -664,6 +657,22 @@ namespace Tagging {
         updateRespByHandle(pos+1);
       }
     }
+    if(featoptFind(ORACLE)) {   // oracle feature is just *reward*.
+      auto computeOracle = [&] (double* feat) {
+        int oldval = node->gm->getLabel(pos);
+        model->sampleOne(*node->gm, rng, pos, false);
+        node->gm->setLabel(pos, oldval);
+        *feat = node->gm->reward[pos];
+      };
+      computeOracle(findFeature(feat, ORACLE));
+      for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
+        if(node->gm->blanket[id].size() > 0) { // has already been initialized.
+          computeOracle(findFeature(node->gm->feat[id], ORACLE));
+        }
+      }
+      // insertFeature(feat, "oracle", temp.entropy[pos]);
+    }
+
     /* update Markov blanket */
     node->gm->blanket[pos] = node->gm->getLabels(model->markovBlanket(*node->gm, pos));
   }

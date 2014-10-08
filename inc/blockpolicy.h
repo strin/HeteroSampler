@@ -41,7 +41,8 @@ public:
   virtual void train(ptr<Corpus> corpus) {
     lg->begin("train");
       /* train the model */
-    cout << "start training ... " << endl;
+    if(Q > 0)
+      cout << "start training ... " << endl;
     for(size_t q = 0; q < Q; q++) {
       cout << "\t epoch " << q << endl;
       cout << "\t update policy " <<  endl;

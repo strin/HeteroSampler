@@ -168,10 +168,11 @@ namespace Tagging {
     int taglen = corpus->tags.size();
     
     // Enumerative Gibbs sampling.
+    int oldval = tag.tag[pos];
     if(use_meta_feature) {
       tag.prev_sc = tag.sc;
       tag.staleness[pos] = 0;
-      tag.oldval = tag.tag[pos];
+      tag.oldval = oldval;
     }
 
     vector<FeaturePointer> featvec;
@@ -191,7 +192,7 @@ namespace Tagging {
     tag.tag[pos] = val;
 
     // compute statistics.
-    tag.reward[pos] = sc[val] - sc[tag.oldval];
+    tag.reward[pos] = sc[val] - sc[oldval];
     if(use_meta_feature) {
       tag.sc = sc;
       for(int t = 0; t < taglen; t++) {

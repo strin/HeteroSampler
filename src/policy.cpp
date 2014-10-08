@@ -664,19 +664,18 @@ namespace Tagging {
       }
     }
     if(featoptFind(ORACLE)) {   // oracle feature is just *reward*.
-      auto computeOracle = [&] (double* feat) {
-        int oldval = node->gm->getLabel(pos);
-        model->sampleOne(*node->gm, rng, pos, false);
-        node->gm->setLabel(pos, oldval);
-        *feat = node->gm->reward[pos];
+      auto computeOracle = [&] (double* feat, int id) {
+        int oldval = node->gm->getLabel(id);
+        model->sampleOne(*node->gm, rng, id, false);
+        node->gm->setLabel(id, oldval);
+        *feat = node->gm->reward[id];
       };
-      computeOracle(findFeature(feat, ORACLE));
+      computeOracle(findFeature(feat, ORACLE), pos);
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
         if(node->gm->blanket[id].size() > 0) { // has already been initialized.
-          computeOracle(findFeature(node->gm->feat[id], ORACLE));
+          computeOracle(findFeature(node->gm->feat[id], ORACLE), id);
         }
       }
-      // insertFeature(feat, "oracle", temp.entropy[pos]);
     }
 
     /* update Markov blanket */

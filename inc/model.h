@@ -14,9 +14,6 @@ namespace Tagging {
     }
   }
 
-
-
-
   struct Model {
   public:
     Model(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
@@ -32,12 +29,14 @@ namespace Tagging {
     virtual void sample(Tag& tag, int time, bool argmax = false);             // inplace.
 
     // sample using custom kernel choice.
-    // return: gradient.
-    virtual ParamPointer sampleOne(GraphicalModel& gm, objcokus& rng, int choice);           
+    // use Gibbs to sample <choice> with random number generator <rng> and feature extraction functional <feat_extract>
+    // flags:
+    //  use_meta_feature: only reward and tags would be updated if set true.
+    virtual void sampleOne(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature = true);
 
     // sample using custom kernel choice at initialization.
     // only applies if "init" flag is on (not equal to *random*). 
-    virtual ParamPointer sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice);           
+    virtual void sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature = true);
 
 
     // create a new sample from an instance.
@@ -145,8 +144,8 @@ namespace Tagging {
 
 
     /* implement inferface for Gibbs sampling */
-    virtual ParamPointer sampleOne(GraphicalModel& tag, objcokus& rng, int choice);
-    virtual ParamPointer sampleOneAtInit(GraphicalModel& tag, objcokus& rng, int choice);
+    virtual void sampleOne(GraphicalModel& tag, objcokus& rng, int choice, bool use_meta_feature = true);
+    virtual void sampleOneAtInit(GraphicalModel& tag, objcokus& rng, int choice, bool use_meta_feature = true);
 
     /* implement interface for making samples */
     virtual ptr<GraphicalModel> makeSample(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const;
@@ -172,8 +171,15 @@ namespace Tagging {
     int factorL;    
 
   protected:
-    ParamPointer proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract, bool grad_expect, bool grad_sample);
-    ParamPointer sampleOne(GraphicalModel& gm, objcokus& rng, int choice, FeatureExtractOne feat_extract);
+    // use Gibbs to sample <pos> with random number generator <rng> and feature extraction functional <feat_extract>
+    // flags:
+    //  grad_expect: add gradient based on expectation if set true.
+    //  grad_sample: add gradient based on current sample if set true.
+    //  meta_feature: do not change the meta features of tag if set true.
+    ParamPointer proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract, 
+      bool grad_expect, bool grad_sample, bool meta_feature);
+
+    void sampleOne(GraphicalModel& gm, objcokus& rng, int choice, FeatureExtractOne feat_extract, bool use_meta_feature = true);
 
     FeaturePointer extractFeaturesAll(const Tag& tag);
 

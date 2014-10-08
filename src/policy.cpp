@@ -572,7 +572,7 @@ namespace Tagging {
   }
 
   MarkovTreeNodePtr Policy::sampleOne(MarkovTreeNodePtr node, objcokus& rng, int pos) {
-    node->gradient = model->sampleOne(*node->gm, rng, pos);
+    model->sampleOne(*node->gm, rng, pos);
     node->log_prior_weight += node->gm->reward[pos];
     auto lag = (int)(node->gm->size() / lazymax_lag);
     if(!lets_lazymax

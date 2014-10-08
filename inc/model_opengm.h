@@ -97,7 +97,7 @@ namespace Tagging {
   }
 
 
-
+  
   template<class GM, class ACC>
   ParamPointer ModelEnumerativeGibbs<GM, ACC>::sampleOne(GraphicalModel& gm, objcokus& rng, int choice) {
     if(choice >= (int)gm.size()) 

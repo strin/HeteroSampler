@@ -56,6 +56,7 @@ public:
   }
 
   int time;                               // how many times have spent on sampling this graphical model. 
+  int oldval;                             // oldval before the latest sampling.
   vec<double> timestamp;                  // whenever a position is changed, its timestamp is incremented.
   vec<double> checksum;                   // if checksum is changes, then the position might be updated.
   std::vector<double> entropy;            // current entropy when being sampled.

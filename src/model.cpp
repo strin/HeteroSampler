@@ -201,11 +201,11 @@ namespace Tagging {
     tag = *this->sample(*tag.seq, argmax).back();
   }
 
-  ParamPointer Model::sampleOne(GraphicalModel& gm, objcokus& rng, int choice) {
+  void Model::sampleOne(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature) {
     throw "custom kernel choice not implemented."; 
   }
 
-  ParamPointer Model::sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice) {
+  void Model::sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature) {
     return this->sampleOne(gm, rng, choice);
   }
 

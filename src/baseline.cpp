@@ -21,10 +21,10 @@ namespace Tagging {
   void ModelSimple::sample(Tag& tag, int time, bool argmax) {
     for(int t = 0; t < time; t++) {
       for(size_t i = 0; i < tag.size(); i++) {
-	auto featExtract = [&] (const Tag& tag) -> FeaturePointer {
-			      return this->extractFeatures(tag, i); 
-			    };
-	tag.proposeGibbs(i, featExtract, false, false, argmax);
+        auto featExtract = [&] (const Tag& tag) -> FeaturePointer {
+                              return this->extractFeatures(tag, i); 
+                            };
+        tag.proposeGibbs(i, featExtract, false, false, argmax);
       }
     }
   }
@@ -44,10 +44,10 @@ namespace Tagging {
     for(int l = max(0, pos - windowL); l <= min(pos + windowL, seqlen-1); l++) {
       StringVector nlp = NLPfunc(cast<TokenLiteral>(sen[l])->word);
       for(const string& token : *nlp) {
-	stringstream ss;
-	ss << "simple-w-" << to_string(l-pos) 
-	   << "-" << token << "-" << corpus->invtag(tag.tag[pos]);
-	insertFeature(features, ss.str());
+        stringstream ss;
+        ss << "simple-w-" << to_string(l-pos) 
+           << "-" << token << "-" << corpus->invtag(tag.tag[pos]);
+        insertFeature(features, ss.str());
       }
     }
     return features;
@@ -63,12 +63,12 @@ namespace Tagging {
     ParamPointer gradient = makeParamPointer();
     for(size_t i = 0; i < tag.size(); i++) {
       auto featExtract = [&] (const Tag& tag) -> FeaturePointer {
-			    return this->extractFeatures(tag, i); 
-			  };
+                            return this->extractFeatures(tag, i); 
+                          };
       ParamPointer g = tag.proposeGibbs(i, featExtract, true, false);
       if(update_grad) {
-	mapUpdate<double, double>(*gradient, *g);
-	mapUpdate<double, double>(*gradient, *featExtract(truth));
+        mapUpdate<double, double>(*gradient, *g);
+        mapUpdate<double, double>(*gradient, *featExtract(truth));
       }
     }
     if(samples)
@@ -269,8 +269,8 @@ namespace Tagging {
   void ModelCRFGibbs::sampleOneSweep(Tag& tag, bool argmax) {
     for(int i = 0; i < tag.tag.size(); i++) { 
       tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
-			    return this->extractFeatures(shared_from_this(), tag, i); 
-			  }, false, false, argmax);
+                            return this->extractFeatures(shared_from_this(), tag, i); 
+                          }, false, false, argmax);
     }
   }
 

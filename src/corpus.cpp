@@ -78,7 +78,7 @@ namespace Tagging {
     this->invtags = corpus->invtags;
     for(SentencePtr sen : seqs) {
       for(int i = 0; i < sen->size(); i++) {
-	sen->tag[i] = this->tags[sen->seq[i]->tag];
+    sen->tag[i] = this->tags[sen->seq[i]->tag];
       }
     }
   }
@@ -119,29 +119,29 @@ namespace Tagging {
     while(!file.eof()) {
       getline(file, line);
       if(line == "") {
-	SentencePtr sen = SentencePtr(new SentenceLiteral(this, lines));
-	lines.clear();
-	if(sen->seq.size() > 0) {
-	  seqs.push_back(sen);
-	}else continue;
-	for(const TokenPtr token : seqs.back()->seq) {
-	  string tg =  token->tag;
-	  if(not tags.contains(tg)) {
-	    tags[tg] =  tagid;
-	    invtags.push_back(tg);
-	    tagid++;
-	    tagcounts[tg] = 0;
-	  }
-	  tagcounts[tg]++;
-	  ptr<TokenLiteral> token_literal = cast<TokenLiteral>(token);
-	  if(dic_counts.find(token_literal->word) == dic_counts.end()) { 
-	    total_words++;
-	    dic_counts[token_literal->word] = 0;
-	  }
-	  dic_counts[token_literal->word]++;
-	}
+        SentencePtr sen = SentencePtr(new SentenceLiteral(this, lines));
+        lines.clear();
+        if(sen->seq.size() > 0) {
+          seqs.push_back(sen);
+        }else continue;
+        for(const TokenPtr token : seqs.back()->seq) {
+          string tg =  token->tag;
+          if(not tags.contains(tg)) {
+            tags[tg] =  tagid;
+            invtags.push_back(tg);
+            tagid++;
+            tagcounts[tg] = 0;
+          }
+          tagcounts[tg]++;
+          ptr<TokenLiteral> token_literal = cast<TokenLiteral>(token);
+          if(dic_counts.find(token_literal->word) == dic_counts.end()) { 
+            total_words++;
+            dic_counts[token_literal->word] = 0;
+          }
+          dic_counts[token_literal->word]++;
+        }
       }else
-	lines.push_back(line);
+        lines.push_back(line);
     }
     // convert raw tag into integer tag.
     word_tag_count.clear();
@@ -165,25 +165,25 @@ namespace Tagging {
         string word = token_literal->word;
         if(not dic.contains(word))
           mapNewToken(word);
-/*	// map tokens to int.
-	token_literal->itoken.push_back(dic["w-"+word]);
-	for(size_t t = 1; t < token_literal->token.size(); t++) {
-	  string tk = token_literal->token[t];
-	  if(not dic.contains("t"+to_string(t)+"-"+tk))
-	    mapNewToken("t"+to_string(t)+"-"+tk);
-	  token_literal->itoken.push_back(dic["t"+to_string(t)+"-"+tk]);
-	}
-	StringVector nlp = NLPfunc(token_literal->word);
-	for(auto sig : *nlp) {
-	  if(not dic.contains(sig)) 
-	    mapNewToken(sig);
-	  token_literal->itoken.push_back(dic[sig]);
-	}
+/*        // map tokens to int.
+        token_literal->itoken.push_back(dic["w-"+word]);
+        for(size_t t = 1; t < token_literal->token.size(); t++) {
+          string tk = token_literal->token[t];
+          if(not dic.contains("t"+to_string(t)+"-"+tk))
+            mapNewToken("t"+to_string(t)+"-"+tk);
+          token_literal->itoken.push_back(dic["t"+to_string(t)+"-"+tk]);
+        }
+        StringVector nlp = NLPfunc(token_literal->word);
+        for(auto sig : *nlp) {
+          if(not dic.contains(sig)) 
+            mapNewToken(sig);
+          token_literal->itoken.push_back(dic[sig]);
+        }
 */
-	if(word_tag_count.find(token_literal->word) == word_tag_count.end()) {
-	  word_tag_count[token_literal->word].resize(tagid, 0.0);
-	}
-	word_tag_count[token_literal->word][itg]++;
+        if(word_tag_count.find(token_literal->word) == word_tag_count.end()) {
+          word_tag_count[token_literal->word].resize(tagid, 0.0);
+        }
+        word_tag_count[token_literal->word][itg]++;
       }
     }
     aveT /= (double)seqs.size();
@@ -204,20 +204,20 @@ namespace Tagging {
     for(const pair<string, int>& p : this->dic) {
       auto count = this->word_tag_count.find(p.first);
       if(count == this->word_tag_count.end()) {
-	cerr << "tagEntropy: word not found." << endl;
-	(*feat)[p.first] = log(taglen);
-	continue;
+        cerr << "tagEntropy: word not found." << endl;
+        (*feat)[p.first] = log(taglen);
+        continue;
       }
       for(size_t t = 0; t < taglen; t++) {
-	if(count->second[t] == 0)
-	  logweights[t] = -DBL_MAX;
-	else
-	  logweights[t] = log(count->second[t]);
+        if(count->second[t] == 0)
+          logweights[t] = -DBL_MAX;
+        else
+          logweights[t] = log(count->second[t]);
       }
       logNormalize(logweights, taglen);
       double entropy = 0.0;
       for(size_t t = 0; t < taglen; t++) {
-	entropy -= logweights[t] * exp(logweights[t]);
+        entropy -= logweights[t] * exp(logweights[t]);
       }
       (*feat)[p.first] = entropy;
     }
@@ -225,9 +225,9 @@ namespace Tagging {
     double mean_ent = 0.0, count = 0;
     for(const SentencePtr seq : this->seqs) {
       for(size_t i = 0; i < seq->seq.size(); i++) {
-	ptr<TokenLiteral> token = dynamic_pointer_cast<TokenLiteral>(seq->seq[i]);
-	mean_ent += (*feat)[token->word]; 
-	count++;
+        ptr<TokenLiteral> token = dynamic_pointer_cast<TokenLiteral>(seq->seq[i]);
+        mean_ent += (*feat)[token->word]; 
+        count++;
       }
     }
     mean_ent /= count;
@@ -249,9 +249,9 @@ namespace Tagging {
     double mean_fre = 0, count = 0;
     for(const SentencePtr seq : this->seqs) {
       for(size_t i = 0; i < seq->seq.size(); i++) {
-	ptr<TokenLiteral> token = dynamic_pointer_cast<TokenLiteral>(seq->seq[i]);
-	mean_fre += (*feat)[token->word];
-	count++;
+        ptr<TokenLiteral> token = dynamic_pointer_cast<TokenLiteral>(seq->seq[i]);
+        mean_fre += (*feat)[token->word];
+        count++;
       }
     }
     mean_fre /= count;
@@ -269,17 +269,17 @@ namespace Tagging {
     for(const SentencePtr seq : this->seqs) {
       vec[seq->tag[0]]++;
       for(size_t t = 1; t < seq->size(); t++) {
-	mat[seq->tag[t-1]][seq->tag[t]]++; 
+        mat[seq->tag[t-1]][seq->tag[t]]++;
       }
     }
     for(size_t i = 0; i < taglen; i++) {
       vec[i] = log(vec[i])-log(taglen+this->seqs.size());
       double sum_i = 0.0;
       for(size_t j = 0; j < taglen; j++) {
-	sum_i += mat[i][j];
+        sum_i += mat[i][j];
       }
       for(size_t j = 0; j < taglen; j++) {
-	mat[i][j] = log(mat[i][j])-log(sum_i);
+        mat[i][j] = log(mat[i][j])-log(sum_i);
       }
     }
     return make_pair(mat, vec);

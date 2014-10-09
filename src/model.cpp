@@ -82,7 +82,7 @@ namespace Tagging {
     int hit_count = 0, pred_count = 0;
     for(int i = 0; i < truth.size(); i++) {
       if(tag.tag[i] == truth.tag[i]) {
-	hit_count++;
+        hit_count++;
       }
       pred_count++;
     }
@@ -95,36 +95,36 @@ namespace Tagging {
     int hit_count = 0, pred_count = 0, truth_count = 0;
     auto check_chunk_begin = [&] (const Tag& tag, int pos) {
       string tg = tag.getTag(pos), 
-	     prev_tg = pos > 0 ? tag.getTag(pos-1) : "O";
+             prev_tg = pos > 0 ? tag.getTag(pos-1) : "O";
       string type = cast<TokenLiteral>(seq->seq[pos])->pos, 
-	     prev_type = pos > 0 ? cast<TokenLiteral>(seq->seq[pos-1])->pos : "";
+             prev_type = pos > 0 ? cast<TokenLiteral>(seq->seq[pos-1])->pos : "";
       char tg_ch = tg[0], prev_tg_ch = prev_tg[0];  
       return (prev_tg_ch == 'B' && tg_ch == 'B') ||
-	     (prev_tg_ch == 'I' && tg_ch == 'B') ||
-	     (prev_tg_ch == 'O' && tg_ch == 'B') ||
-	     (prev_tg_ch == 'O' && tg_ch == 'I') ||
-	     (prev_tg_ch == 'E' && tg_ch == 'E') ||
-	     (prev_tg_ch == 'E' && tg_ch == 'I') ||
-	     (prev_tg_ch == 'O' && tg_ch == 'E') ||
-	     (prev_tg_ch == 'O' && tg_ch == 'I') ||
-	     (tg != "O" && tg != "." && type != prev_type) ||
-	     (tg == "[") || (tg == "]");
+             (prev_tg_ch == 'I' && tg_ch == 'B') ||
+             (prev_tg_ch == 'O' && tg_ch == 'B') ||
+             (prev_tg_ch == 'O' && tg_ch == 'I') ||
+             (prev_tg_ch == 'E' && tg_ch == 'E') ||
+             (prev_tg_ch == 'E' && tg_ch == 'I') ||
+             (prev_tg_ch == 'O' && tg_ch == 'E') ||
+             (prev_tg_ch == 'O' && tg_ch == 'I') ||
+             (tg != "O" && tg != "." && type != prev_type) ||
+             (tg == "[") || (tg == "]");
     };
     auto check_chunk_end = [&] (const Tag& tag, int pos) { 
       string tg = tag.getTag(pos), 
-	     next_tg = pos < tag.size()-1 ? tag.getTag(pos+1) : "O";
+             next_tg = pos < tag.size()-1 ? tag.getTag(pos+1) : "O";
       string type = cast<TokenLiteral>(seq->seq[pos])->pos, 
-	     next_type = pos < tag.size()-1 ? cast<TokenLiteral>(seq->seq[pos+1])->pos : "";
+             next_type = pos < tag.size()-1 ? cast<TokenLiteral>(seq->seq[pos+1])->pos : "";
       char tg_ch = tg[0], next_tg_ch = next_tg[0];
       return (tg_ch == 'B' && next_tg_ch == 'B') ||
-	     (tg_ch == 'B' && next_tg_ch == 'O') ||
-	     (tg_ch == 'I' && next_tg_ch == 'B') ||
-	     (tg_ch == 'I' && next_tg_ch == 'O') ||
-	     (tg_ch == 'E' && next_tg_ch == 'E') ||
-	     (tg_ch == 'E' && next_tg_ch == 'I') ||
-	     (tg_ch == 'E' && next_tg_ch == 'O') ||
-	     (tg != "O" && tg != "." && type != next_type) ||
-	     (tg == "[") || (tg == "]");
+             (tg_ch == 'B' && next_tg_ch == 'O') ||
+             (tg_ch == 'I' && next_tg_ch == 'B') ||
+             (tg_ch == 'I' && next_tg_ch == 'O') ||
+             (tg_ch == 'E' && next_tg_ch == 'E') ||
+             (tg_ch == 'E' && next_tg_ch == 'I') ||
+             (tg_ch == 'E' && next_tg_ch == 'O') ||
+             (tg != "O" && tg != "." && type != next_type) ||
+             (tg == "[") || (tg == "]");
 
     };
     bool hit_begin = true;
@@ -132,12 +132,12 @@ namespace Tagging {
       truth_count += (int)check_chunk_begin(truth, i);
       pred_count += (int)check_chunk_begin(tag, i);
       if(check_chunk_begin(truth, i) && check_chunk_begin(tag, i)) 
-	hit_begin = true;
+        hit_begin = true;
       if(tag.tag[i] != truth.tag[i]) {
-	hit_begin = false;
+        hit_begin = false;
       }
       if(check_chunk_end(truth, i) && check_chunk_end(tag, i)) { 
-	hit_count += (int)hit_begin;
+        hit_count += (int)hit_begin;
       }
     }
     return make_tuple(hit_count, pred_count, truth_count);
@@ -218,7 +218,7 @@ namespace Tagging {
       mapUpdate(*G2, p.first, p.second * p.second);
       double this_eta = eta;
       if(stepsize->find(p.first) != stepsize->end()) {
-	this_eta = (*stepsize)[p.first];
+        this_eta = (*stepsize)[p.first];
       }
       mapUpdate(*param, p.first, this_eta * p.second/sqrt(1 + (*G2)[p.first]));
     }

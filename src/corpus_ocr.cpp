@@ -28,7 +28,7 @@ namespace Tagging {
     fold = int(parts[5][0]);
     for(size_t i = 0; i < height; i++) {
       for(size_t j = 0; j < width; j++) {
-	img[i][j] = int(parts[6 + i * width + j][0]-'0');
+        img[i][j] = int(parts[6 + i * width + j][0]-'0');
       }
     }
   }
@@ -38,7 +38,7 @@ namespace Tagging {
     string str = "";
     for(size_t i = 0; i < height; i++) {
       for(size_t j = 0; j < width; j++) {
-	str += '0'+img[i][j];
+        str += '0'+img[i][j];
       }
     }
     return str;
@@ -82,19 +82,19 @@ namespace Tagging {
     while(!file.eof()) {
       getline(file, line);
       if(line == "") {
-	SentencePtr sen = SentencePtr(new SentenceOCR<height, width>(this, lines));
-	lines.clear();
-	if(sen->seq.size() > 0) {
-	  seqs.push_back(sen);
-	}else continue;
-	for(const TokenPtr token : seqs.back()->seq) {
-	  string tg = token->tag;
-	  if(not tags.contains(tg)) 
-	    tags[tg] =  tagid++;
-	}
-	continue;
+        SentencePtr sen = SentencePtr(new SentenceOCR<height, width>(this, lines));
+        lines.clear();
+        if(sen->seq.size() > 0) {
+          seqs.push_back(sen);
+        }else continue;
+        for(const TokenPtr token : seqs.back()->seq) {
+          string tg = token->tag;
+          if(not tags.contains(tg)) 
+            tags[tg] =  tagid++;
+        }
+        continue;
       }else
-	lines.push_back(line);
+        lines.push_back(line);
     }
     // encoding tag / tokens.
     invtags.clear();
@@ -103,10 +103,10 @@ namespace Tagging {
     for(SentencePtr seq : seqs) {
       aveT += seq->size();
       for(const TokenPtr token : seq->seq) {
-	string tg = token->tag;
-	int itg = tags[tg];
-	seq->tag.push_back(itg); 
-	invtags[itg] = tg;
+        string tg = token->tag;
+        int itg = tags[tg];
+        seq->tag.push_back(itg); 
+        invtags[itg] = tg;
       }
     }
     aveT /= (double)seqs.size();

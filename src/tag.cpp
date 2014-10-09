@@ -7,7 +7,7 @@
 using namespace std;
 namespace Tagging {
   Tag::Tag(const Instance* seq, ptr<Corpus> corpus, 
-	  objcokus* rng, ParamPointer param) 
+          objcokus* rng, ParamPointer param) 
   : param(param) {
     this->seq = seq;
     this->corpus = corpus;
@@ -16,7 +16,7 @@ namespace Tagging {
   }
 
   Tag::Tag(const Instance& seq, ptr<Corpus> corpus, 
-	  objcokus* rng, ParamPointer param)
+          objcokus* rng, ParamPointer param)
   : param(param) {
     this->seq = &seq;
     this->corpus = corpus;
@@ -128,7 +128,7 @@ namespace Tagging {
     double score = 0;
     for(const pair<string, double>& feat : *features) {
       if(this->param->find(feat.first) != this->param->end()) { 
-	score += feat.second * (*this->param)[feat.first];
+        score += feat.second * (*this->param)[feat.first];
       }
     }
     return score;

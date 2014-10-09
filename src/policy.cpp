@@ -16,13 +16,13 @@ using namespace std;
 namespace Tagging {
   Policy::Policy(ModelPtr model, const po::variables_map& vm) 
   :model(model), test_thread_pool(vm["numThreads"].as<size_t>(), 
-		      [&] (int tid, MarkovTreeNodePtr node) {
-			this->sampleTest(tid, node);
-		      }), 
-		 thread_pool(vm["numThreads"].as<size_t>(), 
-		     [&] (int tid, MarkovTreeNodePtr node) {
-		      this->sample(tid, node);
-		     }),
+                      [&] (int tid, MarkovTreeNodePtr node) {
+                        this->sampleTest(tid, node);
+                      }), 
+                 thread_pool(vm["numThreads"].as<size_t>(), 
+                     [&] (int tid, MarkovTreeNodePtr node) {
+                      this->sample(tid, node);
+                     }),
    name(vm["name"].as<string>()),
    K(vm["K"].as<size_t>()),
    J(vm["J"].as<size_t>()),
@@ -217,20 +217,20 @@ namespace Tagging {
       thread_pool.waitFinish();
       /*
       for(size_t k = 0; k < K; k++) {
-	MarkovTreeNodePtr node = tree.root->children[k];
-	ParamPointer g = makeParamPointer();
-	if(node->gradient != nullptr)
-	  mapUpdate(*g, *node->gradient);
-	while(node->children.size() > 0) {
-	  node = node->children[0]; // take final sample.
-	  if(node->gradient != nullptr) {
-	    mapUpdate(*g, *node->gradient);
-	  }
-	}
-	lg->begin("gradient");
-	*lg << *g << endl;
-	*lg << node->log_weight << endl;
-	lg->end(); 
+        MarkovTreeNodePtr node = tree.root->children[k];
+        ParamPointer g = makeParamPointer();
+        if(node->gradient != nullptr)
+          mapUpdate(*g, *node->gradient);
+        while(node->children.size() > 0) {
+          node = node->children[0]; // take final sample.
+          if(node->gradient != nullptr) {
+            mapUpdate(*g, *node->gradient);
+          }
+        }
+        lg->begin("gradient");
+        *lg << *g << endl;
+        *lg << node->log_weight << endl;
+        lg->end(); 
       }*/
       
 //      /* strategy 1. use Markov Tree to compute grad */
@@ -336,7 +336,7 @@ namespace Tagging {
       test_thread_pool.addWork(node);
       count++;
       if(count % thread_pool.numThreads() == 0 || count == test_count 
-	  || count == result->corpus->seqs.size()) {
+          || count == result->corpus->seqs.size()) {
         test_thread_pool.waitFinish();
         for(size_t i = 0; i < id.size(); i++) {
           MarkovTreeNodePtr node = stack[i];
@@ -505,17 +505,17 @@ namespace Tagging {
         ptr<Corpus> corpus = model->corpus;
         string tg = corpus->invtags[tag.tag[pos]];
         if(pos >= 1) {
-  	      string prev_tg = corpus->invtags[tag.tag[pos-1]];
-  	      if((prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))
+                string prev_tg = corpus->invtags[tag.tag[pos-1]];
+                if((prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))
             or (prev_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))) { 
-  	        insertFeature(feat, NER_DISAGREE_L);
+                  insertFeature(feat, NER_DISAGREE_L);
           }
         }
         if(pos < node->gm->size()-1) {
           string next_tg = corpus->invtags[tag.tag[pos+1]];
-  	      if((next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
+                if((next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
             or (next_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != next_tg.substr(1))) { 
-  	        insertFeature(feat, NER_DISAGREE_R);
+                  insertFeature(feat, NER_DISAGREE_R);
           }
         }
       }
@@ -788,20 +788,20 @@ namespace Tagging {
       assert(!node->parent.expired());
       size_t i = node->time_stamp;
       for(; i < 2 * node->gm->size(); i++) {
-	size_t pos = i % node->gm->size();
-	const string& word = cast<TokenLiteral>(node->gm->seq->seq[pos])->word;  
-	double ent = 0;
-	if(wordent->find(word) == wordent->end()) 
-	  ent = log(model->corpus->tags.size());
-	else
-	  ent = (*wordent)[word]+wordent_mean;
-	if(ent > log(threshold)) {
-	  node->gm->mask[pos] = 1;
-	  node->time_stamp = i+1;
-	  return pos;
-	}else{
-	  node->gm->mask[pos] = 0;
-	}
+        size_t pos = i % node->gm->size();
+        const string& word = cast<TokenLiteral>(node->gm->seq->seq[pos])->word;  
+        double ent = 0;
+        if(wordent->find(word) == wordent->end()) 
+          ent = log(model->corpus->tags.size());
+        else
+          ent = (*wordent)[word]+wordent_mean;
+        if(ent > log(threshold)) {
+          node->gm->mask[pos] = 1;
+          node->time_stamp = i+1;
+          return pos;
+        }else{
+          node->gm->mask[pos] = 0;
+        }
       }
       node->time_stamp = i;
       return -1; // stop. 
@@ -845,7 +845,7 @@ namespace Tagging {
           return pos;
         }else{
           node->gm->mask[pos] = 0;
-          mapUpdate(*node->gradient, *feat, -resp);	
+          mapUpdate(*node->gradient, *feat, -resp);        
         }
       }
       node->time_stamp = i;
@@ -909,26 +909,26 @@ namespace Tagging {
       const int fold = 10;
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
       auto logRespReward = [&] (vec<pair<double, double> > p) {
-	for(const ROC& roc : getROC(fold_l, fold, p)) {
-	  cout << roc.str() << endl;
-	  *lg << roc.str() << endl;
-	}
+        for(const ROC& roc : getROC(fold_l, fold, p)) {
+          cout << roc.str() << endl;
+          *lg << roc.str() << endl;
+        }
       };
       lg->begin("roc_R");
-	logRespReward(resp_reward);
+        logRespReward(resp_reward);
       lg->end(); // </prec_recall>
       lg->begin("roc_RL");
-	logRespReward(resp_RL);
+        logRespReward(resp_RL);
       lg->end(); // </prec_recall>
       lg->begin("roc_RH");
-	logRespReward(resp_RH);
+        logRespReward(resp_RH);
       lg->end(); // </prec_recall>
       if(verbose) {
-	lg->begin("resp_reward");
-	for(const pair<double, double>& p : resp_reward) {
-	  *lg << p.first << " " << p.second << endl; 
-	}
-	lg->end();
+        lg->begin("resp_reward");
+        for(const pair<double, double>& p : resp_reward) {
+          *lg << p.first << " " << p.second << endl; 
+        }
+        lg->end();
       }
     }
   }
@@ -939,42 +939,42 @@ namespace Tagging {
       const int fold = 10;
       const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
       auto logRespReward = [&] (vec<pair<double, double> >& p) {
-	cout << endl;
-	for(const ROC& roc : getROC(fold_l, fold, p)) {
-	  cout << roc.str() << endl;
-	  *lg << roc.str() << endl;
-	}
+        cout << endl;
+        for(const ROC& roc : getROC(fold_l, fold, p)) {
+          cout << roc.str() << endl;
+          *lg << roc.str() << endl;
+        }
       };
       lg->begin("test_roc_R");
-	logRespReward(test_resp_reward);
+        logRespReward(test_resp_reward);
       lg->end(); // </prec_recall>
       lg->begin("test_roc_RL");
-	logRespReward(test_resp_RL);
+        logRespReward(test_resp_RL);
       lg->end(); // </prec_recall>
       lg->begin("test_roc_RH");
-	logRespReward(test_resp_RH);
+        logRespReward(test_resp_RH);
       lg->end(); // </prec_recall>
       lg->begin("test_word_tag");
       if(verbose) {
-	assert(test_resp_reward.size() == test_resp_RL.size() 
-	    and test_resp_reward.size() == test_resp_RH.size()
-	    and test_resp_reward.size() == test_word_tag.size());
-	auto compare = [] (std::tuple<double, double, string, int> a, std::tuple<double, double, string, int> b) {
-	  return (get<0>(a) < get<0>(b));
-	};
-	sort(test_word_tag.begin(), test_word_tag.end(), compare); 
-	lg->begin("resp");
-	for(size_t t = 0; t < test_resp_reward.size(); t++) {
-	  *lg << "resp " << get<0>(test_word_tag[t]) << " " 
-	    << "reward " << test_resp_reward[t].second << " " 
-	    << "RH "  
-	    << get<1>(test_word_tag[t]) << " "
-	    << "RL "  
-	    << test_resp_RL[t].second << " "
-	    << get<2>(test_word_tag[t]) << " "
-	    << model->corpus->invtags[get<3>(test_word_tag[t])] << endl;
-	}
-	lg->end(); // </resp>
+        assert(test_resp_reward.size() == test_resp_RL.size() 
+            and test_resp_reward.size() == test_resp_RH.size()
+            and test_resp_reward.size() == test_word_tag.size());
+        auto compare = [] (std::tuple<double, double, string, int> a, std::tuple<double, double, string, int> b) {
+          return (get<0>(a) < get<0>(b));
+        };
+        sort(test_word_tag.begin(), test_word_tag.end(), compare); 
+        lg->begin("resp");
+        for(size_t t = 0; t < test_resp_reward.size(); t++) {
+          *lg << "resp " << get<0>(test_word_tag[t]) << " " 
+            << "reward " << test_resp_reward[t].second << " " 
+            << "RH "  
+            << get<1>(test_word_tag[t]) << " "
+            << "RL "  
+            << test_resp_RL[t].second << " "
+            << get<2>(test_word_tag[t]) << " "
+            << model->corpus->invtags[get<3>(test_word_tag[t])] << endl;
+        }
+        lg->end(); // </resp>
       }
     }
   }
@@ -990,19 +990,19 @@ namespace Tagging {
       assert(!node->parent.expired());
       size_t i = node->time_stamp;
       for(; i < 2 * node->gm->size(); i++) {      
-	size_t pos = i % node->gm->size();
-	FeaturePointer feat = this->extractFeatures(node, pos);
-	double resp = Tagging::score(param, feat);
-	node->gm->resp[pos] = resp;
-	node->gm->feat[pos] = feat;
-	// if(rng->random01() < resp) { // strategy 1. randomized test.
-	if(resp > c) { // strategy 2. deterministic test.
-	  node->gm->mask[pos] = 1;
-	  node->time_stamp = i+1;
-	  return pos;
-	}else{
-	  node->gm->mask[pos] = 0;
-	}
+        size_t pos = i % node->gm->size();
+        FeaturePointer feat = this->extractFeatures(node, pos);
+        double resp = Tagging::score(param, feat);
+        node->gm->resp[pos] = resp;
+        node->gm->feat[pos] = feat;
+        // if(rng->random01() < resp) { // strategy 1. randomized test.
+        if(resp > c) { // strategy 2. deterministic test.
+          node->gm->mask[pos] = 1;
+          node->time_stamp = i+1;
+          return pos;
+        }else{
+          node->gm->mask[pos] = 0;
+        }
       }
       node->time_stamp = i;
       return -1;
@@ -1011,7 +1011,7 @@ namespace Tagging {
 
   // get precision-recall curve. 
   vec<Policy::ROC> Policy::getROC(const int fold_l[], const int fold, 
-	std::vector<std::pair<double, double> >& resp_reward) {
+        std::vector<std::pair<double, double> >& resp_reward) {
     auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
       return (a.first < b.first);
     };
@@ -1078,37 +1078,37 @@ namespace Tagging {
       size_t i = node->time_stamp + 1;
       node->gradient = makeParamPointer();
       for(; i < T * node->gm->size(); i++) {      
-	node->time_stamp = i;
-	size_t pos = i % node->gm->size();
-	FeaturePointer feat = this->extractFeatures(node, pos);
-	double resp = Tagging::score(param, feat);
-	node->gm->resp[pos] = resp;
-	node->gm->feat[pos] = feat;
-	/*if(lets_resp_reward) {
-	  test_thread_pool.lock();
-	  Tag tag(*node->gm);
-	  auto is_equal = [&] () {
-	    return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
-	  };
-	  double reward_baseline = is_equal();
-	  model->sampleOne(tag, pos);
-	  double reward = is_equal();
-	  // double logR = reward - reward_baseline; 
-	  double logR = tag.reward[pos];
-	  test_resp_reward.push_back(make_pair(resp, logR));
-	  test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
-	  test_resp_RL.push_back(make_pair(resp, logR));
-	  if(isinstance<CorpusLiteral>(model->corpus)) {
-	    test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
-	  }
-	  test_thread_pool.unlock();
-	}*/
-	if(resp > c) { 
-	  node->gm->mask[pos] = 1;
-	  return pos;
-	}else{
-	  node->gm->mask[pos] = 0;
-	}
+        node->time_stamp = i;
+        size_t pos = i % node->gm->size();
+        FeaturePointer feat = this->extractFeatures(node, pos);
+        double resp = Tagging::score(param, feat);
+        node->gm->resp[pos] = resp;
+        node->gm->feat[pos] = feat;
+        /*if(lets_resp_reward) {
+          test_thread_pool.lock();
+          Tag tag(*node->gm);
+          auto is_equal = [&] () {
+            return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
+          };
+          double reward_baseline = is_equal();
+          model->sampleOne(tag, pos);
+          double reward = is_equal();
+          // double logR = reward - reward_baseline; 
+          double logR = tag.reward[pos];
+          test_resp_reward.push_back(make_pair(resp, logR));
+          test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
+          test_resp_RL.push_back(make_pair(resp, logR));
+          if(isinstance<CorpusLiteral>(model->corpus)) {
+            test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
+          }
+          test_thread_pool.unlock();
+        }*/
+        if(resp > c) { 
+          node->gm->mask[pos] = 1;
+          return pos;
+        }else{
+          node->gm->mask[pos] = 0;
+        }
       }
       // node->time_stamp = i;
       return -1;
@@ -1250,8 +1250,8 @@ namespace Tagging {
       if(p == pos || p < 0 || p >= node->gm->size()) continue;
       FeaturePointer this_feat = Policy::extractFeatures(node, p);
       for(pair<string, double>& f : *this_feat) {
-	insertFeature(feat, "w"+boost::lexical_cast<string>(p-pos)+"-"
-			      +f.first, f.second);
+        insertFeature(feat, "w"+boost::lexical_cast<string>(p-pos)+"-"
+                              +f.first, f.second);
       }
     }
 #endif
@@ -1271,7 +1271,7 @@ namespace Tagging {
       size_t seqlen = node->gm->size();
       node->depth = seqlen;
       node->gradient = makeParamPointer();
-      while(node->depth < Tstar * seqlen) {		
+      while(node->depth < Tstar * seqlen) {                
         vec<double> reward(seqlen);
         vec<double> resp(seqlen);
         vec<FeaturePointer> feat(seqlen);

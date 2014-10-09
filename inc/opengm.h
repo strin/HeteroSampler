@@ -55,8 +55,6 @@ template<class GM>
 vec<typename OpenGM<GM>::LabelType> OpenGM<GM>::getLabels() const { // why cannot use vec<LabelType>.
   vec<LabelType> ret(gm_.numberOfVariables());
   for(size_t j = 0; j < ret.size(); ++j) {
-     // if(!inInference_)
-     //    x[j] = currentBestState_[j];
     ret[j] = this->getLabel(j);
   }
   return ret;

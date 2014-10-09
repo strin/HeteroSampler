@@ -62,7 +62,7 @@ public:
   std::vector<double> entropy;            // current entropy when being sampled.
   std::vector<double> staleness;          // how stale a position is.
   std::vector<double> prev_entropy;       // previous entropy before being sampled.
-  std::vector<double> sc, prev_sc;                 
+  std::vector<double> sc, this_sc, prev_sc;                 
   std::vector<double> entropy_unigram;    // unigram entropy of positions.
   vec<vec<double> > sc_unigram;
   std::vector<double> reward;

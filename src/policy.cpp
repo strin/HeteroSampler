@@ -438,12 +438,15 @@ namespace Tagging {
         }
       }
     }
+
     if(featoptFind(COND) || featoptFind(NB_ENT__COND) || featoptFind("all")) {
       insertFeature(feat, COND, node->gm->entropy[pos]);
     }
-    // if(featoptFind("cond-lhood") || featoptFind("all")) {
-    //   insertFeature(feat, "cond-lhood", node->gm->sc[node->gm->tag[pos]]);
-    // }
+
+    if(featoptFind(COND_LHOOD) || featoptFind("all")) {
+      insertFeature(feat, COND_LHOOD, node->gm->sc[node->gm->getLabel(pos)]);
+    }
+
     if(featoptFind("unigram-ent")) {
       if(model_unigram) {
         if(std::isnan(node->gm->entropy_unigram[pos])) {
@@ -455,6 +458,7 @@ namespace Tagging {
         insertFeature(feat, "unigram-ent", node->gm->entropy_unigram[pos]);
       }
     }
+
     if(featoptFind("inv-unigram-ent")) {
       if(model_unigram) {
         if(std::isnan(node->gm->entropy_unigram[pos])) {
@@ -466,6 +470,7 @@ namespace Tagging {
         insertFeature(feat, "inv-unigram-ent", 1/(1e-4+node->gm->entropy_unigram[pos]));
       }
     }
+
     if(featoptFind("01-unigram-ent")) {
       if(model_unigram) {
         if(std::isnan(node->gm->entropy_unigram[pos])) {
@@ -477,6 +482,7 @@ namespace Tagging {
         insertFeature(feat, "01-unigram-ent", node->gm->entropy_unigram[pos] < 1e-8);
       }
     }
+
     if(featoptFind("logistic-unigram-ent")) {
       if(model_unigram) {
         if(std::isnan(node->gm->entropy_unigram[pos])) {
@@ -488,17 +494,7 @@ namespace Tagging {
         insertFeature(feat, "logistic-unigram-ent", logisticFunc(node->gm->entropy_unigram[pos]));
       }
     }
-    // if(featoptFind("unigram-lhood")) {
-    //   if(model_unigram) {
-    //     if(node->gm->sc_unigram[pos].size() == 0) {
-    //       // Tag tag(*node->gm);
-    //       auto& gm = model->copySample(*node->gm);
-    //       model_unigram->sampleOne(gm, *gm.rng, pos);
-    //       node->gm->sc_unigram[pos] = gm.sc;
-    //     }
-    //     insertFeature(feat, "unigram-lhood", node->gm->sc_unigram[pos][node->gm->tag[pos]]);
-    //   }
-    // }
+
     if(featoptFind(NER_DISAGREE) || featoptFind("all")) {
       if(model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
         auto& tag = *cast<Tag>(node->gm);
@@ -520,6 +516,7 @@ namespace Tagging {
         }
       }
     }
+
     if(featoptFind("ising-disagree")) {
       auto image = (const ImageIsing*)(node->gm->seq); // WARNING: Hack, no dynamic check. 
       auto& tag = *cast<Tag>(node->gm);
@@ -563,8 +560,17 @@ namespace Tagging {
       insertFeature(feat, NB_ENT__COND, getFeature(feat, NB_ENT) * node->gm->entropy[pos]);
     }
 
+    /* oracle features, that require sampling */
     if(featoptFind(ORACLE)) {
-      insertFeature(feat, ORACLE, 0);
+      insertFeature(feat, ORACLE, 0);     // computed in updateResp.
+    }
+
+    if(featoptFind(ORACLE_ENT)) {
+      insertFeature(feat, ORACLE_ENT, 0);  // computed in updateResp.
+    }
+
+    if(featoptFind(ORACLE_STALENESS)) {
+      insertFeature(feat, ORACLE_STALENESS, 0); // computed in updateResp.
     }
 
     return feat;
@@ -634,6 +640,7 @@ namespace Tagging {
         node->gm->changed[pos][pair.first] = false;
       }
     }
+
     if(featoptFind(NB_ENT) || featoptFind(NB_ENT__COND)) {
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
         if(node->gm->blanket[id].size() > 0) {
@@ -651,6 +658,7 @@ namespace Tagging {
         }
       }
     }
+
     if(featoptFind(NER_DISAGREE)) {
       if(getFeature(feat, NER_DISAGREE_L) and node->gm->blanket[pos-1].size() > 0 
         and getFeature(node->gm->feat[pos-1], NER_DISAGREE_R) == 0) {
@@ -663,6 +671,7 @@ namespace Tagging {
         updateRespByHandle(pos+1);
       }
     }
+
     if(featoptFind(ORACLE)) {   // oracle feature is just *reward*.
       auto computeOracle = [&] (double* feat, int id) {
         int oldval = node->gm->getLabel(id);
@@ -679,6 +688,41 @@ namespace Tagging {
         }
       }
     }
+
+    if(featoptFind(ORACLE_ENT)) {
+     auto computeOracle = [&] (double* feat, int id) {
+        int oldval = node->gm->getLabel(id);
+        model->sampleOne(*node->gm, rng, id, false);
+        *feat = logEntropy(&node->gm->sc[0], node->gm->numLabels(id));  
+        node->gm->setLabel(id, oldval);
+        node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
+        updateRespByHandle(id);
+      };
+      computeOracle(findFeature(feat, ORACLE_ENT), pos);
+      for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
+        if(node->gm->blanket[id].size() > 0) { // has already been initialized.
+          computeOracle(findFeature(node->gm->feat[id], ORACLE_ENT), id);
+        }
+      } 
+    }
+
+    if(featoptFind(ORACLE_STALENESS)) {
+     auto computeOracle = [&] (double* feat, int id) {
+        int oldval = node->gm->getLabel(id);
+        model->sampleOne(*node->gm, rng, id, false);
+        *feat = node->gm->this_sc[oldval] - node->gm->sc[oldval];
+        node->gm->setLabel(id, oldval);
+        node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
+        updateRespByHandle(id);
+      };
+      computeOracle(findFeature(feat, ORACLE_STALENESS), pos);
+      for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
+        if(node->gm->blanket[id].size() > 0) { // has already been initialized.
+          computeOracle(findFeature(node->gm->feat[id], ORACLE_STALENESS), id);
+        }
+      } 
+    }
+
 
     /* update Markov blanket */
     node->gm->blanket[pos] = node->gm->getLabels(model->markovBlanket(*node->gm, pos));

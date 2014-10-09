@@ -141,12 +141,13 @@ namespace Tagging {
     size_t val = rng.sampleCategorical(&sc[0], gm.numLabels(choice));
     size_t oldval = opengm_.state(choice);
     gm.reward[choice] = (sc[val] - sc[oldval]) * temp;  // use reward without temperature.
-
+    gm.sc = sc;
+    
     if(use_meta_feature) {
+      gm.this_sc = sc;
       gm.prev_entropy[choice] = gm.entropy[choice];
       gm.entropy[choice] = logEntropy(&sc[0], gm.numLabels(choice));
       gm.timestamp[choice]++;
-      gm.sc = sc;
     }
 
     /* compute stats */

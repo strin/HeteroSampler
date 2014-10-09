@@ -193,8 +193,9 @@ namespace Tagging {
 
     // compute statistics.
     tag.reward[pos] = sc[val] - sc[oldval];
+    tag.sc = sc;
     if(use_meta_feature) {
-      tag.sc = sc;
+      tag.this_sc = sc;
       for(int t = 0; t < taglen; t++) {
         tag.staleness[pos] += fabs(sc[t] - tag.prev_sc[t]);
       }

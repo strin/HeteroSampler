@@ -31,7 +31,7 @@ namespace Tagging {
     // sample using custom kernel choice.
     // use Gibbs to sample <choice> with random number generator <rng> and feature extraction functional <feat_extract>
     // flags:
-    //  use_meta_feature: only reward and tags would be updated if set true.
+    //  use_meta_feature: only reward, tags, and sc would be updated if set true.
     virtual void sampleOne(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature = true);
 
     // sample using custom kernel choice at initialization.

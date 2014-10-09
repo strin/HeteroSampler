@@ -21,7 +21,10 @@ namespace Tagging {
   const static string NB_ENT__COND = "nb-ent--cond-ent";
   const static string COND = "cond-ent";
   const static string ORACLE = "oracle";
-
+  const static string COND_LHOOD = "cond-lhood";
+  const static string ORACLE_ENT = "oracle-ent";
+  const static string ORACLE_STALENESS = "oracle-stale";
+  
   class Policy {
   public:
     Policy(ModelPtr model, const boost::program_options::variables_map& vm);

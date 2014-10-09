@@ -170,8 +170,7 @@ namespace Tagging {
     // Enumerative Gibbs sampling.
     int oldval = tag.tag[pos];
     if(use_meta_feature) {
-      tag.prev_sc = tag.sc;
-      tag.staleness[pos] = 0;
+      tag.prev_sc[pos] = tag.this_sc[pos];
       tag.oldval = oldval;
     }
 
@@ -195,10 +194,7 @@ namespace Tagging {
     tag.reward[pos] = sc[val] - sc[oldval];
     tag.sc = sc;
     if(use_meta_feature) {
-      tag.this_sc = sc;
-      for(int t = 0; t < taglen; t++) {
-        tag.staleness[pos] += fabs(sc[t] - tag.prev_sc[t]);
-      }
+      tag.this_sc[pos] = sc;
       tag.prev_entropy[pos] = tag.entropy[pos];
       tag.entropy[pos] = logEntropy(&sc[0], taglen);  
       tag.timestamp[pos] += 1;

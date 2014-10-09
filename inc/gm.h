@@ -43,7 +43,6 @@ public:
   void initStats() {
     int num_tags = this->numLabels(0);
     entropy.resize(this->size(), log(num_tags));
-    staleness.resize(this->size(), log(num_tags));
     prev_entropy.resize(this->size());
     feat.resize(this->size());
     blanket.resize(this->size());
@@ -52,7 +51,14 @@ public:
     feat.resize(this->size(), nullptr);
 
     sc.resize(num_tags, 0);
-    prev_sc.resize(num_tags, -log(num_tags));
+    prev_sc.resize(this->size());
+    for(auto& s : prev_sc) {
+      s.resize(num_tags, -log(num_tags));
+    }
+    this_sc.resize(this->size());
+    for(auto& s : prev_sc) {
+      s.resize(num_tags, -log(num_tags));
+    }
   }
 
   int time;                               // how many times have spent on sampling this graphical model. 
@@ -60,9 +66,9 @@ public:
   vec<double> timestamp;                  // whenever a position is changed, its timestamp is incremented.
   vec<double> checksum;                   // if checksum is changes, then the position might be updated.
   std::vector<double> entropy;            // current entropy when being sampled.
-  std::vector<double> staleness;          // how stale a position is.
   std::vector<double> prev_entropy;       // previous entropy before being sampled.
-  std::vector<double> sc, this_sc, prev_sc;                 
+  std::vector<double> sc;                 // temporary normalized score.
+  vec<vec<double> > this_sc, prev_sc;     // normalized score.
   std::vector<double> entropy_unigram;    // unigram entropy of positions.
   vec<vec<double> > sc_unigram;
   std::vector<double> reward;

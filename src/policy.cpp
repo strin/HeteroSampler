@@ -444,7 +444,8 @@ namespace Tagging {
     }
 
     if(featoptFind(COND_LHOOD) || featoptFind("all")) {
-      insertFeature(feat, COND_LHOOD, node->gm->sc[node->gm->getLabel(pos)]);
+      int label = node->gm->getLabel(pos);
+      insertFeature(feat, COND_LHOOD, node->gm->this_sc[pos][label]);
     }
 
     if(featoptFind("unigram-ent")) {
@@ -710,7 +711,7 @@ namespace Tagging {
      auto computeOracle = [&] (double* feat, int id) {
         int oldval = node->gm->getLabel(id);
         model->sampleOne(*node->gm, rng, id, false);
-        *feat = node->gm->this_sc[oldval] - node->gm->sc[oldval];
+        *feat = node->gm->this_sc[id][oldval] - node->gm->sc[oldval];
         node->gm->setLabel(id, oldval);
         node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
         updateRespByHandle(id);
@@ -1451,7 +1452,7 @@ namespace Tagging {
           FeaturePointer feat = node->gm->feat[i];
 
           // double resp = node->gm->resp[i];
-          double resp = Tagging::score(param, feat); // fix: param always changes, so does resp. 
+          double log_resp = Tagging::score(param, feat); // fix: param always changes, so does resp.
           double logR = 0;
           double staleness = 0;
           
@@ -1474,19 +1475,27 @@ namespace Tagging {
 
 #elif REWARD_SCHEME == REWARD_LHOOD
           int oldval = node->gm->getLabel(i);
-          for(size_t j = 0; j < J; j++) {
-            if(j < J-1) {
-              model->sampleOne(*node->gm, rng, i);
-              node->gm->setLabel(i, oldval);
-            }else{
-              this->sampleOne(node, rng, i);
-            }
-            if(j  == 0) {
-              staleness = node->gm->staleness[i];
-            }
-            logR += node->gm->reward[i];
+          const int num_label = node->gm->numLabels(i);
+          double prev_sc = node->gm->this_sc[i][oldval];
+          this->sampleOne(node, rng, i);
+          logR =  - node->gm->sc[oldval];
+          for(int label = 0; label < num_label; label++) {
+            logR += exp(node->gm->sc[label]) * node->gm->sc[label];
           }
-          logR /= (double)J;
+          
+          // for(size_t j = 0; j < J; j++) {
+          //   if(j < J-1) {
+          //     model->sampleOne(*node->gm, rng, i);
+          //     node->gm->setLabel(i, oldval);
+          //   }else{
+          //     this->sampleOne(node, rng, i);
+          //   }
+          //   if(j  == 0) {
+          //     staleness = node->gm->staleness[i];
+          //   }
+          //   logR += node->gm->reward[i];
+          // }
+          // logR /= (double)J;
           
 #endif
           /* use gradients to update model */
@@ -1508,7 +1517,7 @@ namespace Tagging {
 //          }
 
           /* update meta-model (strategy 2) */
-          resp = logisticFunc(resp);
+          double resp = logisticFunc(log_resp);
           if(logR > 0) {
             mapUpdate(*grad, *feat, (1-resp));
           }else{
@@ -1516,18 +1525,23 @@ namespace Tagging {
           }
           
           adagrad(param, G2, grad, eta);   // overwrite adagrad, for fine-grain gradients. (return node->gradient empty).
-          
+
           if(lets_resp_reward) {
             resp_reward.push_back(make_pair(resp, logR));
             PolicyExample example;
             example.reward = logR;
             example.staleness = staleness;
-            example.resp = resp;
+            example.resp = log_resp;
             example.feat = makeFeaturePointer();
             example.param = makeParamPointer();
             *example.feat = *feat;
             *example.param = *param;
             this->examples.push_back(example);
+            //            cout << - getFeature(feat, "oracle-ent")
+            //                    - getFeature(feat, "cond-lhood")
+            //                    + getFeature(feat, "oracle-stale")
+            //                << " , "
+            //                << logR << endl;
           }
           
           if(verbose) {
@@ -1535,11 +1549,11 @@ namespace Tagging {
             logNode(node);
             lg->end();
           }
-          
-          thread_pool.unlock();
 
           /* update response */
           this->updateResp(node, rng, i, nullptr);
+          
+          thread_pool.unlock();
         }
       }
       node->log_weight = 0;

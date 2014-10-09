@@ -144,7 +144,8 @@ namespace Tagging {
     gm.sc = sc;
     
     if(use_meta_feature) {
-      gm.this_sc = sc;
+      gm.prev_sc[choice] = gm.this_sc[choice];
+      gm.this_sc[choice] = sc;
       gm.prev_entropy[choice] = gm.entropy[choice];
       gm.entropy[choice] = logEntropy(&sc[0], gm.numLabels(choice));
       gm.timestamp[choice]++;

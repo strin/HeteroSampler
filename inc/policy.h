@@ -21,10 +21,13 @@ namespace Tagging {
   const static string NB_ENT__COND = "nb-ent--cond-ent";
   const static string COND = "cond-ent";
   const static string ORACLE = "oracle";
+  const static string ORACLEv = "oracle-v"; // virtual feature, do not participate in response.
   const static string COND_LHOOD = "cond-lhood";
   const static string ORACLE_ENT = "oracle-ent";
+  const static string ORACLE_ENTv = "oracle-ent-v"; // virtual feature, do not participate in response.
   const static string ORACLE_STALENESS = "oracle-stale";
-  
+  const static string ORACLE_STALENESSv = "oracle-stale-v"; // virtual feature, do not participate in response.
+
   class Policy {
   public:
     Policy(ModelPtr model, const boost::program_options::variables_map& vm);
@@ -164,7 +167,6 @@ namespace Tagging {
     std::vector<double> tag_unigram_start;
     const std::string name;
     const size_t K, Q; // K: num trajectories. Q: num epochs.
-    const size_t J;    // J: num samples.
     const size_t test_count, train_count;
     const double eta;
 

@@ -46,7 +46,6 @@ int main(int argc, char* argv[]) {
           ("Q", po::value<size_t>()->default_value(1), "number of passes")
           ("Q0", po::value<int>()->default_value(1), "number of passes for smart init")
           ("K", po::value<size_t>()->default_value(5), "number of chains in policy gradient")
-    ("J", po::value<size_t>()->default_value(1), "number of samples to approximate the reward")
           ("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
           ("c", po::value<double>()->default_value(0.1), "time regularization")
           ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
@@ -59,15 +58,15 @@ int main(int argc, char* argv[]) {
           ("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
           ("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
           ("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
-    ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
-    ("lets_lazymax", po::value<bool>()->default_value(false), "lazymax is true, the algorithm takes max sample only after each sweep.")
-    ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
-    ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
-    ("feat", po::value<std::string>()->default_value(""), "feature switches")
-    ("temp", po::value<string>()->default_value("scanline"), "the annealing scheme to use.")
-    ("temp_init", po::value<double>()->default_value(1), "initial temperature")
-    ("temp_decay", po::value<double>()->default_value(0.9), "decay of temperature.")
-    ("temp_magnify", po::value<double>()->default_value(0.1), "magnifying factor of init temperature.");
+          ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
+          ("lets_lazymax", po::value<bool>()->default_value(false), "lazymax is true, the algorithm takes max sample only after each sweep.")
+          ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
+          ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
+          ("feat", po::value<std::string>()->default_value(""), "feature switches")
+          ("temp", po::value<string>()->default_value("scanline"), "the annealing scheme to use.")
+          ("temp_init", po::value<double>()->default_value(1), "initial temperature")
+          ("temp_decay", po::value<double>()->default_value(0.9), "decay of temperature.")
+          ("temp_magnify", po::value<double>()->default_value(0.1), "magnifying factor of init temperature.");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);

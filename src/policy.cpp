@@ -25,7 +25,6 @@ namespace Tagging {
                      }),
    name(vm["name"].as<string>()),
    K(vm["K"].as<size_t>()),
-   J(vm["J"].as<size_t>()),
    eta(vm["eta"].as<double>()),
    train_count(vm["trainCount"].as<size_t>()), 
    test_count(vm["testCount"].as<size_t>()),
@@ -562,15 +561,15 @@ namespace Tagging {
     }
 
     /* oracle features, that require sampling */
-    if(featoptFind(ORACLE)) {
+    if(featoptFind(ORACLE) || featoptFind(ORACLEv)) {
       insertFeature(feat, ORACLE, 0);     // computed in updateResp.
     }
 
-    if(featoptFind(ORACLE_ENT)) {
+    if(featoptFind(ORACLE_ENT) || featoptFind(ORACLE_ENTv)) {
       insertFeature(feat, ORACLE_ENT, 0);  // computed in updateResp.
     }
 
-    if(featoptFind(ORACLE_STALENESS)) {
+    if(featoptFind(ORACLE_STALENESS) || featoptFind(ORACLE_STALENESSv)) {
       insertFeature(feat, ORACLE_STALENESS, 0); // computed in updateResp.
     }
 
@@ -673,14 +672,16 @@ namespace Tagging {
       }
     }
 
-    if(featoptFind(ORACLE)) {   // oracle feature is just *reward*.
+    if(featoptFind(ORACLE) || featoptFind(ORACLEv)) {   // oracle feature is just *reward*.
       auto computeOracle = [&] (double* feat, int id) {
         int oldval = node->gm->getLabel(id);
         model->sampleOne(*node->gm, rng, id, false);
         node->gm->setLabel(id, oldval);
         *feat = node->gm->reward[id];
-        node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
-        updateRespByHandle(id);
+        if(featoptFind(ORACLE)) {
+          node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
+          updateRespByHandle(id);
+        }
       };
       computeOracle(findFeature(feat, ORACLE), pos);
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
@@ -690,14 +691,16 @@ namespace Tagging {
       }
     }
 
-    if(featoptFind(ORACLE_ENT)) {
+    if(featoptFind(ORACLE_ENT) || featoptFind(ORACLE_ENTv)) {
      auto computeOracle = [&] (double* feat, int id) {
         int oldval = node->gm->getLabel(id);
         model->sampleOne(*node->gm, rng, id, false);
         *feat = logEntropy(&node->gm->sc[0], node->gm->numLabels(id));  
         node->gm->setLabel(id, oldval);
-        node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
-        updateRespByHandle(id);
+        if(featoptFind(ORACLE_ENT)) {
+          node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
+          updateRespByHandle(id);
+        }
       };
       computeOracle(findFeature(feat, ORACLE_ENT), pos);
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
@@ -707,14 +710,16 @@ namespace Tagging {
       } 
     }
 
-    if(featoptFind(ORACLE_STALENESS)) {
+    if(featoptFind(ORACLE_STALENESS) || featoptFind(ORACLE_STALENESSv)) {
      auto computeOracle = [&] (double* feat, int id) {
         int oldval = node->gm->getLabel(id);
         model->sampleOne(*node->gm, rng, id, false);
         *feat = node->gm->this_sc[id][oldval] - node->gm->sc[oldval];
         node->gm->setLabel(id, oldval);
-        node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
-        updateRespByHandle(id);
+        if(featoptFind(ORACLE_STALENESS)) {
+          node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
+          updateRespByHandle(id);
+        }
       };
       computeOracle(findFeature(feat, ORACLE_STALENESS), pos);
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
@@ -1476,7 +1481,6 @@ namespace Tagging {
 #elif REWARD_SCHEME == REWARD_LHOOD
           int oldval = node->gm->getLabel(i);
           const int num_label = node->gm->numLabels(i);
-          double prev_sc = node->gm->this_sc[i][oldval];
           this->sampleOne(node, rng, i);
           logR =  - node->gm->sc[oldval];
           for(int label = 0; label < num_label; label++) {
@@ -1525,7 +1529,14 @@ namespace Tagging {
           }
           
           adagrad(param, G2, grad, eta);   // overwrite adagrad, for fine-grain gradients. (return node->gradient empty).
-
+          
+          if(featoptFind(ORACLEv))
+            (*param)[ORACLE] = 0;
+          if(featoptFind(ORACLE_ENTv))
+            (*param)[ORACLE_ENT] = 0;
+          if(featoptFind(ORACLE_STALENESSv))
+            (*param)[ORACLE_STALENESS] = 0;
+          
           if(lets_resp_reward) {
             resp_reward.push_back(make_pair(resp, logR));
             PolicyExample example;

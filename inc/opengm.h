@@ -30,7 +30,7 @@ public:
   vec<LabelType> getLabels() const;
 
   /* implement GraphicalModel interface */
-  virtual string str();
+  virtual string str(bool verbose = false);
   virtual size_t size() const;
   virtual size_t numLabels(int id) const;
 
@@ -63,11 +63,17 @@ vec<typename OpenGM<GM>::LabelType> OpenGM<GM>::getLabels() const { // why canno
 }
 
 template<class GM>
-string OpenGM<GM>::str() {
+string OpenGM<GM>::str(bool verbose) {
   auto ret = getLabels();
   string res;
+  int count = 0;
   for(auto& val : ret) {
-    res += to_string(val) + "\t";
+    if(verbose) {
+      res += to_string(val) + " / " + to_string(count) + "\t";
+    }else{
+      res += to_string(val) + "\t";
+    }
+    count++;
   }
   return res;
 }

@@ -81,7 +81,7 @@ public:
   ptr<Corpus> corpus;
 
   // to string. 
-  virtual string str() {
+  virtual string str(bool verbose = false) {
     throw "GraphicalModel::str not defined.";
   } 
 

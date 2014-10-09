@@ -51,8 +51,9 @@ public:
 
   // return the string of a tag.
   std::string getTag(size_t pos) const;
+
   // to string. 
-  std::string str(); 
+  virtual std::string str(bool verbose = false); 
 };
 
 typedef std::shared_ptr<Tag> TagPtr;

@@ -134,13 +134,15 @@ namespace Tagging {
     return score;
   }
 
-  string Tag::str() {
+  string Tag::str(bool verbose) {
     string ss;
     size_t seqlen = seq->seq.size();
     for(size_t i = 0; i < seqlen; i++) {
       ss += seq->seq[i]->str();
       ss += " / ";
       ss += this->getTag(i);
+      ss += " / ";
+      ss += boost::lexical_cast<string>(i);
       ss += "\t";
     }
     return ss;

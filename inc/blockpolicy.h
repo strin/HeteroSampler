@@ -53,6 +53,8 @@ public:
       for(const string& opt : featopt) {
         (*param)[opt] = 1;
       }
+      // overwrite.
+      (*param)["sp"] = -0.3;
     }
     /* log policy examples */
     lg->begin("policy_example");

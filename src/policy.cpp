@@ -669,6 +669,8 @@ namespace Tagging {
         model->sampleOne(*node->gm, rng, id, false);
         node->gm->setLabel(id, oldval);
         *feat = node->gm->reward[id];
+        node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
+        updateRespByHandle(id);
       };
       computeOracle(findFeature(feat, ORACLE), pos);
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
@@ -694,11 +696,15 @@ namespace Tagging {
   void Policy::logNode(MarkovTreeNodePtr node) {
     while(node->children.size() > 0) node = node->children[0]; // take final sample.
     lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
-    lg->begin("truth"); *lg << node->gm->seq->str() << endl; lg->end();
+    lg->begin("truth"); *lg<< node->gm->seq->str() << endl; lg->end();
     lg->begin("tag"); *lg << node->gm->str() << endl; lg->end();
     lg->begin("resp");
     for(size_t i = 0; i < node->gm->size(); i++) {
-      *lg << node->gm->resp[i] << "\t";            
+      *lg << node->gm->resp[i];
+      if(verbose) {
+        *lg << " / " << boost::lexical_cast<string>(i);
+      }
+      *lg << "\t";            
     }
     *lg << endl;
     lg->end();
@@ -716,7 +722,11 @@ namespace Tagging {
       for(auto& p : feat_names) {
           lg->begin(p);
           for(size_t i = 0; i < node->gm->size(); i++) {
-            *lg << getFeature(node->gm->feat[i], p) << "\t";
+            *lg << getFeature(node->gm->feat[i], p);
+            if(verbose) {
+              *lg << " / " << boost::lexical_cast<string>(i);
+            } 
+            *lg << "\t";
           }
           *lg << endl;
           lg->end();
@@ -725,11 +735,17 @@ namespace Tagging {
     }
     lg->begin("mask");
     for(size_t i = 0; i < node->gm->size(); i++) {
-      *lg << node->gm->mask[i] << "\t";            
+      *lg << node->gm->mask[i];
+      if(verbose) {
+        *lg << " / " << boost::lexical_cast<string>(i);
+      }
+      *lg << "\t";            
     }
     *lg << endl;
     lg->end();
-    // lg->begin("dist"); *lg << node->gm->size()-hits << endl; lg->end();
+    lg->begin("score");
+      *lg << node->log_prior_weight << endl;
+    lg->end(); // <score>
   }
 
   void Policy::resetLog(std::shared_ptr<XMLlog> new_lg) {

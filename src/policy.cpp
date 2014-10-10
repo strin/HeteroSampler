@@ -663,11 +663,13 @@ namespace Tagging {
       if(getFeature(feat, NER_DISAGREE_L) and node->gm->blanket[pos-1].size() > 0 
         and getFeature(node->gm->feat[pos-1], NER_DISAGREE_R) == 0) {
         insertFeature(node->gm->feat[pos-1], NER_DISAGREE_R);
+        node->gm->resp[pos-1] = (*param)[NER_DISAGREE_R];
         updateRespByHandle(pos-1);
       }
       if(getFeature(feat, NER_DISAGREE_R) and node->gm->blanket[pos+1].size() > 0
         and getFeature(node->gm->feat[pos+1], NER_DISAGREE_L) == 0) {
         insertFeature(node->gm->feat[pos+1], NER_DISAGREE_L);
+        node->gm->resp[pos+1] = (*param)[NER_DISAGREE_L];
         updateRespByHandle(pos+1);
       }
     }

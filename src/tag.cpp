@@ -141,9 +141,9 @@ namespace Tagging {
       ss += seq->seq[i]->str();
       ss += " / ";
       ss += this->getTag(i);
-      ss += " / ";
+      ss += " / [";
       ss += boost::lexical_cast<string>(i);
-      ss += "\t";
+      ss += "]\t";
     }
     return ss;
   }

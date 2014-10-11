@@ -25,6 +25,7 @@ namespace Tagging {
                      }),
    name(vm["name"].as<string>()),
    learning(vm["learning"].as<string>()), 
+   mode_reward(vm["reward"].as<string>()), 
    K(vm["K"].as<size_t>()),
    eta(vm["eta"].as<double>()),
    train_count(vm["trainCount"].as<size_t>()), 
@@ -678,9 +679,47 @@ namespace Tagging {
     if(featoptFind(ORACLE) || featoptFind(ORACLEv)) {   // oracle feature is just *reward*.
       auto computeOracle = [&] (double* feat, int id) {
         int oldval = node->gm->getLabel(id);
-        model->sampleOne(*node->gm, rng, id, false);
-        node->gm->setLabel(id, oldval);
-        *feat = node->gm->reward[id];
+        int num_label = node->gm->numLabels(id);
+        /* strategy 1 : use local reward */
+        if(this->mode_reward == "R0") {
+          model->sampleOne(*node->gm, rng, id, false);
+          node->gm->setLabel(id, oldval);
+          *feat = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
+        }
+        /* strategy 2: use second-order reward */
+        if(this->mode_reward == "R1") {
+          auto longtermReward = [&] () {
+            double R = -DBL_MAX;
+            if(id >= 1) {
+              int oldval2 = node->gm->getLabel(id-1);
+              model->sampleOne(*node->gm, rng, id-1, false);
+              double reward2 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval2];
+              if(reward2 > R) {
+                R = reward2;
+              }
+              node->gm->setLabel(id-1, oldval2);
+            }
+            if(id < node->gm->size()-1) {
+              int oldval2 = node->gm->getLabel(id+1);
+              model->sampleOne(*node->gm, rng, id+1, false);
+              double reward2 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval2];
+              if(reward2 > R) {
+                R = reward2;
+              }
+              node->gm->setLabel(id+1, oldval2);
+            }
+            return R;
+          };
+          
+          double reward0 = longtermReward();
+          model->sampleOne(*node->gm, rng, id, false);
+          double reward1 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval] 
+                            + longtermReward();
+          node->gm->setLabel(id, oldval);
+          
+          *feat = reward1 - reward0;
+        }
+
         if(featoptFind(ORACLE)) {
           node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
           updateRespByHandle(id);
@@ -752,10 +791,14 @@ namespace Tagging {
     lg->begin("truth"); *lg<< node->gm->seq->str() << endl; lg->end();
     lg->begin("tag"); *lg << node->gm->str() << endl; lg->end();
     lg->begin("resp");
+    auto logIndex = [&] (int index) {
+      *lg << " / [" << boost::lexical_cast<string>(index) + "]";
+    };
+
     for(size_t i = 0; i < node->gm->size(); i++) {
       *lg << node->gm->resp[i];
       if(verbose) {
-        *lg << " / " << boost::lexical_cast<string>(i);
+        logIndex(i);
       }
       *lg << "\t";            
     }
@@ -777,7 +820,7 @@ namespace Tagging {
           for(size_t i = 0; i < node->gm->size(); i++) {
             *lg << getFeature(node->gm->feat[i], p);
             if(verbose) {
-              *lg << " / " << boost::lexical_cast<string>(i);
+              logIndex(i);
             } 
             *lg << "\t";
           }
@@ -790,7 +833,7 @@ namespace Tagging {
     for(size_t i = 0; i < node->gm->size(); i++) {
       *lg << node->gm->mask[i];
       if(verbose) {
-        *lg << " / " << boost::lexical_cast<string>(i);
+        logIndex(i);
       }
       *lg << "\t";            
     }

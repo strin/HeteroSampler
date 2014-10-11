@@ -1512,7 +1512,7 @@ namespace Tagging {
           auto grad = makeParamPointer();
           /* update meta-model (strategy 1) */
           if(learning == "linear") {
-            mapUpdate(*grad, *feat, (logR - resp));
+            mapUpdate(*grad, *feat, (logR - log_resp));
           }
           
 //          /* update meta-model (strategy 1.5) */
@@ -1545,7 +1545,7 @@ namespace Tagging {
             (*param)[ORACLE_STALENESS] = 0;
           
           if(lets_resp_reward) {
-            resp_reward.push_back(make_pair(resp, logR));
+            resp_reward.push_back(make_pair(log_resp, logR));
             PolicyExample example;
             example.reward = logR;
             example.staleness = staleness;

@@ -164,8 +164,9 @@ namespace Tagging {
     ParamPointer wordent, wordfreq;
     double wordent_mean, wordfreq_mean;
     Vector2d tag_bigram;
-    std::vector<double> tag_unigram_start;
-    const std::string name;
+    vec<double> tag_unigram_start;
+    const string name;
+    const string learning;
     const size_t K, Q; // K: num trajectories. Q: num epochs.
     const size_t test_count, train_count;
     const double eta;

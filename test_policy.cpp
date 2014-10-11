@@ -35,6 +35,7 @@ int main(int argc, char* argv[]) {
           ("model", po::value<string>()->default_value("model/gibbs.model"), "use saved model to do the inference")
           ("unigram_model", po::value<string>(), "use a unigram (if necessary)")
           ("policy", po::value<string>()->default_value("entropy"), "sampling policy")
+          ("learning", po::value<string>()->default_value("logistic"), "learning strategy")
           ("name", po::value<string>()->default_value("default"), "name of the run")
           ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
           ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")

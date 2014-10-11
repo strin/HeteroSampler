@@ -24,6 +24,7 @@ namespace Tagging {
                       this->sample(tid, node);
                      }),
    name(vm["name"].as<string>()),
+   learning(vm["learning"].as<string>()), 
    K(vm["K"].as<size_t>()),
    eta(vm["eta"].as<double>()),
    train_count(vm["trainCount"].as<size_t>()), 
@@ -1510,7 +1511,9 @@ namespace Tagging {
 
           auto grad = makeParamPointer();
           /* update meta-model (strategy 1) */
-//           mapUpdate(*grad, *feat, (logR - resp));
+          if(learning == "linear") {
+            mapUpdate(*grad, *feat, (logR - resp));
+          }
           
 //          /* update meta-model (strategy 1.5) */
 //          mapUpdate(*grad, *feat, ((logR > 0) - resp));
@@ -1523,11 +1526,13 @@ namespace Tagging {
 //          }
 
           /* update meta-model (strategy 2) */
-          double resp = logisticFunc(log_resp);
-          if(logR > 0) {
-            mapUpdate(*grad, *feat, (1-resp));
-          }else{
-            mapUpdate(*grad, *feat, -resp);
+          if(learning == "logistic") {
+            double resp = logisticFunc(log_resp);
+            if(logR > 0) {
+              mapUpdate(*grad, *feat, (1-resp));
+            }else{
+              mapUpdate(*grad, *feat, -resp);
+            }
           }
           
           adagrad(param, G2, grad, eta);   // overwrite adagrad, for fine-grain gradients. (return node->gradient empty).

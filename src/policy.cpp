@@ -712,12 +712,37 @@ namespace Tagging {
           };
           
           double reward0 = longtermReward();
-          model->sampleOne(*node->gm, rng, id, false);
-          double reward1 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval] 
+           model->sampleOne(*node->gm, rng, id, false);
+          double reward1 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval]
                             + longtermReward();
-          node->gm->setLabel(id, oldval);
+//          double reward1 = longtermReward();
           
           *feat = reward1 - reward0;
+          node->gm->setLabel(id, oldval);
+        }
+        /* strategy 3: use higher-order reward */
+        if(this->mode_reward == "R2") {
+          int maxdepth = 5;
+          std::function<double(int, int, bool)> longtermReward = [&] (int id, int depth, bool lets_samle) {
+            int oldval = node->gm->getLabel(id);
+            double R = -DBL_MAX;
+            if(lets_samle or depth > 0) {
+              model->sampleOne(*node->gm, rng, id, false);
+              R = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
+            }else{
+              R = 0;
+            }
+            if(depth >= maxdepth) return R;
+            if(id >= 1) {
+              R = fmax(R, longtermReward(id-1, depth+1, lets_samle));
+            }
+            if(id < node->gm->size()-1) {
+              R = fmax(R, longtermReward(id+1, depth+1, lets_samle));
+            }
+            node->gm->setLabel(id, oldval);
+            return R;
+          };
+          *feat = longtermReward(id, 0, true) - longtermReward(id, 0, false);
         }
 
         if(featoptFind(ORACLE)) {
@@ -726,9 +751,20 @@ namespace Tagging {
         }
       };
       computeOracle(findFeature(feat, ORACLE), pos);
+      set<int> visited;
+      visited.insert(pos);
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
-        if(node->gm->blanket[id].size() > 0) { // has already been initialized.
+        if(node->gm->blanket[id].size() > 0 and visited.count(id) == 0) { // has already been initialized.
           computeOracle(findFeature(node->gm->feat[id], ORACLE), id);
+          visited.insert(id);
+        }
+        if(this->mode_reward == "R1") {
+          for(auto id2 : model->invMarkovBlanket(*node->gm, id)) {
+            if(node->gm->blanket[id].size() > 0 and visited.count(id2) == 0) {
+              computeOracle(findFeature(node->gm->feat[id2], ORACLE), id2);
+              visited.insert(id2);
+            }
+          }
         }
       }
     }

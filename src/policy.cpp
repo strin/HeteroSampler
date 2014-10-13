@@ -750,7 +750,7 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
 //          model->sampleOne(*node->gm, rng, id, false);
 //          node->gm->setLabel(id, oldval);
 //          *feat = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
-          int maxdepth = 5;
+          int maxdepth = 3;
           *feat = delayedReward(node, id, 0, maxdepth, true) - delayedReward(node, id, 0, maxdepth, false);
         }
 
@@ -1644,11 +1644,6 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
             *example.feat = *feat;
             *example.param = *param;
             this->examples.push_back(example);
-            //            cout << - getFeature(feat, "oracle-ent")
-            //                    - getFeature(feat, "cond-lhood")
-            //                    + getFeature(feat, "oracle-stale")
-            //                << " , "
-            //                << logR << endl;
           }
           
           if(verbose) {

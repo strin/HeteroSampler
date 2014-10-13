@@ -116,7 +116,10 @@ namespace Tagging {
 
     // estimate the reward of a MarkovTree node (default: -dist).
     virtual double reward(MarkovTreeNodePtr node);
-
+    
+    // estimate delayed reward.
+    double delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxdepth, bool lets_samle);
+    
     // extract features from node.
     virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
 
@@ -238,7 +241,7 @@ namespace Tagging {
     
     // reward = -dist - c * (depth+1).
     double reward(MarkovTreeNodePtr node);
-    
+
     // extract features from node.
     virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
 

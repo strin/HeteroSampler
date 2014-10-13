@@ -68,15 +68,40 @@ namespace Tagging {
   }
 
   double Policy::reward(MarkovTreeNodePtr node) {
-    auto& tag = *cast<Tag>(node->gm);
-    // Tag& tag = *node->gm;
-    const Instance* seq = tag.seq;
-    double score = 0.0;
-    for(int i = 0; i < tag.size(); i++) {
-      score -= (tag.tag[i] != seq->tag[i]);
-    }
-    return score;
+    throw "function deprecated";
+    // auto& tag = *cast<Tag>(node->gm);
+    // // Tag& tag = *node->gm;
+    // const Instance* seq = tag.seq;
+    // double score = 0.0;
+    // for(int i = 0; i < tag.size(); i++) {
+    //   score -= (tag.tag[i] != seq->tag[i]);
+    // }
+    // return score;
   }
+
+double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxdepth, bool lets_samle) {
+  int num_label = node->gm->numLabels(id);
+  int oldval = node->gm->getLabel(id);
+  double R0;
+  if(lets_samle or depth > 0) {
+    model->sampleOne(*node->gm, rng, id, false);
+    R0 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
+  }else{
+    R0 = 0;
+  }
+  if(depth >= maxdepth) {
+    node->gm->setLabel(id, oldval);
+    return R0;
+  }
+  double R = -DBL_MAX;
+  for(auto i : model->markovBlanket(*node->gm, id)) {
+    R = fmax(R, R0 + delayedReward(node, i, depth+1, maxdepth, lets_samle));
+  }
+  node->gm->setLabel(id, oldval);
+  return R;
+}
+
+
 
   void Policy::sample(int tid, MarkovTreeNodePtr node) {
     this->sampleTest(tid, node);
@@ -722,27 +747,11 @@ namespace Tagging {
         }
         /* strategy 3: use higher-order reward */
         if(this->mode_reward == "R2") {
+//          model->sampleOne(*node->gm, rng, id, false);
+//          node->gm->setLabel(id, oldval);
+//          *feat = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
           int maxdepth = 5;
-          std::function<double(int, int, bool)> longtermReward = [&] (int id, int depth, bool lets_samle) {
-            int oldval = node->gm->getLabel(id);
-            double R = -DBL_MAX;
-            if(lets_samle or depth > 0) {
-              model->sampleOne(*node->gm, rng, id, false);
-              R = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
-            }else{
-              R = 0;
-            }
-            if(depth >= maxdepth) return R;
-            if(id >= 1) {
-              R = fmax(R, longtermReward(id-1, depth+1, lets_samle));
-            }
-            if(id < node->gm->size()-1) {
-              R = fmax(R, longtermReward(id+1, depth+1, lets_samle));
-            }
-            node->gm->setLabel(id, oldval);
-            return R;
-          };
-          *feat = longtermReward(id, 0, true) - longtermReward(id, 0, false);
+          *feat = delayedReward(node, id, 0, maxdepth, true) - delayedReward(node, id, 0, maxdepth, false);
         }
 
         if(featoptFind(ORACLE)) {
@@ -1561,13 +1570,14 @@ namespace Tagging {
           logR /= (double)J;
 
 #elif REWARD_SCHEME == REWARD_LHOOD
-          int oldval = node->gm->getLabel(i);
-          const int num_label = node->gm->numLabels(i);
-          this->sampleOne(node, rng, i);
-          logR =  - node->gm->sc[oldval];
-          for(int label = 0; label < num_label; label++) {
-            logR += exp(node->gm->sc[label]) * node->gm->sc[label];
-          }
+          delayedReward(node, i, 0, 0, true);
+          // int oldval = node->gm->getLabel(i);
+          // const int num_label = node->gm->numLabels(i);
+          // this->sampleOne(node, rng, i);
+          // logR =  - node->gm->sc[oldval];
+          // for(int label = 0; label < num_label; label++) {
+          //   logR += exp(node->gm->sc[label]) * node->gm->sc[label];
+          // }
           
           // for(size_t j = 0; j < J; j++) {
           //   if(j < J-1) {

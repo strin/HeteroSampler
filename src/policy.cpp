@@ -945,7 +945,7 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
         }
       }
       node->time_stamp = i;
-      return -1; // stop. 
+      return -1; // stop.
     }
   }
 

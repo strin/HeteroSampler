@@ -351,7 +351,7 @@ int main(int argc, char* argv[]) {
       const int fold = 20;
       system(("rm -r "+name+"*").c_str());
       auto policy = std::make_shared<BlockPolicy<LockdownPolicy> >(model, vm);
-      policy->lets_resp_reward = true;
+      policy->lets_resp_reward = false;
       policy->model_unigram = model_unigram;
       system(("mkdir -p " + name + "_train").c_str());
       policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));

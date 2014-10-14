@@ -600,6 +600,14 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
       insertFeature(feat, ORACLE_STALENESS, 0); // computed in updateResp.
     }
 
+    if(featoptFind(NB_CONSENT)) {
+      for(auto id : model->markovBlanket(*node->gm, pos)) {
+        insertFeature(feat, 
+                      make_NB_CONSENT(node->gm->getLabel(pos),
+                                      node->gm->getLabel(id)),
+                      1);
+      }
+    }
     return feat;
   }
 
@@ -633,7 +641,7 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
     node->gm->feat[pos] = feat;
     node->gm->resp[pos] = Tagging::score(this->param, feat);
     node->gm->checksum[pos] = 0; // WARNING: a hack.
-    int val = node->gm->getLabel(pos);
+    int val = node->gm->getLabel(pos), oldval = node->gm->oldlabels[pos];
     auto updateRespByHandle = [&] (int id) {
       if(heap == nullptr) return;
       Value& val = *node->gm->handle[id];
@@ -665,6 +673,27 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
       node->gm->changed[pos].clear();
       for(auto pair : node->gm->blanket[pos]) {
         node->gm->changed[pos][pair.first] = false;
+      }
+    }
+
+    if(featoptFind(NB_CONSENT)) {
+      /* update the nodes in inv Markov blanket */
+      for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
+        if(node->gm->blanket[id].size() > 0) {
+          double yourval = node->gm->getLabel(id);
+          double* oldfeat = findFeature(node->gm->feat[id], make_NB_CONSENT(yourval, oldval));
+          assert(oldfeat != nullptr);
+          node->gm->resp[id] -= (*param)[make_NB_CONSENT(yourval, oldval)];
+          *oldfeat = 0;
+          double* newfeat = findFeature(node->gm->feat[id], make_NB_CONSENT(yourval, val));
+          if(newfeat == nullptr) {
+            insertFeature(node->gm->feat[id], make_NB_CONSENT(yourval, val));
+          }else{
+            *newfeat = 1;
+          }
+          node->gm->resp[id] += (*param)[make_NB_CONSENT(yourval, val)];
+          updateRespByHandle(id);
+        }
       }
     }
 
@@ -1551,6 +1580,7 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
           double log_resp = Tagging::score(param, feat); // fix: param always changes, so does resp.
           double logR = 0;
           double staleness = 0;
+          PolicyExample example;
           
           /* estimate reward */
 #if REWARD_SCHEME == REWARD_ACCURACY
@@ -1571,7 +1601,12 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
 
 #elif REWARD_SCHEME == REWARD_LHOOD
           logR = delayedReward(node, i, 0, 0, true);
-	  this->sampleOne(node, rng, i);
+          
+          if(logR > 5) {  // record high-reward examples.
+            example.oldstr = node->gm->str();
+          }
+          
+          this->sampleOne(node, rng, i);
           // int oldval = node->gm->getLabel(i);
           // const int num_label = node->gm->numLabels(i);
           // this->sampleOne(node, rng, i);
@@ -1637,13 +1672,13 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
 //          if(lets_resp_reward) {  // record training examples.
           if(logR > 5) {  // record high-reward examples.
             resp_reward.push_back(make_pair(log_resp, logR));
-            PolicyExample example;
             example.reward = logR;
             example.staleness = staleness;
             example.resp = log_resp;
             example.feat = makeFeaturePointer();
             example.param = makeParamPointer();
             example.node = node;
+            example.str = node->gm->str();
             example.choice = i;
             *example.feat = *feat;
             *example.param = *param;

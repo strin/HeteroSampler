@@ -22,6 +22,7 @@
 #include <boost/random/uniform_int.hpp>
 #include <boost/program_options.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "dirent.h"
 
@@ -41,6 +42,12 @@ namespace Tagging {
   using std::cerr;
   using std::endl;
   using std::to_string;
+
+  template<class Source>
+  inline string tostr(const Source& arg) {
+    return boost::lexical_cast<string>(arg);
+  }
+  
 
   template<class T>
   using vec = std::vector<T>;

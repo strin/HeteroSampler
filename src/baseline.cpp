@@ -171,6 +171,7 @@ namespace Tagging {
     int oldval = tag.tag[pos];
     if(use_meta_feature) {
       tag.prev_sc[pos] = tag.this_sc[pos];
+      tag.oldlabels[pos] = oldval;
       tag.oldval = oldval;
     }
 

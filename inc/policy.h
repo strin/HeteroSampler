@@ -18,6 +18,7 @@ namespace Tagging {
   const static string NER_DISAGREE_L = "ner-disagree-l";
   const static string NER_DISAGREE_R = "ner-disagree-r";
   const static string NB_ENT = "nb-ent";
+  const static string NB_CONSENT = "nb";
   const static string NB_ENT__COND = "nb-ent--cond-ent";
   const static string COND = "cond-ent";
   const static string ORACLE = "oracle";
@@ -28,6 +29,11 @@ namespace Tagging {
   const static string ORACLE_STALENESS = "oracle-stale";
   const static string ORACLE_STALENESSv = "oracle-stale-v"; // virtual feature, do not participate in response.
 
+  inline static string make_NB_CONSENT(int val, int your_val) {
+    return "c-" + tostr(val) + "-" + tostr(your_val);
+  }
+
+  
   class Policy {
   public:
     Policy(ModelPtr model, const boost::program_options::variables_map& vm);
@@ -139,6 +145,7 @@ namespace Tagging {
       double staleness;
       FeaturePointer feat;    // copy and record.
       ParamPointer param;     // copy and record.
+      string str, oldstr;     // copy and record.
       MarkovTreeNodePtr node; // just record.
       int choice;
       void serialize(ptr<XMLlog> lg) {
@@ -155,7 +162,10 @@ namespace Tagging {
         lg->logAttr("item", "choice", choice);
         if(node != nullptr) {
           lg->begin("instance");
-          *lg << node->gm->str() << std::endl;
+          *lg << str << std::endl;
+          lg->end();
+          lg->begin("old_instance");
+          *lg << oldstr << std::endl;
           lg->end();
         }
         lg->end(); // <example>

@@ -140,6 +140,9 @@ namespace Tagging {
     computeSc(choice);
     size_t val = rng.sampleCategorical(&sc[0], gm.numLabels(choice));
     size_t oldval = opengm_.state(choice);
+    if(use_meta_feature) {
+      gm.oldlabels[choice] = oldval;
+    }
     gm.reward[choice] = (sc[val] - sc[oldval]) * temp;  // use reward without temperature.
     gm.sc = sc;
     

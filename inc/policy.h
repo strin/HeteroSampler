@@ -137,19 +137,27 @@ namespace Tagging {
       double reward;
       double resp;
       double staleness;
-      FeaturePointer feat;
-      ParamPointer param;
+      FeaturePointer feat;    // copy and record.
+      ParamPointer param;     // copy and record.
+      MarkovTreeNodePtr node; // just record.
+      int choice;
       void serialize(ptr<XMLlog> lg) {
         lg->begin("example");
           lg->logAttr("item", "reward", reward);
         lg->logAttr("item", "staleness", staleness);
-          lg->logAttr("item", "resp", resp);
-          for(auto& p : *feat) {
-            lg->logAttr("feat", p.first, p.second);
-          }
-          for(auto& p : *param) {
-            lg->logAttr("param", p.first, p.second);
-          }
+        lg->logAttr("item", "resp", resp);
+        for(auto& p : *feat) {
+          lg->logAttr("feat", p.first, p.second);
+        }
+        for(auto& p : *param) {
+          lg->logAttr("param", p.first, p.second);
+        }
+        lg->logAttr("item", "choice", choice);
+        if(node != nullptr) {
+          lg->begin("instance");
+          *lg << node->gm->str() << std::endl;
+          lg->end();
+        }
         lg->end(); // <example>
       }
     };

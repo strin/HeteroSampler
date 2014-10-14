@@ -1633,7 +1633,8 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
           if(featoptFind(ORACLE_STALENESSv))
             (*param)[ORACLE_STALENESS] = 0;
           
-          if(lets_resp_reward) {
+//          if(lets_resp_reward) {  // record training examples.
+          if(logR > 5) {  // record high-reward examples.
             resp_reward.push_back(make_pair(log_resp, logR));
             PolicyExample example;
             example.reward = logR;
@@ -1641,6 +1642,8 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
             example.resp = log_resp;
             example.feat = makeFeaturePointer();
             example.param = makeParamPointer();
+            example.node = node;
+            example.choice = i;
             *example.feat = *feat;
             *example.param = *param;
             this->examples.push_back(example);

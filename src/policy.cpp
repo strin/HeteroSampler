@@ -1602,7 +1602,8 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
 #elif REWARD_SCHEME == REWARD_LHOOD
           logR = delayedReward(node, i, 0, 0, true);
           
-          if(logR > 5) {  // record high-reward examples.
+          if(lets_resp_reward) {  // record training examples.
+          // if(logR > 5) {  // record high-reward examples.
             example.oldstr = node->gm->str();
           }
           
@@ -1669,8 +1670,8 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
           if(featoptFind(ORACLE_STALENESSv))
             (*param)[ORACLE_STALENESS] = 0;
           
-//          if(lets_resp_reward) {  // record training examples.
-          if(logR > 5) {  // record high-reward examples.
+         if(lets_resp_reward) {  // record training examples.
+          // if(logR > 5) {  // record high-reward examples.
             resp_reward.push_back(make_pair(log_resp, logR));
             example.reward = logR;
             example.staleness = staleness;

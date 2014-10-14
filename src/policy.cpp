@@ -1570,7 +1570,8 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
           logR /= (double)J;
 
 #elif REWARD_SCHEME == REWARD_LHOOD
-          delayedReward(node, i, 0, 0, true);
+          logR = delayedReward(node, i, 0, 0, true);
+	  this->sampleOne(node, rng, i);
           // int oldval = node->gm->getLabel(i);
           // const int num_label = node->gm->numLabels(i);
           // this->sampleOne(node, rng, i);

@@ -85,7 +85,8 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
   double R0;
   if(lets_samle or depth > 0) {
     model->sampleOne(*node->gm, rng, id, false);
-    R0 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
+//    R0 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
+    R0 = node->gm->sc[node->gm->getLabel(id)] - node->gm->sc[oldval];
   }else{
     R0 = 0;
   }
@@ -467,6 +468,10 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
 
     if(featoptFind(COND) || featoptFind(NB_ENT__COND) || featoptFind("all")) {
       insertFeature(feat, COND, node->gm->entropy[pos]);
+    }
+
+    if(featoptFind("log-cond-ent")) {
+      insertFeature(feat, "log-cond-ent", log(1e-2 + node->gm->entropy[pos]));
     }
 
     if(featoptFind(COND_LHOOD) || featoptFind("all")) {

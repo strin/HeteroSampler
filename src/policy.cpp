@@ -25,7 +25,7 @@ namespace Tagging {
                      }),
    name(vm["name"].as<string>()),
    learning(vm["learning"].as<string>()), 
-   mode_reward(vm["reward"].as<string>()), 
+   mode_reward(vm["reward"].as<int>()), 
    K(vm["K"].as<size_t>()),
    eta(vm["eta"].as<double>()),
    train_count(vm["trainCount"].as<size_t>()), 
@@ -744,13 +744,13 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
         int oldval = node->gm->getLabel(id);
         int num_label = node->gm->numLabels(id);
         /* strategy 1 : use local reward */
-        if(this->mode_reward == "R0") {
+        if(this->mode_reward == 0) {
           model->sampleOne(*node->gm, rng, id, false);
           node->gm->setLabel(id, oldval);
           *feat = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
         }
         /* strategy 2: use second-order reward */
-        if(this->mode_reward == "R1") {
+        if(this->mode_reward == 1) {
           auto longtermReward = [&] () {
             double R = -DBL_MAX;
             if(id >= 1) {
@@ -784,7 +784,7 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
           node->gm->setLabel(id, oldval);
         }
         /* strategy 3: use higher-order reward */
-        if(this->mode_reward == "R2") {
+        if(this->mode_reward == 2) {
 //          model->sampleOne(*node->gm, rng, id, false);
 //          node->gm->setLabel(id, oldval);
 //          *feat = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
@@ -804,14 +804,6 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
         if(node->gm->blanket[id].size() > 0 and visited.count(id) == 0) { // has already been initialized.
           computeOracle(findFeature(node->gm->feat[id], ORACLE), id);
           visited.insert(id);
-        }
-        if(this->mode_reward == "R1") {
-          for(auto id2 : model->invMarkovBlanket(*node->gm, id)) {
-            if(node->gm->blanket[id].size() > 0 and visited.count(id2) == 0) {
-              computeOracle(findFeature(node->gm->feat[id2], ORACLE), id2);
-              visited.insert(id2);
-            }
-          }
         }
       }
     }
@@ -1609,7 +1601,8 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
           logR /= (double)J;
 
 #elif REWARD_SCHEME == REWARD_LHOOD
-          logR = delayedReward(node, i, 0, 0, true);
+          logR = delayedReward(node, i, 0, mode_reward, true) 
+                  - delayedReward(node, i, 0, mode_reward, true);
           
           if(lets_resp_reward) {  // record training examples.
           // if(logR > 5) {  // record high-reward examples.

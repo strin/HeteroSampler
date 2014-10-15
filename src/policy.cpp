@@ -1621,7 +1621,7 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
 
 #elif REWARD_SCHEME == REWARD_LHOOD
           logR = delayedReward(node, i, 0, mode_reward, true) 
-                  - delayedReward(node, i, 0, mode_reward, true);
+                  - delayedReward(node, i, 0, mode_reward, false);
           
           if(lets_resp_reward) {  // record training examples.
           // if(logR > 5) {  // record high-reward examples.

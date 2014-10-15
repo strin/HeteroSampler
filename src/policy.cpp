@@ -471,7 +471,11 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
     }
 
     if(featoptFind("log-cond-ent")) {
-      insertFeature(feat, "log-cond-ent", log(1e-2 + node->gm->entropy[pos]));
+      insertFeature(feat, "log-cond-ent", log(1e-40 + node->gm->entropy[pos]));
+    }
+
+    if(featoptFind("01-cond-ent")) {
+      insertFeature(feat, "01-cond-ent", node->gm->entropy[pos] < 1e-10 ? 1 : 0);
     }
 
     if(featoptFind(COND_LHOOD) || featoptFind("all")) {
@@ -883,7 +887,7 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
     }
     *lg << endl;
     lg->end();
-    if(node->gm->size() > 0) {
+    if(node->gm->size() > 0 and verbose) {
       lg->begin("feat");
       /* take the uninon of features from all positions */
       std::set<string> feat_names;

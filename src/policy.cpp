@@ -275,12 +275,10 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
           this->logNode(node);
           lg->end(); // </node>
         }
-      }
-      lg->begin("param");
-      *lg << *param;
-      lg->end(); // </param>
-      if(verbose) {
-        lg->end(); // </example>
+	lg->begin("param");
+	*lg << *param;
+	lg->end(); // </param>
+	lg->end(); // </example>
       }
       count++;
     }

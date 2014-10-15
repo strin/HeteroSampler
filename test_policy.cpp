@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
           ("unigram_model", po::value<string>(), "use a unigram (if necessary)")
           ("policy", po::value<string>()->default_value("entropy"), "sampling policy")
           ("learning", po::value<string>()->default_value("logistic"), "learning strategy")
-          ("reward", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward")
+          ("reward", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward.")
           ("name", po::value<string>()->default_value("default"), "name of the run")
           ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
           ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")

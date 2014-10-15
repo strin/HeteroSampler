@@ -47,6 +47,7 @@ public:
     feat.resize(this->size());
     blanket.resize(this->size());
     changed.resize(this->size());
+    vary.resize(this->size());
     handle.resize(this->size());
     feat.resize(this->size(), nullptr);
 
@@ -78,7 +79,8 @@ public:
   std::vector<double> resp;
   std::vector<int> mask;
   vec<map<int, int> > blanket;             // Markov blanket.
-  vec<map<int, bool> > changed;                       // whether a location has changed.
+  vec<map<int, bool> > changed;            // whether a location has changed.
+  vec<map<int, int> > vary;                // how many times a neighbor has varied.
   vec<typename Heap::handle_type> handle;
   std::vector<FeaturePointer> feat;
 

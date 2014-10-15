@@ -610,12 +610,19 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
     }
 
     if(featoptFind(NB_CONSENT)) {
-      for(auto id : model->markovBlanket(*node->gm, pos)) {
-        insertFeature(feat, 
-                      make_NB_CONSENT(node->gm->getLabel(pos),
-                                      node->gm->getLabel(id)),
-                      1);
+      // strategy 1. use it only when neighbors change.
+      {
       }
+      // strategy 2. use it anyhow.
+      {
+        // for(auto id : model->markovBlanket(*node->gm, pos)) {
+        //   insertFeature(feat, 
+        //                 make_NB_CONSENT(node->gm->getLabel(pos),
+        //                                 node->gm->getLabel(id)),
+        //                 1);
+        // }
+      }
+
     }
     return feat;
   }
@@ -645,12 +652,25 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
 
   /* update resp has two parts: update features, compute new responses */
   void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* heap) {
-    /* update my response */
+    /* extract my meta-feature */
     FeaturePointer feat = this->extractFeatures(node, pos);
     node->gm->feat[pos] = feat;
+
+    /* update neighbor stats */
+    node->gm->changed[pos].clear();
+    for(auto id : model->markovBlanket(*node->gm, pos)) {
+      node->gm->changed[pos][id] = false;
+      node->gm->vary[pos][id] = 0;
+    }
+    for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
+      node->gm->vary[id][pos] += 1;
+    }
+
+    /* update my response */
     node->gm->resp[pos] = Tagging::score(this->param, feat);
     node->gm->checksum[pos] = 0; // WARNING: a hack.
     int val = node->gm->getLabel(pos), oldval = node->gm->oldlabels[pos];
+
     auto updateRespByHandle = [&] (int id) {
       if(heap == nullptr) return;
       Value& val = *node->gm->handle[id];
@@ -658,6 +678,7 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
       heap->update(node->gm->handle[id]);
     };
     updateRespByHandle(pos);
+
     /* update my friends' response */
     if(featoptFind(NB_VARY)) {
       /* update the nodes in inv Markov blanket */
@@ -679,10 +700,6 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
           }
         }
       }
-      node->gm->changed[pos].clear();
-      for(auto pair : node->gm->blanket[pos]) {
-        node->gm->changed[pos][pair.first] = false;
-      }
     }
 
     if(featoptFind(NB_CONSENT)) {
@@ -690,15 +707,19 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
       for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
         if(node->gm->blanket[id].size() > 0) {
           double yourval = node->gm->getLabel(id);
-          double* oldfeat = findFeature(node->gm->feat[id], make_NB_CONSENT(yourval, oldval));
-          assert(oldfeat != nullptr);
-          node->gm->resp[id] -= (*param)[make_NB_CONSENT(yourval, oldval)];
-          *oldfeat = 0;
+          if(node->gm->vary[id][pos] > 1) { // more than the first time.
+            // invalidate old feat.
+            double* oldfeat = findFeature(node->gm->feat[id], make_NB_CONSENT(yourval, oldval));
+            assert(oldfeat != nullptr and *oldfeat != 0);
+            node->gm->resp[id] -= (*param)[make_NB_CONSENT(yourval, oldval)];
+            (*oldfeat)--;
+          }
+          // insert new feat.
           double* newfeat = findFeature(node->gm->feat[id], make_NB_CONSENT(yourval, val));
           if(newfeat == nullptr) {
             insertFeature(node->gm->feat[id], make_NB_CONSENT(yourval, val));
           }else{
-            *newfeat = 1;
+            (*newfeat)++;
           }
           node->gm->resp[id] += (*param)[make_NB_CONSENT(yourval, val)];
           updateRespByHandle(id);

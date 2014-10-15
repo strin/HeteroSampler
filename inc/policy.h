@@ -188,7 +188,7 @@ namespace Tagging {
     vec<double> tag_unigram_start;
     const string name;
     const string learning;
-    const string mode_reward;
+    const int mode_reward;
     const size_t K, Q; // K: num trajectories. Q: num epochs.
     const size_t test_count, train_count;
     const double eta;

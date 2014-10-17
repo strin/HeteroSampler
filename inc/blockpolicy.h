@@ -37,6 +37,7 @@ public:
   using PolicyType::Q;
   using PolicyType::param;
   using Policy::featopt;
+  using Policy::featoptFind;
   
   virtual void train(ptr<Corpus> corpus) {
     lg->begin("train");
@@ -54,7 +55,8 @@ public:
         (*param)[opt] = 1;
       }
       // overwrite.
-      (*param)["sp"] = -0.3;
+      if(featoptFind("sp"))
+	(*param)["sp"] = -0.3;
     }
     /* log policy examples */
     lg->begin("policy_example");

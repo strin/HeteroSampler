@@ -88,6 +88,7 @@ private:
 template<class PolicyType>
 ptr<typename BlockPolicy<PolicyType>::Result>
 BlockPolicy<PolicyType>::test(ptr<Corpus> corpus, double budget) {
+  Policy::model->time = 0;
   auto result = std::make_shared<BlockPolicy::Result>(corpus);
   result->corpus->retag(PolicyType::model->corpus);
   result->nodes.resize(fmin((size_t)PolicyType::test_count, (size_t)corpus->seqs.size()), nullptr);

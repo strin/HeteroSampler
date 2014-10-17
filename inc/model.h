@@ -93,6 +93,8 @@ namespace Tagging {
     ptr<Corpus> corpus;
     ParamPointer param, G2, stepsize;   // model.
 
+    int time;
+
     /* IO */
     friend std::ostream& operator<<(std::ostream& os, const Model& model);
     friend std::istream& operator>>(std::istream& os, Model& model);
@@ -169,6 +171,10 @@ namespace Tagging {
 
     /* properties */
     int factorL;    
+
+    /* annealing scheme. */
+    string annealing;
+    double temp, temp_decay, temp_magnify, temp_init;
 
   protected:
     // use Gibbs to sample <pos> with random number generator <rng> and feature extraction functional <feat_extract>

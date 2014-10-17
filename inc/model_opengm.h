@@ -130,7 +130,7 @@ namespace Tagging {
         q /= (double)gm.size();
         temp = temp_magnify * q;
       }
-    }else if(gm.time % gm.size() == 0) {
+    }else if(gm.time % gm.size() == 0 and use_meta_feature) {
       if(annealing == "scanline") {
         temp = temp * temp_decay;
       }
@@ -152,11 +152,11 @@ namespace Tagging {
       gm.prev_entropy[choice] = gm.entropy[choice];
       gm.entropy[choice] = logEntropy(&sc[0], gm.numLabels(choice));
       gm.timestamp[choice]++;
+      gm.time++;
     }
 
     /* compute stats */
     opengm_.move(&choice, &choice + 1, &val);
-    gm.time++;
   }
 
 }

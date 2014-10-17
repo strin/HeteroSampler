@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
           ("policy", po::value<string>()->default_value("entropy"), "sampling policy")
           ("learning", po::value<string>()->default_value("logistic"), "learning strategy")
           ("reward", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward.")
+          ("rewardK", po::value<int>()->default_value(5), "the number of trajectories used to approximate the reward")
           ("name", po::value<string>()->default_value("default"), "name of the run")
           ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
           ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
@@ -98,7 +99,9 @@ int main(int argc, char* argv[]) {
       testCorpus = std::make_shared<CorpusOpenGMType>();
     }
     corpus->read(train, false);
+    corpus->test_count = vm["trainCount"].as<size_t>();
     testCorpus->read(test, false);
+    testCorpus->test_count = vm["testCount"].as<size_t>();
 
     shared_ptr<Model> model, model_unigram;
     if(vm["inference"].as<string>() == "Gibbs") {

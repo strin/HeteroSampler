@@ -89,6 +89,7 @@ namespace Tagging {
   //////// Model CRF Gibbs ///////////////////////////////
   ModelCRFGibbs::ModelCRFGibbs(ptr<Corpus> corpus, const po::variables_map& vm)
    :ModelSimple(corpus, vm), factorL(vm["factorL"].as<int>()), 
+    annealing(vm["temp"].as<string>()), 
     extractFeatures([] (ptr<Model> model, const GraphicalModel& gm, int pos) {
       // default feature extraction, support literal sequence tagging.
       assert(isinstance<ModelCRFGibbs>(model));
@@ -151,6 +152,12 @@ namespace Tagging {
     getInvMarkovBlanket = getMarkovBlanket;
     if(isinstance<CorpusLiteral>(corpus))
       cast<CorpusLiteral>(corpus)->computeWordFeat();
+    if(annealing == "scanline") { // use the annealing scheme introduced in scanline paper (CVPR 2014).
+      temp_decay = vm["temp_decay"].as<double>();
+      temp_magnify = vm["temp_magnify"].as<double>();
+    }
+    temp_init = vm["temp_init"].as<double>();
+    this->time = 0;
    }
 
   void ModelCRFGibbs::sample(Tag& tag, int time, bool argmax) {
@@ -175,16 +182,47 @@ namespace Tagging {
       tag.oldval = oldval;
     }
 
+    /* compute score */
     vector<FeaturePointer> featvec;
     vector<double> sc(taglen);
-    for(int t = 0; t < taglen; t++) {
-      tag.tag[pos] = t;
-      FeaturePointer features = feat_extract(shared_from_this(), tag, pos);
-      featvec.push_back(features);
-      sc[t] = Tagging::score(this->param, features);
+    auto computeSc = [&] (int i) {
+      int backup = tag.tag[i];
+      for(int t = 0; t < taglen; t++) {
+        tag.tag[i] = t;
+        FeaturePointer features = feat_extract(shared_from_this(), tag, i);
+        featvec.push_back(features);
+        sc[t] = Tagging::score(this->param, features);
+      }
+      tag.tag[i] = backup;
+    };
+
+    /* estimate temperature */
+    if(time == 0) {    // compute initial temperature.
+      temp = temp_init;
+      if(annealing == "scanline") {
+        double q = 0;
+        for(int i = 0; i < tag.size(); i++) {
+          computeSc(i);
+          q += abs(sc[tag.tag[i]]);
+        }
+        q /= (double)tag.size();
+        temp = temp_magnify * q;
+      }
+    }else if(this->time % tag.corpus->count(tag.corpus->test_count) == 0 and use_meta_feature) {
+      if(annealing == "scanline") {
+        if(temp > 1e-4)
+          temp = temp * temp_decay;
+        cout << "temp: " << temp << endl;
+      }
     }
 
+    computeSc(pos);
+    tag.sc = sc;
+    for(int t = 0; t < taglen; t++) {
+      sc[t] /= temp;
+    }
     logNormalize(&sc[0], taglen);
+    logNormalize(&tag.sc[0], taglen);
 
     int val;
     val = rng.sampleCategorical(&sc[0], taglen);
@@ -192,13 +230,13 @@ namespace Tagging {
     tag.tag[pos] = val;
 
     // compute statistics.
-    tag.reward[pos] = sc[val] - sc[oldval];
-    tag.sc = sc;
+    tag.reward[pos] = (tag.sc[val] - tag.sc[oldval]);  // use reward without temp.
     if(use_meta_feature) {
-      tag.this_sc[pos] = sc;
+      tag.this_sc[pos] = tag.sc;
       tag.prev_entropy[pos] = tag.entropy[pos];
-      tag.entropy[pos] = logEntropy(&sc[0], taglen);  
+      tag.entropy[pos] = logEntropy(&tag.sc[0], taglen);  
       tag.timestamp[pos] += 1;
+      this->time += 1;
     }
     
     // compute gradient, if necessary.

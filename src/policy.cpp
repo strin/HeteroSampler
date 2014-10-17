@@ -27,6 +27,7 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
  name(vm["name"].as<string>()),
  learning(vm["learning"].as<string>()), 
  mode_reward(vm["reward"].as<int>()), 
+ rewardK(vm["rewardK"].as<int>()),
  K(vm["K"].as<size_t>()),
  eta(vm["eta"].as<double>()),
  train_count(vm["trainCount"].as<size_t>()), 
@@ -86,8 +87,8 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
   double R0;
   if(lets_samle or depth > 0) {
     model->sampleOne(*node->gm, rng, id, false);
-    R0 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
-//    R0 = node->gm->sc[node->gm->getLabel(id)] - node->gm->sc[oldval];
+    // R0 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
+   R0 = node->gm->sc[node->gm->getLabel(id)] - node->gm->sc[oldval];
   }else{
     R0 = 0;
   }
@@ -101,6 +102,24 @@ double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxd
   }
   node->gm->setLabel(id, oldval);
   return R;
+}
+
+double Policy::sampleDelayedReward(MarkovTreeNodePtr node, int id, int maxdepth, int rewardK) {
+  // strategy 1. max.
+  double R_sample = -DBL_MAX, R_stop = -DBL_MAX;
+  for(int k = 0; k < rewardK; k++) {
+    R_sample = fmax(R_sample, delayedReward(node, id, 0, mode_reward, true));
+    R_stop = fmax(R_stop, delayedReward(node, id, 0, mode_reward, false));
+  }
+  return (R_sample - R_stop);
+  
+//  // strategy 1. mean
+//  double R_sample = 0, R_stop = 0;
+//  for(int k = 0; k < rewardK; k++) {
+//    R_sample += delayedReward(node, id, 0, mode_reward, true);
+//    R_stop += delayedReward(node, id, 0, mode_reward, false);
+//  }
+//  return (R_sample - R_stop) / rewardK;
 }
 
 void Policy::sample(int tid, MarkovTreeNodePtr node) {
@@ -221,6 +240,7 @@ void Policy::trainPolicy(ptr<Corpus> corpus) {
     }
   lg->end();
   corpus->retag(model->corpus);
+  model->time = 0;
   size_t count = 0;
   examples.clear();
   for(const SentencePtr seq : corpus->seqs) {
@@ -316,6 +336,7 @@ Policy::Result::Result(ptr<Corpus> corpus)
 }
 
 Policy::ResultPtr Policy::test(ptr<Corpus> testCorpus) {
+  model->time = 0;
   Policy::ResultPtr result = makeResultPtr(testCorpus); 
   result->corpus->retag(model->corpus);
   result->nodes.resize(min(test_count, testCorpus->seqs.size()), nullptr);
@@ -760,20 +781,22 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
   }
 
   if(featoptFind(ORACLE) || featoptFind(ORACLEv)) {   // oracle feature is just *reward*.
-    auto computeOracle = [&] (double* feat, int id) {
-      *feat = delayedReward(node, id, 0, mode_reward, true) - delayedReward(node, id, 0, mode_reward, false);
+    auto computeOracle = [&] (int id) {
+      auto feat = findFeature(node->gm->feat[id], ORACLE);
+     
+      *feat = sampleDelayedReward(node, id, this->mode_reward, this->rewardK);
 
       if(featoptFind(ORACLE)) {
         node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
         updateRespByHandle(id);
       }
     };
-    computeOracle(findFeature(feat, ORACLE), pos);
+    computeOracle(pos);
     set<int> visited;
     visited.insert(pos);
     for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
       if(node->gm->blanket[id].size() > 0 and visited.count(id) == 0) { // has already been initialized.
-        computeOracle(findFeature(node->gm->feat[id], ORACLE), id);
+        computeOracle(id);
         visited.insert(id);
       }
     }

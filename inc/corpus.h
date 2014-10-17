@@ -114,7 +114,7 @@ namespace Tagging {
 
   struct Corpus {
   public:
-    Corpus();
+    Corpus() {test_count = -1; }
     std::vector<SentencePtr> seqs;
 
     objcokus cokus;
@@ -140,6 +140,8 @@ namespace Tagging {
       }
       return c;
     }
+
+    int test_count;
   };
 
   struct CorpusLiteral : public Corpus {

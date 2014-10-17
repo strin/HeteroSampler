@@ -70,9 +70,6 @@ namespace Tagging {
   }
 
   /////////// Corpus ///////////////////////////////////////////
-  Corpus::Corpus() { 
-  }
-
   void Corpus::retag(ptr<Corpus> corpus) {
     this->tags = corpus->tags;
     this->invtags = corpus->invtags;

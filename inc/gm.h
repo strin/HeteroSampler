@@ -62,6 +62,7 @@ public:
     }
 
     oldlabels.resize(this->size());
+    time = 0;
   }
 
   int time;                               // how many times have spent on sampling this graphical model. 

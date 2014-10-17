@@ -54,6 +54,8 @@ public:
 
   // to string. 
   virtual std::string str(bool verbose = false); 
+
+  
 };
 
 typedef std::shared_ptr<Tag> TagPtr;

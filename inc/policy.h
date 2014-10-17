@@ -125,6 +125,7 @@ namespace Tagging {
     
     // estimate delayed reward.
     double delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxdepth, bool lets_samle);
+    double sampleDelayedReward(MarkovTreeNodePtr node, int id, int maxdepth, int rewardK);
     
     // extract features from node.
     virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
@@ -188,7 +189,7 @@ namespace Tagging {
     vec<double> tag_unigram_start;
     const string name;
     const string learning;
-    const int mode_reward;
+    const int mode_reward, rewardK;
     const size_t K, Q; // K: num trajectories. Q: num epochs.
     const size_t test_count, train_count;
     const double eta;

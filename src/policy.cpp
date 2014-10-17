@@ -762,55 +762,9 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
   if(featoptFind(ORACLE) || featoptFind(ORACLEv)) {   // oracle feature is just *reward*.
     auto computeOracle = [&] (double* feat, int id) {
       int oldval = node->gm->getLabel(id);
-      int num_label = node->gm->numLabels(id);
-      /* strategy 1 : use local reward */
-      if(this->mode_reward == 0) {
-        model->sampleOne(*node->gm, rng, id, false);
-        node->gm->setLabel(id, oldval);
-        *feat = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
-      }
-      /* strategy 2: use second-order reward */
-      if(this->mode_reward == 1) {
-        auto longtermReward = [&] () {
-          double R = -DBL_MAX;
-          if(id >= 1) {
-            int oldval2 = node->gm->getLabel(id-1);
-            model->sampleOne(*node->gm, rng, id-1, false);
-            double reward2 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval2];
-            if(reward2 > R) {
-              R = reward2;
-            }
-            node->gm->setLabel(id-1, oldval2);
-          }
-          if(id < node->gm->size()-1) {
-            int oldval2 = node->gm->getLabel(id+1);
-            model->sampleOne(*node->gm, rng, id+1, false);
-            double reward2 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval2];
-            if(reward2 > R) {
-              R = reward2;
-            }
-            node->gm->setLabel(id+1, oldval2);
-          }
-          return R;
-        };
-        
-        double reward0 = longtermReward();
-         model->sampleOne(*node->gm, rng, id, false);
-        double reward1 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval]
-                          + longtermReward();
-//          double reward1 = longtermReward();
-        
-        *feat = reward1 - reward0;
-        node->gm->setLabel(id, oldval);
-      }
-      /* strategy 3: use higher-order reward */
-      if(this->mode_reward == 2) {
-//          model->sampleOne(*node->gm, rng, id, false);
-//          node->gm->setLabel(id, oldval);
-//          *feat = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
-        int maxdepth = 3;
-        *feat = delayedReward(node, id, 0, maxdepth, true) - delayedReward(node, id, 0, maxdepth, false);
-      }
+      int num_label = node->gm->numLabels(id);  
+
+      *feat = delayedReward(node, id, 0, mode_reward, true) - delayedReward(node, id, 0, mode_reward, false);
 
       if(featoptFind(ORACLE)) {
         node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);

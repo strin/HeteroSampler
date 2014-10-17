@@ -761,9 +761,6 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
 
   if(featoptFind(ORACLE) || featoptFind(ORACLEv)) {   // oracle feature is just *reward*.
     auto computeOracle = [&] (double* feat, int id) {
-      int oldval = node->gm->getLabel(id);
-      int num_label = node->gm->numLabels(id);  
-
       *feat = delayedReward(node, id, 0, mode_reward, true) - delayedReward(node, id, 0, mode_reward, false);
 
       if(featoptFind(ORACLE)) {

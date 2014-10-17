@@ -281,39 +281,12 @@ void Policy::trainPolicy(ptr<Corpus> corpus) {
     
 //      /* strategy 1. use Markov Tree to compute grad */
 //      this->gradientPolicy(tree);
-      
-      /* strategy 2. compute gradient when sample */
-      // pass
-      
-      /* log nodes */
-      if(verbose) {
-        for(size_t k = 0; k < K; k++) {
-          MarkovTreeNodePtr node = tree.root->children[k];
-          while(node->children.size() > 0) node = node->children[0]; // take final sample.
-          lg->begin("node");
-          this->logNode(node);
-          lg->end(); // </node>
-        }
-	lg->begin("param");
-	*lg << *param;
-	lg->end(); // </param>
-	lg->end(); // </example>
-      }
-      count++;
-    }
-  }
-
-  void Policy::trainKernel(ptr<Corpus> corpus) {
-    corpus->retag(model->corpus);
-    size_t count = 0;
-    for(const SentencePtr seq : corpus->seqs) {
-      if(count >= train_count) break;
-      if(count % 1000 == 0) 
-        cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
-      MarkovTree tree;
-      // Tag tag(seq.get(), corpus, &rng, model->param);
-      ptr<GraphicalModel> gm = model->makeSample(*seq, corpus, &rng);
-      tree.root->log_weight = -DBL_MAX;
+    
+    /* strategy 2. compute gradient when sample */
+    // pass
+    
+    /* log nodes */
+    if(verbose) {
       for(size_t k = 0; k < K; k++) {
         MarkovTreeNodePtr node = tree.root->children[k];
         while(node->children.size() > 0) node = node->children[0]; // take final sample.
@@ -321,10 +294,10 @@ void Policy::trainPolicy(ptr<Corpus> corpus) {
         this->logNode(node);
         lg->end(); // </node>
       }
+      lg->begin("param");
+      *lg << *param;
+      lg->end(); // </param>
     }
-    lg->begin("param");
-    *lg << *param;
-    lg->end(); // </param>
     if(verbose) {
       lg->end(); // </example>
     }

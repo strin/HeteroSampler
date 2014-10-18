@@ -54,7 +54,8 @@ public:
         (*param)[opt] = 1;
       }
       // overwrite.
-      (*param)["sp"] = -0.3;
+      if(Policy::featoptFind("sp"))
+        (*param)["sp"] = -0.3;
     }
     /* log policy examples */
     lg->begin("policy_example");

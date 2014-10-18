@@ -784,7 +784,14 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
     auto computeOracle = [&] (int id) {
       auto feat = findFeature(node->gm->feat[id], ORACLE);
      
-      *feat = sampleDelayedReward(node, id, this->mode_reward, this->rewardK);
+      if(mode_reward == -1) {
+        // reward that take into account multi-modal.
+        *feat = 0;
+        model->sampleOne(*node->gm, rng, id, false);
+        *feat = -node->gm->sc[node->gm->getLabel(id)];
+      }else{
+        *feat = sampleDelayedReward(node, id, this->mode_reward, this->rewardK);
+      }
 
       if(featoptFind(ORACLE)) {
         node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);

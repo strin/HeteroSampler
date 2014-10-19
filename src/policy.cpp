@@ -241,7 +241,6 @@ void Policy::trainPolicy(ptr<Corpus> corpus) {
     }
   lg->end();
   corpus->retag(model->corpus);
-  model->time = 0;
   size_t count = 0;
   examples.clear();
   for(const SentencePtr seq : corpus->seqs) {
@@ -337,7 +336,6 @@ Policy::Result::Result(ptr<Corpus> corpus)
 }
 
 Policy::ResultPtr Policy::test(ptr<Corpus> testCorpus) {
-  model->time = 0;
   Policy::ResultPtr result = makeResultPtr(testCorpus); 
   result->corpus->retag(model->corpus);
   result->nodes.resize(min(test_count, testCorpus->seqs.size()), nullptr);

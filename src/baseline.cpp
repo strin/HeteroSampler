@@ -196,31 +196,9 @@ namespace Tagging {
       tag.tag[i] = backup;
     };
 
-    /* estimate temperature */
-    if(time == 0) {    // compute initial temperature.
-      temp = temp_init;
-      if(annealing == "scanline") {
-        double q = 0;
-        for(int i = 0; i < tag.size(); i++) {
-          computeSc(i);
-          q += abs(sc[tag.tag[i]]);
-        }
-        q /= (double)tag.size();
-        temp = temp_magnify * q;
-      }
-    }else if(this->time % tag.corpus->count(tag.corpus->test_count) == 0 and use_meta_feature) {
-      if(annealing == "scanline") {
-        if(temp > 1e-4)
-          temp = temp * temp_decay;
-        cout << "temp: " << temp << endl;
-      }
-    }
 
     computeSc(pos);
     tag.sc = sc;
-    for(int t = 0; t < taglen; t++) {
-      sc[t] /= temp;
-    }
     logNormalize(&sc[0], taglen);
     logNormalize(&tag.sc[0], taglen);
 
@@ -230,7 +208,7 @@ namespace Tagging {
     tag.tag[pos] = val;
 
     // compute statistics.
-    tag.reward[pos] = (tag.sc[val] - tag.sc[oldval]);  // use reward without temp.
+    tag.reward[pos] = (tag.sc[val] - tag.sc[oldval]);  
     if(use_meta_feature) {
       tag.this_sc[pos] = tag.sc;
       tag.prev_entropy[pos] = tag.entropy[pos];

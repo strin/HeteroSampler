@@ -26,7 +26,8 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
                    }),
  name(vm["name"].as<string>()),
  learning(vm["learning"].as<string>()), 
- mode_reward(vm["reward"].as<int>()), 
+ mode_reward(vm["reward"].as<int>()),
+ mode_oracle(vm["oracle"].as<int>()),
  rewardK(vm["rewardK"].as<int>()),
  K(vm["K"].as<size_t>()),
  eta(vm["eta"].as<double>()),
@@ -784,7 +785,7 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
     auto computeOracle = [&] (int id) {
       auto feat = findFeature(node->gm->feat[id], ORACLE);
      
-      *feat = sampleDelayedReward(node, id, this->mode_reward, this->rewardK);
+      *feat = sampleDelayedReward(node, id, this->mode_oracle, this->rewardK);
 
       if(featoptFind(ORACLE)) {
         node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
@@ -1595,8 +1596,7 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
         logR /= (double)J;
 
 #elif REWARD_SCHEME == REWARD_LHOOD
-        logR = delayedReward(node, i, 0, mode_reward, true) 
-                - delayedReward(node, i, 0, mode_reward, false);
+        logR = sampleDelayedReward(node, i, this->mode_reward, this->rewardK);
         
         if(lets_resp_reward) {  // record training examples.
         // if(logR > 5) {  // record high-reward examples.

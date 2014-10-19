@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
           ("policy", po::value<string>()->default_value("entropy"), "sampling policy")
           ("learning", po::value<string>()->default_value("logistic"), "learning strategy")
           ("reward", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward.")
+          ("oracle", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward for oracle.")
           ("rewardK", po::value<int>()->default_value(5), "the number of trajectories used to approximate the reward")
           ("name", po::value<string>()->default_value("default"), "name of the run")
           ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")

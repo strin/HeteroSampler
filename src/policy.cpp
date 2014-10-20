@@ -1483,6 +1483,9 @@ LockdownPolicy::LockdownPolicy(ModelPtr model, const boost::program_options::var
 
 FeaturePointer LockdownPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   FeaturePointer feat = Policy::extractFeatures(node, pos);
+  if(featoptFind("exp-sp")) {
+    insertFeature(feat, "exp-sp", exp(node->gm->mask[pos]));
+  }
   if(featoptFind("log-sp")) {
     insertFeature(feat, "log-sp", log(1+node->gm->mask[pos]));
   }

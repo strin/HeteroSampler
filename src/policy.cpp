@@ -1655,6 +1655,23 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
           }
         }
         
+        /* update meta-model (strategy 3) neural network */
+        if(learning == "nn") {
+          double resp = logisticFunc(log_resp);
+          if(param->count("L2-w") == 0) {
+            (*param)["L2-w"] = 0;
+          }
+          if(param->count("L2-b") == 0) {
+            (*param)["L2-b"] = 0;
+          }
+          double w = (*param)["L2-w"];
+          double b = (*param)["L2-b"];
+          double diff = (logR - w * resp - b);
+          mapUpdate(*grad, *feat, diff * resp * (1 - resp) * w);
+          mapUpdate(*grad, "L2-w", diff * resp);
+          mapUpdate(*grad, "L2-b", diff);
+        }
+        
         adagrad(param, G2, grad, eta);   // overwrite adagrad, for fine-grain gradients. (return node->gradient empty).
         
         if(featoptFind(ORACLEv))

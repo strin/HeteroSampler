@@ -1560,7 +1560,9 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
     node->gm->rng = &rng; 
     for(size_t i = 0; i < node->gm->size(); i++) {
       this->sampleOne(node, rng, i);
+      thread_pool.lock();
       this->updateResp(node, rng, i, nullptr);
+      thread_pool.unlock();
       if(verbose) {
         lg->begin("T_0_i_" + to_string(i));
         logNode(node);

@@ -112,7 +112,7 @@ double Policy::sampleDelayedReward(MarkovTreeNodePtr node, int id, int maxdepth,
     R_sample = fmax(R_sample, delayedReward(node, id, 0, mode_reward, true));
     R_stop = fmax(R_stop, delayedReward(node, id, 0, mode_reward, false));
   }
-  return (R_sample - R_stop);
+  return (R_sample);
   
 //  // strategy 1. mean
 //  double R_sample = 0, R_stop = 0;
@@ -1560,7 +1560,9 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
     node->gm->rng = &rng; 
     for(size_t i = 0; i < node->gm->size(); i++) {
       this->sampleOne(node, rng, i);
+      thread_pool.lock();
       this->updateResp(node, rng, i, nullptr);
+      thread_pool.unlock();
       if(verbose) {
         lg->begin("T_0_i_" + to_string(i));
         logNode(node);

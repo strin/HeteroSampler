@@ -209,6 +209,7 @@ BlockPolicy<PolicyType>::sampleOne(ptr<BlockPolicy<PolicyType>::Result> result, 
   clock_t clock_start = clock(), clock_end;
   int index = loc.index, pos = loc.pos;
   MarkovTreeNodePtr node = result->getNode(index);
+  node->gm->rng = &rng;
   node = PolicyType::sampleOne(node, rng, pos);
   clock_end = clock();
   result->wallclock_sample += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;

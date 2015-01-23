@@ -25,6 +25,10 @@ using namespace opengm;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
+  for(int i = 0; i < argc; i++) {
+    cout << argv[i] << " ";
+  }
+  cout << endl;
   try{
     // parse args.
     po::options_description desc("Allowed options");
@@ -371,7 +375,6 @@ int main(int argc, char* argv[]) {
       auto compare2 = [] (std::pair<double, double> a, std::pair<double, double> b) {
         return (a.second < b.second);
       };
-      std::vector<std::pair<double, double> > budget_acc;
       double budget = 0;
       auto runWithBudget = [&] (double b) {
         budget += b;
@@ -380,19 +383,6 @@ int main(int argc, char* argv[]) {
         policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
         policy->test(result, b); 
         policy->resetLog(nullptr);
-        budget_acc.push_back(make_pair(budget, result->score));
-        sort(budget_acc.begin(), budget_acc.end(), compare);
-      };
-      auto findLargestSeg = [&] () -> double {
-        double segmax = -DBL_MAX, budget = 0.0;
-        for(size_t t = 0; t < budget_acc.size()-1; t++) {
-          double seg = budget_acc[t+1].second - budget_acc[t].second;
-          if(seg > segmax) {
-            segmax = seg;
-            budget = (budget_acc[t+1].first + budget_acc[t].first) / 2.0;
-          }
-        }
-        return budget;
       };
       runWithBudget(1);
       for(int t = 0; t < T; t++) {

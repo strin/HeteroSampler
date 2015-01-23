@@ -123,8 +123,14 @@ namespace Tagging {
     // estimate the reward of a MarkovTree node (default: -dist).
     virtual double reward(MarkovTreeNodePtr node);
     
-    // estimate delayed reward.
-    double delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxdepth, bool lets_samle);
+    /* estimate delayed reward without making changes to node. 
+     *   start a rollout of horizon <maxdepth>. 
+     *	    follow the <actions> until the depth > actions.size
+     *      then sample action, and push it into <actions>.
+     */
+    double delayedReward(MarkovTreeNodePtr node, int depth, int maxdepth, vec<int>& actions);
+    
+    /* sample delayed reward without making changes to <node> */
     double sampleDelayedReward(MarkovTreeNodePtr node, int id, int maxdepth, int rewardK);
     
     // extract features from node.

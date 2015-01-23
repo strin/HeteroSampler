@@ -82,45 +82,42 @@ double Policy::reward(MarkovTreeNodePtr node) {
   // return score;
 }
 
-double Policy::delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxdepth, bool lets_samle) {
+double Policy::delayedReward(MarkovTreeNodePtr node, int depth, int maxdepth, vec<int>& actions) {
+  int id;
+  if(depth < actions.size()) { // take specified action. 
+    id = actions[depth];
+  }else{ // sample new action. 
+    if(depth == 0) { //sample uniformly. 
+      id = int(rng.random01() * (1 - 1e-8) * node->gm->size());
+    }else{
+      vec<int> blanket = model->markovBlanket(*node->gm, actions[depth-1]);
+      if(blanket.size() == 0) {
+	id = actions[depth-1];
+      }else{
+	id = blanket[int(rng.random01() * (1 - 1e-8) *  blanket.size())];
+      }
+    }
+    actions.push_back(id);
+  }
   int num_label = node->gm->numLabels(id);
   int oldval = node->gm->getLabel(id);
-  double R0;
-  if(lets_samle or depth > 0) {
-    model->sampleOne(*node->gm, rng, id, false);
-    // R0 = -logEntropy(&node->gm->sc[0], num_label) - node->gm->sc[oldval];
-   R0 = node->gm->sc[node->gm->getLabel(id)] - node->gm->sc[oldval];
-  }else{
-    R0 = 0;
-  }
-  if(depth >= maxdepth) {
-    node->gm->setLabel(id, oldval);
-    return R0;
-  }
-  double R = -DBL_MAX;
-  for(auto i : model->markovBlanket(*node->gm, id)) {
-    R = fmax(R, R0 + delayedReward(node, i, depth+1, maxdepth, lets_samle));
+  double R = 0;
+  model->sampleOne(*node->gm, rng, id, false);
+  R = node->gm->sc[node->gm->getLabel(id)] - node->gm->sc[oldval];
+  if(depth < maxdepth) {
+    R += this->delayedReward(node, depth+1, maxdepth, actions);
   }
   node->gm->setLabel(id, oldval);
   return R;
 }
 
 double Policy::sampleDelayedReward(MarkovTreeNodePtr node, int id, int maxdepth, int rewardK) {
-  // strategy 1. max.
-  double R_sample = -DBL_MAX, R_stop = -DBL_MAX;
-  for(int k = 0; k < rewardK; k++) {
-    R_sample = fmax(R_sample, delayedReward(node, id, 0, mode_reward, true));
-    R_stop = fmax(R_stop, delayedReward(node, id, 0, mode_reward, false));
-  }
-  return (R_sample);
-  
-//  // strategy 1. mean
-//  double R_sample = 0, R_stop = 0;
-//  for(int k = 0; k < rewardK; k++) {
-//    R_sample += delayedReward(node, id, 0, mode_reward, true);
-//    R_stop += delayedReward(node, id, 0, mode_reward, false);
-//  }
-//  return (R_sample - R_stop) / rewardK;
+  vec<int> actions_u(1);
+  actions_u[0] = id;
+  double R_u = this->delayedReward(node, 0, maxdepth, actions_u);
+  vec<int> actions_v(actions_u.begin() + 1, actions_u.end());
+  double R_v = this->delayedReward(node, 0, maxdepth-1, actions_v);
+  return R_u - R_v;
 }
 
 void Policy::sample(int tid, MarkovTreeNodePtr node) {
@@ -390,7 +387,7 @@ void Policy::testPolicy(Policy::ResultPtr result) {
         this->logNode(node);
         while(node->children.size() > 0) node = node->children[0]; // take final sample.
         result->nodes[id[i]] = node;
-        ave_time += node->depth+1;
+        ave_time += node->depth;
         if(model->scoring == Model::SCORING_ACCURACY) {
           tuple<int, int> hit_pred = model->evalPOS(*cast<Tag>(node->max_gm));
           hit_count += get<0>(hit_pred);

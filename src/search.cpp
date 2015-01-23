@@ -38,9 +38,9 @@ namespace Tagging {
       ifstream file; 
       file.open("simple.model", ifstream::in);
       if(!file.is_open()) {
-	init_simple();
+        init_simple();
       }else{
-	file >> (*this);
+        file >> (*this);
       }
     }
     Model::run(test_corpus); 
@@ -50,45 +50,45 @@ namespace Tagging {
   void ModelTreeUA::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag) {
       XMLlog& lg = *th_log[tid];
       while(true) {
-	int pos = node->depth % tag.size();
-	tag.rng = &rngs[tid];
-	if(node->depth >= tag.size())
-	  pos = rngs[tid].randomMT() % tag.size();
-	node->gradient = 	tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
-					    return this->extractFeatures(shared_from_this(), tag, pos);  
-					  }, true);
-	if(node->depth < B) node->log_weight = -DBL_MAX;
-	else node->log_weight = this->score(tag); 
+        int pos = node->depth % tag.size();
+        tag.rng = &rngs[tid];
+        if(node->depth >= tag.size())
+          pos = rngs[tid].randomMT() % tag.size();
+        node->gradient =         tag.proposeGibbs(pos, [&] (const Tag& tag) -> FeaturePointer {
+                                            return this->extractFeatures(shared_from_this(), tag, pos);  
+                                          }, true);
+        if(node->depth < B) node->log_weight = -DBL_MAX;
+        else node->log_weight = this->score(tag); 
 
-	if(node->depth == 0) { // multithread split.
-	  unique_lock<mutex> lock(th_mutex);
-	  active_work--;
-	  for(int k = 0; k < K; k++) {
-	    node->children.push_back(makeMarkovTreeNode(node));
-	    th_work.push_back(make_tuple(node->children.back(), tag));
-	  }
-	  th_cv.notify_all();
-	  lock.unlock();
-	  return;
-	}/*else if(log(rng.random01()) < log(this->eps_split)) {
-	  for(int k = 0; k < K; k++) {
-	    node->children.push_back(makeMarkovTreeNode(node));
-	    workerThreads(tid, seed, node->children.back(), tag, rng);
-	  }
-	  return;
-	}*/else if(node->depth >= B && log(rngs[tid].random01()) < log(this->eps)) { // stop.
-	  lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
-	  lg.begin("weight"); lg << node->log_weight << endl; lg.end();
-	  lg.begin("time"); lg << node->depth << endl; lg.end();
-	  node->gm = shared_ptr<Tag>(new Tag(tag));
-	  unique_lock<mutex> lock(th_mutex);
-	  active_work--;
-	  lock.unlock();
-	  return;
-	}else{                             // proceed as chain.
-	  node->children.push_back(makeMarkovTreeNode(node));
-	  node = node->children.back();
-	}
+        if(node->depth == 0) { // multithread split.
+          unique_lock<mutex> lock(th_mutex);
+          active_work--;
+          for(int k = 0; k < K; k++) {
+            node->children.push_back(makeMarkovTreeNode(node));
+            th_work.push_back(make_tuple(node->children.back(), tag));
+          }
+          th_cv.notify_all();
+          lock.unlock();
+          return;
+        }/*else if(log(rng.random01()) < log(this->eps_split)) {
+          for(int k = 0; k < K; k++) {
+            node->children.push_back(makeMarkovTreeNode(node));
+            workerThreads(tid, seed, node->children.back(), tag, rng);
+          }
+          return;
+        }*/else if(node->depth >= B && log(rngs[tid].random01()) < log(this->eps)) { // stop.
+          lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
+          lg.begin("weight"); lg << node->log_weight << endl; lg.end();
+          lg.begin("time"); lg << node->depth << endl; lg.end();
+          node->gm = shared_ptr<Tag>(new Tag(tag));
+          unique_lock<mutex> lock(th_mutex);
+          active_work--;
+          lock.unlock();
+          return;
+        }else{                             // proceed as chain.
+          node->children.push_back(makeMarkovTreeNode(node));
+          node = node->children.back();
+        }
       }
   }
 
@@ -100,21 +100,21 @@ namespace Tagging {
       this->th_stream.push_back(shared_ptr<stringstream>(new stringstream()));
       this->th_log.push_back(shared_ptr<XMLlog>(new XMLlog(*th_stream.back())));
       this->th[ni] = shared_ptr<thread>(new thread([&] (int tid) {
-	unique_lock<mutex> lock(th_mutex);
-	while(true) {
-	  if(th_work.size() > 0) {
-	    tuple<shared_ptr<MarkovTreeNode>, Tag> work = th_work.front();
-	    th_work.pop_front();
-	    active_work++;
-	    lock.unlock();
-	    th_stream[tid]->str("");
-	    workerThreads(tid,  get<0>(work), get<1>(work));
-	    th_finished.notify_all();
-	    lock.lock();
-	  }else{
-	    th_cv.wait(lock);	
-	  }
-	}
+        unique_lock<mutex> lock(th_mutex);
+        while(true) {
+          if(th_work.size() > 0) {
+            tuple<shared_ptr<MarkovTreeNode>, Tag> work = th_work.front();
+            th_work.pop_front();
+            active_work++;
+            lock.unlock();
+            th_stream[tid]->str("");
+            workerThreads(tid,  get<0>(work), get<1>(work));
+            th_finished.notify_all();
+            lock.lock();
+          }else{
+            th_cv.wait(lock);        
+          }
+        }
       }, ni));
     }
   }
@@ -151,7 +151,8 @@ namespace Tagging {
   TagVector ModelTreeUA::sample(const Instance& seq) {
     return castVector<Tag>(explore(seq)->getSamples());
   }
-  double ModelTreeUA::score(const Tag& tag) {
+  double ModelTreeUA::score(const GraphicalModel& gm) {
+    auto& tag = dynamic_cast<const Tag&>(gm);
     const Instance* seq = tag.seq;
     double score = 0.0;
     for(int i = 0; i < tag.size(); i++) {
@@ -181,61 +182,61 @@ namespace Tagging {
   void ModelAdaTree::workerThreads(int tid, shared_ptr<MarkovTreeNode> node, Tag tag) { 
       XMLlog& lg = *th_log[tid];
       while(true) {
-	int pos = rngs[tid].randomMT() % tag.size();
-	node->gradient = tag.proposeGibbs(pos, 
-					  [&] (const Tag& tag) -> FeaturePointer {
-					    return this->extractFeatures(shared_from_this(), tag, pos);  
-					  }, true);
-	node->gm = shared_ptr<Tag>(new Tag(tag));
-	auto predT = this->logisticStop(node, *tag.seq, tag); 
-	double prob = get<0>(predT);
-	node->posgrad = get<1>(predT);
-	node->neggrad = get<2>(predT);
-	FeaturePointer feat = get<3>(predT); 
-	th_mutex.lock();
-	this->configStepsize(feat, this->etaT);
-	th_mutex.unlock();
+        int pos = rngs[tid].randomMT() % tag.size();
+        node->gradient = tag.proposeGibbs(pos, 
+                                          [&] (const Tag& tag) -> FeaturePointer {
+                                            return this->extractFeatures(shared_from_this(), tag, pos);  
+                                          }, true);
+        node->gm = shared_ptr<Tag>(new Tag(tag));
+        auto predT = this->logisticStop(node, *tag.seq, tag); 
+        double prob = get<0>(predT);
+        node->posgrad = get<1>(predT);
+        node->neggrad = get<2>(predT);
+        FeaturePointer feat = get<3>(predT); 
+        th_mutex.lock();
+        this->configStepsize(feat, this->etaT);
+        th_mutex.unlock();
 
-	lg.begin("tag"); 
-	lg  << "[thread: " << tid << "] "
-	    << "[depth: " << node->depth << "] " 
-	    << "[prob: " << prob << "] "
-	    << tag.str() << endl;
-	lg.end();
-	
-	if(node->depth < B) node->log_weight = -DBL_MAX;
-	else node->log_weight = this->score(node, tag)+log(prob); 
+        lg.begin("tag"); 
+        lg  << "[thread: " << tid << "] "
+            << "[depth: " << node->depth << "] " 
+            << "[prob: " << prob << "] "
+            << tag.str() << endl;
+        lg.end();
+        
+        if(node->depth < B) node->log_weight = -DBL_MAX;
+        else node->log_weight = this->score(node, tag)+log(prob); 
 
-	if(node->depth == 0 || log(rngs[tid].random01()) < log(this->eps_split)) { // multithread split.
-	  unique_lock<mutex> lock(th_mutex);
-	  for(int k = 0; k < K; k++) {
-	    node->children.push_back(makeMarkovTreeNode(node));
-	    tag.rng = &rngs[k];
-	    th_work.push_back(make_tuple(node->children.back(), tag));
-	  }
-	  active_work--;
-	  th_cv.notify_all();
-	  lock.unlock();
-	  node->stop_feat = feat;
-	  return;
-	}else if(node->depth >= B && log(rngs[tid].random01()) < log(prob)) { // stop.
-	  unique_lock<mutex> lock(th_mutex);
-	  lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
-	  lg.begin("weight"); lg << node->log_weight << endl; lg.end();
-	  lg.begin("time"); lg << node->depth << endl; lg.end();
-	  lg.begin("feat");
-	  for(const pair<string, double>& p : *feat) {
-	    lg << p.first << " : " << p.second 
-		   << " , param : " << (*param)[p.first] << endl;
-	  }
-	  lg.end();
-	  active_work--;
-	  lock.unlock();
-	  return;
-	}else{                             // proceed as chain.
-	  node->children.push_back(makeMarkovTreeNode(node));
-	  node = node->children.back();
-	}
+        if(node->depth == 0 || log(rngs[tid].random01()) < log(this->eps_split)) { // multithread split.
+          unique_lock<mutex> lock(th_mutex);
+          for(int k = 0; k < K; k++) {
+            node->children.push_back(makeMarkovTreeNode(node));
+            tag.rng = &rngs[k];
+            th_work.push_back(make_tuple(node->children.back(), tag));
+          }
+          active_work--;
+          th_cv.notify_all();
+          lock.unlock();
+          node->stop_feat = feat;
+          return;
+        }else if(node->depth >= B && log(rngs[tid].random01()) < log(prob)) { // stop.
+          unique_lock<mutex> lock(th_mutex);
+          lg.begin("final-tag");  lg << tag.str() << endl; lg.end();
+          lg.begin("weight"); lg << node->log_weight << endl; lg.end();
+          lg.begin("time"); lg << node->depth << endl; lg.end();
+          lg.begin("feat");
+          for(const pair<string, double>& p : *feat) {
+            lg << p.first << " : " << p.second 
+                   << " , param : " << (*param)[p.first] << endl;
+          }
+          lg.end();
+          active_work--;
+          lock.unlock();
+          return;
+        }else{                             // proceed as chain.
+          node->children.push_back(makeMarkovTreeNode(node));
+          node = node->children.back();
+        }
       }
   }
 
@@ -281,16 +282,16 @@ namespace Tagging {
       string word = cast<TokenLiteral>(seq.seq[t])->word;
       double ent = 0, freq = 0;
       if(wordent->find(word) == wordent->end())
-	ent = log(taglen); // no word, use maxent.
+        ent = log(taglen); // no word, use maxent.
       else
-	ent = (*wordent)[word];
+        ent = (*wordent)[word];
       if(ent > max_ent) max_ent = ent;
       ave_ent += ent;
 
       if(wordfreq->find(word) == wordfreq->end())
-	freq = log(corpus->total_words);
+        freq = log(corpus->total_words);
       else
-	freq = (*wordfreq)[word];
+        freq = (*wordfreq)[word];
       if(freq > max_freq) max_freq = freq;
       ave_freq += freq;
     }
@@ -324,7 +325,7 @@ namespace Tagging {
   tuple<double, ParamPointer, ParamPointer, FeaturePointer> 
   ModelAdaTree::logisticStop(shared_ptr<MarkovTreeNode> node, const Instance& seq, const Tag& tag) {
     ParamPointer posgrad = makeParamPointer(), 
-		  neggrad = makeParamPointer();
+                  neggrad = makeParamPointer();
     FeaturePointer feat = this->extractStopFeatures(node, seq, tag);
     double prob = logisticFunc(log(eps)-log(1-eps)+tag.score(feat)); 
     if(prob < 1e-3) prob = 1e-3;   // truncation, avoid too long transitions.

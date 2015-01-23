@@ -7,7 +7,7 @@
 using namespace std;
 namespace Tagging {
   Tag::Tag(const Instance* seq, ptr<Corpus> corpus, 
-	  objcokus* rng, ParamPointer param) 
+          objcokus* rng, ParamPointer param) 
   : param(param) {
     this->seq = seq;
     this->corpus = corpus;
@@ -16,7 +16,7 @@ namespace Tagging {
   }
 
   Tag::Tag(const Instance& seq, ptr<Corpus> corpus, 
-	  objcokus* rng, ParamPointer param)
+          objcokus* rng, ParamPointer param)
   : param(param) {
     this->seq = &seq;
     this->corpus = corpus;
@@ -32,13 +32,12 @@ namespace Tagging {
     sc_unigram.resize(seqlen);
     tag.resize(seqlen);
     resp.resize(seqlen, DBL_MAX);
-    feat.resize(seqlen);
     mask.resize(seqlen); 
     timestamp.resize(seqlen, 0);
     checksum.resize(seqlen, NAN);
-    entropy.resize(seqlen);
     entropy_unigram.resize(seqlen, NAN);
     reward.resize(seqlen);
+    this->initStats();
     for(int& t : tag) {
       t = rng->randomMT() % taglen;
     }
@@ -73,9 +72,7 @@ namespace Tagging {
     logNormalize(sc, taglen);
 
     int val;
-    /*for(int t = 0; t < taglen; t++) {
-      cout << "t = " << t << " , " << exp(sc[t]) << endl;
-    }*/
+    
     if(argmax) {
       double max_sc = -DBL_MAX;
       for(int t = 0; t < taglen; t++) {
@@ -99,6 +96,7 @@ namespace Tagging {
       this->sc.push_back(sc[t]);
     }
     this->timestamp[pos] += 1;
+
     // compute gradient, if necessary.
     this->features = featExtract(*this);
     ParamPointer gradient = makeParamPointer();
@@ -130,19 +128,24 @@ namespace Tagging {
     double score = 0;
     for(const pair<string, double>& feat : *features) {
       if(this->param->find(feat.first) != this->param->end()) { 
-	score += feat.second * (*this->param)[feat.first];
+        score += feat.second * (*this->param)[feat.first];
       }
     }
     return score;
   }
 
-  string Tag::str() {
+  string Tag::str(bool verbose) {
     string ss;
     size_t seqlen = seq->seq.size();
     for(size_t i = 0; i < seqlen; i++) {
       ss += seq->seq[i]->str();
       ss += " / ";
       ss += this->getTag(i);
+      if(verbose) {
+        ss += " / [";
+        ss += boost::lexical_cast<string>(i);
+        ss += "]";
+      }
       ss += "\t";
     }
     return ss;

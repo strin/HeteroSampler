@@ -13,7 +13,27 @@
 #define POLICY_MARKOV_CHAIN_MAXDEPTH 10000000
 
 namespace Tagging {
+  const static string NB_VARY = "nb-vary";
+  const static string NER_DISAGREE = "ner-disagree";
+  const static string NER_DISAGREE_L = "ner-disagree-l";
+  const static string NER_DISAGREE_R = "ner-disagree-r";
+  const static string NB_ENT = "nb-ent";
+  const static string NB_CONSENT = "nb";
+  const static string NB_ENT__COND = "nb-ent--cond-ent";
+  const static string COND = "cond-ent";
+  const static string ORACLE = "oracle";
+  const static string ORACLEv = "oracle-v"; // virtual feature, do not participate in response.
+  const static string COND_LHOOD = "cond-lhood";
+  const static string ORACLE_ENT = "oracle-ent";
+  const static string ORACLE_ENTv = "oracle-ent-v"; // virtual feature, do not participate in response.
+  const static string ORACLE_STALENESS = "oracle-stale";
+  const static string ORACLE_STALENESSv = "oracle-stale-v"; // virtual feature, do not participate in response.
 
+  inline static string make_NB_CONSENT(int val, int your_val) {
+    return "c-" + tostr(val) + "-" + tostr(your_val);
+  }
+
+  
   class Policy {
   public:
     Policy(ModelPtr model, const boost::program_options::variables_map& vm);
@@ -28,6 +48,17 @@ namespace Tagging {
       double score;
       double time;
       double wallclock;
+      double wallclock_policy, wallclock_sample;
+
+      size_t size() const {
+        return nodes.size();
+      }
+      MarkovTreeNodePtr getNode(size_t i) const {
+        return nodes[i];
+      }
+      void setNode(size_t i, MarkovTreeNodePtr node) {
+        nodes[i] = node;
+      }
     };
     struct ROC {
     public:
@@ -78,6 +109,12 @@ namespace Tagging {
     // sample node, for training. default: call sampleTest.
     virtual void sample(int tid, MarkovTreeNodePtr node);
     
+    // wrap model->sampleOne.
+    MarkovTreeNodePtr sampleOne(MarkovTreeNodePtr, objcokus& rng, int pos);
+
+    // update resp of the meta-features.
+    void updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* heap);
+
     // return a number referring to the transition kernel to use.
     // return = -1 : stop the markov chain.
     // o.w. return a natural number representing a choice.
@@ -85,7 +122,11 @@ namespace Tagging {
 
     // estimate the reward of a MarkovTree node (default: -dist).
     virtual double reward(MarkovTreeNodePtr node);
-
+    
+    // estimate delayed reward.
+    double delayedReward(MarkovTreeNodePtr node, int id, int depth, int maxdepth, bool lets_samle);
+    double sampleDelayedReward(MarkovTreeNodePtr node, int id, int maxdepth, int rewardK);
+    
     // extract features from node.
     virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
 
@@ -98,9 +139,41 @@ namespace Tagging {
     // reset log.
     void resetLog(std::shared_ptr<XMLlog> new_lg);
 
-
     // response-reward pair.
+    struct PolicyExample {  // examples used to train policy.
+      double reward;
+      double resp;
+      double staleness;
+      FeaturePointer feat;    // copy and record.
+      ParamPointer param;     // copy and record.
+      string str, oldstr;     // copy and record.
+      MarkovTreeNodePtr node; // just record.
+      int choice;
+      void serialize(ptr<XMLlog> lg) {
+        lg->begin("example");
+          lg->logAttr("item", "reward", reward);
+        lg->logAttr("item", "staleness", staleness);
+        lg->logAttr("item", "resp", resp);
+        for(auto& p : *feat) {
+          lg->logAttr("feat", p.first, p.second);
+        }
+        for(auto& p : *param) {
+          lg->logAttr("param", p.first, p.second);
+        }
+        lg->logAttr("item", "choice", choice);
+        if(node != nullptr) {
+          lg->begin("instance");
+          *lg << str << std::endl;
+          lg->end();
+          lg->begin("old_instance");
+          *lg << oldstr << std::endl;
+          lg->end();
+        }
+        lg->end(); // <example>
+      }
+    };
     bool lets_resp_reward;
+    vec<PolicyExample> examples;
     vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R. 
     vec<pair<double, double> > resp_RH, test_resp_RH; // whether incorrect, upper bound of R.
     vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.
@@ -113,9 +186,11 @@ namespace Tagging {
     ParamPointer wordent, wordfreq;
     double wordent_mean, wordfreq_mean;
     Vector2d tag_bigram;
-    std::vector<double> tag_unigram_start;
-    const std::string name;
-    const size_t K, Q; // K: num samples. Q: num epochs.
+    vec<double> tag_unigram_start;
+    const string name;
+    const string learning;
+    const int mode_reward, mode_oracle, rewardK;
+    const size_t K, Q; // K: num trajectories. Q: num epochs.
     const size_t test_count, train_count;
     const double eta;
 
@@ -125,7 +200,9 @@ namespace Tagging {
     vec<string> verbose_opt;
     bool verboseOptFind(string verse) {return std::find(verbose_opt.begin(), verbose_opt.end(), verse) != verbose_opt.end(); }
 
-    const bool lets_inplace;   // not work with entire history.
+    const bool lets_inplace;              // not work with entire history.
+    const bool lets_lazymax;              // take max sample only after each sweep. 
+    int lazymax_lag;        // the lag to take max, default(-1, entire instance).
     // feature option, each string switches a meta-feature to add.
 
     vec<string> featopt; 
@@ -183,7 +260,7 @@ namespace Tagging {
     
     // reward = -dist - c * (depth+1).
     double reward(MarkovTreeNodePtr node);
-    
+
     // extract features from node.
     virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
 

@@ -13,7 +13,7 @@ namespace po = boost::program_options;
 int main(int argc, char* argv[]) {
   /* parse args. */
   const int T = 10, B = 0, Q = 10, 
-	    Q0 = 1, K = 5;  
+            Q0 = 1, K = 5;  
   const double eta = 0.4;    // default args.
   po::options_description desc("Allowed options");
   desc.add_options()

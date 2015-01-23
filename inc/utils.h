@@ -1,10 +1,12 @@
-#pragma once
+#ifndef TAGGING_UTILS
+#define TAGGING_UTILS
 
 #include <cmath>
 #include <map>
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <set>
 #include <list>
 #include <iostream>
 #include <functional>
@@ -19,6 +21,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/random/uniform_int.hpp>
 #include <boost/program_options.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include "dirent.h"
 
 #include "float.h"
 #include "log.h"
@@ -29,11 +35,25 @@ namespace Tagging {
   template<class T>
   using ptr = std::shared_ptr<T>;
 
-  
   using string = std::string;
+
+  using std::cout;
+  using std::cin;
+  using std::cerr;
+  using std::endl;
+  using std::to_string;
+
+  template<class Source>
+  inline string tostr(const Source& arg) {
+    return boost::lexical_cast<string>(arg);
+  }
+  
 
   template<class T>
   using vec = std::vector<T>;
+
+  template<class T>
+  using set = std::set<T>;
 
   template<class T>
   using vec2d = vec<vec<T> >;
@@ -81,6 +101,25 @@ namespace Tagging {
 
   inline static void insertFeature(FeaturePointer feat, const std::string& key, double val = 1.0) {
     feat->push_back(std::make_pair(key, val));
+  }
+
+  inline static double* findFeature(FeaturePointer feat, const std::string& key) {
+    for(auto& pair : *feat) {
+      if(pair.first == key) {
+        return &pair.second;
+      }
+    }
+    return nullptr;
+  }
+
+  inline static double getFeature(FeaturePointer feat, const std::string& key) {
+    if(feat == nullptr) return 0;
+    for(auto& pair : *feat) {
+      if(pair.first == key) {
+        return pair.second;
+      }
+    }
+    return 0;
   }
 
   inline static void insertFeature(FeaturePointer featA, FeaturePointer featB) {
@@ -261,3 +300,4 @@ namespace Tagging {
   }
 }
 
+#endif

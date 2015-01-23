@@ -31,7 +31,7 @@ namespace Tagging {
     virtual void parselines(const std::vector<std::string>& lines) = 0;
     virtual std::string str() const = 0;
     virtual size_t size() const {return this->seq.size(); }
-     
+
     std::vector<TokenPtr> seq;
     std::vector<int> tag;
     const Corpus* corpus;
@@ -99,6 +99,12 @@ namespace Tagging {
     
     virtual void parselines(const std::vector<string>& lines);
     virtual string str() const;
+    virtual vec<int> markovBlanket(int id) const {
+      vec<int> ret;
+      if(id >= 1) ret.push_back(id-1);
+      if(id < this->size()-1) ret.push_back(id+1);
+      return ret;
+    }
   };
 
   typedef std::shared_ptr<std::vector<std::string> > StringVector;
@@ -108,7 +114,7 @@ namespace Tagging {
 
   struct Corpus {
   public:
-    Corpus();
+    Corpus() {test_count = -1; }
     std::vector<SentencePtr> seqs;
 
     objcokus cokus;
@@ -124,7 +130,18 @@ namespace Tagging {
 
     virtual void read(const std::string& filename, bool lets_shuffle = true) = 0;
     virtual void retag(ptr<Corpus> corpus); 
+
     int size() const {return seqs.size(); }
+    int count(int test_count = -1) const {
+      if(test_count < 0 || test_count >= seqs.size()) test_count = seqs.size();
+      int c = 0;
+      for(int i = 0; i < test_count; i++) {
+        c += seqs[i]->size();
+      }
+      return c;
+    }
+
+    int test_count;
   };
 
   struct CorpusLiteral : public Corpus {

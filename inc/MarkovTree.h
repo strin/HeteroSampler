@@ -17,11 +17,16 @@ namespace Tagging {
        gradient: sum of weights of node and descendants. 
        posgrad : weight of node. 
        neggrad : sum weights of descendants */
-    ParamPointer gradient, posgrad, neggrad;
+    ParamPointer gradient, posgrad, neggrad, G2;
     ptr<Model> model;
     std::shared_ptr<GraphicalModel> gm; // tag after the transition.
     double log_weight;        // posterior weight for gradient.
+
     double log_prior_weight;  // prior weight from proposal.
+    double max_log_prior_weight;
+    std::shared_ptr<GraphicalModel> max_gm;  // save gm with maximum score.
+
+
     int depth;                // how many samples have been generated.
     int choice;               // if using a policy, which choice is made?
     size_t time_stamp;        // time stamp of this object.

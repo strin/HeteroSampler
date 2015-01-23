@@ -22,7 +22,11 @@ public:
   Tag(const Instance& seq, ptr<Corpus> corpus, 
      objcokus* rng, ParamPointer param); // copy tag from seq.
   // length of sequence.
-  size_t size() const {return this->tag.size(); }
+  inline size_t size() const {return this->tag.size(); }
+
+  // overide: number of possible tags.
+  inline size_t numLabels(int id) const {return this->corpus->tags.size();}
+
   // initialize the sequence tags uniformly at random.
   void randomInit();
   // propose Gibbs-style modification to *pos*
@@ -33,10 +37,25 @@ public:
   // distance to another tag.
   // warning: both tags should have same length and dict. 
   double distance(const Tag& tag);  
+
+  // get tag of a node.
+  virtual int getLabel(int id) const {
+    assert(id >= 0 and id < this->size());
+    return tag[id];
+  }
+
+  // set tag of a node.
+  virtual void setLabel(int id, int val) {
+    tag[id] = val;
+  }
+
   // return the string of a tag.
   std::string getTag(size_t pos) const;
+
   // to string. 
-  std::string str(); 
+  virtual std::string str(bool verbose = false); 
+
+  
 };
 
 typedef std::shared_ptr<Tag> TagPtr;

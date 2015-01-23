@@ -10,13 +10,13 @@ namespace Tagging {
     size_t wordlen = word.length();
     for(size_t k = 1; k <= 4; k++) {
       if(wordlen > k) {
-	nlp->push_back("p"+to_string(k)+"-"+word.substr(0, k));
-	nlp->push_back("s"+to_string(k)+"-"+word.substr(wordlen-k, k));
+        nlp->push_back("p"+to_string(k)+"-"+word.substr(0, k));
+        nlp->push_back("s"+to_string(k)+"-"+word.substr(wordlen-k, k));
       }
     }
     if(std::find_if(word.begin(), word.end(), 
-	    [](char c) { return std::isdigit(c); }) != word.end()) {
-	nlp->push_back("00-");  // number
+            [](char c) { return std::isdigit(c); }) != word.end()) {
+        nlp->push_back("00-");  // number
     }
     // word signature.
     stringstream sig0;
@@ -28,20 +28,20 @@ namespace Tagging {
     bool capitalized = true;
     for(size_t i = 0; i < wordlen; i++) {
       if(word[i] <= 'Z' && word[i] >= 'A') {
-	if(prev != 'A') 
-	  sig0 << "A";
-	sig1[i] = 'A';
-	prev = 'A';
+        if(prev != 'A') 
+          sig0 << "A";
+        sig1[i] = 'A';
+        prev = 'A';
       }else if(word[i] <= 'z' && word[i] >= 'a') {
-	if(prev != 'a')
-	  sig0 << "a";
-	sig1[i] = 'a';
-	prev = 'a';
-	capitalized = false;
+        if(prev != 'a')
+          sig0 << "a";
+        sig1[i] = 'a';
+        prev = 'a';
+        capitalized = false;
       }else{
-	sig1[i] = 'x';
-	prev = 'x';
-	capitalized = false;
+        sig1[i] = 'x';
+        prev = 'x';
+        capitalized = false;
       }
     }
     nlp->push_back("SG-"+sig0.str());
@@ -63,36 +63,36 @@ namespace Tagging {
       StringVector nlp = cast<CorpusLiteral>(tag.corpus)->getWordFeat(token->word);
       string lpos = boost::lexical_cast<string>(l-pos);
       /*for(int itoken : token->itoken) {
-	int id = (l-pos+breadth) * corpus->total_sig * corpus->tags.size()  + 
-		  corpus->total_sig * tag.tag[pos] + itoken;
-	string ss = "";
-	while(id > 0) {
-	  ss += id & 0xFF;
-	  id = id >> 8;
-	}
-	insertFeature(output, ss, 1);
+        int id = (l-pos+breadth) * corpus->total_sig * corpus->tags.size()  + 
+                  corpus->total_sig * tag.tag[pos] + itoken;
+        string ss = "";
+        while(id > 0) {
+          ss += id & 0xFF;
+          id = id >> 8;
+        }
+        insertFeature(output, ss, 1);
       }*/
       for(const string& token : *nlp) {
-	string ss = "w-";
-	ss += lpos;
-	ss += "-";
-	ss += token;
-	ss += "-";
-	ss += tag.getTag(pos);
-	insertFeature(output, ss);
+        string ss = "w-";
+        ss += lpos;
+        ss += "-";
+        ss += token;
+        ss += "-";
+        ss += tag.getTag(pos);
+        insertFeature(output, ss);
       }
       
       for(int d = 1; d <= depth; d++) {
-	if(d >= token->depth()) continue;
-	string ss = "t";
-	if(d > 1) ss += boost::lexical_cast<string>(d);
-	ss += "-";
-	ss += lpos;
-	ss += "-";
-	ss += token->token[d];
-	ss +="-";
-	ss += tag.getTag(pos);
-	insertFeature(output, ss, 0.1);
+        if(d >= token->depth()) continue;
+        string ss = "t";
+        if(d > 1) ss += boost::lexical_cast<string>(d);
+        ss += "-";
+        ss += lpos;
+        ss += "-";
+        ss += token->token[d];
+        ss +="-";
+        ss += tag.getTag(pos);
+        insertFeature(output, ss, 0.1);
       }
     }
   }
@@ -106,7 +106,7 @@ namespace Tagging {
     ss += "-";
     ss += tag.getTag(pos);
     /* ss << "p-" << tag.getTag(pos-1) << "-" 
-	  << tag.getTag(pos);*/
+          << tag.getTag(pos);*/
     // (*output)[ss.str()] = 1;
     insertFeature(output, ss); 
   }

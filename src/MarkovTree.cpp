@@ -17,13 +17,20 @@ namespace Tagging {
       depth = 0;
       time_stamp = 0;
       model = nullptr;
+      log_prior_weight = 0;
+      max_log_prior_weight = -DBL_MAX;
+      gm = nullptr;
+      max_gm = nullptr;
     }else{
       depth = parent->depth+1;
       time_stamp = parent->time_stamp;
       model = parent->model;
+      log_prior_weight = parent->log_prior_weight;
+      max_log_prior_weight = parent->max_log_prior_weight;
+      max_gm = parent->max_gm;
+      gm = parent->gm;
     }
     gradient = posgrad = neggrad = nullptr;
-    gm = nullptr;
     compute_stop = false;
   }
 
@@ -73,7 +80,7 @@ namespace Tagging {
     double weight = node->log_prior_weight;
     if(node->depth < max_level) {
       for(shared_ptr<MarkovTreeNode> child : node->children) 
-	weight = logAdd(weight, logSumPriorWeights(child, max_level));
+        weight = logAdd(weight, logSumPriorWeights(child, max_level));
     }
     return weight;
   }
@@ -82,7 +89,7 @@ namespace Tagging {
     double reward = node->log_prior_weight - normalize + node->log_weight;
     if(node->depth < max_level) {
       for(shared_ptr<MarkovTreeNode> child : node->children) {
-	reward = logAdd(reward, aggregateReward(child, normalize, max_level));
+        reward = logAdd(reward, aggregateReward(child, normalize, max_level));
       }
     }
     return reward;

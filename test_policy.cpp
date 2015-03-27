@@ -17,7 +17,6 @@
 #include <opengm/inference/messagepassing/messagepassing.hxx>
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 
-
 using namespace std;
 using namespace Tagging;
 using namespace opengm;

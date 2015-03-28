@@ -3,8 +3,9 @@ PROJECT (AdaInfer)
 
 include_directories("inc")
 include_directories("scilog/inc")
-link_directories("scilog")
+# link_directories("scilog")
 add_subdirectory("src")
+add_subdirectory("scilog")
 
 
 IF("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")

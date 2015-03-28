@@ -66,7 +66,6 @@ ADD_LIBRARY(tag SHARED
   src/MarkovTree.cpp
   src/model.cpp
   src/baseline.cpp
-  src/search.cpp
   src/objcokus.cpp
   src/policy.cpp
   src/ThreadPool.cpp

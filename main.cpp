@@ -18,7 +18,6 @@ int main(int argc, char* argv[]) {
   po::options_description desc("Allowed options");
   desc.add_options()
       ("help", "produce help message")
-      ("inference", po::value<string>(), "inference method (Gibbs, TreeUA)")
       ("eta", po::value<double>()->default_value(eta), "step size")
       ("etaT", po::value<double>()->default_value(eta), "step size for time adaptation")
       ("T", po::value<size_t>()->default_value(T), "number of transitions")
@@ -45,10 +44,6 @@ int main(int argc, char* argv[]) {
       cout << desc << "\n";
       return 1;
   }
-  string inference = "Gibbs";
-  if(vm.count("inference")) {
-    inference = vm["inference"].as<string>();
-  }
   try{
     /* load corpus-> */
     string train = "data/eng_ner/train", test = "data/eng_ner/test";
@@ -66,19 +61,10 @@ int main(int argc, char* argv[]) {
     if(pos == string::npos) throw "invalid model output dir."; 
     system(("mkdir -p "+output.substr(0, pos)).c_str());
     shared_ptr<Model> model = nullptr;
-    if(inference == "Gibbs") {
-      model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
-      model->run(testCorpus);
-    }else if(inference == "Simple") {
-      model = shared_ptr<Model>(new ModelSimple(corpus, vm));
-      model->run(testCorpus);
-    }else if(inference == "TreeUA") {
-      model = shared_ptr<ModelTreeUA>(new ModelTreeUA(corpus, vm));
-      model->run(testCorpus);
-    }else if(inference == "AdaTree") {
-      model = shared_ptr<ModelAdaTree>(new ModelAdaTree(corpus, vm));
-      model->run(testCorpus);
-    }
+
+    model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
+    model->run(testCorpus);
+
     ofstream file;
     file.open(vm["output"].as<string>());
     file << *model;

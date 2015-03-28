@@ -24,12 +24,13 @@ int main(int argc, char* argv[]) {
       ("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
       ("factorL", po::value<int>()->default_value(2), "up to what order of gram should be used")
       ("output", po::value<string>()->default_value("model/default.model"), "output model file")
-
       ("eta", po::value<double>()->default_value(eta), "step size")
-      ("etaT", po::value<double>()->default_value(eta), "step size for time adaptation")
       ("T", po::value<size_t>()->default_value(T), "number of transitions")
       ("B", po::value<size_t>()->default_value(B), "number of burnin steps")
       ("Q", po::value<size_t>()->default_value(Q), "number of passes")
+
+
+      ("etaT", po::value<double>()->default_value(eta), "step size for time adaptation")
       ("Q0", po::value<int>()->default_value(Q0), "number of passes for smart init")
       ("K", po::value<size_t>()->default_value(K), "number of threads/particles")
       ("c", po::value<double>()->default_value(0), "extent of time regularization")

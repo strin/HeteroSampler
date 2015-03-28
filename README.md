@@ -1,4 +1,4 @@
-HeteroSampler
+HeteroSampler [![Build Status](https://travis-ci.org/strin/HeteroSampler.svg?branch=release)](https://travis-ci.org/strin/HeteroSampler)
 =============
 
 This project is a C++ implementation of HeteroSamplers: heterogenous Gibbs samplers for structured prediction problems. It is based on algorithms published in the AISTATS 2015 paper "Learning Where to Sample in Structured Prediction" by Shi Tianlin, Jacob Steinhardt, and Percy Liang. 

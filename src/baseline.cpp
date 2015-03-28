@@ -11,7 +11,7 @@ using namespace std::placeholders;
 namespace po = boost::program_options;
 
 namespace Tagging { 
-  
+
   ////////// Simple Model (Independent Logistic Regression) ////////////
   ModelSimple::ModelSimple(ptr<Corpus> corpus, const po::variables_map& vm) 
   :Model(corpus, vm) {
@@ -93,60 +93,65 @@ namespace Tagging {
 
   //////// Model CRF Gibbs ///////////////////////////////
   ModelCRFGibbs::ModelCRFGibbs(ptr<Corpus> corpus, const po::variables_map& vm)
-   :ModelSimple(corpus, vm), factorL(vm["factorL"].as<int>()), 
-    annealing(vm["temp"].as<string>()), 
-    extractFeatures([] (ptr<Model> model, const GraphicalModel& gm, int pos) {
-      // default feature extraction, support literal sequence tagging.
+   :ModelSimple(corpus, vm) {
+
+    // lambda expression for feature extractions.
+    this->extractFeatures = [] (ptr<Model> model, const GraphicalModel& gm, int pos) {
+
       assert(isinstance<ModelCRFGibbs>(model));
       ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
       const Tag& tag = dynamic_cast<const Tag&>(gm);
-      size_t windowL = this_model->windowL;
-      size_t depthL = this_model->depthL;
-      size_t factorL = this_model->factorL;
       assert(isinstance<CorpusLiteral>(tag.corpus));
       const vector<TokenPtr>& sen = tag.seq->seq;
       int seqlen = tag.size();
+
       // extract word features. 
       FeaturePointer features = makeFeaturePointer();
-      extractUnigramFeature(tag, pos, windowL, depthL, features);
+      extractUnigramFeature(tag, pos, this_model->windowL, this_model->depthL, features);
+
       // extract higher-order grams.
-      for(int factor = 1; factor <= factorL; factor++) {
+      for(int factor = 1; factor <= this_model->factorL; factor++) {
        for(int p = pos; p < pos+factor; p++) {
          if(p-factor+1 >= 0 && p < seqlen) {
            extractXgramFeature(tag, p, factor, features);
          }
        }
       }
+
       return features;
-    }),
-    extractFeatAll([] (ptr<Model> model, const GraphicalModel& gm) {
-      // default feature extraction, support literal sequence tagging.
+    };
+
+    this->extractFeatAll = [] (ptr<Model> model, const GraphicalModel& gm) {
+
       assert(isinstance<ModelCRFGibbs>(model));
       ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
       auto& tag = dynamic_cast<const Tag&>(gm);
-      size_t windowL = this_model->windowL;
-      size_t depthL = this_model->depthL;
-      size_t factorL = this_model->factorL;
       assert(isinstance<CorpusLiteral>(tag.corpus));
       const vector<TokenPtr>& sen = tag.seq->seq;
       int seqlen = tag.size();
+
       // extract word features. 
       FeaturePointer features = makeFeaturePointer();
+
       for(int pos = 0; pos < seqlen; pos++) {
-        // extract ILR features.
-        extractUnigramFeature(tag, pos, windowL, depthL, features);
+        // extract unigram features.
+        extractUnigramFeature(tag, pos, this_model->windowL, this_model->depthL, features);
         // extract higher-order grams.
-        for(int factor = 1; factor <= factorL; factor++) {
+        for(int factor = 1; factor <= this_model->factorL; factor++) {
            if(pos-factor+1 >= 0) {
              extractXgramFeature(tag, pos, factor, features);
            }
          }
       }
+
       return features;
-   }) {
+    };
+
     getMarkovBlanket = [] (ptr<Model> model, const GraphicalModel& gm, int pos) {
+
       assert(isinstance<ModelCRFGibbs>(model));
       ptr<ModelCRFGibbs> this_model = cast<ModelCRFGibbs>(model);
+
       vec<int> ret;
       for(int p = fmax(0, pos - this_model->factorL + 1); p <= fmin(pos + this_model->factorL -1, gm.size()-1); p++) {
         if(p == pos) continue;
@@ -154,14 +159,21 @@ namespace Tagging {
       }
       return ret;
     };
-    getInvMarkovBlanket = getMarkovBlanket; 
+
+    getInvMarkovBlanket = getMarkovBlanket; // markov network.
+
+    this->factorL = vm["factorL"].empty() ? 2 : vm["factorL"].as<int>();
+    this->annealing = vm["temp"].empty() ? "" : vm["temp"].as<string>();
+
     if(isinstance<CorpusLiteral>(corpus))
       cast<CorpusLiteral>(corpus)->computeWordFeat();
+
     if(annealing == "scanline") { // use the annealing scheme introduced in scanline paper (CVPR 2014).
       temp_decay = vm["temp_decay"].as<double>();
       temp_magnify = vm["temp_magnify"].as<double>();
     }
     temp_init = vm["temp_init"].as<double>();
+
     this->time = 0;
    }
 

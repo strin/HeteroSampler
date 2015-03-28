@@ -81,7 +81,7 @@ namespace Tagging {
     // return the nodes whose Markov blanket include the node. 
     // default: return the Markov blanket of node *id*
     virtual vec<int> invMarkovBlanket(const GraphicalModel& gm, int pos) {
-      markovBlanket(gm, pos);
+      return markovBlanket(gm, pos);
     }
     
     /* parameters */

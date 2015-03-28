@@ -31,10 +31,10 @@ Install cmake to bulid the source code
 sudo apt-get install cmake
 ```
 
-Install boost-program-options
+Install boost-program-options	
 
 ```
-sudo apt-get install libboost-program-options-dev
+sudo apt-get install libboost-all-dev
 ```
 
 Install Hierarchical Data Format (HDF 5):

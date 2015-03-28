@@ -17,7 +17,31 @@ HeteroSampler is written in C++ 11, so requires gcc >= 4.8. It also uses HDF5 fo
 
 Dependencies (Ubuntu)
 ---------------------
+To install gcc 4.8, 
 
+```
+sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
+sudo apt-get install -qq g++-4.8
+export CXX="g++-4.8"
+```
+
+Install cmake to bulid the source code
+
+```
+sudo apt-get install cmake
+```
+
+Install boost-program-options
+
+```
+sudo apt-get install libboost-program-options-dev
+```
+
+Install Hierarchical Data Format (HDF 5):
+
+```
+sudo apt-get install libhdf5-serial-dev
+```
 
 
 Dependencies (OS X, Homebrew)

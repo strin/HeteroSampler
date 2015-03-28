@@ -11,11 +11,16 @@ using namespace std::placeholders;
 namespace po = boost::program_options;
 
 namespace Tagging { 
+  
   ////////// Simple Model (Independent Logistic Regression) ////////////
   ModelSimple::ModelSimple(ptr<Corpus> corpus, const po::variables_map& vm) 
-  :Model(corpus, vm), windowL(vm["windowL"].as<int>()),
-   depthL(vm["depthL"].as<int>()) {
-    xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
+  :Model(corpus, vm) {
+    this->depthL = vm["depthL"].empty() ? 0 : vm["depthL"].as<int>();
+    this->windowL = vm["windowL"].empty() ? 0 : vm["windowL"].as<int>();
+
+    xmllog.begin("windowL"); 
+    xmllog << windowL << endl; 
+    xmllog.end();
   }
 
   void ModelSimple::sample(Tag& tag, int time, bool argmax) {

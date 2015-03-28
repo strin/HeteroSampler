@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
       ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
       ("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
       ("factorL", po::value<int>()->default_value(2), "up to what order of gram should be used")
-
+      ("output", po::value<string>()->default_value("model/default.model"), "output model file")
 
       ("eta", po::value<double>()->default_value(eta), "step size")
       ("etaT", po::value<double>()->default_value(eta), "step size for time adaptation")
@@ -39,10 +39,10 @@ int main(int argc, char* argv[]) {
       ("train", po::value<string>(), "training data")
       ("test", po::value<string>(), "test data")
       ("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
-      ("output", po::value<string>()->default_value("model/default.model"), "output model file")
   ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
+  vm.insert(make_pair("depthL", po::variable_value(0, false)));
   po::notify(vm);    
   if(vm.count("help")) {
       cout << desc << "\n";

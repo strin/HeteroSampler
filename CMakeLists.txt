@@ -121,12 +121,6 @@ target_link_libraries(ising
 add_executable(policy test_policy.cpp
 )
 
-add_executable(test-ising test_ising.cpp
-)
-
-add_executable(test-opengm test_opengm.cpp
-)
-
 target_link_libraries(policy
   scilog
   tag
@@ -137,42 +131,9 @@ target_link_libraries(policy
   ${HDF5_LIBRARIES}
 )
 
-target_link_libraries(test-ising
-  scilog
-  tag
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${LIBS}
-  ${Boost_LIBRARIES}
-  ${PYTHON_LIBRARIES}
-)
-
-target_link_libraries(test-opengm
-  scilog
-  tag
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${LIBS}
-  ${Boost_LIBRARIES}
-  ${PYTHON_LIBRARIES}
-  ${HDF5_LIBRARIES}
-)
-
-
-add_executable(test-thread test_thread.cpp
-src/ThreadPool.cpp
-src/objcokus.cpp
-)
-
-target_link_libraries(test-thread
-  scilog
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${LIBS}
-  ${Boost_LIBRARIES}
-  ${PYTHON_LIBRARIES}
-)
-
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY check)
 
-add_executable(check-opengm-chain check/check_opengm_chain.cpp
+add_executable(check-opengm-chain sanity/check_opengm_chain.cpp
 )
 
 target_link_libraries(check-opengm-chain

@@ -1,6 +1,6 @@
 /* implementation of baseline sequence tagging models, including 
- * > independent logistic regression.
- * > CRF with Gibbs sampling. 
+ *  > independent logistic regression.
+ *  > CRF with Gibbs sampling. 
  */
 #include "model.h"
 #include "feature.h"
@@ -11,7 +11,7 @@ using namespace std::placeholders;
 namespace po = boost::program_options;
 
 namespace Tagging { 
-  ////////// Simple Model (Independent Logit) ////////////
+  ////////// Simple Model (Independent Logistic Regression) ////////////
   ModelSimple::ModelSimple(ptr<Corpus> corpus, const po::variables_map& vm) 
   :Model(corpus, vm), windowL(vm["windowL"].as<int>()),
    depthL(vm["depthL"].as<int>()) {
@@ -149,7 +149,7 @@ namespace Tagging {
       }
       return ret;
     };
-    getInvMarkovBlanket = getMarkovBlanket;
+    getInvMarkovBlanket = getMarkovBlanket; 
     if(isinstance<CorpusLiteral>(corpus))
       cast<CorpusLiteral>(corpus)->computeWordFeat();
     if(annealing == "scanline") { // use the annealing scheme introduced in scanline paper (CVPR 2014).

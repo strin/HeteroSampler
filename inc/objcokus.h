@@ -1,13 +1,8 @@
-//
-//  objcokus.h
-//  HybridMedLDA
-//
-//  Created by Tianlin Shi on 8/13/13.
-//  Copyright (c) 2013 Tianlin Shi. All rights reserved.
-//
-
-#ifndef __HybridMedLDA__objcokus__
-#define __HybridMedLDA__objcokus__
+/* An class wrapping cokus.c 
+ * pseudo-random number generator based on MT19937 algorithm
+ */
+#ifndef __objcokus__
+#define __objcokus__
 
 #include <iostream>
 #include "math.h"
@@ -31,6 +26,7 @@ public:
 	:left(-1)
 	{
 	}
+	
 	void seedMT(uint32 seed)
 	{
 		//
@@ -143,4 +139,4 @@ public:
 	  return i;
 	}
 };
-#endif /* defined(__HybridMedLDA__objcokus__) */
+#endif /* defined(__objcokus__) */

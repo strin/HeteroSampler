@@ -1,7 +1,7 @@
 HeteroSampler
 =============
 
-This project aims to build HeteroSamplers: heterogenous Gibbs samplers for structured prediction problems. It is based on algorithms published in the AISTATS 2015 paper "Learning Where to Sample in Structured Prediction" by Shi Tianlin, Jacob Steinhardt, and Percy Liang. 
+This project is a C++ implementation of HeteroSamplers: heterogenous Gibbs samplers for structured prediction problems. It is based on algorithms published in the AISTATS 2015 paper "Learning Where to Sample in Structured Prediction" by Shi Tianlin, Jacob Steinhardt, and Percy Liang. 
 
 How does it work
 ----------------
@@ -17,6 +17,8 @@ HeteroSampler is written in C++ 11, so requires gcc >= 4.8. It also uses HDF5 fo
 
 Dependencies (Ubuntu)
 ---------------------
+
+
 
 Dependencies (OS X, Homebrew)
 -----------------------------

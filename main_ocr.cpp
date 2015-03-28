@@ -29,8 +29,6 @@ int main(int argc, char* argv[]) {
       ("B", po::value<size_t>()->default_value(B), "number of burnin steps")
       ("Q", po::value<size_t>()->default_value(Q), "number of passes")
 
-
-      ("etaT", po::value<double>()->default_value(eta), "step size for time adaptation")
       ("Q0", po::value<int>()->default_value(Q0), "number of passes for smart init")
       ("K", po::value<size_t>()->default_value(K), "number of threads/particles")
       ("c", po::value<double>()->default_value(0), "extent of time regularization")

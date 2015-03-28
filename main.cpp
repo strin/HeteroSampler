@@ -19,7 +19,6 @@ int main(int argc, char* argv[]) {
   desc.add_options()
       ("help", "produce help message")
       ("eta", po::value<double>()->default_value(eta), "step size")
-      ("etaT", po::value<double>()->default_value(eta), "step size for time adaptation")
       ("T", po::value<size_t>()->default_value(T), "number of transitions")
       ("B", po::value<size_t>()->default_value(B), "number of burnin steps")
       ("Q", po::value<size_t>()->default_value(Q), "number of passes")

@@ -82,7 +82,7 @@ target_link_libraries(tag
   ${HDF5_LIBRARIES}
 )
 
-add_executable(pos main.cpp
+add_executable(pos model_tagging.cpp
 )
 
 target_link_libraries(pos
@@ -95,10 +95,10 @@ target_link_libraries(pos
 )
 
 
-add_executable(ocr main_ocr.cpp
+add_executable(ocr model_ocr.cpp
 )
 
-add_executable(ising main_ising.cpp
+add_executable(ising model_ising.cpp
 )
 
 target_link_libraries(ocr

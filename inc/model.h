@@ -86,7 +86,6 @@ namespace Tagging {
     
     /* parameters */
     size_t T, B, Q;
-    int Q0;
     double testFrequency;
     double eta;
     std::vector<objcokus> rngs;

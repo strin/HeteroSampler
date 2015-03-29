@@ -18,7 +18,7 @@ namespace Tagging {
    G2(makeParamPointer()) , stepsize(makeParamPointer()), 
    T(vm["T"].as<size_t>()), B(vm["B"].as<size_t>()), 
    Q(vm["Q"].as<size_t>()), eta(vm["eta"].as<double>()), 
-   K(vm["K"].as<size_t>()), Q0(vm["Q0"].as<int>()),  
+   K(vm["K"].as<size_t>()), 
    testFrequency(vm["testFrequency"].as<double>()) {
     try {
       if(vm.count("scoring") == 0) {

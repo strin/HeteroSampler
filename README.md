@@ -74,6 +74,17 @@ To pre-train an NER model, run <i>tagging</i> with the following parameters:
 |------------------|--------------|
 |        T            |   number of Gibbs sweeps over each training instance |
 |        B            |   number of burn-in steps for Gibbs sweeps |
+|     train         |  path for training data |
+|     test          |     path for test data     |
+|    eta            |   learning rate (AdaGrad) |
+|   depthL      |  up to which input column is used as input  |
+|  windowL    |  window size for features like x_j - y_i |
+| factorL        |  factor size, e.g. if factorL = 1, use features y_{i-1} - y_i - y_{i+1} |
+| output         | output file to store the pre-trained model |
+| scoring        | NER or Acc. NER = F1 score, Acc = Accuracy |
+| Q                 | number of passes over the training dataset |
+| log              |  path for log file | 
+| testFrequency | over what percentage of the training set to run a test |
 
 
 Citation

@@ -21,7 +21,7 @@ namespace Tagging {
     double test(ptr<Corpus> test_corpus);
 
     /* gradient interface */
-    virtual ParamPointer gradient(const Instance& seq) = 0; 
+    virtual ParamPointer gradient(const Instance& seq) = 0;
     virtual TagVector sample(const Instance& seq, bool argmax = false) = 0;
     // infer under computational constraints.
     // emulate t-step transition of a markov chain.
@@ -35,7 +35,7 @@ namespace Tagging {
     virtual void sampleOne(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature = true);
 
     // sample using custom kernel choice at initialization.
-    // only applies if "init" flag is on (not equal to *random*). 
+    // only applies if "init" flag is on (not equal to *random*).
     virtual void sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature = true);
 
 
@@ -54,7 +54,7 @@ namespace Tagging {
       throw "Model::copySample not supported.";
     }
 
-    // <deprecated> score a tag ? 
+    // <deprecated> score a tag ?
     virtual double score(const GraphicalModel& gm);
 
     // evaluate the accuracy for POS tag aginst truth.
@@ -78,12 +78,12 @@ namespace Tagging {
       return ret;
     }
 
-    // return the nodes whose Markov blanket include the node. 
+    // return the nodes whose Markov blanket include the node.
     // default: return the Markov blanket of node *id*
     virtual vec<int> invMarkovBlanket(const GraphicalModel& gm, int pos) {
       return markovBlanket(gm, pos);
     }
-    
+
     /* parameters */
     size_t T, B, Q;
     double testFrequency;
@@ -98,8 +98,8 @@ namespace Tagging {
     friend std::ostream& operator<<(std::ostream& os, const Model& model);
     friend std::istream& operator>>(std::istream& os, Model& model);
 
-    XMLlog xmllog;
-    virtual void logArgs(); 
+    ptr<XMLlog> xmllog;
+    virtual void logArgs();
     /* const environment */
     enum Scoring {SCORING_NER, SCORING_ACCURACY, SCORING_LHOOD };
     Scoring scoring;
@@ -109,7 +109,7 @@ namespace Tagging {
     void adagrad(ParamPointer gradient);
     void configStepsize(FeaturePointer gradient, double new_eta);
 
-    int K;          // num of particle. 
+    int K;          // num of particle.
     int num_ob;     // current number of observations.
   };
 
@@ -123,10 +123,10 @@ namespace Tagging {
     ModelSimple(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
     ParamPointer gradient(const Instance& seq, TagVector* vec = nullptr, bool update_grad = true);
     ParamPointer gradient(const Instance& seq);
-    virtual TagVector sample(const Instance& seq, bool argmax = false); 
+    virtual TagVector sample(const Instance& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
     FeaturePointer extractFeatures(const Tag& tag, int pos);
-    
+
     virtual void logArgs();
 
     int windowL, depthL; // range of unigram features.
@@ -139,7 +139,7 @@ namespace Tagging {
     ParamPointer gradient(const Instance& seq);
     virtual TagVector sample(const Instance& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
-    
+
     double score(const GraphicalModel& tag);
     virtual void logArgs();
 
@@ -153,7 +153,7 @@ namespace Tagging {
     virtual ptr<GraphicalModel> makeTruth(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const;
     virtual ptr<GraphicalModel> copySample(const GraphicalModel& gm) const;
 
-    /* interface for feature extraction. */    
+    /* interface for feature extraction. */
     FeatureExtractOne extractFeatures;
     FeatureExtractOne extractFeaturesAtInit;
     FeatureExtractAll extractFeatAll;
@@ -162,14 +162,14 @@ namespace Tagging {
     virtual vec<int> markovBlanket(const GraphicalModel& gm, int pos) {
       return getMarkovBlanket(shared_from_this(), gm, pos);
     }
-    
-    MarkovBlanketGet getInvMarkovBlanket; 
+
+    MarkovBlanketGet getInvMarkovBlanket;
     virtual vec<int> invMarkovBlanket(const GraphicalModel& gm, int pos) {
       return getInvMarkovBlanket(shared_from_this(), gm, pos);
     }
 
     /* properties */
-    int factorL;    
+    int factorL;
 
     /* annealing scheme. */
     string annealing;
@@ -181,7 +181,7 @@ namespace Tagging {
     //  grad_expect: add gradient based on expectation if set true.
     //  grad_sample: add gradient based on current sample if set true.
     //  meta_feature: do not change the meta features of tag if set true.
-    ParamPointer proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract, 
+    ParamPointer proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract,
       bool grad_expect, bool grad_sample, bool meta_feature);
 
     void sampleOne(GraphicalModel& gm, objcokus& rng, int choice, FeatureExtractOne feat_extract, bool use_meta_feature = true);

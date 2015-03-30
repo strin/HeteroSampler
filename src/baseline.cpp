@@ -18,9 +18,9 @@ namespace Tagging {
     this->depthL = vm["depthL"].empty() ? 0 : vm["depthL"].as<int>();
     this->windowL = vm["windowL"].empty() ? 0 : vm["windowL"].as<int>();
 
-    xmllog.begin("windowL");
-    xmllog << windowL << endl;
-    xmllog.end();
+    xmllog->begin("windowL");
+    (*xmllog) << windowL << endl;
+    xmllog->end();
   }
 
   void ModelSimple::sample(Tag& tag, int time, bool argmax) {
@@ -79,16 +79,16 @@ namespace Tagging {
     if(samples)
       samples->push_back(shared_ptr<Tag>(new Tag(tag)));
     else{
-      xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-      xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+      xmllog->begin("truth"); (*xmllog) << seq.str() << endl; xmllog->end();
+      xmllog->begin("tag"); (*xmllog) << tag.str() << endl; xmllog->end();
     }
     return gradient;
   }
 
   void ModelSimple::logArgs() {
     Model::logArgs();
-    xmllog.begin("windowL"); xmllog << windowL << endl; xmllog.end();
-    xmllog.begin("depthL"); xmllog << depthL << endl; xmllog.end();
+    xmllog->begin("windowL"); (*xmllog) << windowL << endl; xmllog->end();
+    xmllog->begin("depthL"); (*xmllog) << depthL << endl; xmllog->end();
   }
 
   //////// Model CRF Gibbs ///////////////////////////////
@@ -309,7 +309,7 @@ namespace Tagging {
 
   void ModelCRFGibbs::logArgs() {
     ModelSimple::logArgs();
-    xmllog.begin("factorL"); xmllog << factorL << endl; xmllog.end();
+    xmllog->begin("factorL"); (*xmllog) << factorL << endl; xmllog->end();
   }
 
   ParamPointer ModelCRFGibbs::gradient(const Instance& seq) {
@@ -328,8 +328,8 @@ namespace Tagging {
     }
     if(samples)
       samples->push_back(shared_ptr<Tag>(new Tag(tag)));
-    // xmllog.begin("truth"); xmllog << seq.str() << endl; xmllog.end();
-    // xmllog.begin("tag"); xmllog << tag.str() << endl; xmllog.end();
+    // xmllog->begin("truth"); (*xmllog) << seq.str() << endl; xmllog->end();
+    // xmllog->begin("tag"); (*xmllog) << tag.str() << endl; xmllog->end();
     if(update_grad) {
       FeaturePointer feat = this->extractFeaturesAll(truth);
       mapDivide<double>(*gradient, -(double)(T-B));

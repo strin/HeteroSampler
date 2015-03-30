@@ -15,11 +15,12 @@ namespace po = boost::program_options;
 namespace Tagging {
   Model::Model(ptr<Corpus> corpus, const po::variables_map& vm)
   :corpus(corpus), param(makeParamPointer()), vm(vm),
-   G2(makeParamPointer()) , stepsize(makeParamPointer()), 
-   T(vm["T"].as<size_t>()), B(vm["B"].as<size_t>()), 
-   Q(vm["Q"].as<size_t>()), eta(vm["eta"].as<double>()), 
-   K(vm["K"].as<size_t>()), 
-   testFrequency(vm["testFrequency"].as<double>()) {
+       G2(makeParamPointer()) , stepsize(makeParamPointer()),
+       T(vm["T"].as<size_t>()), B(vm["B"].as<size_t>()),
+       Q(vm["Q"].as<size_t>()), eta(vm["eta"].as<double>()),
+       K(vm["K"].as<size_t>()),
+       testFrequency(vm["testFrequency"].as<double>())
+   {
     try {
       if(vm.count("scoring") == 0) {
         throw "no scoring specified";
@@ -35,10 +36,20 @@ namespace Tagging {
       scoring = SCORING_ACCURACY;
     }
     rngs.resize(K);
+    if(!vm["log"].empty() and vm["log"].as<string>() != "") {
+      try{
+        xmllog = std::make_shared<XMLlog>(vm["log"].as<string>());
+      }catch(char const* error) {
+        cout << "error: " << error << endl;
+        xmllog = std::make_shared<XMLlog>();
+      }
+    }else{
+      xmllog = std::make_shared<XMLlog>();
+    }
   }
 
   void Model::configStepsize(FeaturePointer gradient, double new_eta) {
-    for(const pair<string, double>& p : *gradient) 
+    for(const pair<string, double>& p : *gradient)
       (*stepsize)[p.first] = new_eta;
   }
 
@@ -48,16 +59,16 @@ namespace Tagging {
     int testLag = corpus->seqs.size()*testFrequency;
     num_ob = 0;
     this->logArgs();
-    xmllog.begin("num_train"); xmllog << corpus->size() << endl; xmllog.end();
-    xmllog.begin("num_test"); xmllog << test_corpus->size() << endl; xmllog.end();
-    xmllog.begin("test_lag"); xmllog << testLag << endl; xmllog.end();
+    xmllog->begin("num_train"); (*xmllog) <<  corpus->size() << endl; xmllog->end();
+    xmllog->begin("num_test"); (*xmllog) <<  test_corpus->size() << endl; xmllog->end();
+    xmllog->begin("test_lag"); (*xmllog) <<  testLag << endl; xmllog->end();
     for(int q = 0; q < Q; q++) {
-      xmllog.begin("pass "+to_string(q));
+      xmllog->begin("pass "+to_string(q));
       for(const SentencePtr seq : corpus->seqs) {
-        xmllog.begin("example_"+to_string(num_ob));
+        // xmllog->begin("example_"+to_string(num_ob));
         ParamPointer gradient = this->gradient(*seq);
         this->adagrad(gradient);
-        xmllog.end();
+        // xmllog->end();
         num_ob++;
         if(lets_test) {
           if(num_ob % testLag == 0) {
@@ -65,16 +76,16 @@ namespace Tagging {
           }
         }
       }
-      xmllog.end();
+      xmllog->end();
     }
   }
 
   void Model::logArgs() {
-    xmllog.begin("Q"); xmllog << Q << endl; xmllog.end();
-    xmllog.begin("T"); xmllog << T << endl; xmllog.end();
-    xmllog.begin("B"); xmllog << B << endl; xmllog.end();
-    xmllog.begin("eta"); xmllog << eta << endl; xmllog.end();
-    xmllog.begin("taglen"); xmllog << corpus->tags.size() << endl; xmllog.end();
+    xmllog->begin("Q"); (*xmllog) <<  Q << endl; xmllog->end();
+    xmllog->begin("T"); (*xmllog) <<  T << endl; xmllog->end();
+    xmllog->begin("B"); (*xmllog) <<  B << endl; xmllog->end();
+    xmllog->begin("eta"); (*xmllog) <<  eta << endl; xmllog->end();
+    xmllog->begin("taglen"); (*xmllog) <<  corpus->tags.size() << endl; xmllog->end();
   }
 
   tuple<int, int> Model::evalPOS(const Tag& tag) {
@@ -94,11 +105,11 @@ namespace Tagging {
     Tag truth(*tag.seq, corpus, &rngs[0], param);
     int hit_count = 0, pred_count = 0, truth_count = 0;
     auto check_chunk_begin = [&] (const Tag& tag, int pos) {
-      string tg = tag.getTag(pos), 
+      string tg = tag.getTag(pos),
              prev_tg = pos > 0 ? tag.getTag(pos-1) : "O";
-      string type = cast<TokenLiteral>(seq->seq[pos])->pos, 
+      string type = cast<TokenLiteral>(seq->seq[pos])->pos,
              prev_type = pos > 0 ? cast<TokenLiteral>(seq->seq[pos-1])->pos : "";
-      char tg_ch = tg[0], prev_tg_ch = prev_tg[0];  
+      char tg_ch = tg[0], prev_tg_ch = prev_tg[0];
       return (prev_tg_ch == 'B' && tg_ch == 'B') ||
              (prev_tg_ch == 'I' && tg_ch == 'B') ||
              (prev_tg_ch == 'O' && tg_ch == 'B') ||
@@ -110,10 +121,10 @@ namespace Tagging {
              (tg != "O" && tg != "." && type != prev_type) ||
              (tg == "[") || (tg == "]");
     };
-    auto check_chunk_end = [&] (const Tag& tag, int pos) { 
-      string tg = tag.getTag(pos), 
+    auto check_chunk_end = [&] (const Tag& tag, int pos) {
+      string tg = tag.getTag(pos),
              next_tg = pos < tag.size()-1 ? tag.getTag(pos+1) : "O";
-      string type = cast<TokenLiteral>(seq->seq[pos])->pos, 
+      string type = cast<TokenLiteral>(seq->seq[pos])->pos,
              next_type = pos < tag.size()-1 ? cast<TokenLiteral>(seq->seq[pos+1])->pos : "";
       char tg_ch = tg[0], next_tg_ch = next_tg[0];
       return (tg_ch == 'B' && next_tg_ch == 'B') ||
@@ -131,12 +142,12 @@ namespace Tagging {
     for(int i = 0; i < truth.size(); i++) {
       truth_count += (int)check_chunk_begin(truth, i);
       pred_count += (int)check_chunk_begin(tag, i);
-      if(check_chunk_begin(truth, i) && check_chunk_begin(tag, i)) 
+      if(check_chunk_begin(truth, i) && check_chunk_begin(tag, i))
         hit_begin = true;
       if(tag.tag[i] != truth.tag[i]) {
         hit_begin = false;
       }
-      if(check_chunk_end(truth, i) && check_chunk_end(tag, i)) { 
+      if(check_chunk_end(truth, i) && check_chunk_end(tag, i)) {
         hit_count += (int)hit_begin;
       }
     }
@@ -146,7 +157,7 @@ namespace Tagging {
   double Model::test(ptr<Corpus> test_corpus) {
     test_corpus->retag(this->corpus);
     int pred_count = 0, truth_count = 0, hit_count = 0;
-    xmllog.begin("test");
+    xmllog->begin("test");
     int ex = 0;
     for(const SentencePtr seq : test_corpus->seqs) {
       TagVector tags = this->sample(*seq, false);
@@ -160,12 +171,12 @@ namespace Tagging {
         }
       }
       Tag truth(*seq, corpus, &rngs[0], param);
-      xmllog.begin("example_"+to_string(ex));
-      // xmllog.begin("truth"); xmllog << truth.str() << endl; xmllog.end();
-      xmllog.begin("truth"); xmllog << tag->seq->str() << endl; xmllog.end();
-      xmllog.begin("tag"); xmllog << tag->str() << endl; xmllog.end();
-      xmllog.begin("dist"); xmllog << tag->distance(truth) << endl; xmllog.end();
-      xmllog.end();
+      xmllog->begin("example_"+to_string(ex));
+      // xmllog->begin("truth"); (*xmllog) <<  truth.str() << endl; xmllog->end();
+      xmllog->begin("truth"); (*xmllog) <<  tag->seq->str() << endl; xmllog->end();
+      xmllog->begin("tag"); (*xmllog) <<  tag->str() << endl; xmllog->end();
+      xmllog->begin("dist"); (*xmllog) <<  tag->distance(truth) << endl; xmllog->end();
+      xmllog->end();
       if(this->scoring == SCORING_ACCURACY) {
         tuple<int, int> hit_pred = this->evalPOS(*tag);
         hit_count += get<0>(hit_pred);
@@ -178,20 +189,20 @@ namespace Tagging {
       }
       ex++;
     }
-    xmllog.end();
+    xmllog->end();
 
-    xmllog.begin("score"); 
+    xmllog->begin("score");
     double accuracy = (double)hit_count/pred_count;
     double recall = (double)hit_count/truth_count;
-    xmllog << "test precision = " << accuracy * 100 << " %" << endl; 
+    (*xmllog) <<  "test precision = " << accuracy * 100 << " %" << endl;
     if(this->scoring  == SCORING_ACCURACY) {
-      xmllog.end();
+      xmllog->end();
       return accuracy;
-    }else if(this->scoring == SCORING_NER) {  
-      xmllog << "test recall = " << recall * 100 << " %" << endl;
+    }else if(this->scoring == SCORING_NER) {
+      (*xmllog) <<  "test recall = " << recall * 100 << " %" << endl;
       double f1 = 2 * accuracy * recall / (accuracy + recall);
-      xmllog << "test f1 = " << f1 * 100 << " %" << endl;
-      xmllog.end();
+      (*xmllog) <<  "test f1 = " << f1 * 100 << " %" << endl;
+      xmllog->end();
       return f1;
     }
     return -1;
@@ -202,7 +213,7 @@ namespace Tagging {
   }
 
   void Model::sampleOne(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature) {
-    throw "custom kernel choice not implemented."; 
+    throw "custom kernel choice not implemented.";
   }
 
   void Model::sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature) {

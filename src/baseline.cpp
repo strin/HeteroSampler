@@ -1,6 +1,6 @@
-/* implementation of baseline sequence tagging models, including 
+/* implementation of baseline sequence tagging models, including
  *  > independent logistic regression.
- *  > CRF with Gibbs sampling. 
+ *  > CRF with Gibbs sampling.
  */
 #include "model.h"
 #include "feature.h"
@@ -10,16 +10,16 @@ using namespace std;
 using namespace std::placeholders;
 namespace po = boost::program_options;
 
-namespace Tagging { 
+namespace Tagging {
 
   ////////// Simple Model (Independent Logistic Regression) ////////////
-  ModelSimple::ModelSimple(ptr<Corpus> corpus, const po::variables_map& vm) 
+  ModelSimple::ModelSimple(ptr<Corpus> corpus, const po::variables_map& vm)
   :Model(corpus, vm) {
     this->depthL = vm["depthL"].empty() ? 0 : vm["depthL"].as<int>();
     this->windowL = vm["windowL"].empty() ? 0 : vm["windowL"].as<int>();
 
-    xmllog.begin("windowL"); 
-    xmllog << windowL << endl; 
+    xmllog.begin("windowL");
+    xmllog << windowL << endl;
     xmllog.end();
   }
 
@@ -27,7 +27,7 @@ namespace Tagging {
     for(int t = 0; t < time; t++) {
       for(size_t i = 0; i < tag.size(); i++) {
         auto featExtract = [&] (const Tag& tag) -> FeaturePointer {
-                              return this->extractFeatures(tag, i); 
+                              return this->extractFeatures(tag, i);
                             };
         tag.proposeGibbs(i, featExtract, false, false, argmax);
       }
@@ -50,7 +50,7 @@ namespace Tagging {
       StringVector nlp = NLPfunc(cast<TokenLiteral>(sen[l])->word);
       for(const string& token : *nlp) {
         stringstream ss;
-        ss << "simple-w-" << to_string(l-pos) 
+        ss << "simple-w-" << to_string(l-pos)
            << "-" << token << "-" << corpus->invtag(tag.tag[pos]);
         insertFeature(features, ss.str());
       }
@@ -68,7 +68,7 @@ namespace Tagging {
     ParamPointer gradient = makeParamPointer();
     for(size_t i = 0; i < tag.size(); i++) {
       auto featExtract = [&] (const Tag& tag) -> FeaturePointer {
-                            return this->extractFeatures(tag, i); 
+                            return this->extractFeatures(tag, i);
                           };
       ParamPointer g = tag.proposeGibbs(i, featExtract, true, false);
       if(update_grad) {
@@ -105,7 +105,7 @@ namespace Tagging {
       const vector<TokenPtr>& sen = tag.seq->seq;
       int seqlen = tag.size();
 
-      // extract word features. 
+      // extract word features.
       FeaturePointer features = makeFeaturePointer();
       extractUnigramFeature(tag, pos, this_model->windowL, this_model->depthL, features);
 
@@ -130,7 +130,7 @@ namespace Tagging {
       const vector<TokenPtr>& sen = tag.seq->seq;
       int seqlen = tag.size();
 
-      // extract word features. 
+      // extract word features.
       FeaturePointer features = makeFeaturePointer();
 
       for(int pos = 0; pos < seqlen; pos++) {
@@ -169,28 +169,30 @@ namespace Tagging {
       cast<CorpusLiteral>(corpus)->computeWordFeat();
 
     if(annealing == "scanline") { // use the annealing scheme introduced in scanline paper (CVPR 2014).
-      temp_decay = vm["temp_decay"].as<double>();
-      temp_magnify = vm["temp_magnify"].as<double>();
+      // TODO: implement CRF Gibbs samplers with annealing.
+      throw "simulated annealing is not supported by CRF Gibbs samplers";
+      // temp_decay = vm["temp_decay"].as<double>();
+      // temp_magnify = vm["temp_magnify"].as<double>();
+      // temp_init = vm["temp_init"].as<double>();
     }
-    temp_init = vm["temp_init"].as<double>();
 
     this->time = 0;
    }
 
   void ModelCRFGibbs::sample(Tag& tag, int time, bool argmax) {
     for(int t = 0; t < time; t++) {
-      this->sampleOneSweep(tag, argmax);  
+      this->sampleOneSweep(tag, argmax);
     }
   }
 
   ParamPointer ModelCRFGibbs::
-  proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract, 
+  proposeGibbs(Tag& tag, objcokus& rng, int pos, FeatureExtractOne feat_extract,
                bool grad_expect, bool grad_sample, bool use_meta_feature) {
     int seqlen = tag.size();
-    if(pos >= seqlen) 
+    if(pos >= seqlen)
       throw "Gibbs sampling proposal out of bound.";
     int taglen = corpus->tags.size();
-    
+
     // Enumerative Gibbs sampling.
     int oldval = tag.tag[pos];
     if(use_meta_feature) {
@@ -225,15 +227,15 @@ namespace Tagging {
     tag.tag[pos] = val;
 
     // compute statistics.
-    tag.reward[pos] = (tag.sc[val] - tag.sc[oldval]);  
+    tag.reward[pos] = (tag.sc[val] - tag.sc[oldval]);
     if(use_meta_feature) {
       tag.this_sc[pos] = tag.sc;
       tag.prev_entropy[pos] = tag.entropy[pos];
-      tag.entropy[pos] = logEntropy(&tag.sc[0], taglen);  
+      tag.entropy[pos] = logEntropy(&tag.sc[0], taglen);
       tag.timestamp[pos] += 1;
       this->time += 1;
     }
-    
+
     // compute gradient, if necessary.
     tag.features = feat_extract(shared_from_this(), tag, pos);
     ParamPointer gradient = makeParamPointer();
@@ -275,12 +277,12 @@ namespace Tagging {
     this->sampleOne(gm, rng, choice, this->extractFeatures, use_meta_feature);
   }
 
-  TagVector ModelCRFGibbs::sample(const Instance& seq, bool argmax) { 
+  TagVector ModelCRFGibbs::sample(const Instance& seq, bool argmax) {
     TagVector vec;
     TagPtr tag = makeTagPtr(&seq, corpus, &rngs[0], param);
     for(int t = 0; t < T; t++) {
       this->sample(*tag, 1, argmax);
-      if(t < B) continue;  
+      if(t < B) continue;
       vec.push_back(tag);
       tag = TagPtr(new Tag(*tag));
     }
@@ -298,9 +300,9 @@ namespace Tagging {
   }
 
   void ModelCRFGibbs::sampleOneSweep(Tag& tag, bool argmax) {
-    for(int i = 0; i < tag.tag.size(); i++) { 
+    for(int i = 0; i < tag.tag.size(); i++) {
       tag.proposeGibbs(i, [&] (const Tag& tag) -> FeaturePointer {
-                            return this->extractFeatures(shared_from_this(), tag, i); 
+                            return this->extractFeatures(shared_from_this(), tag, i);
                           }, false, false, argmax);
     }
   }
@@ -336,4 +338,3 @@ namespace Tagging {
     return gradient;
   }
 }
-

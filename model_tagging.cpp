@@ -70,4 +70,6 @@ int main(int argc, char* argv[]) {
   }catch(char const* exception) {
     cerr << "Exception: " << string(exception) << endl;
   }
+
+  return 0;
 }

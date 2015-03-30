@@ -107,7 +107,10 @@ int main(int argc, char* argv[]) {
       test_corpus = std::make_shared<CorpusIsing>();
     }else if(type == "opengm") {
       typedef opengm::SimpleDiscreteSpace<size_t, size_t> Space;
-      typedef opengm::GraphicalModel<double, opengm::Adder, OPENGM_TYPELIST_2(ExplicitFunction<double> ,PottsFunction<double>), Space> GraphicalModelType;
+      typedef opengm::GraphicalModel<double, opengm::Adder,
+                                                                    OPENGM_TYPELIST_2(ExplicitFunction<double> ,
+                                                                                                              PottsFunction<double>),
+                                                                  Space>  GraphicalModelType;
       typedef CorpusOpenGM<GraphicalModelType> CorpusOpenGMType;
       corpus = std::make_shared<CorpusOpenGMType>();
       test_corpus = std::make_shared<CorpusOpenGMType>();
@@ -148,7 +151,10 @@ int main(int argc, char* argv[]) {
       }
     }else if(type == "opengm") {
       typedef opengm::SimpleDiscreteSpace<size_t, size_t> Space;
-      typedef opengm::GraphicalModel<double, opengm::Adder, OPENGM_TYPELIST_2(ExplicitFunction<double> ,PottsFunction<double>), Space> GraphicalModelType;
+      typedef opengm::GraphicalModel<double, opengm::Adder,
+                                                                    OPENGM_TYPELIST_2(ExplicitFunction<double> ,
+                                                                                                              PottsFunction<double>),
+                                                                  Space> GraphicalModelType;
       typedef CorpusOpenGM<GraphicalModelType> CorpusOpenGMType;
       model = std::make_shared<ModelEnumerativeGibbs<GraphicalModelType, opengm::Minimizer> >(vm);
     }
@@ -185,7 +191,7 @@ int main(int argc, char* argv[]) {
       sysres = system(("rm -r "+name).c_str());
 
     }
-    else if(vm["policy"].as<string>() == "policy") 
+    else if(vm["policy"].as<string>() == "policy")
     {
       string name = vm["name"].as<string>();
       const int fold = 20;
@@ -235,4 +241,6 @@ int main(int argc, char* argv[]) {
   }catch(char const* ee) {
     cout << "error: " << ee << endl;
   }
+
+  return 0;
 }

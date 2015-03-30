@@ -21,6 +21,7 @@ To install gcc 4.8,
 
 ```
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
+sudo apt-get update -qq
 sudo apt-get install -qq g++-4.8
 export CXX="g++-4.8"
 ```
@@ -34,7 +35,10 @@ sudo apt-get install cmake
 Install boost-program-options	
 
 ```
+sudo add-apt-repository -y ppa:boost-latest/ppa
+sudo apt-get update -qq
 sudo apt-get install libboost-all-dev
+sudo apt-get install libboost1.55-all-dev
 ```
 
 Install Hierarchical Data Format (HDF 5):
@@ -51,7 +55,7 @@ Installation
 -------------
 ```
 cmake .
-sudo make 
+make 
 ```
 
 

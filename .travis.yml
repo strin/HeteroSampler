@@ -31,3 +31,4 @@ script:
   - "cmake ."
   - $CXX --version
   - "make"
+  - python test/test_ner.py

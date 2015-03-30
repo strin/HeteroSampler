@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
     string output = vm["output"].as<string>();
     size_t pos = output.find_last_of("/");
     if(pos == string::npos) throw "invalid model output dir."; 
-    system(("mkdir -p "+output.substr(0, pos)).c_str());
+    int sysres = system(("mkdir -p "+output.substr(0, pos)).c_str());
 
     // Gibbs sampling for inference 
     shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));

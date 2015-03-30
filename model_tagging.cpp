@@ -12,7 +12,7 @@ namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
   // default arguments
-  const int T = 10, B = 0, Q = 10, K = 5;  
+  const int T = 10, B = 0, Q = 10, K = 5;
   const double eta = 0.4;    // default args.
 
   // parse arguments from command line
@@ -33,10 +33,10 @@ int main(int argc, char* argv[]) {
       ("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
       ("output", po::value<string>()->default_value("model/default.model"), "output file to store trained model")
   ;
-  
+
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);    
+  po::notify(vm);
   if(vm.count("help")) {
       cout << desc << "\n";
       return 1;
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
     // load corpus
     string train = "data/eng_ner/train", test = "data/eng_ner/test";
     if(vm.count("train")) train = vm["train"].as<string>();
-    if(vm.count("test")) test = vm["test"].as<string>();  
+    if(vm.count("test")) test = vm["test"].as<string>();
     ptr<CorpusLiteral> corpus = ptr<CorpusLiteral>(new CorpusLiteral());
     corpus->read(train);
     ptr<CorpusLiteral> testCorpus = ptr<CorpusLiteral>(new CorpusLiteral());
@@ -56,8 +56,8 @@ int main(int argc, char* argv[]) {
     corpus->computeWordFeat();
     string output = vm["output"].as<string>();
     size_t pos = output.find_last_of("/");
-    if(pos == string::npos) throw "invalid model output dir."; 
-    system(("mkdir -p "+output.substr(0, pos)).c_str());
+    if(pos == string::npos) throw "invalid model output dir.";
+    int sysres = system(("mkdir -p "+output.substr(0, pos)).c_str());
     shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
     model->run(testCorpus);
 

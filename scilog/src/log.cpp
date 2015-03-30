@@ -75,7 +75,7 @@ XMLlog::~XMLlog() {
 string XMLlog::encodeString(string source)
 {
   string ss;
-  for(int i = 0; i < source.size(); i++)
+  for(size_t i = 0; i < source.size(); i++)
   {
     if(source[i]>>7) ss += source[i];
     else if(source[i] == '\"')

@@ -60,7 +60,7 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
     tag_unigram_start = tag_bigram_unigram.second;
   }
 
-  system(("mkdir -p "+name).c_str());
+  int sysres = system(("mkdir -p "+name).c_str());
   lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
 
 }

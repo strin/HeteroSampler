@@ -24,29 +24,41 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
                    [&] (int tid, MarkovTreeNodePtr node) {
                     this->sample(tid, node);
                    }),
- name(vm["name"].as<string>()),
- learning(vm["learning"].as<string>()),
- mode_reward(vm["reward"].as<int>()),
- mode_oracle(vm["oracle"].as<int>()),
- rewardK(vm["rewardK"].as<int>()),
- K(vm["K"].as<size_t>()),
- eta(vm["eta"].as<double>()),
- train_count(vm["trainCount"].as<size_t>()),
- test_count(vm["testCount"].as<size_t>()),
- verbose(vm["verbose"].as<bool>()),
- Q(vm["Q"].as<size_t>()),
  lets_resp_reward(false),
- lets_inplace(vm["inplace"].as<bool>()),
- lets_lazymax(vm["lets_lazymax"].as<bool>()),
  lazymax_lag(-1),
- init_method(vm["init"].as<string>()),
  model_unigram(nullptr),
+ name(vm["output"].empty() ? "" : vm["output"].as<string>()),
+ learning(vm["learning"].empty() ? "logistic" : vm["learning"].as<string>()),
+ mode_reward(vm["reward"].empty() ? 0 : vm["reward"].as<int>()),
+ mode_oracle(vm["oracle"].empty() ? 0 : vm["oracle"].as<int>()),
+ rewardK(vm["rewardK"].empty() ? 1 : vm["rewardK"].as<int>()),
+ K(vm["K"].empty() ? 1 : vm["K"].as<size_t>()),
+ eta(vm["eta"].empty() ? 1 : vm["eta"].as<double>()),
+ train_count(vm["trainCount"].empty() ? -1 : vm["trainCount"].as<size_t>()),
+ test_count(vm["testCount"].empty() ? -1 : vm["testCount"].as<size_t>()),
+ verbose(vm["verbose"].empty() ? false : vm["verbose"].as<bool>()),
+ Q(vm["Q"].empty() ? 1 : vm["Q"].as<size_t>()),
+ lets_inplace(vm["inplace"].empty() ? true : vm["inplace"].as<bool>()),
+ lets_lazymax(vm["lets_lazymax"].empty() ? false : vm["lets_lazymax"].as<bool>()),
+ init_method(vm["init"].empty() ? "" : vm["init"].as<string>()),
  param(makeParamPointer()), G2(makeParamPointer()) {
-  // feature switch.
+   // parse options
+   if(!vm["log"].empty() and vm["log"].as<string>() != "") {
+     try{
+       lg = std::make_shared<XMLlog>(vm["log"].as<string>());
+     }catch(char const* error) {
+       cout << "error: " << error << endl;
+       lg = std::make_shared<XMLlog>();
+     }
+   }else{
+     lg = std::make_shared<XMLlog>();
+   }
+
+  // feature switch
   split(featopt, vm["feat"].as<string>(), boost::is_any_of(" "));
   split(verbose_opt, vm["verbosity"].as<string>(), boost::is_any_of(" "));
 
-  // init stats.
+  // init stats
   if(isinstance<CorpusLiteral>(model->corpus)) {
     ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(model->corpus);
     auto wordent_meanent = corpus->tagEntropySimple();
@@ -61,8 +73,6 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
   }
 
   int sysres = system(("mkdir -p "+name).c_str());
-  lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));
-
 }
 
 Policy::~Policy() {
@@ -933,10 +943,9 @@ int GibbsPolicy::policy(MarkovTreeNodePtr node) {
 //////// LockdownPolicy ////////////////////////////
 LockdownPolicy::LockdownPolicy(ModelPtr model, const boost::program_options::variables_map& vm)
  :Policy(model, vm),
-  T(vm["T"].as<size_t>()),
-  c(vm["c"].as<double>())
+  T(vm["T"].as<size_t>())
 {
-
+  c = vm["c"].empty() ? 0 : vm["c"].as<double>();
 }
 
 FeaturePointer LockdownPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {

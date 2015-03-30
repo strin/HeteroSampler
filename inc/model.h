@@ -38,6 +38,11 @@ namespace Tagging {
     // only applies if "init" flag is on (not equal to *random*).
     virtual void sampleOneAtInit(GraphicalModel& gm, objcokus& rng, int choice, bool use_meta_feature = true);
 
+    // save model meta-data, such as windowL, depthL, etc.
+    virtual void saveMetaData(std::ostream& os) const;
+
+    // load model meta-data, such as windowL, depthL, etc.
+    virtual void loadMetaData(std::istream& is);
 
     // create a new sample from an instance.
     virtual ptr<GraphicalModel> makeSample(const Instance& instance, ptr<Corpus> corpus, objcokus* rng) const {
@@ -100,9 +105,33 @@ namespace Tagging {
 
     ptr<XMLlog> xmllog;
     virtual void logArgs();
+
     /* const environment */
+
     enum Scoring {SCORING_NER, SCORING_ACCURACY, SCORING_LHOOD };
     Scoring scoring;
+
+    void parseScoring(std::string scoring_str) {
+      if(scoring_str == "Acc") scoring = SCORING_ACCURACY;
+      else if(scoring_str == "NER") scoring = SCORING_NER;
+      else if(scoring_str == "Lhood") scoring = SCORING_LHOOD;
+      else throw "scoring method invalid";
+    }
+
+    std::string tostrScoring() const {
+      switch(scoring) {
+        case SCORING_ACCURACY:
+          return "Acc";
+        case SCORING_NER:
+          return "NER";
+        case SCORING_LHOOD:
+          return "Lhood";
+        default:
+          throw "unknown scoring option";
+      }
+    }
+
+    // options
     const boost::program_options::variables_map& vm;
 
   protected:
@@ -121,11 +150,17 @@ namespace Tagging {
   struct ModelSimple : public Model {
   public:
     ModelSimple(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
+
     ParamPointer gradient(const Instance& seq, TagVector* vec = nullptr, bool update_grad = true);
     ParamPointer gradient(const Instance& seq);
+
     virtual TagVector sample(const Instance& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
+
     FeaturePointer extractFeatures(const Tag& tag, int pos);
+
+    virtual void loadMetaData(std::istream& is);
+    virtual void saveMetaData(std::ostream& os) const;
 
     virtual void logArgs();
 
@@ -135,12 +170,18 @@ namespace Tagging {
   struct ModelCRFGibbs : public ModelSimple, public std::enable_shared_from_this<Model> {
   public:
     ModelCRFGibbs(ptr<Corpus> corpus, const boost::program_options::variables_map& vm);
+
     ParamPointer gradient(const Instance& seq, TagVector* vec = nullptr, bool update_grad = true);
     ParamPointer gradient(const Instance& seq);
+
     virtual TagVector sample(const Instance& seq, bool argmax = false);
     virtual void sample(Tag& tag, int time, bool argmax = false);
 
     double score(const GraphicalModel& tag);
+
+    virtual void loadMetaData(std::istream& is);
+    virtual void saveMetaData(std::ostream& os) const;
+
     virtual void logArgs();
 
 

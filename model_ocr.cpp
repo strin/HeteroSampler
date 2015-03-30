@@ -34,6 +34,8 @@ int main(int argc, char* argv[]) {
       ("train", po::value<string>(), "training data")
       ("test", po::value<string>(), "test data")
       ("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing when making one pass of the training data")
+      ("log", po::value<string>()->default_value("log/latest.txt"), "log file for the model")
+
   ;
 
   po::variables_map vm;

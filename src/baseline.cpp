@@ -85,6 +85,29 @@ namespace Tagging {
     return gradient;
   }
 
+  void ModelSimple::saveMetaData(ostream& os) const {
+    Model::saveMetaData(os);
+    os << "depthL " << boost::lexical_cast<string>(this->depthL) << endl;
+    os << "windowL " << boost::lexical_cast<string>(this->windowL) << endl;
+    os << endl;
+  }
+
+  void ModelSimple::loadMetaData(istream& is) {
+    Model::loadMetaData(is);
+    string line;
+    while(!is.eof()) {
+      getline(is, line);
+      if(line == "") break;
+      vector<string> parts;
+      split(parts, line, boost::is_any_of(" "));
+      if(parts[0] == "depthL") {
+        this->depthL = boost::lexical_cast<int>(parts[1]);
+      }else if(parts[0] == "windowL") {
+        this->windowL = boost::lexical_cast<int>(parts[1]);
+      }
+    }
+  }
+
   void ModelSimple::logArgs() {
     Model::logArgs();
     xmllog->begin("windowL"); (*xmllog) << windowL << endl; xmllog->end();
@@ -306,6 +329,27 @@ namespace Tagging {
                           }, false, false, argmax);
     }
   }
+
+  void ModelCRFGibbs::saveMetaData(ostream& os) const {
+    ModelSimple::saveMetaData(os);
+    os << "factorL " << boost::lexical_cast<string>(this->factorL) << endl;
+    os << endl;
+  }
+
+  void ModelCRFGibbs::loadMetaData(istream& is) {
+    ModelSimple::loadMetaData(is);
+    string line;
+    while(!is.eof()) {
+      getline(is, line);
+      if(line == "") break;
+      vector<string> parts;
+      split(parts, line, boost::is_any_of(" "));
+      if(parts[0] == "factorL") {
+        this->factorL = boost::lexical_cast<int>(parts[1]);
+      }
+    }
+  }
+
 
   void ModelCRFGibbs::logArgs() {
     ModelSimple::logArgs();

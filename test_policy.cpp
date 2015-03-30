@@ -10,6 +10,8 @@
 #include "blockpolicy.h"
 #include "opengm.h"
 
+#include <boost/format.hpp>
+
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <opengm/graphicalmodel/space/simplediscretespace.hxx>
 #include <opengm/functions/potts.hxx>
@@ -33,53 +35,45 @@ int main(int argc, char* argv[]) {
     po::options_description desc("Allowed options");
     desc.add_options()
           ("help", "produce help message")
+          // model and data
           ("inference", po::value<string>()->default_value("Gibbs"), "inference engine (CRF / OpenGM)")
           ("type", po::value<string>()->default_value("tagging"), "type of the problem (tagging / ocr / ising / opengm)")
-          ("model", po::value<string>()->default_value("model/gibbs.model"), "use saved model to do the inference")
-
-
-          ("unigram_model", po::value<string>(), "use a unigram (if necessary)")
-          ("policy", po::value<string>()->default_value("entropy"), "sampling policy")
-          ("learning", po::value<string>()->default_value("logistic"), "learning strategy")
+          ("model", po::value<string>()->default_value("model/gibbs.model"), "file for the pre-trained model")
+          ("unigram_model", po::value<string>(), "file for a unigram model (option, dependency for unigram entropy meta-feature)")
+          ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
+          ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
+          // learning
+          ("policy", po::value<string>()->default_value("gibbs"), "the policy used for sampling (gibbs / adaptive)")
+          ("learning", po::value<string>()->default_value("logistic"), "learning strategy (logistic / nn)")
+          ("B", po::value<size_t>()->default_value(0), "number of burnin steps (overwritten by model)")
+          ("T", po::value<size_t>()->default_value(1), "number of passes (overwritten by model)")
+          ("K", po::value<size_t>()->default_value(1), "number of trajectories")
+          ("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
+          ("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
+          ("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
+          ("Q", po::value<size_t>()->default_value(1), "number of passes")
+          ("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
+          ("inplace", po::value<bool>()->default_value(true), "set inplace = false causes the sampler to represent entire trajectory")
+          ("lets_lazymax", po::value<bool>()->default_value(false), "lazymax is true, the algorithm takes max sample only after each sweep.")
+          ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
+          ("feat", po::value<std::string>()->default_value(""), "list of meta-features to use, separated with space")
+          // simulated annealing
+          ("temp", po::value<string>()->default_value(""), "the annealing scheme to use (\"scanline\" or \"\")")
+          ("temp_init", po::value<double>()->default_value(1), "initial temperature")
+          ("temp_decay", po::value<double>()->default_value(0.9), "decay of temperature.")
+          ("temp_magnify", po::value<double>()->default_value(0.1), "magnifying factor of init temperature.")
+          // ouput
+          ("output", po::value<string>()->default_value("default"), "output path for this run")
+          ("log", po::value<string>()->default_value("log/latest.txt"), "log file for the model")
+          // reward
           ("reward", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward.")
           ("oracle", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward for oracle.")
           ("rewardK", po::value<int>()->default_value(5), "the number of trajectories used to approximate the reward")
-          ("name", po::value<string>()->default_value("default"), "name of the run")
-          ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
-          ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
-          ("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
-          ("threshold", po::value<double>()->default_value(0.8), "theshold for entropy policy")
-          ("T", po::value<size_t>()->default_value(1), "number of passes")
-          ("K", po::value<size_t>()->default_value(1), "number of chains in policy gradient")
-          ("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
-          ("c", po::value<double>()->default_value(0.1), "time regularization")
-          ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
-          ("depthL", po::value<int>()->default_value(4), "number of sweeps in Gibbs sampling")
-          ("Tstar", po::value<double>()->default_value(1.5), "computational resource constraint (used to compute c)")
-          ("B", po::value<size_t>()->default_value(0), "number of burnin steps")
-          ("Q", po::value<size_t>()->default_value(1), "number of passes")
-          ("K", po::value<size_t>()->default_value(1), "number of chains in policy gradient")
-          ("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
-          ("c", po::value<double>()->default_value(0.1), "time regularization")
-          ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
-          ("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
-          ("factorL", po::value<int>()->default_value(2), "up to what order of gram should be used")
-          ("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
-          ("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
-          ("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")
-          ("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
+          // other options
           ("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
-          ("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
-          ("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
-          ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
-          ("lets_lazymax", po::value<bool>()->default_value(false), "lazymax is true, the algorithm takes max sample only after each sweep.")
-          ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
           ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
-          ("feat", po::value<std::string>()->default_value(""), "feature switches")
-          ("temp", po::value<string>()->default_value("scanline"), "the annealing scheme to use.")
-          ("temp_init", po::value<double>()->default_value(1), "initial temperature")
-          ("temp_decay", po::value<double>()->default_value(0.9), "decay of temperature.")
-          ("temp_magnify", po::value<double>()->default_value(0.1), "magnifying factor of init temperature.");
+          ("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
+          ;
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -160,51 +154,44 @@ int main(int argc, char* argv[]) {
     }
 
     shared_ptr<Policy> policy;
-    bool lets_model = vm["lets_model"].as<bool>();
     auto train_func = [&] (shared_ptr<Policy> policy) {
-      if(lets_model) policy->train(corpus);
-      else policy->trainPolicy(corpus);
+      policy->trainPolicy(corpus);
     };
 
     int sysres = 0;
+    string name = vm["output"].as<string>();
+    const size_t T = vm["T"].as<size_t>();
+    removeFile(name);
+    makeDirs(name + "/");
 
     if(vm["policy"].as<string>() == "gibbs")
     {
       Policy::ResultPtr result = nullptr;
-      string name = vm["name"].as<string>();
-      const size_t T = vm["T"].as<size_t>();
       shared_ptr<GibbsPolicy> gibbs_policy;
       gibbs_policy = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
       gibbs_policy->T = 1;  // do one sweep after another.
       for(size_t t = 1; t <= T; t++) {
-              string myname = name+"_T"+to_string(t);
-              int sysres = system(("mkdir -p "+myname).c_str());
-              gibbs_policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname+"/policy.xml")));
+              string myname = name+"/T"+to_string(t) + ".xml";
+              gibbs_policy->resetLog(std::make_shared<XMLlog>(myname));
               if(t == 1) {
                 result = gibbs_policy->test(test_corpus);
               }else{
-          gibbs_policy->init_method = "";
+                gibbs_policy->init_method = "";
                 gibbs_policy->test(result);
               }
-              gibbs_policy->resetLog(nullptr);
       }
-      sysres = system(("rm -r "+name).c_str());
-
     }
-    else if(vm["policy"].as<string>() == "policy")
+    else if(vm["policy"].as<string>() == "adaptive")
     {
-      string name = vm["name"].as<string>();
       const int fold = 20;
-      sysres = system(("rm -r "+name+"*").c_str());
       auto policy = std::make_shared<BlockPolicy<LockdownPolicy> >(model, vm);
       policy->lets_resp_reward = false;
       policy->model_unigram = model_unigram;
-      int sysres = system(("mkdir -p " + name + "_train").c_str());
-      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
+      makeDirs(name + "/train");
+      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + ".xml")));
       policy->train(corpus);
       int testCount = vm["testCount"].as<size_t>();
       int count = test_corpus->count(testCount);
-      size_t T = vm["T"].as<size_t>();
       ptr<BlockPolicy<LockdownPolicy>::Result> result = policy->test(test_corpus, 0);
       policy->resetLog(nullptr);
       auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
@@ -216,9 +203,8 @@ int main(int argc, char* argv[]) {
       double budget = 0;
       auto runWithBudget = [&] (double b) {
         budget += b;
-        string myname = name + "_b" + boost::lexical_cast<string>(budget);
-        int sysres = system(("mkdir -p " + myname).c_str());
-        policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
+        string myname = name + "/b" +boost::str(boost::format("%.2f") % budget)+ ".xml";
+        policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname)));
         policy->test(result, b);
         policy->resetLog(nullptr);
       };

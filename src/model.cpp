@@ -15,21 +15,23 @@ namespace po = boost::program_options;
 namespace Tagging {
   Model::Model(ptr<Corpus> corpus, const po::variables_map& vm)
   :corpus(corpus), param(makeParamPointer()), vm(vm),
-       G2(makeParamPointer()) , stepsize(makeParamPointer()),
-       T(vm["T"].as<size_t>()), B(vm["B"].as<size_t>()),
-       Q(vm["Q"].as<size_t>()), eta(vm["eta"].as<double>()),
-       K(vm["K"].as<size_t>()),
-       testFrequency(vm["testFrequency"].as<double>())
+       G2(makeParamPointer()) , stepsize(makeParamPointer())
    {
+    if(vm["testFrequency"].empty())
+      testFrequency = 1;
+    else
+      testFrequency = vm["testFrequency"].as<double>();
+    T = vm["T"].empty() ? 4 : vm["T"].as<size_t>();
+    B = vm["B"].empty() ? 0 : vm["B"].as<size_t>();
+    Q = vm["Q"].empty() ? 1 : vm["Q"].as<size_t>();
+    eta = vm["eta"].empty() ? 1 : vm["eta"].as<double>();
+    K = vm["K"].empty() ? 1 : vm["K"].as<size_t>();
+
     try {
       if(vm.count("scoring") == 0) {
-        throw "no scoring specified";
+        scoring = SCORING_ACCURACY;
       }else{
-        string scoring_str = vm["scoring"].as<string>();
-        if(scoring_str == "Acc") scoring = SCORING_ACCURACY;
-        else if(scoring_str == "NER") scoring = SCORING_NER;
-        else if(scoring_str == "Lhood") scoring = SCORING_LHOOD;
-        else throw "scoring method invalid";
+        this->parseScoring(vm["scoring"].as<string>());
       }
     }catch(char const* warn) {
       cout << warn << " - use accuracy" << endl;
@@ -235,7 +237,26 @@ namespace Tagging {
     }
   }
 
+  void Model::saveMetaData(ostream& os) const {
+    os << "scoring " << tostrScoring() << endl;
+    os << endl;
+  }
+
+  void Model::loadMetaData(istream& is) {
+    string line;
+    while(!is.eof()) {
+      getline(is, line);
+      if(line == "") break;
+      vector<string> parts;
+      split(parts, line, boost::is_any_of(" "));
+      if(parts[0] == "scoring") {
+        this->parseScoring(parts[1]);
+      }
+    }
+  }
+
   ostream& operator<<(ostream& os, const Model& model) {
+    model.saveMetaData(os);
     for(const pair<string, double>& p : *model.param) {
       os << p.first << " " << p.second << endl;
     }
@@ -243,10 +264,11 @@ namespace Tagging {
   }
 
   istream& operator>>(istream& is, Model& model) {
+    model.loadMetaData(is);
     string line;
     while(!is.eof()) {
       getline(is, line);
-      if(line == "") break;
+      if(line == "") continue;
       vector<string> parts;
       split(parts, line, boost::is_any_of(" "));
       (*model.param)[parts[0]] = stod(parts[1]);

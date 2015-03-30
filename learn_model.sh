@@ -1,6 +1,6 @@
 #!/bin/bash
 # learn model using ./pos, $1: task, $2: inference method.
-if [ $1 == "NER" ]; then 
+if [ $1 == "NER" ]; then
   factorL=$4
   path=ner_T8_eta0p3
   mkdir -p model/$path
@@ -8,9 +8,9 @@ if [ $1 == "NER" ]; then
   cmd="./pos --inference $2 --T 8 --B 5 --train data/eng_ner/train --test data/eng_ner/test --eta 0.3 \
     --depthL 2 --windowL "$3" --factorL "$factorL" --output model/$path/ner_gibbs_w"$3"_d2_f"$factorL".model --scoring NER --Q 5"
   echo $cmd
-  ($cmd) > result/$path/ner_gibbs_w$3_d2_f$factorL.xml & 
-elif [ $1 == "POS_NER" ]; then 
-  for windowL in `seq 0 2` 
+  ($cmd) > result/$path/ner_gibbs_w$3_d2_f$factorL.xml &
+elif [ $1 == "POS_NER" ]; then
+  for windowL in `seq 0 2`
   do
     cmd="./pos --inference $2 --T 8 --B 5 --train data/eng_pos_ner/train --test data/eng_pos_ner/test --eta 1 --windowL "$windowL" \
       --output model/ner_pos_gibbs_w"$windowL".model --scoring Acc --Q 2"
@@ -31,22 +31,21 @@ elif [ $1 == "stuck" ]; then
   0 --factorL $factorL --depthL 0 --output model/stuck.model --scoring Acc --Q 3"
   echo $cmd
   ($cmd) > result/stuck_gibbs.xml &
-elif [ $1 == "Czech" ]; then 
+elif [ $1 == "Czech" ]; then
   factorL=$3
   for windowL in `seq 0 2`
   do
     cmd="./pos --inference $2 --T 10 --B 3 --train data/czech_ner/train --test data/czech_ner/test --eta 1 --windowL "$windowL" \
       --output model/czech_gibbs_w"$windowL"_f"$factorL".model --scoring Acc --Q 3 --factorL "$factorL
     echo $cmd
-    ($cmd) > result/czech_gibbs_w$windowL_f$factorL.xml & 
+    ($cmd) > result/czech_gibbs_w$windowL_f$factorL.xml &
   done
 elif [ $1 == "OCR" ]; then
   path=adagrad1
   factorL=$3
-  cmd="./ocr --inference $2 --T 8 --B 5 --train data/ocr/train0 --test data/ocr/test0 --eta 0.3 --factorL $factorL  --output model/$path/ocr_f$factorL.model --scoring Acc --Q 3 " 
+  cmd="./ocr --inference $2 --T 8 --B 5 --train data/ocr/train0 --test data/ocr/test0 --eta 0.3 --factorL $factorL  --output model/$path/ocr_f$factorL.model --scoring Acc --Q 3 "
   echo $cmd
   mkdir -p model/$path
   mkdir -p result/$path
   ($cmd)  > result/$path/ocr_gibbs_f$factorL.xml &
 fi
-

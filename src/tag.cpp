@@ -6,8 +6,8 @@
 
 using namespace std;
 namespace Tagging {
-  Tag::Tag(const Instance* seq, ptr<Corpus> corpus, 
-          objcokus* rng, ParamPointer param) 
+  Tag::Tag(const Instance* seq, ptr<Corpus> corpus,
+          objcokus* rng, ParamPointer param)
   : param(param) {
     this->seq = seq;
     this->corpus = corpus;
@@ -15,7 +15,7 @@ namespace Tagging {
     this->randomInit();
   }
 
-  Tag::Tag(const Instance& seq, ptr<Corpus> corpus, 
+  Tag::Tag(const Instance& seq, ptr<Corpus> corpus,
           objcokus* rng, ParamPointer param)
   : param(param) {
     this->seq = &seq;
@@ -32,7 +32,7 @@ namespace Tagging {
     sc_unigram.resize(seqlen);
     tag.resize(seqlen);
     resp.resize(seqlen, DBL_MAX);
-    mask.resize(seqlen); 
+    mask.resize(seqlen);
     timestamp.resize(seqlen, 0);
     checksum.resize(seqlen, NAN);
     entropy_unigram.resize(seqlen, NAN);
@@ -57,7 +57,7 @@ namespace Tagging {
   featExtract, bool grad_expect, bool grad_sample, bool argmax) {
     const vector<TokenPtr>& sen = seq->seq;
     int seqlen = sen.size();
-    if(pos >= seqlen) 
+    if(pos >= seqlen)
       throw "Gibbs sampling proposal out of bound.";
     int taglen = corpus->tags.size();
     int oldval = tag[pos];
@@ -72,7 +72,7 @@ namespace Tagging {
     logNormalize(sc, taglen);
 
     int val;
-    
+
     if(argmax) {
       double max_sc = -DBL_MAX;
       for(int t = 0; t < taglen; t++) {
@@ -90,8 +90,8 @@ namespace Tagging {
     this->reward[pos] = sc[val] - sc[oldval];
     this->entropy[pos] = logEntropy(sc, taglen);
     this->sc.clear();
-    for(int t = 0; t < taglen; t++) { 
-      if(std::isnan(sc[t])) 
+    for(int t = 0; t < taglen; t++) {
+      if(std::isnan(sc[t]))
         cout << "nan " << endl;
       this->sc.push_back(sc[t]);
     }
@@ -127,7 +127,7 @@ namespace Tagging {
   double Tag::score(FeaturePointer features) const {
     double score = 0;
     for(const pair<string, double>& feat : *features) {
-      if(this->param->find(feat.first) != this->param->end()) { 
+      if(this->param->find(feat.first) != this->param->end()) {
         score += feat.second * (*this->param)[feat.first];
       }
     }

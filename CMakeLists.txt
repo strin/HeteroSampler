@@ -49,10 +49,7 @@ message(STATUS ${LIBS})
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
   message("Found g++ version " ${CMAKE_CXX_COMPILER_VERSION})
-#  IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
-#    MESSAGE(FATAL_ERROR "g++ version 4.8 is required!")
-#  ENDIF()
-  ADD_DEFINITIONS("-std=c++11" "-static" "-O3" "-fPIC")
+  ADD_DEFINITIONS("-std=c++11" "-static" "-O0" "-g" "-fPIC")
 ELSE("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         message("Found clang++ version" ${CMAKE_CXX_COMPILER_VERSION})
         ADD_DEFINITIONS("-std=c++11" "-O0" "-g" "-fPIC" "-Wno-deprecated-register" "-Wno-overloaded-virtual")
@@ -60,7 +57,7 @@ ELSE()
   MESSAGE(FATAL_ERROR "CMakeLists.txt has not been tested/written for your compiler.")
 ENDIF()
 
-ADD_LIBRARY(tag SHARED
+ADD_LIBRARY(heterosampler SHARED
   src/feature.cpp
   src/corpus.cpp
   src/corpus_ocr.cpp
@@ -73,7 +70,7 @@ ADD_LIBRARY(tag SHARED
   src/ThreadPool.cpp
 )
 
-target_link_libraries(tag
+target_link_libraries(heterosampler
   scilog
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}
@@ -82,12 +79,12 @@ target_link_libraries(tag
   ${HDF5_LIBRARIES}
 )
 
-add_executable(pos model_tagging.cpp
+add_executable(tagging model_tagging.cpp
 )
 
-target_link_libraries(pos
+target_link_libraries(tagging
   scilog
-  tag
+  heterosampler
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}
   ${Boost_LIBRARIES}
@@ -103,7 +100,7 @@ add_executable(ising model_ising.cpp
 
 target_link_libraries(ocr
   scilog
-  tag
+  heterosampler
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}
   ${Boost_LIBRARIES}
@@ -112,7 +109,7 @@ target_link_libraries(ocr
 
 target_link_libraries(ising
   scilog
-  tag
+  heterosampler
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}
   ${Boost_LIBRARIES}
@@ -124,7 +121,7 @@ add_executable(policy test_policy.cpp
 
 target_link_libraries(policy
   scilog
-  tag
+  heterosampler
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}
   ${Boost_LIBRARIES}
@@ -139,7 +136,7 @@ add_executable(check-opengm-chain sanity/check_opengm_chain.cpp
 
 target_link_libraries(check-opengm-chain
   scilog
-  tag
+  heterosampler
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBS}
   ${Boost_LIBRARIES}

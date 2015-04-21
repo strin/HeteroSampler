@@ -1,4 +1,4 @@
-// Learning inference policies. 
+// Learning inference policies.
 //
 #ifndef POS_POLICY_H
 #define POS_POLICY_H
@@ -33,7 +33,7 @@ namespace Tagging {
     return "c-" + tostr(val) + "-" + tostr(your_val);
   }
 
-  
+
   class Policy {
   public:
     Policy(ModelPtr model, const boost::program_options::variables_map& vm);
@@ -100,7 +100,7 @@ namespace Tagging {
     // train policy.
     virtual void trainPolicy(ptr<Corpus> corpus);
 
-    // train primitive kernels. 
+    // train primitive kernels.
     virtual void trainKernel(ptr<Corpus> corpus);
 
     // sample node, default uses Gibbs sampling.
@@ -108,7 +108,7 @@ namespace Tagging {
 
     // sample node, for training. default: call sampleTest.
     virtual void sample(int tid, MarkovTreeNodePtr node);
-    
+
     // wrap model->sampleOne.
     MarkovTreeNodePtr sampleOne(MarkovTreeNodePtr, objcokus& rng, int pos);
 
@@ -122,17 +122,17 @@ namespace Tagging {
 
     // estimate the reward of a MarkovTree node (default: -dist).
     virtual double reward(MarkovTreeNodePtr node);
-    
-    /* estimate delayed reward without making changes to node. 
-     *   start a rollout of horizon <maxdepth>. 
+
+    /* estimate delayed reward without making changes to node.
+     *   start a rollout of horizon <maxdepth>.
      *	    follow the <actions> until the depth > actions.size
      *      then sample action, and push it into <actions>.
      */
     double delayedReward(MarkovTreeNodePtr node, int depth, int maxdepth, vec<int>& actions);
-    
+
     /* sample delayed reward without making changes to <node> */
     double sampleDelayedReward(MarkovTreeNodePtr node, int id, int maxdepth, int rewardK);
-    
+
     // extract features from node.
     virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
 
@@ -180,11 +180,11 @@ namespace Tagging {
     };
     bool lets_resp_reward;
     vec<PolicyExample> examples;
-    vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R. 
+    vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R.
     vec<pair<double, double> > resp_RH, test_resp_RH; // whether incorrect, upper bound of R.
     vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.
     vec<tuple<double, double, string, int> > test_word_tag;                //  corresponding word, tag pair.
-      
+
     // compute TP, FP, TN, FN.
     vec<ROC> getROC(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);
 
@@ -202,142 +202,48 @@ namespace Tagging {
 
     string init_method;
 
-    const bool verbose; 
+    const bool verbose;
     vec<string> verbose_opt;
     bool verboseOptFind(string verse) {return std::find(verbose_opt.begin(), verbose_opt.end(), verse) != verbose_opt.end(); }
 
     const bool lets_inplace;              // not work with entire history.
-    const bool lets_lazymax;              // take max sample only after each sweep. 
+    const bool lets_lazymax;              // take max sample only after each sweep.
     int lazymax_lag;        // the lag to take max, default(-1, entire instance).
     // feature option, each string switches a meta-feature to add.
 
-    vec<string> featopt; 
+    vec<string> featopt;
     bool featoptFind(string feat) {return std::find(featopt.begin(), featopt.end(), feat) != featopt.end(); }
 
     /* global environment. */
     ModelPtr model;                 // full model.
-    ModelPtr model_unigram;         // unigram/lower-order model.    
+    ModelPtr model_unigram;         // unigram/lower-order model.
 
     objcokus rng;
     std::shared_ptr<XMLlog> lg;
     ParamPointer param, G2;
 
     /* parallel environment. */
-    ThreadPool<MarkovTreeNodePtr> thread_pool, test_thread_pool;    
+    ThreadPool<MarkovTreeNodePtr> thread_pool, test_thread_pool;
   };
 
 
-  // baseline policy of selecting Gibbs sampling kernels 
+  // baseline policy of selecting Gibbs sampling kernels
   // just based on Gibbs sweeping.
   class GibbsPolicy : public Policy {
   public:
     GibbsPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
 
-    // policy: first make an entire pass over the sequence. 
+    // policy: first make an entire pass over the sequence.
     //	     second/third pass only update words with entropy exceeding threshold.
     int policy(MarkovTreeNodePtr node);
 
     size_t T; // how many sweeps.
   };
 
-  // baseline policy of selecting Gibbs sampling kernels 
-  // just based on thresholding entropy of tags for words.
-  class EntropyPolicy : public Policy   {
-  public:
-    EntropyPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
-
-    // policy: first make an entire pass over the sequence. 
-    //	     second/third pass only update words with entropy exceeding threshold.
-    int policy(MarkovTreeNodePtr node);
-
-  private:
-    double threshold;   // entropy threshold = log(threshold).
-  };
-
-  // cyclic policy, 
-  // first sweep samples everything. 
-  // subsequent sweeps use logistic regression to predict whether to sample. 
-  // at end of every sweep, predict stop or not.
-  class CyclicPolicy : public Policy {
-  public:
-    CyclicPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
-
-    virtual int policy(MarkovTreeNodePtr node); 
-    
-    // reward = -dist - c * (depth+1).
-    double reward(MarkovTreeNodePtr node);
-
-    // extract features from node.
-    virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
-
-    double c;          // regularization of computation.
-  };
-
-  // policy based on learning value function.
-  // virtual class that overwrites the training function.
-  class CyclicValuePolicy : public CyclicPolicy {
-  public:
-    CyclicValuePolicy(ModelPtr model, const boost::program_options::variables_map& vm);
-
-    virtual int policy(MarkovTreeNodePtr node);
-
-    // sample for training.
-    virtual void sample(int tid, MarkovTreeNodePtr node);
-
-    // training.
-    virtual void trainPolicy(ptr<Corpus> corpus);
-
-    // testing.
-    virtual void testPolicy(Policy::ResultPtr result);
-
-  };
-
-  class MultiCyclicValuePolicy : public CyclicValuePolicy {
-  public:
-    MultiCyclicValuePolicy(ModelPtr model, const boost::program_options::variables_map& vm);
-
-    virtual int policy(MarkovTreeNodePtr node);
-
-    // logNodes after each pass.
-    virtual void logNode(MarkovTreeNodePtr node);
-
-    virtual void sample(int tid, MarkovTreeNodePtr node);
-    
-    // rename features from CyclicPolicy::extractFeatures based on current pass.
-    virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
-
-  protected:
-    size_t T;
-  };
-
-  class MultiCyclicValueUnigramPolicy : public MultiCyclicValuePolicy {
-  public:
-    MultiCyclicValueUnigramPolicy(ModelPtr model, ModelPtr model_unigram, const boost::program_options::variables_map& vm);
-
-    // add features inpired by the unigram.
-    virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
-
-  protected:
-    ModelPtr model_unigram;
-  };
-
-  // Baseline Random Scan Gibbs Sampler.
-  // first take a cyclic sweep, then sample uniform at random.
-  class RandomScanPolicy : public Policy {
-  public:
-    RandomScanPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
-    virtual int policy(MarkovTreeNodePtr node);
-    virtual void sample(int tid, MarkovTreeNodePtr node);
-    virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
-  protected:
-    double Tstar;
-    int windowL;
-  };
-
   // Lock-down sampler.
-  // lock-down position above the threshold and sample. 
+  // lock-down position above the threshold and sample.
   // when meta-features are unigram, essentially same as multi-cyclic scan.
-  // but stop is more natural (all positions below thrsehold). 
+  // but stop is more natural (all positions below thrsehold).
   class LockdownPolicy : public Policy {
   public:
     LockdownPolicy(ModelPtr model, const boost::program_options::variables_map& vm);

@@ -1,4 +1,4 @@
-// Learning inference policies that deal with entire dataset. 
+// Learning inference policies that deal with entire dataset.
 //
 #ifndef POS_BLOCK_POLICY_H
 #define POS_BLOCK_POLICY_H
@@ -28,7 +28,7 @@ public:
   public:
     Result(ptr<Corpus> corpus)
     : PolicyType::Result(corpus) {
-    
+
     }
     Heap heap;
   };
@@ -38,7 +38,7 @@ public:
   using PolicyType::param;
   using Policy::featopt;
   using Policy::featoptFind;
-  
+
   virtual void train(ptr<Corpus> corpus) {
     lg->begin("train");
       /* train the model */
@@ -68,14 +68,14 @@ public:
   }
 
   ptr<Result> test(ptr<Corpus> corpus, double budget);
-  
-  void test(ptr<Result> result, double budget); 
+
+  void test(ptr<Result> result, double budget);
 
   virtual void testPolicy(ptr<Result> result, double budget);
 
   MarkovTreeNodePtr sampleOne(ptr<Result> result, objcokus& rng, const Location& loc);
 
-  /* Given a forest of MarkovTreeNode 
+  /* Given a forest of MarkovTreeNode
    * return which node and which position of the node to sample.
    * */
   virtual Location policy(ptr<Result> result);
@@ -110,7 +110,7 @@ BlockPolicy<PolicyType>::test(ptr<Corpus> corpus, double budget) {
 }
 
 template<class PolicyType>
-void 
+void
 BlockPolicy<PolicyType>::test(ptr<BlockPolicy<PolicyType>::Result> result, double budget) {
   std::cout << "> test " << std::endl;
   PolicyType::lg->begin("test");
@@ -124,7 +124,7 @@ BlockPolicy<PolicyType>::test(ptr<BlockPolicy<PolicyType>::Result> result, doubl
 }
 
 template<class PolicyType>
-void 
+void
 BlockPolicy<PolicyType>::testPolicy(ptr<BlockPolicy<PolicyType>::Result> result, double budget) {
   clock_t time_start = clock(), time_end;
   assert(result != nullptr);

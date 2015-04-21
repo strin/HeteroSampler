@@ -10,6 +10,8 @@
 #include "blockpolicy.h"
 #include "opengm.h"
 
+#include <boost/format.hpp>
+
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <opengm/graphicalmodel/space/simplediscretespace.hxx>
 #include <opengm/functions/potts.hxx>
@@ -29,98 +31,106 @@ int main(int argc, char* argv[]) {
   }
   cout << endl;
   try{
-    // parse args.
+    // parse args
     po::options_description desc("Allowed options");
     desc.add_options()
           ("help", "produce help message")
-          ("inference", po::value<string>()->default_value("Gibbs"), "inference method (Gibbs)")
-          ("dataset", po::value<string>()->default_value("literal"), "type of dataset to use (literal, ocr)")
-          ("model", po::value<string>()->default_value("model/gibbs.model"), "use saved model to do the inference")
-          ("unigram_model", po::value<string>(), "use a unigram (if necessary)")
-          ("policy", po::value<string>()->default_value("entropy"), "sampling policy")
-          ("learning", po::value<string>()->default_value("logistic"), "learning strategy")
+          // model and data
+          ("inference", po::value<string>()->default_value("Gibbs"), "inference engine (CRF / OpenGM)")
+          ("type", po::value<string>()->default_value("tagging"), "type of the problem (tagging / ocr / ising / opengm)")
+          ("model", po::value<string>()->default_value("model/gibbs.model"), "file for the pre-trained model")
+          ("unigram_model", po::value<string>(), "file for a unigram model (option, dependency for unigram entropy meta-feature)")
+          ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
+          ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
+          // learning
+          ("policy", po::value<string>()->default_value("gibbs"), "the policy used for sampling (gibbs / adaptive)")
+          ("learning", po::value<string>()->default_value("logistic"), "learning strategy (logistic / nn)")
+          ("B", po::value<size_t>()->default_value(0), "number of burnin steps (overwritten by model)")
+          ("T", po::value<size_t>()->default_value(1), "number of passes (overwritten by model)")
+          ("K", po::value<size_t>()->default_value(1), "number of trajectories")
+          ("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
+          ("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
+          ("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
+          ("Q", po::value<size_t>()->default_value(1), "number of passes")
+          ("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
+          ("inplace", po::value<bool>()->default_value(true), "set inplace = false causes the sampler to represent entire trajectory")
+          ("lets_lazymax", po::value<bool>()->default_value(false), "lazymax is true, the algorithm takes max sample only after each sweep.")
+          ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
+          ("feat", po::value<std::string>()->default_value(""), "list of meta-features to use, separated with space")
+          // simulated annealing
+          ("temp", po::value<string>()->default_value(""), "the annealing scheme to use (\"scanline\" or \"\")")
+          ("temp_init", po::value<double>()->default_value(1), "initial temperature")
+          ("temp_decay", po::value<double>()->default_value(0.9), "decay of temperature.")
+          ("temp_magnify", po::value<double>()->default_value(0.1), "magnifying factor of init temperature.")
+          // ouput
+          ("output", po::value<string>()->default_value("default"), "output path for this run")
+          ("log", po::value<string>()->default_value("log/latest.txt"), "log file for the model")
+          // reward
           ("reward", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward.")
           ("oracle", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward for oracle.")
           ("rewardK", po::value<int>()->default_value(5), "the number of trajectories used to approximate the reward")
-          ("name", po::value<string>()->default_value("default"), "name of the run")
-          ("train", po::value<string>()->default_value("data/eng_ner/train"), "training data")
-          ("test", po::value<string>()->default_value("data/eng_ner/test"), "test data")
-          ("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
-          ("threshold", po::value<double>()->default_value(0.8), "theshold for entropy policy")
-          ("T", po::value<size_t>()->default_value(4), "number of sweeps in Gibbs sampling")
-          ("Tstar", po::value<double>()->default_value(1.5), "computational resource constraint (used to compute c)")
-          ("B", po::value<size_t>()->default_value(0), "number of burnin steps")
-          ("Q", po::value<size_t>()->default_value(1), "number of passes")
-          ("K", po::value<size_t>()->default_value(1), "number of chains in policy gradient")
-          ("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
-          ("c", po::value<double>()->default_value(0.1), "time regularization")
-          ("windowL", po::value<int>()->default_value(0), "window size for node-wise features")
-          ("depthL", po::value<int>()->default_value(0), "depth size for node-wise features")
-          ("factorL", po::value<int>()->default_value(2), "up to what order of gram should be used")
-          ("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
-          ("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
-          ("scoring", po::value<string>()->default_value("Acc"), "scoring (Acc, NER)")
-          ("testFrequency", po::value<double>()->default_value(0.3), "frequency of testing")
+          // other options
           ("verbose", po::value<bool>()->default_value(false), "whether to output more debug information")
-          ("lets_model", po::value<bool>()->default_value(false), "whether to update model during policy learning (default: false)")
-          ("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
-          ("inplace", po::value<bool>()->default_value(false), "inplace is true, then the algorithm do not work with entire hisotry")
-          ("lets_lazymax", po::value<bool>()->default_value(false), "lazymax is true, the algorithm takes max sample only after each sweep.")
-          ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")
           ("verbosity", po::value<string>()->default_value(""), "what kind of information to log? ")
-          ("feat", po::value<std::string>()->default_value(""), "feature switches")
-          ("temp", po::value<string>()->default_value("scanline"), "the annealing scheme to use.")
-          ("temp_init", po::value<double>()->default_value(1), "initial temperature")
-          ("temp_decay", po::value<double>()->default_value(0.9), "decay of temperature.")
-          ("temp_magnify", po::value<double>()->default_value(0.1), "magnifying factor of init temperature.");
+          ("lets_notrain", po::value<bool>()->default_value(false), "do not train the policy")
+          ;
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);    
+    po::notify(vm);
+
     if(vm.count("help")) {
       cout << desc << "\n";
       return 1;
     }
+
+    // load data
     string train = vm["train"].as<string>(), test = vm["test"].as<string>();
-    string dataset = vm["dataset"].as<string>();
-    ptr<Corpus> corpus, testCorpus;
-    if(dataset == "literal") {
+    ptr<Corpus> corpus, test_corpus;
+    string type = vm["type"].as<string>();
+
+    if(type == "tagging") {
       corpus = ptr<CorpusLiteral>(new CorpusLiteral());
-      testCorpus = ptr<CorpusLiteral>(new CorpusLiteral());
+      test_corpus = ptr<CorpusLiteral>(new CorpusLiteral());
       cast<CorpusLiteral>(corpus)->computeWordFeat();
-    }else if(dataset == "ocr") {
+    }else if(type == "ocr") {
       corpus = std::make_shared<CorpusOCR<16, 8> >();
-      testCorpus = std::make_shared<CorpusOCR<16, 8> >();
-    }else if(dataset == "ising") {
+      test_corpus = std::make_shared<CorpusOCR<16, 8> >();
+    }else if(type == "ising") {
       corpus = std::make_shared<CorpusIsing>();
-      testCorpus = std::make_shared<CorpusIsing>();
-    }else if(dataset == "opengm") {
+      test_corpus = std::make_shared<CorpusIsing>();
+    }else if(type == "opengm") {
       typedef opengm::SimpleDiscreteSpace<size_t, size_t> Space;
-      typedef opengm::GraphicalModel<double, opengm::Adder, OPENGM_TYPELIST_2(ExplicitFunction<double> ,PottsFunction<double>), Space> GraphicalModelType;
+      typedef opengm::GraphicalModel<double, opengm::Adder,
+                                                                    OPENGM_TYPELIST_2(ExplicitFunction<double> ,
+                                                                                                              PottsFunction<double>),
+                                                                  Space>  GraphicalModelType;
       typedef CorpusOpenGM<GraphicalModelType> CorpusOpenGMType;
       corpus = std::make_shared<CorpusOpenGMType>();
-      testCorpus = std::make_shared<CorpusOpenGMType>();
+      test_corpus = std::make_shared<CorpusOpenGMType>();
     }
+
     corpus->read(train, false);
     corpus->test_count = vm["trainCount"].as<size_t>();
-    testCorpus->read(test, false);
-    testCorpus->test_count = vm["testCount"].as<size_t>();
+    test_corpus->read(test, false);
+    test_corpus->test_count = vm["testCount"].as<size_t>();
 
+    // load pre-trained model
     shared_ptr<Model> model, model_unigram;
-    if(vm["inference"].as<string>() == "Gibbs") {
+    if(type == "ocr" || type == "ising" || type == "tagging") {
       auto loadGibbsModel = [&] (string name) -> ModelPtr {
         shared_ptr<Model> model = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
-        std::ifstream file; 
+        std::ifstream file;
         file.open(name, std::fstream::in);
-        if(!file.is_open()) 
+        if(!file.is_open())
           throw (name+" not found.").c_str();
         file >> *model;
         file.close();
         // extract features based on application.
-        if(dataset == "ocr") {
+        if(type == "ocr") {
           cast<ModelCRFGibbs>(model)->extractFeatures = extractOCR;
-          cast<ModelCRFGibbs>(model)->extractFeatAll = extractOCRAll; 
-        }else if(dataset == "ising") {
+          cast<ModelCRFGibbs>(model)->extractFeatAll = extractOCRAll;
+        }else if(type == "ising") {
           cast<ModelCRFGibbs>(model)->extractFeatures = extractIsing;
           cast<ModelCRFGibbs>(model)->extractFeatAll = extractIsingAll;
           cast<ModelCRFGibbs>(model)->extractFeaturesAtInit = extractIsingAtInit;
@@ -133,239 +143,56 @@ int main(int argc, char* argv[]) {
       if(vm.count("unigram_model")) {
         model_unigram = loadGibbsModel(vm["unigram_model"].as<string>());
       }
-    }else if(vm["inference"].as<string>() == "OpenGibbs") {
+    }else if(type == "opengm") {
       typedef opengm::SimpleDiscreteSpace<size_t, size_t> Space;
-      typedef opengm::GraphicalModel<double, opengm::Adder, OPENGM_TYPELIST_2(ExplicitFunction<double> ,PottsFunction<double>), Space> GraphicalModelType;
+      typedef opengm::GraphicalModel<double, opengm::Adder,
+                                                                    OPENGM_TYPELIST_2(ExplicitFunction<double> ,
+                                                                                                              PottsFunction<double>),
+                                                                  Space> GraphicalModelType;
       typedef CorpusOpenGM<GraphicalModelType> CorpusOpenGMType;
       model = std::make_shared<ModelEnumerativeGibbs<GraphicalModelType, opengm::Minimizer> >(vm);
     }
 
     shared_ptr<Policy> policy;
-    bool lets_model = vm["lets_model"].as<bool>();
     auto train_func = [&] (shared_ptr<Policy> policy) {
-      if(lets_model) policy->train(corpus);
-      else policy->trainPolicy(corpus);
+      policy->trainPolicy(corpus);
     };
-    if(vm["policy"].as<string>() == "entropy") {
-      policy = dynamic_pointer_cast<Policy>(shared_ptr<EntropyPolicy>(new EntropyPolicy(model, vm)));   
-      policy->test(testCorpus);
-    }else if(vm["policy"].as<string>() == "gibbs") {
-      policy = dynamic_pointer_cast<Policy>(shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm)));   
-      policy->test(testCorpus);
-    }else if(vm["policy"].as<string>() == "gibbs_shared") {
+
+    int sysres = 0;
+    string name = vm["output"].as<string>();
+    const size_t T = vm["T"].as<size_t>();
+    removeFile(name);
+    makeDirs(name + "/");
+
+    if(vm["policy"].as<string>() == "gibbs")
+    {
       Policy::ResultPtr result = nullptr;
-      string name = vm["name"].as<string>();
-      const size_t T = vm["T"].as<size_t>();
       shared_ptr<GibbsPolicy> gibbs_policy;
       gibbs_policy = shared_ptr<GibbsPolicy>(new GibbsPolicy(model, vm));
       gibbs_policy->T = 1;  // do one sweep after another.
       for(size_t t = 1; t <= T; t++) {
-              string myname = name+"_T"+to_string(t);
-              system(("mkdir -p "+myname).c_str());
-              gibbs_policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname+"/policy.xml")));  
+              string myname = name+"/T"+to_string(t) + ".xml";
+              gibbs_policy->resetLog(std::make_shared<XMLlog>(myname));
               if(t == 1) {
-                result = gibbs_policy->test(testCorpus);
+                result = gibbs_policy->test(test_corpus);
               }else{
-          gibbs_policy->init_method = "";
+                gibbs_policy->init_method = "";
                 gibbs_policy->test(result);
               }
-              gibbs_policy->resetLog(nullptr);
       }
-      system(("rm -r "+name).c_str());
-    }else if(vm["policy"].as<string>() == "cyclic") {
-      policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicPolicy(model, vm)));
-      train_func(policy);
-      policy->test(testCorpus);
-    }else if(vm["policy"].as<string>() == "cyclic_value") {
-      policy = dynamic_pointer_cast<Policy>(shared_ptr<CyclicPolicy>(new CyclicValuePolicy(model, vm)));
-      train_func(policy);
-      policy->test(testCorpus);
-    }else if(vm["policy"].as<string>() == "multi_cyclic_value") {
-      policy = shared_ptr<Policy>(new MultiCyclicValuePolicy(model, vm));
-      train_func(policy);
-      policy->test(testCorpus);
-    }else if(vm["policy"].as<string>() == "lockdown") {
-      policy = shared_ptr<Policy>(new LockdownPolicy(model, vm));
-      train_func(policy);
-      policy->test(testCorpus);
-    }else if(vm["policy"].as<string>() == "lockdown_shared") {
-      string name = vm["name"].as<string>();
-      const int fold = 40;
-//      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-      system(("rm -r "+name+"*").c_str());
-      policy = shared_ptr<Policy>(new LockdownPolicy(model, vm));
-      policy->lets_resp_reward = true;
-      policy->model_unigram = model_unigram;
-      system(("mkdir -p " + name + "_train").c_str());
-      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
-      train_func(policy);
-      cast<LockdownPolicy>(policy)->c = -DBL_MAX; // sample every position.
-      policy->test(testCorpus);
-      policy->resetLog(nullptr);
-      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
-        return (a.first < b.first);
-      };
-      auto compare2 = [] (std::pair<double, double> a, std::pair<double, double> b) {
-        return (a.second < b.second);
-      };
-      sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare);
-      double c_max = std::max_element(policy->test_resp_reward.begin(),
-                                            policy->test_resp_reward.end(), compare)->first,
-                    c_min = std::min_element(policy->test_resp_reward.begin(),
-                                            policy->test_resp_reward.end(), compare)->first;
-      std::vector<std::pair<double, double> > acc_c;
-      auto runWithC = [&] (double m_c) {
-        string myname = name + "_c" + boost::lexical_cast<string>(m_c);
-        system(("mkdir -p " + myname).c_str());
-        shared_ptr<LockdownPolicy> ptest = std::make_shared<LockdownPolicy>(model, vm);
-        ptest->model_unigram = model_unigram;
-        ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-        ptest->param = policy->param;
-        ptest->c = m_c;
-        Policy::ResultPtr result = ptest->test(testCorpus);
-        ptest->resetLog(nullptr);
-        acc_c.push_back(make_pair(result->score, m_c));
-        sort(acc_c.rbegin(), acc_c.rend(), compare2);
-      };
-      auto findLargestSeg = [&] () -> double {
-        double segmax = -DBL_MAX, c = 0.0;
-        for(size_t t = 0; t < acc_c.size()-1; t++) {
-          double seg = acc_c[t+1].first - acc_c[t].first;
-          if(seg > segmax) {
-            segmax = seg;
-            c = (acc_c[t+1].second + acc_c[t].second) / 2.0;
-          }
-        }
-        return c;
-      };
-      runWithC(c_min);
-      runWithC(c_max);
-      for(int i = 0; i < fold; i++) {
-        double c = findLargestSeg();
-        runWithC(c);
-      }
-//      for(int i : fold_l) {
-//              double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
-//              // string myname = name+"_i"+to_string(i);
-//      }
-    }else if(vm["policy"].as<string>() == "random_scan") {
-      policy = shared_ptr<Policy>(new RandomScanPolicy(model, vm));
-      policy->test(testCorpus);
-    }else if(vm["policy"].as<string>() == "adaptive_random_scan") {
-      policy = shared_ptr<Policy>(new RandomScanPolicy(model, vm));
-      shared_ptr<Policy>(new RandomScanPolicy(model, vm));
-      train_func(policy);
-      policy->test(testCorpus);
-    }else if(vm["policy"].as<string>() == "multi_cyclic_value_shared") {
-      string name = vm["name"].as<string>();
-      const int fold = 10;
-      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-      system(("rm -r "+name+"*").c_str());
-      shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
-      cast<CyclicValuePolicy>(policy)->c = -DBL_MAX; // sample every position.
-      policy->lets_resp_reward = true;
-      system(("mkdir -p " + name + "_train").c_str());
-      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
-      train_func(policy);
-      if(vm["lets_notrain"].as<bool>()) mapReset(*policy->param, 1);
-      policy->test(testCorpus);
-      policy->resetLog(nullptr);
-      shared_ptr<MultiCyclicValuePolicy> ptest;
-      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
-        return (a.first < b.first);
-      };
-      sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare); 
-      for(int i : fold_l) {
-        double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
-        // string myname = name+"_i"+to_string(i);
-        string myname = name + "_c" + boost::lexical_cast<string>(c);
-        system(("mkdir -p " + myname).c_str());
-        ptest = shared_ptr<MultiCyclicValuePolicy>(new MultiCyclicValuePolicy(model, vm));
-        ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-        ptest->param = policy->param; 
-        ptest->c = c;
-        ptest->test(testCorpus);
-        ptest->resetLog(nullptr);
-      }
-    }else if(vm["policy"].as<string>() == "multi_cyclic_value_unigram_shared") {
-      shared_ptr<ModelCRFGibbs> model_unigram = shared_ptr<ModelCRFGibbs>(new ModelCRFGibbs(corpus, vm));
-      std::ifstream file; 
-      file.open(vm["unigram_model"].as<string>(), std::fstream::in);
-      if(!file.is_open()) 
-        throw (vm["unigram_model"].as<string>()+" not found.").c_str();
-      file >> *model_unigram;
-      file.close();
-      if(dataset == "ocr") {
-        cast<ModelCRFGibbs>(model_unigram)->extractFeatures = extractOCR;
-        cast<ModelCRFGibbs>(model_unigram)->extractFeatAll = extractOCRAll; 
-      }
-      string name = vm["name"].as<string>();
-      const int fold = 10;
-      const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-      system(("rm -r "+name+"*").c_str());
-      shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new MultiCyclicValueUnigramPolicy(model, model_unigram, vm));
-      policy->lets_resp_reward = true;
-      system(("mkdir -p " + name + "_train").c_str());
-      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
-      train_func(policy);
-      if(vm["lets_notrain"].as<bool>()) mapReset(*policy->param, 1);
-      policy->test(testCorpus);
-      policy->resetLog(nullptr);
-      shared_ptr<MultiCyclicValueUnigramPolicy> ptest;
-      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
-        return (a.first < b.first);
-      };
-      sort(policy->test_resp_reward.begin(), policy->test_resp_reward.end(), compare); 
-      for(int i : fold_l) {
-        double c = policy->test_resp_reward[i * (policy->test_resp_reward.size()-1)/(double)fold_l[fold-1]].first;
-        // string myname = name+"_i"+to_string(i);
-        string myname = name + "_c" + boost::lexical_cast<string>(c);
-        system(("mkdir -p " + myname).c_str());
-        ptest = shared_ptr<MultiCyclicValueUnigramPolicy>(new MultiCyclicValueUnigramPolicy(model, model_unigram, vm));
-        ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-        ptest->param = policy->param; 
-        ptest->c = c;
-        ptest->test(testCorpus);
-        ptest->resetLog(nullptr);
-      }
-      system(("rm -r "+name).c_str());
-    }else if(vm["policy"].as<string>() == "cyclic_value_shared") {
-      string name = vm["name"].as<string>();
-      const int fold = 10;
-      shared_ptr<CyclicValuePolicy> policy = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
-      policy->lets_resp_reward = true;
-      train_func(policy);
-      shared_ptr<CyclicValuePolicy> ptest;
-      auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
-        return (a.first < b.first);
-      };
-      sort(policy->resp_reward.begin(), policy->resp_reward.end(), compare); 
-      for(int i = 0; i <= fold; i++) {
-        double c = policy->resp_reward[i * (policy->resp_reward.size()-1)/(double)fold].first;
-        string myname = name+"_i"+to_string(i);
-        system(("mkdir -p " + myname).c_str());
-        ptest = shared_ptr<CyclicValuePolicy>(new CyclicValuePolicy(model, vm));
-        ptest->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-        ptest->param = policy->param; 
-        ptest->c = c;
-        ptest->test(testCorpus);
-        ptest->resetLog(nullptr);
-      }
-      system(("rm -r "+name).c_str());
-    }else if(vm["policy"].as<string>() == "blockpolicy") {
-      string name = vm["name"].as<string>();
+    }
+    else if(vm["policy"].as<string>() == "adaptive")
+    {
       const int fold = 20;
-      system(("rm -r "+name+"*").c_str());
       auto policy = std::make_shared<BlockPolicy<LockdownPolicy> >(model, vm);
       policy->lets_resp_reward = false;
       policy->model_unigram = model_unigram;
-      system(("mkdir -p " + name + "_train").c_str());
-      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + "/policy.xml")));
+      makeDirs(name + "/train");
+      policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + ".xml")));
       policy->train(corpus);
       int testCount = vm["testCount"].as<size_t>();
-      int count = testCorpus->count(testCount);
-      size_t T = vm["T"].as<size_t>();
-      ptr<BlockPolicy<LockdownPolicy>::Result> result = policy->test(testCorpus, 0);
+      int count = test_corpus->count(testCount);
+      ptr<BlockPolicy<LockdownPolicy>::Result> result = policy->test(test_corpus, 0);
       policy->resetLog(nullptr);
       auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
         return (a.first < b.first);
@@ -376,10 +203,9 @@ int main(int argc, char* argv[]) {
       double budget = 0;
       auto runWithBudget = [&] (double b) {
         budget += b;
-        string myname = name + "_b" + boost::lexical_cast<string>(budget);
-        system(("mkdir -p " + myname).c_str());
-        policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname + "/policy.xml")));
-        policy->test(result, b); 
+        string myname = name + "/b" +boost::str(boost::format("%.2f") % budget)+ ".xml";
+        policy->resetLog(shared_ptr<XMLlog>(new XMLlog(myname)));
+        policy->test(result, b);
         policy->resetLog(nullptr);
       };
       runWithBudget(1);
@@ -401,4 +227,6 @@ int main(int argc, char* argv[]) {
   }catch(char const* ee) {
     cout << "error: " << ee << endl;
   }
+
+  return 0;
 }

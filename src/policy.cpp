@@ -14,39 +14,51 @@ namespace po = boost::program_options;
 using namespace std;
 
 namespace Tagging {
-  
+
 Policy::Policy(ModelPtr model, const po::variables_map& vm)
-:model(model), test_thread_pool(vm["numThreads"].as<size_t>(), 
+:model(model), test_thread_pool(vm["numThreads"].as<size_t>(),
                     [&] (int tid, MarkovTreeNodePtr node) {
                       this->sampleTest(tid, node);
-                    }), 
-               thread_pool(vm["numThreads"].as<size_t>(), 
+                    }),
+               thread_pool(vm["numThreads"].as<size_t>(),
                    [&] (int tid, MarkovTreeNodePtr node) {
                     this->sample(tid, node);
                    }),
- name(vm["name"].as<string>()),
- learning(vm["learning"].as<string>()), 
- mode_reward(vm["reward"].as<int>()),
- mode_oracle(vm["oracle"].as<int>()),
- rewardK(vm["rewardK"].as<int>()),
- K(vm["K"].as<size_t>()),
- eta(vm["eta"].as<double>()),
- train_count(vm["trainCount"].as<size_t>()), 
- test_count(vm["testCount"].as<size_t>()),
- verbose(vm["verbose"].as<bool>()), 
- Q(vm["Q"].as<size_t>()),
  lets_resp_reward(false),
- lets_inplace(vm["inplace"].as<bool>()), 
- lets_lazymax(vm["lets_lazymax"].as<bool>()),
  lazymax_lag(-1),
- init_method(vm["init"].as<string>()),
- model_unigram(nullptr), 
+ model_unigram(nullptr),
+ name(vm["output"].empty() ? "" : vm["output"].as<string>()),
+ learning(vm["learning"].empty() ? "logistic" : vm["learning"].as<string>()),
+ mode_reward(vm["reward"].empty() ? 0 : vm["reward"].as<int>()),
+ mode_oracle(vm["oracle"].empty() ? 0 : vm["oracle"].as<int>()),
+ rewardK(vm["rewardK"].empty() ? 1 : vm["rewardK"].as<int>()),
+ K(vm["K"].empty() ? 1 : vm["K"].as<size_t>()),
+ eta(vm["eta"].empty() ? 1 : vm["eta"].as<double>()),
+ train_count(vm["trainCount"].empty() ? -1 : vm["trainCount"].as<size_t>()),
+ test_count(vm["testCount"].empty() ? -1 : vm["testCount"].as<size_t>()),
+ verbose(vm["verbose"].empty() ? false : vm["verbose"].as<bool>()),
+ Q(vm["Q"].empty() ? 1 : vm["Q"].as<size_t>()),
+ lets_inplace(vm["inplace"].empty() ? true : vm["inplace"].as<bool>()),
+ lets_lazymax(vm["lets_lazymax"].empty() ? false : vm["lets_lazymax"].as<bool>()),
+ init_method(vm["init"].empty() ? "" : vm["init"].as<string>()),
  param(makeParamPointer()), G2(makeParamPointer()) {
-  // feature switch.
+   // parse options
+   if(!vm["log"].empty() and vm["log"].as<string>() != "") {
+     try{
+       lg = std::make_shared<XMLlog>(vm["log"].as<string>());
+     }catch(char const* error) {
+       cout << "error: " << error << endl;
+       lg = std::make_shared<XMLlog>();
+     }
+   }else{
+     lg = std::make_shared<XMLlog>();
+   }
+
+  // feature switch
   split(featopt, vm["feat"].as<string>(), boost::is_any_of(" "));
   split(verbose_opt, vm["verbosity"].as<string>(), boost::is_any_of(" "));
 
-  // init stats.
+  // init stats
   if(isinstance<CorpusLiteral>(model->corpus)) {
     ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(model->corpus);
     auto wordent_meanent = corpus->tagEntropySimple();
@@ -60,13 +72,11 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
     tag_unigram_start = tag_bigram_unigram.second;
   }
 
-  system(("mkdir -p "+name).c_str());
-  lg = shared_ptr<XMLlog>(new XMLlog(name+"/policy.xml"));  
-
+  int sysres = system(("mkdir -p "+name).c_str());
 }
 
 Policy::~Policy() {
-  while(lg != nullptr and lg->depth() > 0) 
+  while(lg != nullptr and lg->depth() > 0)
     lg->end();
 }
 
@@ -84,10 +94,10 @@ double Policy::reward(MarkovTreeNodePtr node) {
 
 double Policy::delayedReward(MarkovTreeNodePtr node, int depth, int maxdepth, vec<int>& actions) {
   int id;
-  if(depth < actions.size()) { // take specified action. 
+  if(depth < actions.size()) { // take specified action.
     id = actions[depth];
-  }else{ // sample new action. 
-    if(depth == 0) { //sample uniformly. 
+  }else{ // sample new action.
+    if(depth == 0) { //sample uniformly.
       id = int(rng.random01() * (1 - 1e-8) * node->gm->size());
     }else{
       vec<int> blanket = model->markovBlanket(*node->gm, actions[depth-1]);
@@ -139,7 +149,7 @@ void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
       node->max_gm = model->copySample(*node->gm);
     }
     while(true) {
-      if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH) 
+      if(node->depth >= POLICY_MARKOV_CHAIN_MAXDEPTH)
         throw "Policy Chain reaches maximum depth.";
       node->choice = this->policy(node);
       if(node->choice == -1) {
@@ -150,7 +160,7 @@ void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
         node->gradient = makeParamPointer();
         break;
       }else{
-        node->log_weight = -DBL_MAX; 
+        node->log_weight = -DBL_MAX;
         int pos = node->choice;
         this->sampleOne(node, rng, pos);
         this->updateResp(node, rng, pos, nullptr);
@@ -159,12 +169,12 @@ void Policy::sampleTest(int tid, MarkovTreeNodePtr node) {
           test_thread_pool.lock();
           Tag tag(*node->gm);
           auto is_equal = [&] () {
-            return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
+            return (double)(tag.tag[pos] == tag.seq->tag[pos]);
           };
           double reward_baseline = is_equal();
           model->sampleOne(tag, pos);
           double reward = is_equal();
-          // double logR = reward - reward_baseline; 
+          // double logR = reward - reward_baseline;
           double logR = tag.reward[pos];
           test_resp_reward.push_back(make_pair(resp, logR));
           test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
@@ -226,7 +236,7 @@ void Policy::train(ptr<Corpus> corpus) {
 }
 
 void Policy::trainPolicy(ptr<Corpus> corpus) {
-  lg->begin("commit"); *lg << getGitHash() << endl; lg->end();  
+  lg->begin("commit"); *lg << getGitHash() << endl; lg->end();
   lg->begin("args");
     if(isinstance<CorpusLiteral>(corpus)) {
       lg->begin("wordent_mean");
@@ -255,7 +265,7 @@ void Policy::trainPolicy(ptr<Corpus> corpus) {
     tree.root->model = this->model;
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = addChild(tree.root, *gm);
-      this->thread_pool.addWork(node); 
+      this->thread_pool.addWork(node);
     }
     thread_pool.waitFinish();
     /*
@@ -273,15 +283,15 @@ void Policy::trainPolicy(ptr<Corpus> corpus) {
       lg->begin("gradient");
       *lg << *g << endl;
       *lg << node->log_weight << endl;
-      lg->end(); 
+      lg->end();
     }*/
-    
+
 //      /* strategy 1. use Markov Tree to compute grad */
 //      this->gradientPolicy(tree);
-    
+
     /* strategy 2. compute gradient when sample */
     // pass
-    
+
     /* log nodes */
     if(verbose) {
       for(size_t k = 0; k < K; k++) {
@@ -307,7 +317,7 @@ void Policy::trainKernel(ptr<Corpus> corpus) {
   size_t count = 0;
   for(const SentencePtr seq : corpus->seqs) {
     if(count >= train_count) break;
-    if(count % 1000 == 0) 
+    if(count % 1000 == 0)
       cout << "\t\t " << (double)count/corpus->seqs.size()*100 << " %" << endl;
     MarkovTree tree;
     // Tag tag(seq.get(), corpus, &rng, model->param);
@@ -315,7 +325,7 @@ void Policy::trainKernel(ptr<Corpus> corpus) {
     tree.root->log_weight = -DBL_MAX;
     for(size_t k = 0; k < K; k++) {
       MarkovTreeNodePtr node = addChild(tree.root, *gm);
-      this->thread_pool.addWork(node); 
+      this->thread_pool.addWork(node);
     }
     thread_pool.waitFinish();
     this->gradientKernel(tree);
@@ -323,7 +333,7 @@ void Policy::trainKernel(ptr<Corpus> corpus) {
   }
 }
 
-Policy::Result::Result(ptr<Corpus> corpus) 
+Policy::Result::Result(ptr<Corpus> corpus)
 :corpus(corpus) {
   nodes.clear();
   time = 0;
@@ -333,7 +343,7 @@ Policy::Result::Result(ptr<Corpus> corpus)
 }
 
 Policy::ResultPtr Policy::test(ptr<Corpus> testCorpus) {
-  Policy::ResultPtr result = makeResultPtr(testCorpus); 
+  Policy::ResultPtr result = makeResultPtr(testCorpus);
   result->corpus->retag(model->corpus);
   result->nodes.resize(min(test_count, testCorpus->seqs.size()), nullptr);
   result->time = 0;
@@ -378,7 +388,7 @@ void Policy::testPolicy(Policy::ResultPtr result) {
     id.push_back(count);
     test_thread_pool.addWork(node);
     count++;
-    if(count % thread_pool.numThreads() == 0 || count == test_count 
+    if(count % thread_pool.numThreads() == 0 || count == test_count
         || count == result->corpus->seqs.size()) {
       test_thread_pool.waitFinish();
       for(size_t i = 0; i < id.size(); i++) {
@@ -451,7 +461,7 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   size_t seqlen = gm.size();
   const Instance& seq = *gm.seq;
   // bias.
-  if(featoptFind("bias") || featoptFind("all")) 
+  if(featoptFind("bias") || featoptFind("all"))
     insertFeature(feat, "b");
   if(featoptFind("word-ent") || featoptFind("all")) {
     size_t taglen = model->corpus->tags.size();
@@ -472,7 +482,7 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
         insertFeature(feat, "word-freq", (*wordfreq)[word]);
       StringVector nlp = corpus->getWordFeat(word);
       for(const string wordfeat : *nlp) {
-        if(wordfeat == word) continue; 
+        if(wordfeat == word) continue;
         string lowercase = word;
         transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
         if(wordfeat == lowercase) continue;
@@ -555,14 +565,14 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
       if(pos >= 1) {
               string prev_tg = corpus->invtags[tag.tag[pos-1]];
               if((prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))
-          or (prev_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))) { 
+          or (prev_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))) {
                 insertFeature(feat, NER_DISAGREE_L);
         }
       }
       if(pos < node->gm->size()-1) {
         string next_tg = corpus->invtags[tag.tag[pos+1]];
-              if((next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1)) 
-          or (next_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != next_tg.substr(1))) { 
+              if((next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1))
+          or (next_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != next_tg.substr(1))) {
                 insertFeature(feat, NER_DISAGREE_R);
         }
       }
@@ -570,9 +580,9 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   }
 
   if(featoptFind("ising-disagree")) {
-    auto image = (const ImageIsing*)(node->gm->seq); // WARNING: Hack, no dynamic check. 
+    auto image = (const ImageIsing*)(node->gm->seq); // WARNING: Hack, no dynamic check.
     auto& tag = *cast<Tag>(node->gm);
-    if(image == NULL) 
+    if(image == NULL)
       throw "cannot use feature 'ising-disagree' on non-ising dataset.";
     size_t disagree = 0;
     ImageIsing::Pt pt = image->posToPt(pos);
@@ -581,7 +591,7 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
       ImageIsing::Pt this_pt = pt;
       this_pt.h += steer_it[0];
       this_pt.w += steer_it[1];
-      if(this_pt.h >= 0 and this_pt.h < image->H 
+      if(this_pt.h >= 0 and this_pt.h < image->H
         and this_pt.w >= 0 and this_pt.w < image->W) {
         size_t pos2 = image->ptToPos(this_pt);
         if(tag.tag[pos2] != tag.tag[pos]) {
@@ -632,7 +642,7 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
     // strategy 2. use it anyhow.
     {
       // for(auto id : model->markovBlanket(*node->gm, pos)) {
-      //   insertFeature(feat, 
+      //   insertFeature(feat,
       //                 make_NB_CONSENT(node->gm->getLabel(pos),
       //                                 node->gm->getLabel(id)),
       //                 1);
@@ -747,7 +757,7 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
     for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
       if(node->gm->blanket[id].size() > 0) {
         double* feat_nb_ent = findFeature(node->gm->feat[id], NB_ENT);
-        double ent_diff = (node->gm->entropy[pos] - node->gm->prev_entropy[pos]) 
+        double ent_diff = (node->gm->entropy[pos] - node->gm->prev_entropy[pos])
                               / (double)node->gm->blanket[id].size();;
         (*feat_nb_ent) += ent_diff;
         node->gm->resp[id] += (*param)[NB_ENT] * ent_diff;
@@ -756,13 +766,13 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
           double ent = getFeature(node->gm->feat[id], COND);
           (*feat_nb_ent__cond) += ent_diff * ent;
           node->gm->resp[id] += (*param)[NB_ENT__COND] * ent_diff * ent;
-        }   
+        }
       }
     }
   }
 
   if(featoptFind(NER_DISAGREE)) {
-    if(getFeature(feat, NER_DISAGREE_L) and node->gm->blanket[pos-1].size() > 0 
+    if(getFeature(feat, NER_DISAGREE_L) and node->gm->blanket[pos-1].size() > 0
       and getFeature(node->gm->feat[pos-1], NER_DISAGREE_R) == 0) {
       insertFeature(node->gm->feat[pos-1], NER_DISAGREE_R);
       node->gm->resp[pos-1] = (*param)[NER_DISAGREE_R];
@@ -779,7 +789,7 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
   if(featoptFind(ORACLE) || featoptFind(ORACLEv)) {   // oracle feature is just *reward*.
     auto computeOracle = [&] (int id) {
       auto feat = findFeature(node->gm->feat[id], ORACLE);
-     
+
       *feat = sampleDelayedReward(node, id, this->mode_oracle, this->rewardK);
 
       if(featoptFind(ORACLE)) {
@@ -802,7 +812,7 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
    auto computeOracle = [&] (double* feat, int id) {
       int oldval = node->gm->getLabel(id);
       model->sampleOne(*node->gm, rng, id, false);
-      *feat = logEntropy(&node->gm->sc[0], node->gm->numLabels(id));  
+      *feat = logEntropy(&node->gm->sc[0], node->gm->numLabels(id));
       node->gm->setLabel(id, oldval);
       if(featoptFind(ORACLE_ENT)) {
         node->gm->resp[id] = Tagging::score(this->param, node->gm->feat[id]);
@@ -814,7 +824,7 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
       if(node->gm->blanket[id].size() > 0) { // has already been initialized.
         computeOracle(findFeature(node->gm->feat[id], ORACLE_ENT), id);
       }
-    } 
+    }
   }
 
   if(featoptFind(ORACLE_STALENESS) || featoptFind(ORACLE_STALENESSv)) {
@@ -833,7 +843,7 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
       if(node->gm->blanket[id].size() > 0) { // has already been initialized.
         computeOracle(findFeature(node->gm->feat[id], ORACLE_STALENESS), id);
       }
-    } 
+    }
   }
 
 
@@ -865,7 +875,7 @@ void Policy::logNode(MarkovTreeNodePtr node) {
     if(verbose) {
       logIndex(i);
     }
-    *lg << "\t";            
+    *lg << "\t";
   }
   *lg << endl;
   lg->end();
@@ -886,7 +896,7 @@ void Policy::logNode(MarkovTreeNodePtr node) {
           *lg << getFeature(node->gm->feat[i], p);
           if(verbose) {
             logIndex(i);
-          } 
+          }
           *lg << "\t";
         }
         *lg << endl;
@@ -900,7 +910,7 @@ void Policy::logNode(MarkovTreeNodePtr node) {
     if(verbose) {
       logIndex(i);
     }
-    *lg << "\t";            
+    *lg << "\t";
   }
   *lg << endl;
   lg->end();
@@ -917,7 +927,7 @@ void Policy::resetLog(std::shared_ptr<XMLlog> new_lg) {
 ////// Gibbs Policy   ///////////////////////////////////////////
 
 GibbsPolicy::GibbsPolicy(ModelPtr model, const po::variables_map& vm)
-:Policy(model, vm), T(vm["T"].as<size_t>()) 
+:Policy(model, vm), T(vm["T"].as<size_t>())
 {
 }
 
@@ -931,549 +941,13 @@ int GibbsPolicy::policy(MarkovTreeNodePtr node) {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////
-////// Entropy Policy ///////////////////////////////////////////
-
-EntropyPolicy::EntropyPolicy(ModelPtr model, const po::variables_map& vm)
-:Policy(model, vm), 
- threshold(vm["threshold"].as<double>())
-{
-}
-
-int EntropyPolicy::policy(MarkovTreeNodePtr node) {
-  if(node->depth == 0) node->time_stamp = 0;
-  if(node->depth < node->gm->size()) { // first pass.
-    node->time_stamp++;
-    return node->depth;
-  }else{
-    assert(!node->parent.expired());
-    size_t i = node->time_stamp;
-    for(; i < 2 * node->gm->size(); i++) {
-      size_t pos = i % node->gm->size();
-      const string& word = cast<TokenLiteral>(node->gm->seq->seq[pos])->word;  
-      double ent = 0;
-      if(wordent->find(word) == wordent->end()) 
-        ent = log(model->corpus->tags.size());
-      else
-        ent = (*wordent)[word]+wordent_mean;
-      if(ent > log(threshold)) {
-        node->gm->mask[pos] = 1;
-        node->time_stamp = i+1;
-        return pos;
-      }else{
-        node->gm->mask[pos] = 0;
-      }
-    }
-    node->time_stamp = i;
-    return -1; // stop.
-  }
-}
-
-/////////////////////////////////////////////////////////////////////////////
-////// Cyclic Policy ///////////////////////////////////////////
-CyclicPolicy::CyclicPolicy(ModelPtr model, const po::variables_map& vm)
-:Policy(model, vm), 
- c(vm["c"].as<double>()) {
-}
-
-FeaturePointer CyclicPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
-  FeaturePointer feat = Policy::extractFeatures(node, pos);
-  return feat;
-}
-
-int CyclicPolicy::policy(MarkovTreeNodePtr node) {
-  if(node->depth == 0) node->time_stamp = 0;
-  if(node->depth < node->gm->size()) {
-    node->time_stamp++;
-    return node->depth;
-  }else{
-    objcokus* rng = node->gm->rng;
-    assert(!node->parent.expired());
-    size_t i = node->time_stamp;
-    node->gradient = makeParamPointer();
-    for( ; i < 2 * node->gm->size(); i++) {      
-      size_t pos = i % node->gm->size();
-      FeaturePointer feat = this->extractFeatures(node, pos);
-      double resp = logisticFunc(Tagging::score(param, feat));
-      node->gm->resp[pos] = resp;
-      node->gm->feat[pos] = feat;
-      if(rng->random01() < resp) {
-        node->gm->mask[pos] = 1;
-        mapUpdate(*node->gradient, *feat, (1-resp));
-        node->time_stamp = i+1;
-        return pos;
-      }else{
-        node->gm->mask[pos] = 0;
-        mapUpdate(*node->gradient, *feat, -resp);        
-      }
-    }
-    node->time_stamp = i;
-    return -1;
-  }
-}
-
-double CyclicPolicy::reward(MarkovTreeNodePtr node) {
-  return Policy::reward(node) - this->c * (node->depth + 1);
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////
-//////// Cyclic Value Policy /////////////////////////////////////////////////////////////
-CyclicValuePolicy::CyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
-:CyclicPolicy(model, vm) { 
-}
-
-// will update gradient of policy.
-void CyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
-  node->depth = 0;
-  node->choice = -1;
-  objcokus& rng = thread_pool.rngs[tid];
-  node->gm->rng = &rng;
-  try{
-    for(size_t i = 0; i < node->gm->size(); i++) {
-      model->sampleOne(*node->gm, rng, i);
-    }
-    node->gradient = makeParamPointer();
-    ptr<Tag> tag = cast<Tag>(node->gm);
-    for(size_t i = 0; i < node->gm->size(); i++) {
-      auto is_equal = [&] () {
-      return (double)(tag->tag[i] == tag->seq->tag[i]); 
-    };
-    double reward_baseline = is_equal();
-    model->sampleOne(*node->gm, rng, i);
-    double reward = is_equal();
-    double logR = reward - reward_baseline; 
-    FeaturePointer feat = this->extractFeatures(node, i);   
-    double resp = Tagging::score(param, feat);
-    if(lets_resp_reward) {
-      resp_reward.push_back(make_pair(resp, logR));
-    }
-    //      cout << "logR: " << logR << ", resp: " << resp << endl;
-    mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
-    }
-    node->log_weight = 0;
-  }catch(const char* ee) {
-    cout << "error: " << ee << endl;
-  }
-}
-
-void CyclicValuePolicy::trainPolicy(ptr<Corpus> corpus) {
-  cout << "cyclic value train (lets_resp_reward = " << lets_resp_reward << ")"  << endl;
-  if(lets_resp_reward and K > 1 and thread_pool.numThreads() > 1) 
-    throw "multithread environment cannot record reward.";
-  if(lets_resp_reward) 
-    resp_reward.clear();
-  Policy::trainPolicy(corpus);
-  if(lets_resp_reward) {
-    const int fold = 10;
-    const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-    auto logRespReward = [&] (vec<pair<double, double> > p) {
-      for(const ROC& roc : getROC(fold_l, fold, p)) {
-        cout << roc.str() << endl;
-        *lg << roc.str() << endl;
-      }
-    };
-    lg->begin("roc_R");
-      logRespReward(resp_reward);
-    lg->end(); // </prec_recall>
-    lg->begin("roc_RL");
-      logRespReward(resp_RL);
-    lg->end(); // </prec_recall>
-    lg->begin("roc_RH");
-      logRespReward(resp_RH);
-    lg->end(); // </prec_recall>
-    if(verbose) {
-      lg->begin("resp_reward");
-      for(const pair<double, double>& p : resp_reward) {
-        *lg << p.first << " " << p.second << endl; 
-      }
-      lg->end();
-    }
-  }
-}
-
-void CyclicValuePolicy::testPolicy(Policy::ResultPtr result) {
-  Policy::testPolicy(result);
-  if(lets_resp_reward) {
-    const int fold = 10;
-    const int fold_l[fold] = {0,5,10,15,20,25,26,27,28,29};
-    auto logRespReward = [&] (vec<pair<double, double> >& p) {
-      cout << endl;
-      for(const ROC& roc : getROC(fold_l, fold, p)) {
-        cout << roc.str() << endl;
-        *lg << roc.str() << endl;
-      }
-    };
-    lg->begin("test_roc_R");
-      logRespReward(test_resp_reward);
-    lg->end(); // </prec_recall>
-    lg->begin("test_roc_RL");
-      logRespReward(test_resp_RL);
-    lg->end(); // </prec_recall>
-    lg->begin("test_roc_RH");
-      logRespReward(test_resp_RH);
-    lg->end(); // </prec_recall>
-    lg->begin("test_word_tag");
-    if(verbose) {
-      assert(test_resp_reward.size() == test_resp_RL.size() 
-          and test_resp_reward.size() == test_resp_RH.size()
-          and test_resp_reward.size() == test_word_tag.size());
-      auto compare = [] (std::tuple<double, double, string, int> a, std::tuple<double, double, string, int> b) {
-        return (get<0>(a) < get<0>(b));
-      };
-      sort(test_word_tag.begin(), test_word_tag.end(), compare); 
-      lg->begin("resp");
-      for(size_t t = 0; t < test_resp_reward.size(); t++) {
-        *lg << "resp " << get<0>(test_word_tag[t]) << " " 
-          << "reward " << test_resp_reward[t].second << " " 
-          << "RH "  
-          << get<1>(test_word_tag[t]) << " "
-          << "RL "  
-          << test_resp_RL[t].second << " "
-          << get<2>(test_word_tag[t]) << " "
-          << model->corpus->invtags[get<3>(test_word_tag[t])] << endl;
-      }
-      lg->end(); // </resp>
-    }
-  }
-}
-
-// will update gradient of transition.
-int CyclicValuePolicy::policy(MarkovTreeNodePtr node) {
-  if(node->depth == 0) node->time_stamp = 0;
-  if(node->depth < node->gm->size()) {
-    node->time_stamp++;
-    return node->depth;
-  }else{
-    objcokus* rng = node->gm->rng;
-    assert(!node->parent.expired());
-    size_t i = node->time_stamp;
-    for(; i < 2 * node->gm->size(); i++) {      
-      size_t pos = i % node->gm->size();
-      FeaturePointer feat = this->extractFeatures(node, pos);
-      double resp = Tagging::score(param, feat);
-      node->gm->resp[pos] = resp;
-      node->gm->feat[pos] = feat;
-      // if(rng->random01() < resp) { // strategy 1. randomized test.
-      if(resp > c) { // strategy 2. deterministic test.
-        node->gm->mask[pos] = 1;
-        node->time_stamp = i+1;
-        return pos;
-      }else{
-        node->gm->mask[pos] = 0;
-      }
-    }
-    node->time_stamp = i;
-    return -1;
-  }
-}
-
-// get precision-recall curve. 
-vec<Policy::ROC> Policy::getROC(const int fold_l[], const int fold, 
-      std::vector<std::pair<double, double> >& resp_reward) {
-  auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
-    return (a.first < b.first);
-  };
-  sort(resp_reward.begin(), resp_reward.end(), compare); 
-  int truth = 0, total = resp_reward.size();
-  for(const pair<double, double>& p : resp_reward) {
-    truth += p.second > 0;
-  }
-  double cmax = resp_reward.back().first, cmin = resp_reward[0].first;
-  vec<ROC> roc_list;
-  int tr_count = 0, count = 0;
-  for(const pair<double, double>& p : resp_reward) {
-    tr_count += p.second > 0;
-    count += 1;
-    if(count > 1 && p.first-roc_list.back().threshold < (cmax-cmin) * 1e-4) continue;
-    ROC roc; 
-    roc.threshold = p.first;
-    roc.TP = truth-tr_count;
-    roc.TN = count-tr_count;
-    roc.FP = total-count-roc.TP;
-    roc.FN = count-roc.TN;
-    roc.prec_sample = roc.TP / (roc.TP + roc.FP);
-    roc.prec_stop = roc.TN / (roc.TN + roc.FN);
-    roc.recall_sample = roc.TP / (roc.TP + roc.FN);
-    roc.recall_stop = roc.TN / (roc.TN + roc.FP);
-    roc_list.push_back(roc);
-  }
-  return roc_list;
-}
-
-///////// MultiCyclicValueUnigramPolicy ////////////////////////////////
-MultiCyclicValueUnigramPolicy::MultiCyclicValueUnigramPolicy(ModelPtr model, 
-    ModelPtr model_unigram, const po::variables_map& vm)
-: MultiCyclicValuePolicy(model, vm), model_unigram(model_unigram) { 
-}
-
-FeaturePointer MultiCyclicValueUnigramPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
-  FeaturePointer feat = MultiCyclicValuePolicy::extractFeatures(node, pos);
-  ptr<Tag> tag_ptr = cast<Tag>(model->copySample(*node->gm));
-  Tag& tag = *tag_ptr;
-  // Tag tag(*node->gm);
-  int oldval = tag.tag[pos];
-  model_unigram->sampleOne(tag, *tag.rng, pos);
-  int pass = node->time_stamp / node->gm->size();
-  // insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", -tag.sc[oldval]);
-  insertFeature(feat, boost::lexical_cast<string>(pass) + "-unigram", tag.entropy[pos]);
-  return feat;
-}
-
-//////// Multi Cyclic Value Policy /////////////////////////////////////////////////
-MultiCyclicValuePolicy::MultiCyclicValuePolicy(ModelPtr model, const po::variables_map& vm)
-:CyclicValuePolicy(model, vm), 
- T(vm["T"].as<size_t>()) { 
-}
-
-int MultiCyclicValuePolicy::policy(MarkovTreeNodePtr node) {
-  if(node->depth == 0) node->time_stamp = -1;
-  if(node->depth < node->gm->size()) {
-    node->time_stamp++;
-    return node->depth;
-  }else{
-    objcokus* rng = node->gm->rng;
-    assert(!node->parent.expired());
-    size_t i = node->time_stamp + 1;
-    node->gradient = makeParamPointer();
-    for(; i < T * node->gm->size(); i++) {      
-      node->time_stamp = i;
-      size_t pos = i % node->gm->size();
-      FeaturePointer feat = this->extractFeatures(node, pos);
-      double resp = Tagging::score(param, feat);
-      node->gm->resp[pos] = resp;
-      node->gm->feat[pos] = feat;
-      /*if(lets_resp_reward) {
-        test_thread_pool.lock();
-        Tag tag(*node->gm);
-        auto is_equal = [&] () {
-          return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
-        };
-        double reward_baseline = is_equal();
-        model->sampleOne(tag, pos);
-        double reward = is_equal();
-        // double logR = reward - reward_baseline; 
-        double logR = tag.reward[pos];
-        test_resp_reward.push_back(make_pair(resp, logR));
-        test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
-        test_resp_RL.push_back(make_pair(resp, logR));
-        if(isinstance<CorpusLiteral>(model->corpus)) {
-          test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
-        }
-        test_thread_pool.unlock();
-      }*/
-      if(resp > c) { 
-        node->gm->mask[pos] = 1;
-        return pos;
-      }else{
-        node->gm->mask[pos] = 0;
-      }
-    }
-    // node->time_stamp = i;
-    return -1;
-  }
-}
-
-void MultiCyclicValuePolicy::sample(int tid, MarkovTreeNodePtr node) {
-  node->depth = 0;
-  node->choice = -1;
-  try{
-    node->gm->rng = &thread_pool.rngs[tid];
-    for(size_t i = 0; i < node->gm->size(); i++) {
-      model->sampleOne(*node->gm, *node->gm->rng, i);
-    }
-    node->gradient = makeParamPointer();
-    for(size_t t = 1; t < T; t++) {
-      for(size_t i = 0; i < node->gm->size(); i++) {
-        node->time_stamp = t * node->gm->size() + i;
-        ptr<Tag> tag = cast<Tag>(node->gm);
-        auto is_equal = [&] () {
-          return (double)(tag->tag[i] == tag->seq->tag[i]); 
-        };
-        double reward_baseline = is_equal();
-        model->sampleOne(*node->gm, *node->gm->rng, i);
-        double reward = is_equal();
-        // double logR = reward - reward_baseline; 
-        double logR = node->gm->reward[i];
-        FeaturePointer feat = this->extractFeatures(node, i);   
-        double resp = Tagging::score(param, feat);
-        if(lets_resp_reward) {
-          thread_pool.lock();
-          resp_reward.push_back(make_pair(resp, logR));
-          resp_RH.push_back(make_pair(resp, 1-reward_baseline));
-          resp_RL.push_back(make_pair(resp, logR));
-          thread_pool.unlock();
-        }
-        mapUpdate(*node->gradient, *feat, 2 * (logR - resp)); 
-}
-    }
-    node->log_weight = 0;
-  }catch(const char* ee) {
-    cout << "error: " << ee << endl;
-  }
-}
-
-FeaturePointer MultiCyclicValuePolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
-  FeaturePointer feat = CyclicValuePolicy::extractFeatures(node, pos);
-  int pass = node->time_stamp / node->gm->size();
-  for(pair<string, double>& p : *feat) {
-    p.first = boost::lexical_cast<string>(pass) + "-" + p.first;
-  }
-  return feat; 
-}
-
-
-void MultiCyclicValuePolicy::logNode(MarkovTreeNodePtr node) {
-  size_t pass = 0;
-  while(true) {
-    if(node->time_stamp >= (pass+1) * node->gm->size()-1 || node->children.size() == 0) {
-      lg->begin("pass_"+boost::lexical_cast<string>(node->time_stamp / node->gm->size()));
-        lg->begin("tag"); *lg << node->gm->str() << endl; lg->end();
-        for(size_t i = 0; i < node->gm->size(); i++) {
-          lg->begin("feat"); 
-          if(node->gm->feat.size() > i and node->gm->feat[i]) {
-            *lg << *node->gm->feat[i] << endl;
-          }else{
-            *lg << *this->extractFeatures(node, i) << endl;
-          }
-          lg->end(); // </feat> 
-        }
-        lg->begin("resp");
-        for(size_t i = 0; i < node->gm->size(); i++) {
-          *lg << node->gm->resp[i] << "\t";            
-        }
-        *lg << endl;
-        lg->end(); // </resp>
-        lg->begin("mask");
-        for(size_t i = 0; i < node->gm->size(); i++) {
-          *lg << node->gm->mask[i] << "\t";            
-        }
-        *lg << endl;
-        if(isinstance<Tag>(node->gm)) {
-          ptr<Tag> tag = cast<Tag>(node->gm);
-          int hits = 0;
-          for(size_t i = 0; i < node->gm->size(); i++) {
-            if(tag->tag[i] == tag->seq->tag[i]) {
-              hits++;
-            }
-          }
-          lg->begin("dist"); *lg << node->gm->size()-hits << endl; lg->end();
-        }
-        lg->end(); // </mask>
-      lg->end(); // </pass>
-      pass = int(node->time_stamp / node->gm->size()) + 1;
-    }
-    if(node->children.size() > 0)
-      node = node->children[0]; // take final sample.
-    else
-      break;
-  }
-  lg->begin("time"); *lg << node->depth + 1 << endl; lg->end();
-  lg->begin("truth"); *lg << node->gm->seq->str() << endl; lg->end();
-}
-
-//////// RandomScanPolicy ////////////////////////////////////////////
-RandomScanPolicy::RandomScanPolicy(ModelPtr model, const boost::program_options::variables_map& vm) 
- :Policy(model, vm), 
-  Tstar(vm["Tstar"].as<double>()), 
-  windowL(vm["windowL"].as<int>()) {
-
-}
-
-int RandomScanPolicy::policy(MarkovTreeNodePtr node) {
-  if(node->depth == 0) node->time_stamp = -1;
-  int pos = 0;
-  if(node->depth < node->gm->size()) {
-    pos = node->depth;
-    node->gm->mask[pos] = 1;
-  }else{
-    if(node->depth > Tstar * node->gm->size()) 
-      return -1;
-    vec<double> resp = node->gm->resp;
-    logNormalize(&resp[0], resp.size());
-    objcokus* rng = node->gm->rng;
-    pos = rng->sampleCategorical(&resp[0], resp.size());
-    node->gm->mask[pos] += 1;
-  }
-  FeaturePointer feat = this->extractFeatures(node, pos);
-  node->gm->feat[pos] = feat;
-  node->gm->resp[pos] = Tagging::score(this->param, feat);
-  node->time_stamp++;
-  return pos;
-}
-
-FeaturePointer RandomScanPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
-  FeaturePointer feat = Policy::extractFeatures(node, pos);
-#if USE_WINDOW == 1
-  for(int p = pos-windowL; p <= pos+windowL; p++) {
-    if(p == pos || p < 0 || p >= node->gm->size()) continue;
-    FeaturePointer this_feat = Policy::extractFeatures(node, p);
-    for(pair<string, double>& f : *this_feat) {
-      insertFeature(feat, "w"+boost::lexical_cast<string>(p-pos)+"-"
-                            +f.first, f.second);
-    }
-  }
-#endif
-  return feat;
-}
-
-void RandomScanPolicy::sample(int tid, MarkovTreeNodePtr node) {
-  node->depth = 0;
-  node->choice = -1;
-  objcokus& rng = thread_pool.rngs[tid];
-  node->gm->rng = &rng;
-  try{
-    for(size_t i = 0; i < node->gm->size(); i++) {
-      model->sampleOne(*node->gm, rng, i);
-      node->gm->mask[i] = 1;
-    }
-    size_t seqlen = node->gm->size();
-    node->depth = seqlen;
-    node->gradient = makeParamPointer();
-    while(node->depth < Tstar * seqlen) {                
-      vec<double> reward(seqlen);
-      vec<double> resp(seqlen);
-      vec<FeaturePointer> feat(seqlen);
-      auto is_equal = [] (Tag& tag, int i) {
-        return (double)(tag.tag[i] == tag.seq->tag[i]); 
-      };
-      ptr<Tag> old_tag = cast<Tag>(node->gm);
-      double norm1 = -DBL_MAX, norm2 = -DBL_MAX;
-      for(size_t i = 0; i < seqlen; i++) {
-        double reward_baseline = is_equal(*old_tag, i);
-        // Tag tag(*node->gm);
-        ptr<Tag> tag_ptr = cast<Tag>(model->copySample(*node->gm));
-        Tag& tag = *tag_ptr;
-        model->sampleOne(tag, rng, i);
-        reward[i] = is_equal(tag, i) - reward_baseline;
-        feat[i] = extractFeatures(node, i);
-        resp[i] = Tagging::score(param, feat[i]);
-        norm1 = logAdd(norm1, reward[i] + resp[i]);
-        norm2 = logAdd(norm2, resp[i]);
-      }
-      for(size_t i = 0; i < seqlen; i++) {
-        mapUpdate(*node->gradient, *feat[i], exp(reward[i] + resp[i] - norm1));
-        mapUpdate(*node->gradient, *feat[i], -exp(resp[i] - norm2));
-      }
-      logNormalize(&resp[0], seqlen);
-      int pos = node->gm->rng->sampleCategorical(&resp[0], seqlen);
-      model->sampleOne(*node->gm, rng, pos);
-      node->gm->mask[pos] += 1;
-      node->depth += 1;
-    }
-    node->log_weight = 0;
-  }catch(const char* ee) {
-    cout << "error: " << ee << endl;
-  }
-}
 
 //////// LockdownPolicy ////////////////////////////
 LockdownPolicy::LockdownPolicy(ModelPtr model, const boost::program_options::variables_map& vm)
- :Policy(model, vm), 
-  T(vm["T"].as<size_t>()),
-  c(vm["c"].as<double>())
+ :Policy(model, vm),
+  T(vm["T"].as<size_t>())
 {
-    
+  c = vm["c"].empty() ? 0 : vm["c"].as<double>();
 }
 
 FeaturePointer LockdownPolicy::extractFeatures(MarkovTreeNodePtr node, int pos) {
@@ -1517,19 +991,19 @@ int LockdownPolicy::policy(MarkovTreeNodePtr node) {
         // collect reward, slow, for debug only.
 //          Tag tag(*node->gm);
 //          auto is_equal = [&] () {
-//            return (double)(tag.tag[pos] == tag.seq->tag[pos]); 
+//            return (double)(tag.tag[pos] == tag.seq->tag[pos]);
 //          };
 //          double reward_baseline = is_equal();
 //          model->sampleOne(tag, pos);
 //          double reward = is_equal();
-//          // double logR = reward - reward_baseline; 
+//          // double logR = reward - reward_baseline;
 //          double logR = tag.reward[pos];
 //          test_resp_RH.push_back(make_pair(resp, 1-reward_baseline));
 //          test_resp_RL.push_back(make_pair(resp, logR));
 //          if(isinstance<CorpusLiteral>(model->corpus)) {
 //            test_word_tag.push_back(make_tuple(resp, 1-reward_baseline, cast<TokenLiteral>(tag.seq->seq[pos])->word, tag.tag[pos]));
 //          }
-        
+
         // do not collect reward.
         double logR = 0;
         test_resp_reward.push_back(make_pair(resp, logR));
@@ -1537,7 +1011,7 @@ int LockdownPolicy::policy(MarkovTreeNodePtr node) {
       }
     }
     int mk = node->gm->mask[pos];
-    if(node->gm->resp[pos] > c and 
+    if(node->gm->resp[pos] > c and
         node->gm->mask[pos] < T) {
       node->time_stamp = count+1;
       return pos;
@@ -1552,7 +1026,7 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
   node->choice = -1;
   try{
     objcokus& rng = thread_pool.rngs[tid];
-    node->gm->rng = &rng; 
+    node->gm->rng = &rng;
     for(size_t i = 0; i < node->gm->size(); i++) {
       this->sampleOne(node, rng, i);
       thread_pool.lock();
@@ -1575,19 +1049,19 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
         double logR = 0;
         double staleness = 0;
         PolicyExample example;
-        
+
         /* estimate reward */
 #if REWARD_SCHEME == REWARD_ACCURACY
         ptr<Tag> old_tag = cast<Tag>(node->gm);
         auto is_equal = [&] () {
-          return (double)(old_tag->tag[i] == old_tag->seq->tag[i]); 
+          return (double)(old_tag->tag[i] == old_tag->seq->tag[i]);
         };
         double reward_baseline = is_equal();
         int oldval = node->gm->getLabel(i);
         for(size_t j = 0; j < J; j++) {
           this->sampleOne(node, rng, i);
           double reward = is_equal();
-          logR += reward - reward_baseline; 
+          logR += reward - reward_baseline;
           if(j < J-1)  // reset.
             node->gm->setLabel(i, oldval);
         }
@@ -1595,12 +1069,12 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
 
 #elif REWARD_SCHEME == REWARD_LHOOD
         logR = sampleDelayedReward(node, i, this->mode_reward, this->rewardK);
-        
+
         if(lets_resp_reward) {  // record training examples.
         // if(logR > 5) {  // record high-reward examples.
           example.oldstr = node->gm->str();
         }
-        
+
         this->sampleOne(node, rng, i);
         // int oldval = node->gm->getLabel(i);
         // const int num_label = node->gm->numLabels(i);
@@ -1609,7 +1083,7 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
         // for(int label = 0; label < num_label; label++) {
         //   logR += exp(node->gm->sc[label]) * node->gm->sc[label];
         // }
-        
+
         // for(size_t j = 0; j < J; j++) {
         //   if(j < J-1) {
         //     model->sampleOne(*node->gm, rng, i);
@@ -1623,7 +1097,7 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
         //   logR += node->gm->reward[i];
         // }
         // logR /= (double)J;
-        
+
 #endif
         /* use gradients to update model */
 
@@ -1634,7 +1108,7 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
         if(learning == "linear") {
           mapUpdate(*grad, *feat, (logR - log_resp));
         }
-        
+
 //          /* update meta-model (strategy 1.5) */
 //          mapUpdate(*grad, *feat, ((logR > 0) - resp));
 
@@ -1654,7 +1128,7 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
             mapUpdate(*grad, *feat, -resp);
           }
         }
-        
+
         /* update meta-model (strategy 3) neural network */
         if(learning == "nn") {
           double resp = logisticFunc(log_resp);
@@ -1671,16 +1145,16 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
           mapUpdate(*grad, "L2-w", diff * resp);
           mapUpdate(*grad, "L2-b", diff);
         }
-        
+
         adagrad(param, G2, grad, eta);   // overwrite adagrad, for fine-grain gradients. (return node->gradient empty).
-        
+
         if(featoptFind(ORACLEv))
           (*param)[ORACLE] = 0;
         if(featoptFind(ORACLE_ENTv))
           (*param)[ORACLE_ENT] = 0;
         if(featoptFind(ORACLE_STALENESSv))
           (*param)[ORACLE_STALENESS] = 0;
-        
+
        if(lets_resp_reward) {  // record training examples.
         // if(logR > 5) {  // record high-reward examples.
           resp_reward.push_back(make_pair(log_resp, logR));
@@ -1696,7 +1170,7 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
           *example.param = *param;
           this->examples.push_back(example);
         }
-        
+
         if(verbose) {
           lg->begin("T_" + to_string(t) + "_i_" + to_string(i));
           logNode(node);
@@ -1705,7 +1179,7 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
 
         /* update response */
         this->updateResp(node, rng, i, nullptr);
-        
+
         thread_pool.unlock();
       }
     }
@@ -1714,7 +1188,7 @@ void LockdownPolicy::sample(int tid, MarkovTreeNodePtr node) {
     cout << "error: " << ee << endl;
   }
 }
-  
-  
-  
+
+
+
 }

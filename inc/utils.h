@@ -47,7 +47,7 @@ namespace Tagging {
   inline string tostr(const Source& arg) {
     return boost::lexical_cast<string>(arg);
   }
-  
+
 
   template<class T>
   using vec = std::vector<T>;
@@ -147,7 +147,7 @@ namespace Tagging {
     for(const std::pair<std::string, double>& pair : *param_from) {
       std::string key = pair.first;
       size_t pos = key.find(prefix_from);
-      if(pos == std::string::npos) 
+      if(pos == std::string::npos)
 	continue;
       (*param_to)[prefix_to + key.substr(pos + prefix_from.length())] = pair.second;
     }
@@ -199,7 +199,7 @@ namespace Tagging {
   static void logNormalize(double* logprob, int len) {
     double lse = -DBL_MAX;
     for(int i = 0; i < len; i++) {
-      lse = logAdd(lse, logprob[i]); 
+      lse = logAdd(lse, logprob[i]);
     }
     for(int i = 0; i < len; i++) {
       logprob[i] -= lse;
@@ -239,7 +239,7 @@ namespace Tagging {
       g[p.first] = eta;
     }
   }
-  
+
 
   template<class K>
   static void mapUpdate(std::unordered_map<std::string, K>& g, std::string key, K val) {
@@ -297,6 +297,20 @@ namespace Tagging {
     }
     pclose(pipe);
     return result;
+  }
+
+  inline static int removeFiles(string name) {
+    return system(("rm -r "+name+"*").c_str());
+  }
+
+  inline static int removeFile(string name) {
+    return system(("rm -r "+name).c_str());
+  }
+
+  inline static int makeDirs(string name) {
+    size_t pos = name.find_last_of("/");
+    if(pos == string::npos) throw "invalid model output dir.";
+    return system(("mkdir -p "+name.substr(0, pos)).c_str());
   }
 }
 

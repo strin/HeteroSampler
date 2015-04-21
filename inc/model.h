@@ -194,4 +194,5 @@ namespace Tagging {
   struct MarkovTree;
   struct MarkovTreeNode;
 }
+
 #endif

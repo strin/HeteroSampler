@@ -10,7 +10,7 @@ using namespace std;
 using namespace std::placeholders;
 namespace po = boost::program_options;
 
-namespace Tagging {
+namespace HeteroSampler {
 
   ////////// Simple Model (Independent Logistic Regression) ////////////
   ModelSimple::ModelSimple(ptr<Corpus> corpus, const po::variables_map& vm)
@@ -233,7 +233,7 @@ namespace Tagging {
         tag.tag[i] = t;
         FeaturePointer features = feat_extract(shared_from_this(), tag, i);
         featvec.push_back(features);
-        sc[t] = Tagging::score(this->param, features);
+        sc[t] = HeteroSampler::score(this->param, features);
       }
       tag.tag[i] = backup;
     };
@@ -315,7 +315,7 @@ namespace Tagging {
   double ModelCRFGibbs::score(const GraphicalModel& gm) {
     auto& tag = dynamic_cast<const Tag&>(gm);
     FeaturePointer feat = this->extractFeaturesAll(tag);
-    return Tagging::score(this->param, feat);
+    return HeteroSampler::score(this->param, feat);
   }
 
   FeaturePointer ModelCRFGibbs::extractFeaturesAll(const Tag& tag) {

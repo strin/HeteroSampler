@@ -14,7 +14,6 @@
 #include "model_opengm.h"
 #include "utils.h"
 #include "policy.h"
-#include "blockpolicy.h"
 #include "opengm.h"
 
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
@@ -26,7 +25,7 @@
 
 
 using namespace std;
-using namespace Tagging;
+using namespace HeteroSampler;
 using namespace opengm;
 
 namespace po = boost::program_options;
@@ -101,7 +100,7 @@ int main(int argc, char* argv[]) {
     
 
     string name = vm["name"].as<string>();
-    shared_ptr<Policy> policy = std::make_shared<BlockPolicy<LockdownPolicy> >(model, vm);
+    shared_ptr<Policy> policy = std::make_shared<BlockPolicy>(model, vm);
     policy->train(corpus);
 
   }catch(char const* ee) {

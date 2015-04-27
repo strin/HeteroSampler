@@ -10,7 +10,7 @@
 using namespace std;
 using namespace boost;
 
-namespace Tagging {
+namespace HeteroSampler {
 
   template<size_t height, size_t width>
   TokenOCR<height, width>::TokenOCR() {}

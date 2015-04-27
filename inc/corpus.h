@@ -7,7 +7,7 @@
 #ifndef POS_SENTENCE_H
 #define POS_SENTENCE_H
 
-namespace Tagging {
+namespace HeteroSampler {
   /////// Token Interface /////////////////////////////////////////////
   struct Token {
   public:

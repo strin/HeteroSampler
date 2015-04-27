@@ -10,7 +10,7 @@
 using namespace std;
 using namespace boost;
 
-namespace Tagging {
+namespace HeteroSampler {
   // implement Token.
   Token::Token() {}
   Token::Token(const string& line) {

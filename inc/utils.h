@@ -31,7 +31,7 @@
 #include "stdlib.h"
 #include "objcokus.h"
 
-namespace Tagging {
+namespace HeteroSampler {
   template<class T>
   using ptr = std::shared_ptr<T>;
 
@@ -42,6 +42,7 @@ namespace Tagging {
   using std::cerr;
   using std::endl;
   using std::to_string;
+  using boost::program_options::variables_map;
 
   template<class Source>
   inline string tostr(const Source& arg) {

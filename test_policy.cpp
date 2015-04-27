@@ -7,7 +7,6 @@
 #include "model_opengm.h"
 #include "utils.h"
 #include "policy.h"
-#include "blockpolicy.h"
 #include "opengm.h"
 
 #include <boost/format.hpp>
@@ -20,7 +19,7 @@
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 
 using namespace std;
-using namespace Tagging;
+using namespace HeteroSampler;
 using namespace opengm;
 
 namespace po = boost::program_options;
@@ -155,7 +154,7 @@ int main(int argc, char* argv[]) {
 
     shared_ptr<Policy> policy;
     auto train_func = [&] (shared_ptr<Policy> policy) {
-      policy->trainPolicy(corpus);
+      policy->train_policy(corpus);
     };
 
     int sysres = 0;
@@ -184,15 +183,14 @@ int main(int argc, char* argv[]) {
     else if(vm["policy"].as<string>() == "adaptive")
     {
       const int fold = 20;
-      auto policy = std::make_shared<BlockPolicy<LockdownPolicy> >(model, vm);
-      policy->lets_resp_reward = false;
+      auto policy = std::make_shared<BlockPolicy>(model, vm);
       policy->model_unigram = model_unigram;
       makeDirs(name + "/train");
       policy->resetLog(shared_ptr<XMLlog>(new XMLlog(name + "_train" + ".xml")));
       policy->train(corpus);
       int testCount = vm["testCount"].as<size_t>();
       int count = test_corpus->count(testCount);
-      ptr<BlockPolicy<LockdownPolicy>::Result> result = policy->test(test_corpus, 0);
+      auto result = policy->test(test_corpus, 0);
       policy->resetLog(nullptr);
       auto compare = [] (std::pair<double, double> a, std::pair<double, double> b) {
         return (a.first < b.first);

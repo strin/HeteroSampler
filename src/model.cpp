@@ -12,7 +12,7 @@
 using namespace std;
 namespace po = boost::program_options;
 
-namespace Tagging {
+namespace HeteroSampler {
   Model::Model(ptr<Corpus> corpus, const po::variables_map& vm)
   :corpus(corpus), param(makeParamPointer()), vm(vm),
        G2(makeParamPointer()) , stepsize(makeParamPointer())

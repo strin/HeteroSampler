@@ -3,16 +3,29 @@
 #include "utils.h"
 #include "corpus.h"
 
-namespace Tagging {
+namespace HeteroSampler {
 
 class Location {
-  public:
-    int index, pos;
-    Location() {}
-    Location(int index, int pos)
-    : index(index), pos(pos) {
-    }
-  };
+public:
+  int index, pos;
+
+  enum LocType {LOC_BLOCK, LOC_SINGLE, LOC_NULL};
+  LocType type;
+
+  Location()
+    : type(LOC_NULL) {
+
+  }
+
+  Location(int pos)
+    : pos(pos), type(LOC_SINGLE) {
+
+  }
+
+  Location(int index, int pos)
+    : index(index), pos(pos), type(LOC_BLOCK) {
+  }
+};
 
 class Value {
 public:
@@ -20,7 +33,7 @@ public:
   double resp;
   Value() {}
   Value(Location loc, double resp)
-  : loc(loc), resp(resp) {
+    : loc(loc), resp(resp) {
   }
 };
 
@@ -35,7 +48,7 @@ typedef boost::heap::fibonacci_heap<Value, boost::heap::compare<compare_value>> 
 struct GraphicalModel {
 public:
   GraphicalModel() {
-    time = 0;    
+    time = 0;
   }
   virtual ~GraphicalModel() {}
 
@@ -53,11 +66,11 @@ public:
 
     sc.resize(num_tags, 0);
     prev_sc.resize(this->size());
-    for(auto& s : prev_sc) {
+    for (auto& s : prev_sc) {
       s.resize(num_tags, -log(num_tags));
     }
     this_sc.resize(this->size());
-    for(auto& s : prev_sc) {
+    for (auto& s : prev_sc) {
       s.resize(num_tags, -log(num_tags));
     }
 
@@ -65,11 +78,10 @@ public:
     time = 0;
   }
 
-  int time;                               // how many times have spent on sampling this graphical model. 
+  int time;                               // how many times have spent on sampling this graphical model.
   int oldval;                             // oldval before the latest sampling.
   vec<int> oldlabels;                     // old labels.
   vec<double> timestamp;                  // whenever a position is changed, its timestamp is incremented.
-  vec<double> checksum;                   // if checksum is changes, then the position might be updated.
   std::vector<double> entropy;            // current entropy when being sampled.
   std::vector<double> prev_entropy;       // previous entropy before being sampled.
   std::vector<double> sc;                 // temporary normalized score.
@@ -86,16 +98,16 @@ public:
   std::vector<FeaturePointer> feat;
 
   /* randomness */
-  objcokus* rng;  
+  objcokus* rng;
 
   /* related reference and pointers */
   const Instance* seq;
   ptr<Corpus> corpus;
 
-  // to string. 
+  // to string.
   virtual string str(bool verbose = false) {
     throw "GraphicalModel::str not defined.";
-  } 
+  }
 
   // get size of the graphical model.
   virtual size_t size() const {
@@ -116,7 +128,7 @@ public:
   // get the labels of some nodes in blanket.
   virtual map<int, int> getLabels(vec<int> blanket) const {
     map<int, int> mb;
-    for(auto id : blanket) {
+    for (auto id : blanket) {
       mb[id] = getLabel(id);
     }
     return mb;

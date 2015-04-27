@@ -1,10 +1,12 @@
-#pragma once
+#ifndef HETEROSAMPLER_MARKOVTREE
+#define HETEROSAMPLER_MARKOVTREE
 
 #include "tag.h"
 #include "utils.h"
 #include "model.h"
+#include "gm.h"
 
-namespace Tagging {
+namespace HeteroSampler {
   struct Model; 
   
   /* warning: this class is not thread safe */
@@ -28,7 +30,7 @@ namespace Tagging {
 
 
     int depth;                // how many samples have been generated.
-    int choice;               // if using a policy, which choice is made?
+    Location choice;               // if using a policy, which choice is made?
     size_t time_stamp;        // time stamp of this object.
     std::weak_ptr<MarkovTreeNode> parent; // weak_ptr: avoid cycle in reference count.
     std::vector<std::shared_ptr<MarkovTreeNode> > children;
@@ -75,3 +77,4 @@ namespace Tagging {
   };
 }
 
+#endif

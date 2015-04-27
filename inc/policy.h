@@ -1,7 +1,5 @@
-// Learning inference policies.
-//
-#ifndef POS_POLICY_H
-#define POS_POLICY_H
+#ifndef HETEROSAMPLER_POLICY
+#define HETEROSAMPLER_POLICY
 
 #include "utils.h"
 #include "model.h"
@@ -10,249 +8,254 @@
 #include "ThreadPool.h"
 #include <boost/program_options.hpp>
 
-#define POLICY_MARKOV_CHAIN_MAXDEPTH 10000000
+namespace HeteroSampler {
+const static string NB_VARY = "nb-vary";
+const static string NER_DISAGREE = "ner-disagree";
+const static string NER_DISAGREE_L = "ner-disagree-l";
+const static string NER_DISAGREE_R = "ner-disagree-r";
+const static string NB_ENT = "nb-ent";
+const static string NB_CONSENT = "nb";
+const static string NB_ENT__COND = "nb-ent--cond-ent";
+const static string COND = "cond-ent";
+const static string ORACLE = "oracle";
+const static string ORACLEv = "oracle-v"; // virtual feature, do not participate in response.
+const static string COND_LHOOD = "cond-lhood";
+const static string ORACLE_ENT = "oracle-ent";
+const static string ORACLE_ENTv = "oracle-ent-v"; // virtual feature, do not participate in response.
+const static string ORACLE_STALENESS = "oracle-stale";
+const static string ORACLE_STALENESSv = "oracle-stale-v"; // virtual feature, do not participate in response.
 
-namespace Tagging {
-  const static string NB_VARY = "nb-vary";
-  const static string NER_DISAGREE = "ner-disagree";
-  const static string NER_DISAGREE_L = "ner-disagree-l";
-  const static string NER_DISAGREE_R = "ner-disagree-r";
-  const static string NB_ENT = "nb-ent";
-  const static string NB_CONSENT = "nb";
-  const static string NB_ENT__COND = "nb-ent--cond-ent";
-  const static string COND = "cond-ent";
-  const static string ORACLE = "oracle";
-  const static string ORACLEv = "oracle-v"; // virtual feature, do not participate in response.
-  const static string COND_LHOOD = "cond-lhood";
-  const static string ORACLE_ENT = "oracle-ent";
-  const static string ORACLE_ENTv = "oracle-ent-v"; // virtual feature, do not participate in response.
-  const static string ORACLE_STALENESS = "oracle-stale";
-  const static string ORACLE_STALENESSv = "oracle-stale-v"; // virtual feature, do not participate in response.
+inline static string make_nb(int val, int your_val) {
+  return "c-" + tostr(val) + "-" + tostr(your_val);
+}
 
-  inline static string make_NB_CONSENT(int val, int your_val) {
-    return "c-" + tostr(val) + "-" + tostr(your_val);
+class Policy {
+public:
+  Policy(ModelPtr model, const boost::program_options::variables_map& vm);
+  ~Policy();
+
+  class Result {
+    /* object to store the result of applying the policy */
+  public:
+    Result(ptr<Corpus> corpus);
+
+    std::vector<MarkovTreeNodePtr> nodes;
+    ptr<Corpus> corpus;
+
+    double score;
+    double time;
+    double wallclock;
+    double wallclock_policy, wallclock_sample;
+
+    size_t size() const {
+      return nodes.size();
+    }
+
+    MarkovTreeNodePtr getNode(size_t i) const {
+      return nodes[i];
+    }
+
+    void setNode(size_t i, MarkovTreeNodePtr node) {
+      nodes[i] = node;
+    }
+  };
+
+  typedef std::shared_ptr<Result> ResultPtr;
+
+  struct Action {
+  public:
+    int pos;
+  };
+
+  static ResultPtr makeResultPtr(ptr<Corpus> corpus) {
+    return ResultPtr(new Result(corpus));
   }
 
 
-  class Policy {
-  public:
-    Policy(ModelPtr model, const boost::program_options::variables_map& vm);
-    ~Policy();
+  /// high-level methods.
+  /* apply policy on a new test corpus */
+  ResultPtr test(ptr<Corpus> test_corpus);
 
-    // results in terms of test samples.
-    class Result {
-    public:
-      Result(ptr<Corpus> corpus);
-      std::vector<MarkovTreeNodePtr> nodes;
-      ptr<Corpus> corpus;
-      double score;
-      double time;
-      double wallclock;
-      double wallclock_policy, wallclock_sample;
+  /* apply policy on a test corpus with an existing result */
+  void test(ResultPtr result);
 
-      size_t size() const {
-        return nodes.size();
-      }
-      MarkovTreeNodePtr getNode(size_t i) const {
-        return nodes[i];
-      }
-      void setNode(size_t i, MarkovTreeNodePtr node) {
-        nodes[i] = node;
-      }
-    };
-    struct ROC {
-    public:
-      ROC() : TP(0), FP(0), TN(0), FN(0), threshold(0) {}
-      double TP, FP, TN, FN;
-      double threshold;
-      double prec_sample, prec_stop, recall_sample, recall_stop;
-      string str() const {
-      	string res = "";
-      	res += "threshold (" + std::to_string(threshold) + ")\t";
-      	res += "prec/sample (" + std::to_string(prec_sample) + ")\t";
-      	res += "recall/sample (" + std::to_string(recall_sample) + ")\t";
-      	res += "prec/stop (" + std::to_string(prec_stop) + ")\t";
-      	res += "recall/stop (" + std::to_string(recall_stop) + ")\t";
-      	return res;
-      }
-    };
+  /* sub-procedure to test policy */
+  virtual void test_policy(ResultPtr result);
 
-    typedef std::shared_ptr<Result> ResultPtr;
-    inline static ResultPtr makeResultPtr(ptr<Corpus> corpus) {
-      return ResultPtr(new Result(corpus));
+  /* train policy on a training corpus */
+  virtual void train(ptr<Corpus> corpus);
+
+  /* sub-procedure to train policy */
+  virtual void train_policy(ptr<Corpus> corpus);
+
+
+  /// methods for sampling.
+  /* sample node, default uses Gibbs sampling */
+  virtual void sample(int tid, MarkovTreeNodePtr node);
+
+  /* wrap model->sampleOne */
+  MarkovTreeNodePtr sampleOne(MarkovTreeNodePtr, objcokus& rng, int pos);
+
+  /* update resp of the meta-features */
+  void updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* heap);
+
+  /* return a number referring to the transition kernel to use.
+   * return value:
+   *    -1 : stop the markov chain.
+   *    a natural number representing a choice.
+   */
+  virtual Location policy(MarkovTreeNodePtr node) = 0;
+
+  // estimate the reward of a MarkovTree node (default: -dist).
+  virtual double reward(MarkovTreeNodePtr node);
+
+  /* estimate delayed reward without making changes to node.
+   *   start a rollout of horizon <maxdepth>.
+   *      follow the <actions> until the depth > actions.size
+   *      then sample action, and push it into <actions>.
+   */
+  double delayedReward(MarkovTreeNodePtr node, int depth, int maxdepth, vec<int>& actions);
+
+  /* sample delayed reward without making changes to <node> */
+  double sampleDelayedReward(MarkovTreeNodePtr node, int id, int maxdepth, int rewardK);
+
+  /* extract meta-features from node */
+  virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
+
+
+  /// dump a node to file.
+  /* log information about node */
+  virtual void logNode(MarkovTreeNodePtr node);
+
+  /* reset log stream */
+  void resetLog(std::shared_ptr<XMLlog> new_lg);
+
+  // response-reward pair.
+  struct PolicyExample {  // examples used to train policy.
+    double reward;
+    double resp;
+    double staleness;
+    FeaturePointer feat;    // copy and record.
+    ParamPointer param;     // copy and record.
+    string str, oldstr;     // copy and record.
+    MarkovTreeNodePtr node; // just record.
+    int choice;
+    void serialize(ptr<XMLlog> lg) {
+      lg->begin("example");
+      lg->logAttr("item", "reward", reward);
+      lg->logAttr("item", "staleness", staleness);
+      lg->logAttr("item", "resp", resp);
+      for (auto& p : *feat) {
+        lg->logAttr("feat", p.first, p.second);
+      }
+      for (auto& p : *param) {
+        lg->logAttr("param", p.first, p.second);
+      }
+      lg->logAttr("item", "choice", choice);
+      if (node != nullptr) {
+        lg->begin("instance");
+        *lg << str << std::endl;
+        lg->end();
+        lg->begin("old_instance");
+        *lg << oldstr << std::endl;
+        lg->end();
+      }
+      lg->end(); // <example>
     }
-
-    // run test on corpus.
-    // return: accuracy on the test set.
-    ResultPtr test(ptr<Corpus> testCorpus);
-    void test(ResultPtr result);
-    virtual void testPolicy(ResultPtr result);
-
-    // apply gradient from samples to policy.
-    virtual void gradientPolicy(MarkovTree& tree);
-
-    // apply gradient from samples to model.
-    virtual void gradientKernel(MarkovTree& tree);
-
-    // run training on corpus.
-    virtual void train(ptr<Corpus> corpus);
-
-    // train policy.
-    virtual void trainPolicy(ptr<Corpus> corpus);
-
-    // train primitive kernels.
-    virtual void trainKernel(ptr<Corpus> corpus);
-
-    // sample node, default uses Gibbs sampling.
-    virtual void sampleTest(int tid, MarkovTreeNodePtr node);
-
-    // sample node, for training. default: call sampleTest.
-    virtual void sample(int tid, MarkovTreeNodePtr node);
-
-    // wrap model->sampleOne.
-    MarkovTreeNodePtr sampleOne(MarkovTreeNodePtr, objcokus& rng, int pos);
-
-    // update resp of the meta-features.
-    void updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* heap);
-
-    // return a number referring to the transition kernel to use.
-    // return = -1 : stop the markov chain.
-    // o.w. return a natural number representing a choice.
-    virtual int policy(MarkovTreeNodePtr node) = 0;
-
-    // estimate the reward of a MarkovTree node (default: -dist).
-    virtual double reward(MarkovTreeNodePtr node);
-
-    /* estimate delayed reward without making changes to node.
-     *   start a rollout of horizon <maxdepth>.
-     *	    follow the <actions> until the depth > actions.size
-     *      then sample action, and push it into <actions>.
-     */
-    double delayedReward(MarkovTreeNodePtr node, int depth, int maxdepth, vec<int>& actions);
-
-    /* sample delayed reward without making changes to <node> */
-    double sampleDelayedReward(MarkovTreeNodePtr node, int id, int maxdepth, int rewardK);
-
-    // extract features from node.
-    virtual FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
-
-    // compute the checksum of a node. (determine if the feature needs to be re-extracted due to change in neighbors).
-    virtual double checksum(MarkovTreeNodePtr node, int pos);
-
-    // log information about node.
-    virtual void logNode(MarkovTreeNodePtr node);
-
-    // reset log.
-    void resetLog(std::shared_ptr<XMLlog> new_lg);
-
-    // response-reward pair.
-    struct PolicyExample {  // examples used to train policy.
-      double reward;
-      double resp;
-      double staleness;
-      FeaturePointer feat;    // copy and record.
-      ParamPointer param;     // copy and record.
-      string str, oldstr;     // copy and record.
-      MarkovTreeNodePtr node; // just record.
-      int choice;
-      void serialize(ptr<XMLlog> lg) {
-        lg->begin("example");
-          lg->logAttr("item", "reward", reward);
-        lg->logAttr("item", "staleness", staleness);
-        lg->logAttr("item", "resp", resp);
-        for(auto& p : *feat) {
-          lg->logAttr("feat", p.first, p.second);
-        }
-        for(auto& p : *param) {
-          lg->logAttr("param", p.first, p.second);
-        }
-        lg->logAttr("item", "choice", choice);
-        if(node != nullptr) {
-          lg->begin("instance");
-          *lg << str << std::endl;
-          lg->end();
-          lg->begin("old_instance");
-          *lg << oldstr << std::endl;
-          lg->end();
-        }
-        lg->end(); // <example>
-      }
-    };
-    bool lets_resp_reward;
-    vec<PolicyExample> examples;
-    vec<pair<double, double> > resp_RL, test_resp_RL; // incr in correctness, lower bound of R.
-    vec<pair<double, double> > resp_RH, test_resp_RH; // whether incorrect, upper bound of R.
-    vec<pair<double, double> > resp_reward, test_resp_reward; // true reward.
-    vec<tuple<double, double, string, int> > test_word_tag;                //  corresponding word, tag pair.
-
-    // compute TP, FP, TN, FN.
-    vec<ROC> getROC(const int fold[], const int num_fold, std::vector<std::pair<double, double> >& resp_reward);
-
-    /* const environment. */
-    ParamPointer wordent, wordfreq;
-    double wordent_mean, wordfreq_mean;
-    Vector2d tag_bigram;
-    vec<double> tag_unigram_start;
-    const string name;
-    const string learning;
-    const int mode_reward, mode_oracle, rewardK;
-    const size_t K, Q; // K: num trajectories. Q: num epochs.
-    const size_t test_count, train_count;
-    const double eta;
-
-    string init_method;
-
-    const bool verbose;
-    vec<string> verbose_opt;
-    bool verboseOptFind(string verse) {return std::find(verbose_opt.begin(), verbose_opt.end(), verse) != verbose_opt.end(); }
-
-    const bool lets_inplace;              // not work with entire history.
-    const bool lets_lazymax;              // take max sample only after each sweep.
-    int lazymax_lag;        // the lag to take max, default(-1, entire instance).
-    // feature option, each string switches a meta-feature to add.
-
-    vec<string> featopt;
-    bool featoptFind(string feat) {return std::find(featopt.begin(), featopt.end(), feat) != featopt.end(); }
-
-    /* global environment. */
-    ModelPtr model;                 // full model.
-    ModelPtr model_unigram;         // unigram/lower-order model.
-
-    objcokus rng;
-    std::shared_ptr<XMLlog> lg;
-    ParamPointer param, G2;
-
-    /* parallel environment. */
-    ThreadPool<MarkovTreeNodePtr> thread_pool, test_thread_pool;
   };
 
+  bool lets_resp_reward;
+  vec<PolicyExample> examples;
 
-  // baseline policy of selecting Gibbs sampling kernels
-  // just based on Gibbs sweeping.
-  class GibbsPolicy : public Policy {
+  /* const environment. */
+  ParamPointer wordent, wordfreq;
+  double wordent_mean, wordfreq_mean;
+  Vector2d tag_bigram;
+  vec<double> tag_unigram_start;
+  const string name;
+  const string learning;
+  const int mode_reward, mode_oracle, rewardK;
+  const size_t K, Q; // K: num trajectories. Q: num epochs.
+  const size_t test_count, train_count;
+  const double eta;
+
+  string init_method;
+
+  const bool verbose;
+  vec<string> verbose_opt;
+  bool verboseOptFind(string verse) {return std::find(verbose_opt.begin(), verbose_opt.end(), verse) != verbose_opt.end(); }
+
+  const bool lets_inplace;              // not work with entire history.
+  const bool lets_lazymax;              // take max sample only after each sweep.
+  int lazymax_lag;        // the lag to take max, default(-1, entire instance).
+  // feature option, each string switches a meta-feature to add.
+
+  vec<string> featopt;
+  bool featoptFind(string feat) {return std::find(featopt.begin(), featopt.end(), feat) != featopt.end(); }
+
+  /* global environment. */
+  ModelPtr model;                 // full model.
+  ModelPtr model_unigram;         // unigram/lower-order model.
+
+  objcokus rng;
+  std::shared_ptr<XMLlog> lg;
+  ParamPointer param, G2;
+
+  /* parallel environment. */
+  ThreadPool<MarkovTreeNodePtr> thread_pool, test_thread_pool;
+};
+
+
+// baseline policy of selecting Gibbs sampling kernels
+// just based on Gibbs sweeping.
+class GibbsPolicy : public Policy {
+public:
+  GibbsPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
+
+  // policy: first make an entire pass over the sequence.
+  //       second/third pass only update words with entropy exceeding threshold.
+  virtual Location policy(MarkovTreeNodePtr node);
+
+  size_t T; // how many sweeps.
+};
+
+class BlockPolicy : public Policy {
+public:
+  BlockPolicy(ModelPtr model, const variables_map& vm);
+
+  ~BlockPolicy();
+
+  class Result : public Policy::Result {
   public:
-    GibbsPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
-
-    // policy: first make an entire pass over the sequence.
-    //	     second/third pass only update words with entropy exceeding threshold.
-    int policy(MarkovTreeNodePtr node);
-
-    size_t T; // how many sweeps.
+    Result(ptr<Corpus> corpus);
+    Heap heap;
   };
 
-  // Lock-down sampler.
-  // lock-down position above the threshold and sample.
-  // when meta-features are unigram, essentially same as multi-cyclic scan.
-  // but stop is more natural (all positions below thrsehold).
-  class LockdownPolicy : public Policy {
-  public:
-    LockdownPolicy(ModelPtr model, const boost::program_options::variables_map& vm);
-    virtual int policy(MarkovTreeNodePtr node);
-    FeaturePointer extractFeatures(MarkovTreeNodePtr node, int pos);
-    void sample(int tid, MarkovTreeNodePtr node);
+  typedef ptr<BlockPolicy::Result> ResultPtr;
 
-    double c;
-    size_t T;
-  };
+  virtual MarkovTreeNodePtr sampleOne(ResultPtr result,
+                                      objcokus& rng,
+                                      const Location& loc);
+
+  /* overrides inherited virtual method,
+   * calls method test(corpus, budget = 1) */
+  virtual Policy::ResultPtr test(ptr<Corpus> corpus);
+  virtual ResultPtr test(ptr<Corpus> corpus, double budget);
+
+  /* overrides inherited virtual method,
+   * calls method test(result, budget = 1) */
+  virtual void test(Policy::ResultPtr result);
+  virtual void test(ResultPtr result, double budget);
+
+  /* overrides inherited virtual method,
+   * calls method test_policy(result, budget = 1) */
+  virtual void test_policy(Policy::ResultPtr result);
+  virtual void test_policy(ResultPtr result, double budget);
+
+  virtual Location policy(MarkovTreeNodePtr node);
+  virtual Location policy(ResultPtr result);
+};
+
 }
+
 #endif

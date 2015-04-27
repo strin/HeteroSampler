@@ -8,7 +8,7 @@
 
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 
-namespace Tagging {
+namespace HeteroSampler {
 
 template<class GM>
 struct InstanceOpenGM : public Instance {

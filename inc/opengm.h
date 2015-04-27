@@ -5,7 +5,7 @@
 #include "opengm/inference/movemaker.hxx"
 #include "opengm/inference/inference.hxx"
 
-namespace Tagging {
+namespace HeteroSampler {
 
 
 template<class GM>
@@ -43,7 +43,6 @@ OpenGM<GM>::OpenGM(const Instance* seq, const GraphicalModelType& gm)
   this->seq = seq;
   size_t size = gm.numberOfVariables();
   timestamp.resize(size, 0);
-  checksum.resize(size);
   reward.resize(size, 0);
   entropy_unigram.resize(size);
   resp.resize(size, DBL_MAX);

@@ -8,7 +8,7 @@
 #include "corpus.h"
 #include "objcokus.h"
 
-namespace Tagging {
+namespace HeteroSampler {
   StringVector NLPfunc(const std::string word);
   void extractUnigramFeature(const Tag& tag, int pos, int breadth, int depth, FeaturePointer output);
   void extractBigramFeature(const Tag& tag, int pos, FeaturePointer output);

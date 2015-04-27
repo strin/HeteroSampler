@@ -3,7 +3,7 @@
 #include "corpus.h"
 #include "gm.h"
 
-namespace Tagging {
+namespace HeteroSampler {
 // output feature vector of an instance as std::string.
 inline static std::string str(FeaturePointer features);
 

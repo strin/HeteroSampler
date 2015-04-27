@@ -4,7 +4,7 @@
 #include "model.h"
 #include <boost/lexical_cast.hpp>
 
-namespace Tagging {
+namespace HeteroSampler {
 
 struct TokenIsing : public Token {
 public:
@@ -153,12 +153,12 @@ void CorpusIsing::read(const std::string& filename, bool lets_shuffle) {
 }
   
 static auto extractIsingUnigram = 
-[&] (FeaturePointer features, const ImageIsing* image, const Tag& tag, int pos) {
+[] (FeaturePointer features, const ImageIsing* image, const Tag& tag, int pos) {
   insertFeature(features, "u-"+image->seq[pos]->str()+"-"+tag.getTag(pos));
 };
 
 static auto extractIsingBigram = 
-[&] (FeaturePointer features, const ImageIsing* image, const Tag& tag, int pos1, int pos2) {
+[] (FeaturePointer features, const ImageIsing* image, const Tag& tag, int pos1, int pos2) {
   const string token1 = tag.getTag(pos1);
   const string token2 = tag.getTag(pos2);
   insertFeature(features, "w-"+token1+"-"+token2);
@@ -249,4 +249,4 @@ static auto getIsingMarkovBlanket = [] (ptr<Model> model, const GraphicalModel& 
 };
 
 
-} // namespace Tagging.
+} // namespace HeteroSampler.

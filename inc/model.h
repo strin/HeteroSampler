@@ -6,7 +6,7 @@
 #include "corpus.h"
 #include "MarkovTree.h"
 
-namespace Tagging {
+namespace HeteroSampler {
   inline static void adagrad(ParamPointer param, ParamPointer G2, ParamPointer gradient, double eta) {
     for(const std::pair<std::string, double>& p : *gradient) {
       mapUpdate(*G2, p.first, p.second * p.second);

@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace Tagging {
+namespace HeteroSampler {
   StringVector NLPfunc(const string word) {
     StringVector nlp = makeStringVector();
     nlp->push_back(word);

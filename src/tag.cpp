@@ -5,7 +5,7 @@
 #include <sstream>
 
 using namespace std;
-namespace Tagging {
+namespace HeteroSampler {
   Tag::Tag(const Instance* seq, ptr<Corpus> corpus,
           objcokus* rng, ParamPointer param)
   : param(param) {
@@ -34,7 +34,6 @@ namespace Tagging {
     resp.resize(seqlen, DBL_MAX);
     mask.resize(seqlen);
     timestamp.resize(seqlen, 0);
-    checksum.resize(seqlen, NAN);
     entropy_unigram.resize(seqlen, NAN);
     reward.resize(seqlen);
     this->initStats();

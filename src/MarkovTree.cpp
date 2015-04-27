@@ -2,7 +2,7 @@
 
 using namespace std;
 
-namespace Tagging {
+namespace HeteroSampler {
   ptr<MarkovTreeNode> makeMarkovTreeNode(std::shared_ptr<MarkovTreeNode> parent, const GraphicalModel& gm) {
     auto node = MarkovTreeNodePtr(new MarkovTreeNode(parent));
     assert(node->model != nullptr);

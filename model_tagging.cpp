@@ -7,7 +7,7 @@
 #include <boost/program_options.hpp>
 
 using namespace std;
-using namespace Tagging;
+using namespace HeteroSampler;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {

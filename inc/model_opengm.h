@@ -5,7 +5,7 @@
 #include "opengm.h"
 #include "corpus_opengm.h"
 
-namespace Tagging {
+namespace HeteroSampler {
   // OpenGM inference algorithms invoke existing trained graphical model. 
   // so all gradients in Model is 0.
   template<class GM, class ACC>

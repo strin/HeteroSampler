@@ -9,21 +9,52 @@
 #include <boost/program_options.hpp>
 
 namespace HeteroSampler {
-const static string NB_VARY = "nb-vary";
-const static string NER_DISAGREE = "ner-disagree";
-const static string NER_DISAGREE_L = "ner-disagree-l";
-const static string NER_DISAGREE_R = "ner-disagree-r";
-const static string NB_ENT = "nb-ent";
-const static string NB_CONSENT = "nb";
-const static string NB_ENT__COND = "nb-ent--cond-ent";
-const static string COND = "cond-ent";
-const static string ORACLE = "oracle";
-const static string ORACLEv = "oracle-v"; // virtual feature, do not participate in response.
-const static string COND_LHOOD = "cond-lhood";
-const static string ORACLE_ENT = "oracle-ent";
-const static string ORACLE_ENTv = "oracle-ent-v"; // virtual feature, do not participate in response.
-const static string ORACLE_STALENESS = "oracle-stale";
-const static string ORACLE_STALENESSv = "oracle-stale-v"; // virtual feature, do not participate in response.
+
+enum MetaFeature { FEAT_BIAS, 
+                   FEAT_NB_VARY, 
+                   FEAT_NB_ENT, 
+                   FEAT_NB_CONSENT, 
+                   FEAT_COND_ENT,
+                   FEAT_LOG_COND_ENT,
+                   FEAT_01_COND_ENT,
+                   FEAT_UNIGRAM_ENT,
+                   FEAT_INV_UNIGRAM_ENT,
+                   FEAT_01_UNIGRAM_ENT,
+                   FEAT_LOGISTIC_UNIGRAM_ENT,
+                   FEAT_ORACLE,
+                   FEAT_COND_LHOOD,
+                   FEAT_ORACLE_ENT,
+                   FEAT_ORACLE_STALENESS,
+                   FEAT_SP,
+                   FEAT_LOG_SP,
+                   FEAT_EXP_SP,
+                   FEAT_SP_COND_ENT,
+                   FEAT_SP_UNIGRAM_ENT,
+                 };
+
+struct MetaFeatureHash
+{
+    template <typename T>
+    std::size_t operator()(T t) const
+    {
+        return static_cast<std::size_t>(t);
+    }
+};
+
+template<class K, class T, class H = std::hash<K>>
+class MapInitializer {
+public:
+  MapInitializer(std::unordered_map<K, T, H>& m)
+    :m(m) {
+  }
+
+  MapInitializer operator()(const K& key, const T& val) {
+    m[key] = val;
+    return (*this);
+  }
+
+  std::unordered_map<K, T, H>& m;
+};
 
 inline static string make_nb(int val, int your_val) {
   return "c-" + tostr(val) + "-" + tostr(your_val);
@@ -106,9 +137,6 @@ public:
    */
   virtual Location policy(MarkovTreeNodePtr node) = 0;
 
-  // estimate the reward of a MarkovTree node (default: -dist).
-  virtual double reward(MarkovTreeNodePtr node);
-
   /* estimate delayed reward without making changes to node.
    *   start a rollout of horizon <maxdepth>.
    *      follow the <actions> until the depth > actions.size
@@ -168,10 +196,6 @@ public:
   vec<PolicyExample> examples;
 
   /* const environment. */
-  ParamPointer wordent, wordfreq;
-  double wordent_mean, wordfreq_mean;
-  Vector2d tag_bigram;
-  vec<double> tag_unigram_start;
   const string name;
   const string learning;
   const int mode_reward, mode_oracle, rewardK;
@@ -186,12 +210,11 @@ public:
   bool verboseOptFind(string verse) {return std::find(verbose_opt.begin(), verbose_opt.end(), verse) != verbose_opt.end(); }
 
   const bool lets_inplace;              // not work with entire history.
-  const bool lets_lazymax;              // take max sample only after each sweep.
-  int lazymax_lag;        // the lag to take max, default(-1, entire instance).
   // feature option, each string switches a meta-feature to add.
 
-  vec<string> featopt;
-  bool featoptFind(string feat) {return std::find(featopt.begin(), featopt.end(), feat) != featopt.end(); }
+  vec<MetaFeature> feat;
+  map<string, MetaFeature> feat_map;
+  std::unordered_map<MetaFeature, string, MetaFeatureHash> feat_name;
 
   /* global environment. */
   ModelPtr model;                 // full model.

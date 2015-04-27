@@ -79,10 +79,10 @@ target_link_libraries(heterosampler
   ${HDF5_LIBRARIES}
 )
 
-add_executable(tagging model_tagging.cpp
+add_executable(bin/tagging model_tagging.cpp
 )
 
-target_link_libraries(tagging
+target_link_libraries(bin/tagging
   scilog
   heterosampler
   ${CMAKE_THREAD_LIBS_INIT}
@@ -92,13 +92,13 @@ target_link_libraries(tagging
 )
 
 
-add_executable(ocr model_ocr.cpp
+add_executable(bin/ocr model_ocr.cpp
 )
 
-add_executable(ising model_ising.cpp
+add_executable(bin/ising model_ising.cpp
 )
 
-target_link_libraries(ocr
+target_link_libraries(bin/ocr
   scilog
   heterosampler
   ${CMAKE_THREAD_LIBS_INIT}
@@ -107,7 +107,7 @@ target_link_libraries(ocr
   ${PYTHON_LIBRARIES}
 )
 
-target_link_libraries(ising
+target_link_libraries(bin/ising
   scilog
   heterosampler
   ${CMAKE_THREAD_LIBS_INIT}
@@ -116,10 +116,10 @@ target_link_libraries(ising
   ${PYTHON_LIBRARIES}
 )
 
-add_executable(policy test_policy.cpp
+add_executable(bin/policy test_policy.cpp
 )
 
-target_link_libraries(policy
+target_link_libraries(bin/policy
   scilog
   heterosampler
   ${CMAKE_THREAD_LIBS_INIT}

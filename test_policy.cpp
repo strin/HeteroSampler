@@ -35,7 +35,6 @@ int main(int argc, char* argv[]) {
     desc.add_options()
     ("help", "produce help message")
     // model and data
-    ("inference", po::value<string>()->default_value("Gibbs"), "inference engine (CRF / OpenGM)")
     ("type", po::value<string>()->default_value("tagging"), "type of the problem (tagging / ocr / ising / opengm)")
     ("model", po::value<string>()->default_value("model/gibbs.model"), "file for the pre-trained model")
     ("unigram_model", po::value<string>(), "file for a unigram model (option, dependency for unigram entropy meta-feature)")
@@ -50,7 +49,7 @@ int main(int argc, char* argv[]) {
     ("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
     ("trainCount", po::value<size_t>()->default_value(-1), "how many training data used ? default: all (-1). ")
     ("Q", po::value<size_t>()->default_value(1), "number of passes")
-    ("numThreads", po::value<size_t>()->default_value(10), "number of threads to use")
+    ("numThreads", po::value<size_t>()->default_value(1), "number of threads to use")
     ("inplace", po::value<bool>()->default_value(true), "set inplace = false causes the sampler to represent entire trajectory")
     ("lets_lazymax", po::value<bool>()->default_value(false), "lazymax is true, the algorithm takes max sample only after each sweep.")
     ("init", po::value<string>()->default_value("random"), "initialization method: random, iid, unigram.")

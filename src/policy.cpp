@@ -42,15 +42,21 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
     param(makeParamPointer()), G2(makeParamPointer()) {
 
   // parse other options
+  try {
+    lg = std::make_shared<XMLlog>(vm["output"].as<string>());
+  } catch (char const* error) {
+    throw error;
+  }
+
   if (!vm["log"].empty() and vm["log"].as<string>() != "") {
     try {
-      lg = std::make_shared<XMLlog>(vm["log"].as<string>());
+      auxlg = std::make_shared<XMLlog>(vm["log"].as<string>());
     } catch (char const* error) {
       cout << "error: " << error << endl;
-      lg = std::make_shared<XMLlog>();
+      auxlg = std::make_shared<XMLlog>();
     }
   } else {
-    lg = std::make_shared<XMLlog>();
+    auxlg = std::make_shared<XMLlog>();
   }
 
   // parsing meta-feature 
@@ -69,6 +75,7 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
           ("bias", FEAT_BIAS)
           ("nb-vary", FEAT_NB_VARY)
           ("nb-ent", FEAT_NB_ENT)
+          ("nb-discord", FEAT_NB_DISCORD)
           ("oracle", FEAT_ORACLE)
           ("oracle-ent", FEAT_ORACLE_ENT)
           ("oracle-staleness", FEAT_ORACLE_STALENESS)
@@ -201,10 +208,10 @@ void Policy::train(ptr<Corpus> corpus) {
   lg->begin("train");
   /* train the model */
   if (Q > 0)
-    cout << "start training ... " << endl;
+    *auxlg << "start training ... " << endl;
   for (size_t q = 0; q < Q; q++) {
-    cout << "\t epoch " << q << endl;
-    cout << "\t update policy " <<  endl;
+    *auxlg << "\t epoch " << q << endl;
+    *auxlg << "\t update policy " <<  endl;
     this->train_policy(corpus);
   }
   if (Q == 0) { // notraining is needed.
@@ -224,6 +231,9 @@ void Policy::train(ptr<Corpus> corpus) {
     }
     lg->end(); // </policy_example>
   }
+  lg->begin("param");
+  *lg << *param;
+  lg->end(); // </param>
   lg->end(); // </train>
 }
 
@@ -237,7 +247,7 @@ void Policy::train_policy(ptr<Corpus> corpus) {
     // cout << corpus->seqs.size() << endl;
     size_t display_lag = int(0.1 * min(train_count, corpus->seqs.size()));
     if (display_lag == 0 or count % display_lag == 0)
-      cout << "\t\t " << (double)count / corpus->seqs.size() * 100 << " %" << endl;
+      *auxlg << "\t\t " << (double)count / corpus->seqs.size() * 100 << " %" << endl;
     if (verbose)
       lg->begin("example_" + to_string(count));
     MarkovTree tree;
@@ -291,7 +301,7 @@ Policy::ResultPtr Policy::test(ptr<Corpus> testCorpus) {
 }
 
 void Policy::test(Policy::ResultPtr result) {
-  cout << "> test " << endl;
+  *auxlg << "> test " << endl;
   lg->begin("test");
   lg->begin("param");
   *lg << *param;
@@ -363,30 +373,30 @@ void Policy::test_policy(Policy::ResultPtr result) {
   result->time += (double)ave_time / count;
   result->wallclock += (double)(time_end - time_start) / CLOCKS_PER_SEC;
   lg->begin("time");
-  cout << "time: " << result->time << endl;
+  *auxlg << "time: " << result->time << endl;
   *lg << result->time << endl;
   lg->end(); // </time>
   lg->begin("wallclock");
-  cout << "wallclock: " << result->wallclock << endl;
+  *auxlg << "wallclock: " << result->wallclock << endl;
   *lg << result->wallclock << endl;
   lg->end(); // </wallclock>
   if (model->scoring == Model::SCORING_ACCURACY) {
     lg->begin("accuracy");
     *lg << accuracy << endl;
-    cout << "acc: " << accuracy << endl;
+    *auxlg << "acc: " << accuracy << endl;
     lg->end(); // </accuracy>
     result->score = accuracy;
   } else if (model->scoring == Model::SCORING_NER) {
     double f1 = 2 * accuracy * recall / (accuracy + recall);
     lg->begin("accuracy");
     *lg << f1 << endl;
-    cout << "f1: " << f1 << endl;
+    *auxlg << "f1: " << f1 << endl;
     lg->end(); // </accuracy>
     result->score = f1;
   } else if (model->scoring == Model::SCORING_LHOOD) {
     lg->begin("accuracy");
     *lg << accuracy << endl;
-    cout << "lhood: " << accuracy << endl;
+    *auxlg << "lhood: " << accuracy << endl;
     lg->end(); // </accuracy>
     result->score = accuracy;
   }
@@ -482,6 +492,7 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
                       node->gm->entropy_unigram[pos]);
         break;
       case FEAT_NB_VARY:
+      case FEAT_NB_DISCORD:
       case FEAT_ORACLE:
       case FEAT_ORACLE_ENT:
       case FEAT_ORACLE_STALENESS:
@@ -571,7 +582,11 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
     node->gm->resp[id] = HeteroSampler::score(this->param, node->gm->feat[id]);
     updateRespByHandle(id);
   };
-
+  
+  auto make_nb_discord = [] (int val, int your_val) {
+    return "c-" + tostr(val) + "-" + tostr(your_val);
+  };
+  
   /* update my friends' response */
   for(MetaFeature f : this->feat) {
     string name = this->feat_name[f];
@@ -594,6 +609,29 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
               node->gm->resp[id] -= (*param)[name];
               updateRespByHandle(id);
             }
+          }
+        }
+        break;
+      case FEAT_NB_DISCORD:
+        for(auto id : model->invMarkovBlanket(*node->gm, pos)) {
+          if(node->gm->blanket[id].size() > 0) {
+            double yourval = node->gm->getLabel(id);
+            if(node->gm->vary[id][pos] > 1) { // more than the first time.
+              // invalidate old feat.
+              double* oldfeat = findFeature(node->gm->feat[id], make_nb_discord(yourval, oldval));
+              assert(oldfeat != nullptr and *oldfeat != 0);
+              node->gm->resp[id] -= (*param)[make_nb_discord(yourval, oldval)];
+              (*oldfeat)--;
+            }
+            // insert new feat.
+            double* newfeat = findFeature(node->gm->feat[id], make_nb_discord(yourval, val));
+            if(newfeat == nullptr) {
+              insertFeature(node->gm->feat[id], make_nb_discord(yourval, val));
+            }else{
+              (*newfeat)++;
+            }
+            node->gm->resp[id] += (*param)[make_nb_discord(yourval, val)];
+            updateRespByHandle(id);
           }
         }
         break;
@@ -635,7 +673,7 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
         }
         break;
       default:
-        throw "unrecognized meta-feature";
+        break;
     }
   }
 
@@ -726,7 +764,7 @@ Location GibbsPolicy::policy(MarkovTreeNodePtr node) {
 
 /////////////////////////// Block Policy ///////////////////////////////
 BlockPolicy::BlockPolicy(ModelPtr model, const variables_map& vm)
-  : Policy(model, vm) {
+  : GibbsPolicy(model, vm) {
 
 }
 
@@ -779,7 +817,7 @@ void BlockPolicy::test(Policy::ResultPtr result) {
 
 
 void BlockPolicy::test(BlockPolicy::ResultPtr result, double budget) {
-  std::cout << "> test " << std::endl;
+  *auxlg << "> test " << std::endl;
   lg->begin("test");
   lg->begin("param");
   *lg << *param;
@@ -831,38 +869,38 @@ void BlockPolicy::test_policy(ptr<BlockPolicy::Result> result, double budget) {
   result->time += total_budget / result->size();
   result->wallclock += (double)(time_end - time_start) / CLOCKS_PER_SEC;
   lg->begin("time");
-  std::cout << "time: " << result->time << std::endl;
+  *auxlg << "time: " << result->time << std::endl;
   *lg << result->time << std::endl;
   lg->end(); // </time>
   lg->begin("wallclock");
-  std::cout << "wallclock: " << result->wallclock << std::endl;
+  *auxlg << "wallclock: " << result->wallclock << std::endl;
   *lg << result->wallclock << std::endl;
   lg->end(); // </wallclock>
   lg->begin("wallclock_sample");
-  std::cout << "wallclock_sample: " << result->wallclock_sample << std::endl;
+  *auxlg << "wallclock_sample: " << result->wallclock_sample << std::endl;
   *lg << result->wallclock_sample << std::endl;
   lg->end();
   lg->begin("wallclock_policy");
-  std::cout << "wallclock_policy: " << result->wallclock_policy << std::endl;
+  *auxlg << "wallclock_policy: " << result->wallclock_policy << std::endl;
   *lg << result->wallclock_policy << std::endl;
   lg->end();
   if (this->model->scoring == Model::SCORING_ACCURACY) {
     lg->begin("accuracy");
     *lg << accuracy << std::endl;
-    std::cout << "acc: " << accuracy << std::endl;
+    *auxlg << "acc: " << accuracy << std::endl;
     lg->end(); // </accuracy>
     result->score = accuracy;
   } else if (this->model->scoring == Model::SCORING_NER) {
     double f1 = 2 * accuracy * recall / (accuracy + recall);
     lg->begin("accuracy");
     *lg << f1 << std::endl;
-    std::cout << "f1: " << f1 << std::endl;
+    *auxlg << "f1: " << f1 << std::endl;
     lg->end(); // </accuracy>
     result->score = f1;
   } else if (this->model->scoring == Model::SCORING_LHOOD) {
     lg->begin("accuracy");
     *lg << accuracy << std::endl;
-    std::cout << "lhood: " << accuracy << std::endl;
+    *auxlg << "lhood: " << accuracy << std::endl;
     lg->end(); // </accuracy>
     result->score = accuracy;
   }
@@ -874,6 +912,165 @@ void BlockPolicy::test_policy(Policy::ResultPtr result) {
   this->test_policy(block_result, 1.0);
 }
 
+void BlockPolicy::sample(int tid, MarkovTreeNodePtr node) {
+  node->depth = 0;
+  node->choice = -1;
+  try{
+    objcokus& rng = thread_pool.rngs[tid];
+    node->gm->rng = &rng; 
+    for(size_t i = 0; i < node->gm->size(); i++) {
+      this->sampleOne(node, rng, i);
+      thread_pool.lock();
+      this->updateResp(node, rng, i, nullptr);
+      thread_pool.unlock();
+      if(verbose) {
+        lg->begin("T_0_i_" + to_string(i));
+        logNode(node);
+        lg->end();
+      }
+    }
+    for(size_t t = 1; t < T; t++) {
+      for(size_t i = 0; i < node->gm->size(); i++) {
+        node->time_stamp = t * node->gm->size() + i;
+        /* extract features */
+        FeaturePointer feat = node->gm->feat[i];
+
+        // double resp = node->gm->resp[i];
+        double log_resp = HeteroSampler::score(param, feat); // fix: param always changes, so does resp.
+        double logR = 0;
+        double staleness = 0;
+        PolicyExample example;
+        
+        /* estimate reward */
+#if REWARD_SCHEME == REWARD_ACCURACY
+        ptr<Tag> old_tag = cast<Tag>(node->gm);
+        auto is_equal = [&] () {
+          return (double)(old_tag->tag[i] == old_tag->seq->tag[i]); 
+        };
+        double reward_baseline = is_equal();
+        int oldval = node->gm->getLabel(i);
+        for(size_t j = 0; j < J; j++) {
+          this->sampleOne(node, rng, i);
+          double reward = is_equal();
+          logR += reward - reward_baseline; 
+          if(j < J-1)  // reset.
+            node->gm->setLabel(i, oldval);
+        }
+        logR /= (double)J;
+
+#elif REWARD_SCHEME == REWARD_LHOOD
+        logR = sampleDelayedReward(node, i, this->mode_reward, this->rewardK);
+        
+        if(lets_resp_reward) {  // record training examples.
+        // if(logR > 5) {  // record high-reward examples.
+          example.oldstr = node->gm->str();
+        }
+        
+        this->sampleOne(node, rng, i);
+        // int oldval = node->gm->getLabel(i);
+        // const int num_label = node->gm->numLabels(i);
+        // this->sampleOne(node, rng, i);
+        // logR =  - node->gm->sc[oldval];
+        // for(int label = 0; label < num_label; label++) {
+        //   logR += exp(node->gm->sc[label]) * node->gm->sc[label];
+        // }
+        
+        // for(size_t j = 0; j < J; j++) {
+        //   if(j < J-1) {
+        //     model->sampleOne(*node->gm, rng, i);
+        //     node->gm->setLabel(i, oldval);
+        //   }else{
+        //     this->sampleOne(node, rng, i);
+        //   }
+        //   if(j  == 0) {
+        //     staleness = node->gm->staleness[i];
+        //   }
+        //   logR += node->gm->reward[i];
+        // }
+        // logR /= (double)J;
+        
+#endif
+        /* use gradients to update model */
+
+        thread_pool.lock();
+
+        auto grad = makeParamPointer();
+        /* update meta-model (strategy 1) */
+        if(learning == "linear") {
+          mapUpdate(*grad, *feat, (logR - log_resp));
+        }
+        
+//          /* update meta-model (strategy 1.5) */
+//          mapUpdate(*grad, *feat, ((logR > 0) - resp));
+
+        /* update meta-model (strategy 1.6) */
+//          if(logR > 0) {
+//            mapUpdate(*grad, *feat, (1 - resp));
+//          }else{
+//            mapUpdate(*grad, *feat, (-1 - resp));
+//          }
+
+        /* update meta-model (strategy 2) */
+        if(learning == "logistic") {
+          double resp = logisticFunc(log_resp);
+          if(logR > 0) {
+            mapUpdate(*grad, *feat, (1-resp));
+          }else{
+            mapUpdate(*grad, *feat, -resp);
+          }
+        }
+        
+        /* update meta-model (strategy 3) neural network */
+        if(learning == "nn") {
+          double resp = logisticFunc(log_resp);
+          if(param->count("L2-w") == 0) {
+            (*param)["L2-w"] = 0;
+          }
+          if(param->count("L2-b") == 0) {
+            (*param)["L2-b"] = 0;
+          }
+          double w = (*param)["L2-w"];
+          double b = (*param)["L2-b"];
+          double diff = (logR - w * resp - b);
+          mapUpdate(*grad, *feat, diff * resp * (1 - resp) * w);
+          mapUpdate(*grad, "L2-w", diff * resp);
+          mapUpdate(*grad, "L2-b", diff);
+        }
+        
+        adagrad(param, G2, grad, eta);   // overwrite adagrad, for fine-grain gradients. (return node->gradient empty).
+
+        
+       if(lets_resp_reward) {  // record training examples.
+          example.reward = logR;
+          example.staleness = staleness;
+          example.resp = log_resp;
+          example.feat = makeFeaturePointer();
+          example.param = makeParamPointer();
+          example.node = node;
+          example.str = node->gm->str();
+          example.choice = i;
+          *example.feat = *feat;
+          *example.param = *param;
+          this->examples.push_back(example);
+        }
+        
+        if(verbose) {
+          lg->begin("T_" + to_string(t) + "_i_" + to_string(i));
+          logNode(node);
+          lg->end();
+        }
+
+        /* update response */
+        this->updateResp(node, rng, i, nullptr);
+        
+        thread_pool.unlock();
+      }
+    }
+    node->log_weight = 0;
+  }catch(const char* ee) {
+    cout << "error: " << ee << endl;
+  }
+}
 
 MarkovTreeNodePtr BlockPolicy::sampleOne(ptr<BlockPolicy::Result> result,
     objcokus& rng,
@@ -890,11 +1087,6 @@ MarkovTreeNodePtr BlockPolicy::sampleOne(ptr<BlockPolicy::Result> result,
   clock_end = clock();
   result->wallclock_policy += (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
   return node;
-}
-
-
-Location BlockPolicy::policy(MarkovTreeNodePtr node) {
-  throw "not implemented.";
 }
 
 

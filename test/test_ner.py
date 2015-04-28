@@ -13,24 +13,23 @@ class TestNER(unittest.TestCase):
         assert(float(line.split(' ')[-2]) >= 55)
 
     def test_small_gibbs_policy(self):
-        cmd = "./bin/policy --inference Gibbs --policy gibbs --output result/eng_ner/gibbs  " + \
+        cmd = "./bin/policy --type tagging --policy gibbs --output result/eng_ner/gibbs_small  " + \
                     "--model  model/eng_ner/gibbs_small.model --train  data/eng_ner/train_small " + \
-                    "--test data/eng_ner/test_small --eta 1 --T 6   --log log/eng_ner/gibbs"
+                    "--test data/eng_ner/test_small --eta 1 --T 6   --log log/eng_ner/gibbs_small"
         print cmd
         execute(cmd)
-        line = execute("cat result/eng_ner/gibbs/T4.xml | grep '<accuracy>' -A 1 | tail -n 1")
+        line = execute("cat result/eng_ner/gibbs_small/T4.xml | grep '<accuracy>' -A 1 | tail -n 1")
         assert(float(line) >= 0.5)
 
-"""
     def test_small_adaptive_policy(self):
-            cmd = "./bin/policy --inference Gibbs --policy adaptive --output result/eng_ner/adaptive  " + \
+            cmd = "./bin/policy --type tagging --policy adaptive --output result/eng_ner/adaptive_small  " + \
                         "--model  model/eng_ner/gibbs_small.model --train  data/eng_ner/train_small " + \
                         "--test data/eng_ner/test_small --eta 1 --T 6  " + \
-                        "--feat 'sp cond-ent bias nb-vary nb 01-unigram-ent' --reward 0  --log log/eng_ner/adaptive"
+                        "--feat 'sp cond-ent bias nb-vary nb-discord' --reward 0  --log log/eng_ner/adaptive_small"
             print cmd
             execute(cmd)
-            line = execute("cat result/eng_ner/adaptive/b5.00.xml | grep '<accuracy>' -A 1 | tail -n 1")
+            line = execute("cat result/eng_ner/adaptive_small/b5.00.xml | grep '<accuracy>' -A 1 | tail -n 1")
             assert(float(line) >= 0.5)
-"""
+
 if __name__ == "__main__":
     unittest.main()

@@ -13,7 +13,7 @@ namespace HeteroSampler {
 enum MetaFeature { FEAT_BIAS, 
                    FEAT_NB_VARY, 
                    FEAT_NB_ENT, 
-                   FEAT_NB_CONSENT, 
+                   FEAT_NB_DISCORD, 
                    FEAT_COND_ENT,
                    FEAT_LOG_COND_ENT,
                    FEAT_01_COND_ENT,
@@ -221,7 +221,7 @@ public:
   ModelPtr model_unigram;         // unigram/lower-order model.
 
   objcokus rng;
-  std::shared_ptr<XMLlog> lg;
+  std::shared_ptr<XMLlog> lg, auxlg;
   ParamPointer param, G2;
 
   /* parallel environment. */
@@ -242,7 +242,12 @@ public:
   size_t T; // how many sweeps.
 };
 
-class BlockPolicy : public Policy {
+class BlockPolicy : public GibbsPolicy {
+/* Implement Adaptive Selection Policy on a block of training examples 
+ * > BlockPolicy inherits from GibbsPolicy, because 
+ *   it uses gibbs policy to exlore rewards during training
+ * > BlockPolicy has policy(ResultPtr result) that output location action based on a block of examples.
+ */
 public:
   BlockPolicy(ModelPtr model, const variables_map& vm);
 
@@ -256,9 +261,14 @@ public:
 
   typedef ptr<BlockPolicy::Result> ResultPtr;
 
+  /* primitive sampling operation */
   virtual MarkovTreeNodePtr sampleOne(ResultPtr result,
                                       objcokus& rng,
                                       const Location& loc);
+  using Policy::sampleOne;
+
+  /* sample and collect reward during training */
+  virtual void sample(int tid, MarkovTreeNodePtr node);
 
   /* overrides inherited virtual method,
    * calls method test(corpus, budget = 1) */
@@ -275,7 +285,6 @@ public:
   virtual void test_policy(Policy::ResultPtr result);
   virtual void test_policy(ResultPtr result, double budget);
 
-  virtual Location policy(MarkovTreeNodePtr node);
   virtual Location policy(ResultPtr result);
 };
 

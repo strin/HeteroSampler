@@ -1,7 +1,15 @@
 HeteroSampler [![Build Status](https://travis-ci.org/strin/HeteroSampler.svg?branch=release)](https://travis-ci.org/strin/HeteroSampler)
 =============
 
-This project is a C++ implementation of HeteroSamplers: heterogenous Gibbs samplers for structured prediction problems. It is based on algorithms published in the AISTATS 2015 paper "Learning Where to Sample in Structured Prediction" by Shi Tianlin, Jacob Steinhardt, and Percy Liang.
+This project is a C++ implementation of HeteroSamplers: heterogenous Gibbs samplers for structured prediction problems. It is based on algorithms published in the AISTATS 2015 paper 
+
+>Shi Tianlin, Jacob Steinhardt, and Percy Liang 
+
+><a href="http://stanford.edu/~tianlins/research/adainfer.pdf">Learning Where to Sample in Structured Prediction</a>
+
+>18th International Conference on Artificial Intelligence and Statistics
+
+
 
 How does it work
 ----------------
@@ -58,6 +66,8 @@ cmake .
 make
 ```
 
+The compilation will create the directory "bin/". All binary executables will be located in it.
+
 Example
 =======
 
@@ -67,7 +77,7 @@ Pre-Train a Sequence Tagging Model
 To pre-train an NER model, run <i>tagging</i> with the following parameters:
 
 ```
-./tagging --T 8 --B 5 --train data/eng_ner/train --test data/eng_ner/test --eta 0.3 --depthL 2 --windowL 2 --factorL 2 --output model/eng_ner/gibbs.model --scoring NER --Q 1 --log 'log/eng_ner/log' --testFrequency 1
+./bin/tagging --T 8 --B 5 --train data/eng_ner/train --test data/eng_ner/test --eta 0.3 --depthL 2 --windowL 2 --factorL 2 --output model/eng_ner/gibbs.model --scoring NER --Q 1 --log 'log/eng_ner/log' --testFrequency 1
 ```
 
 | Parameters | Meaning |
@@ -85,6 +95,41 @@ To pre-train an NER model, run <i>tagging</i> with the following parameters:
 | Q                 | number of passes over the training dataset |
 | log              |  path for log file | 
 | testFrequency | over what percentage of the training set to run a test |
+
+
+Scripts have been written for training various types of models, including
+
+```
+# learn NER model 
+./script/learn_ner.sh
+# learn POS model on WSJ dataset
+./script/learn_wsj.sh
+```
+
+
+Run Gibbs Policy on the Pre-Trained Model
+-------------------------------------------------
+```
+./bin/policy --type tagging --policy gibbs --output result/eng_ner/gibbs  --model model/eng_ner/gibbs_small.model --train  data/eng_ner/train_small --test data/eng_ner/test_small --eta 1 --T 4   --log log/eng_ner/gibbs
+```
+| Parameter | Meaning |
+|-----------|---------|
+| type      | the specific task to solve (tagging / ocr / ising / opengm) |
+| policy    | which policy to use (gibbs / adaptive) |
+| output    | where to dump the results |
+| model     | where to load the pre-trained model |
+| train     | location of training dataset |
+| test      | location of test dataset |
+| eta       | meta step size of AdaGRAD used in policy training |
+| T         | the computational resource contraint, how many effective passes are made |
+| log       | where to log |
+
+
+Run Adaptive Policy on the Pre-Trained Model
+--------------------------------------------
+Adaptive policy uses Gibbs policy as exploration strategy during training. It learns a block policy that selects which example and which part to sample at run time. 
+
+
 
 
 Citation

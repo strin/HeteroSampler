@@ -105,10 +105,10 @@ public:
 
   /// high-level methods.
   /* apply policy on a new test corpus */
-  ResultPtr test(ptr<Corpus> test_corpus);
+  virtual ResultPtr test(ptr<Corpus> test_corpus);
 
   /* apply policy on a test corpus with an existing result */
-  void test(ResultPtr result);
+  virtual void test(ResultPtr result);
 
   /* sub-procedure to test policy */
   virtual void test_policy(ResultPtr result);

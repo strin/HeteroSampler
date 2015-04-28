@@ -44,6 +44,7 @@ int main(int argc, char* argv[]) {
     // learning
     ("policy", po::value<string>()->default_value("gibbs"), "the policy used for sampling (gibbs / adaptive)")
     ("learning", po::value<string>()->default_value("logistic"), "learning strategy (logistic / nn)")
+    ("T", po::value<size_t>()->default_value(4), "number of sweeps by the policy")
     ("K", po::value<size_t>()->default_value(1), "number of trajectories")
     ("eta", po::value<double>()->default_value(1), "step-size for policy gradient (adagrad)")
     ("testCount", po::value<size_t>()->default_value(-1), "how many test data used ? default: all (-1). ")
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]) {
     ("temp_decay", po::value<double>()->default_value(0.9), "decay of temperature.")
     ("temp_magnify", po::value<double>()->default_value(0.1), "magnifying factor of init temperature.")
     // ouput
-    ("output", po::value<string>()->default_value("default"), "output path for this run")
+    ("output", po::value<string>()->default_value("result/default"), "output path for this run")
     ("log", po::value<string>()->default_value("log/latest.txt"), "log file for the model")
     // reward
     ("reward", po::value<int>()->default_value(0), "what is the depth of simulation to compute reward.")

@@ -57,6 +57,8 @@ ELSE()
   MESSAGE(FATAL_ERROR "CMakeLists.txt has not been tested/written for your compiler.")
 ENDIF()
 
+file(MAKE_DIRECTORY bin)
+
 ADD_LIBRARY(heterosampler SHARED
   src/feature.cpp
   src/corpus.cpp

@@ -114,6 +114,7 @@ Policy::Policy(ModelPtr model, const po::variables_map& vm)
   };
 
   for(string key : featopt) {
+    if(key == "") continue;
     add_feat(key);
   }
 
@@ -180,7 +181,7 @@ void Policy::sample(int tid, MarkovTreeNodePtr node) {
     }
     while (true) {
       node->choice = this->policy(node);
-      if (node->choice.type != Location::LOC_NULL) {
+      if (node->choice.type == Location::LOC_NULL) {
         node->log_weight = model->score(*node->gm);
         node->gradient = makeParamPointer();
         break;

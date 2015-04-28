@@ -16,32 +16,32 @@ using namespace std;
 namespace HeteroSampler {
 
 Policy::Policy(ModelPtr model, const po::variables_map& vm)
-  : model(model), test_thread_pool(vm["numThreads"].as<size_t>(),
-                                   [ & ] (int tid, MarkovTreeNodePtr node) {
-  this->sample(tid, node);
-}),
-thread_pool(vm["numThreads"].as<size_t>(),
-[&] (int tid, MarkovTreeNodePtr node) {
-  this->sample(tid, node);
-}),
-lazymax_lag(-1),
-model_unigram(nullptr),
-name(vm["output"].empty() ? "" : vm["output"].as<string>()),
-learning(vm["learning"].empty() ? "logistic" : vm["learning"].as<string>()),
-mode_reward(vm["reward"].empty() ? 0 : vm["reward"].as<int>()),
-mode_oracle(vm["oracle"].empty() ? 0 : vm["oracle"].as<int>()),
-rewardK(vm["rewardK"].empty() ? 1 : vm["rewardK"].as<int>()),
-K(vm["K"].empty() ? 1 : vm["K"].as<size_t>()),
-eta(vm["eta"].empty() ? 1 : vm["eta"].as<double>()),
-train_count(vm["trainCount"].empty() ? -1 : vm["trainCount"].as<size_t>()),
-test_count(vm["testCount"].empty() ? -1 : vm["testCount"].as<size_t>()),
-verbose(vm["verbose"].empty() ? false : vm["verbose"].as<bool>()),
-Q(vm["Q"].empty() ? 1 : vm["Q"].as<size_t>()),
-lets_inplace(vm["inplace"].empty() ? true : vm["inplace"].as<bool>()),
-lets_lazymax(vm["lets_lazymax"].empty() ? false : vm["lets_lazymax"].as<bool>()),
-init_method(vm["init"].empty() ? "" : vm["init"].as<string>()),
-param(makeParamPointer()), G2(makeParamPointer()) {
-  // parse options
+  : model(model), 
+    test_thread_pool(vm["numThreads"].as<size_t>(),
+                     [ & ] (int tid, MarkovTreeNodePtr node) {
+                        this->sample(tid, node);
+                     }),
+    thread_pool(vm["numThreads"].as<size_t>(),
+                    [ & ] (int tid, MarkovTreeNodePtr node) {
+                        this->sample(tid, node);
+                    }),
+    model_unigram(nullptr),
+    name(vm["output"].empty() ? "" : vm["output"].as<string>()),
+    learning(vm["learning"].empty() ? "logistic" : vm["learning"].as<string>()),
+    mode_reward(vm["reward"].empty() ? 0 : vm["reward"].as<int>()),
+    mode_oracle(vm["oracle"].empty() ? 0 : vm["oracle"].as<int>()),
+    rewardK(vm["rewardK"].empty() ? 1 : vm["rewardK"].as<int>()),
+    K(vm["K"].empty() ? 1 : vm["K"].as<size_t>()),
+    eta(vm["eta"].empty() ? 1 : vm["eta"].as<double>()),
+    train_count(vm["trainCount"].empty() ? -1 : vm["trainCount"].as<size_t>()),
+    test_count(vm["testCount"].empty() ? -1 : vm["testCount"].as<size_t>()),
+    verbose(vm["verbose"].empty() ? false : vm["verbose"].as<bool>()),
+    Q(vm["Q"].empty() ? 1 : vm["Q"].as<size_t>()),
+    lets_inplace(vm["inplace"].empty() ? true : vm["inplace"].as<bool>()),
+    init_method(vm["init"].empty() ? "" : vm["init"].as<string>()),
+    param(makeParamPointer()), G2(makeParamPointer()) {
+
+  // parse other options
   if (!vm["log"].empty() and vm["log"].as<string>() != "") {
     try {
       lg = std::make_shared<XMLlog>(vm["log"].as<string>());
@@ -53,23 +53,71 @@ param(makeParamPointer()), G2(makeParamPointer()) {
     lg = std::make_shared<XMLlog>();
   }
 
-  // feature switch
+  // parsing meta-feature 
+  vec<string> featopt;
   split(featopt, vm["feat"].as<string>(), boost::is_any_of(" "));
-  split(verbose_opt, vm["verbosity"].as<string>(), boost::is_any_of(" "));
 
-  // init stats
-  if (isinstance<CorpusLiteral>(model->corpus)) {
-    ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(model->corpus);
-    auto wordent_meanent = corpus->tagEntropySimple();
-    wordent = get<0>(wordent_meanent);
-    wordent_mean = get<1>(wordent_meanent);
-    auto wordfreq_meanfreq = corpus->wordFrequencies();
-    wordfreq = get<0>(wordfreq_meanfreq);
-    wordfreq_mean = get<1>(wordfreq_meanfreq);
-    auto tag_bigram_unigram = corpus->tagBigram();
-    tag_bigram = tag_bigram_unigram.first;
-    tag_unigram_start = tag_bigram_unigram.second;
+  MapInitializer<string, MetaFeature> feat_init(feat_map);
+  
+  feat_init("log-cond-ent", FEAT_LOG_COND_ENT) 
+          ("01-cond-ent", FEAT_01_COND_ENT) 
+          ("cond-ent", FEAT_COND_ENT)
+          ("unigram-ent", FEAT_UNIGRAM_ENT)
+          ("inv-unigram-ent", FEAT_INV_UNIGRAM_ENT)
+          ("logistic-unigram-ent", FEAT_LOGISTIC_UNIGRAM_ENT)
+          ("01-unigram-ent", FEAT_01_UNIGRAM_ENT)
+          ("bias", FEAT_BIAS)
+          ("nb-vary", FEAT_NB_VARY)
+          ("nb-ent", FEAT_NB_ENT)
+          ("oracle", FEAT_ORACLE)
+          ("oracle-ent", FEAT_ORACLE_ENT)
+          ("oracle-staleness", FEAT_ORACLE_STALENESS)
+          ("cond-lhood", FEAT_COND_LHOOD)
+          ("sp", FEAT_SP)
+          ("exp-sp", FEAT_EXP_SP)
+          ("log-sp", FEAT_LOG_SP)
+          ("sp-cond-ent", FEAT_SP_COND_ENT)
+          ("sp-unigram-ent", FEAT_UNIGRAM_ENT)
+          ;
+
+  MapInitializer<MetaFeature, string, MetaFeatureHash> name_init(feat_name);
+  name_init(FEAT_LOG_COND_ENT, "lce")
+            (FEAT_01_COND_ENT, "0ce")
+            (FEAT_COND_ENT, "ce")
+            (FEAT_BIAS, "b")
+            (FEAT_NB_VARY, "nv")
+            (FEAT_COND_LHOOD, "cl")
+            (FEAT_ORACLE, "o")
+            (FEAT_ORACLE_ENT, "oe")
+            (FEAT_ORACLE_STALENESS, "os")
+            (FEAT_UNIGRAM_ENT, "ue")
+            (FEAT_INV_UNIGRAM_ENT, "iue")
+            (FEAT_LOGISTIC_UNIGRAM_ENT, "lue")
+            (FEAT_01_UNIGRAM_ENT, "0ue")
+            (FEAT_NB_ENT, "ne")
+            (FEAT_SP, "sp")
+            (FEAT_EXP_SP, "esp")
+            (FEAT_LOG_SP, "lsp")
+            (FEAT_SP_COND_ENT, "spc")
+            (FEAT_SP_UNIGRAM_ENT, "spu")
+            ;
+
+  auto add_feat = [&] (string name) {
+    if(feat_map.contains(name)) {
+      MetaFeature f = feat_map[name];
+      this->feat.push_back(f);
+      this->feat_name[f] = name;
+      return true;
+    }else{
+      throw (string("unrecognized meta-feature") + name).c_str();
+    }
+  };
+
+  for(string key : featopt) {
+    add_feat(key);
   }
+
+  split(verbose_opt, vm["verbosity"].as<string>(), boost::is_any_of(" "));
 
   int sysres = system(("mkdir -p " + name).c_str());
 }
@@ -77,18 +125,6 @@ param(makeParamPointer()), G2(makeParamPointer()) {
 Policy::~Policy() {
   while (lg != nullptr and lg->depth() > 0)
     lg->end();
-}
-
-double Policy::reward(MarkovTreeNodePtr node) {
-  throw "function deprecated";
-  // auto& tag = *cast<Tag>(node->gm);
-  // // Tag& tag = *node->gm;
-  // const Instance* seq = tag.seq;
-  // double score = 0.0;
-  // for(int i = 0; i < tag.size(); i++) {
-  //   score -= (tag.tag[i] != seq->tag[i]);
-  // }
-  // return score;
 }
 
 double Policy::delayedReward(MarkovTreeNodePtr node, int depth, int maxdepth, vec<int>& actions) {
@@ -145,9 +181,6 @@ void Policy::sample(int tid, MarkovTreeNodePtr node) {
     while (true) {
       node->choice = this->policy(node);
       if (node->choice.type != Location::LOC_NULL) {
-        /* strategy 1 */
-//          node->log_weight = this->reward(node);
-        /* strategy 2 */
         node->log_weight = model->score(*node->gm);
         node->gradient = makeParamPointer();
         break;
@@ -175,15 +208,15 @@ void Policy::train(ptr<Corpus> corpus) {
   }
   if (Q == 0) { // notraining is needed.
     // set all feature weights to 1.
-    for (const string& opt : featopt) {
-      (*param)[opt] = 1;
+    for (const auto& opt : feat_name) {
+      (*param)[opt.second] = 1;
     }
     // overwrite.
-    if (featoptFind("sp"))
-      (*param)["sp"] = -0.3;
+    if (feat_name.find(FEAT_SP) != feat_name.end())
+      (*param)[feat_name[FEAT_SP]] = -0.3;
   }
   /* log policy examples */
-  if(lets_resp_reward) {
+  if (lets_resp_reward) {
     lg->begin("policy_example");
     for (auto example : this->examples) {
       example.serialize(lg);
@@ -195,16 +228,6 @@ void Policy::train(ptr<Corpus> corpus) {
 
 void Policy::train_policy(ptr<Corpus> corpus) {
   lg->begin("commit"); *lg << getGitHash() << endl; lg->end();
-  lg->begin("args");
-  if (isinstance<CorpusLiteral>(corpus)) {
-    lg->begin("wordent_mean");
-    *lg << wordent_mean << endl;
-    lg->end();
-    lg->begin("wordfreq_mean");
-    *lg << wordfreq_mean << endl;
-    lg->end();
-  }
-  lg->end();
   corpus->retag(model->corpus);
   size_t count = 0;
   examples.clear();
@@ -217,7 +240,6 @@ void Policy::train_policy(ptr<Corpus> corpus) {
     if (verbose)
       lg->begin("example_" + to_string(count));
     MarkovTree tree;
-//      Tag tag(seq.get(), corpus, &rng, model->param);
     ptr<GraphicalModel> gm = model->makeSample(*seq, model->corpus, &rng);
     tree.root->log_weight = -DBL_MAX;
     tree.root->model = this->model;
@@ -226,29 +248,6 @@ void Policy::train_policy(ptr<Corpus> corpus) {
       this->thread_pool.addWork(node);
     }
     thread_pool.waitFinish();
-    /*
-    for(size_t k = 0; k < K; k++) {
-      MarkovTreeNodePtr node = tree.root->children[k];
-      ParamPointer g = makeParamPointer();
-      if(node->gradient != nullptr)
-        mapUpdate(*g, *node->gradient);
-      while(node->children.size() > 0) {
-        node = node->children[0]; // take final sample.
-        if(node->gradient != nullptr) {
-          mapUpdate(*g, *node->gradient);
-        }
-      }
-      lg->begin("gradient");
-      *lg << *g << endl;
-      *lg << node->log_weight << endl;
-      lg->end();
-    }*/
-
-//      /* strategy 1. use Markov Tree to compute grad */
-//      this->gradientPolicy(tree);
-
-    /* strategy 2. compute gradient when sample */
-    // pass
 
     /* log nodes */
     if (verbose) {
@@ -398,199 +397,100 @@ FeaturePointer Policy::extractFeatures(MarkovTreeNodePtr node, int pos) {
   GraphicalModel& gm = *node->gm;
   size_t seqlen = gm.size();
   const Instance& seq = *gm.seq;
-  // bias.
-  if (featoptFind("bias") || featoptFind("all"))
-    insertFeature(feat, "b");
-  if (featoptFind("word-ent") || featoptFind("all")) {
-    size_t taglen = model->corpus->tags.size();
-    string word = cast<TokenLiteral>(seq.seq[pos])->word;
-    // feat: entropy and frequency.
-    if (wordent->find(word) == wordent->end())
-      insertFeature(feat, "word-ent", log(taglen) - wordent_mean);
-    else
-      insertFeature(feat, "word-ent", (*wordent)[word]);
-  }
-  if (featoptFind("word-freq") || featoptFind("all")) {
-    if (isinstance<TokenLiteral>(seq.seq[pos])) {
-      string word = cast<TokenLiteral>(seq.seq[pos])->word;
-      ptr<CorpusLiteral> corpus = cast<CorpusLiteral>(this->model->corpus);
-      if (wordfreq->find(word) == wordfreq->end())
-        insertFeature(feat, "word-freq", log(corpus->total_words) - wordfreq_mean);
-      else
-        insertFeature(feat, "word-freq", (*wordfreq)[word]);
-      StringVector nlp = corpus->getWordFeat(word);
-      for (const string wordfeat : *nlp) {
-        if (wordfeat == word) continue;
-        string lowercase = word;
-        transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
-        if (wordfeat == lowercase) continue;
-        if (wordfeat[0] == 'p' or wordfeat[0] == 's') continue;
-        insertFeature(feat, wordfeat);
-      }
-    }
-  }
-
-  if (featoptFind(COND) || featoptFind(NB_ENT__COND) || featoptFind("all")) {
-    insertFeature(feat, COND, node->gm->entropy[pos]);
-  }
-
-  if (featoptFind("log-cond-ent")) {
-    insertFeature(feat, "log-cond-ent", log(1e-40 + node->gm->entropy[pos]));
-  }
-
-  if (featoptFind("01-cond-ent")) {
-    insertFeature(feat, "01-cond-ent", node->gm->entropy[pos] < 1e-10 ? 1 : 0);
-  }
-
-  if (featoptFind(COND_LHOOD) || featoptFind("all")) {
-    int label = node->gm->getLabel(pos);
-    insertFeature(feat, COND_LHOOD, node->gm->this_sc[pos][label]);
-  }
-
-  if (featoptFind("unigram-ent")) {
-    if (model_unigram) {
-      if (std::isnan(node->gm->entropy_unigram[pos])) {
-        ptr<GraphicalModel> gm_ptr = model->copySample(*node->gm);
-        auto& gm = *gm_ptr;
-        model_unigram->sampleOne(gm, *gm.rng, pos);
-        node->gm->entropy_unigram[pos] = gm.entropy[pos];
-      }
-      insertFeature(feat, "unigram-ent", node->gm->entropy_unigram[pos]);
-    }
-  }
-
-  if (featoptFind("inv-unigram-ent")) {
-    if (model_unigram) {
-      if (std::isnan(node->gm->entropy_unigram[pos])) {
-        ptr<GraphicalModel> gm_ptr = model->copySample(*node->gm);
-        auto& gm = *gm_ptr;
-        model_unigram->sampleOne(gm, *gm.rng, pos);
-        node->gm->entropy_unigram[pos] = gm.entropy[pos];
-      }
-      insertFeature(feat, "inv-unigram-ent", 1 / (1e-4 + node->gm->entropy_unigram[pos]));
-    }
-  }
-
-  if (featoptFind("01-unigram-ent")) {
-    if (model_unigram) {
-      if (std::isnan(node->gm->entropy_unigram[pos])) {
-        ptr<GraphicalModel> gm_ptr = model->copySample(*node->gm);
-        auto& gm = *gm_ptr;
-        model_unigram->sampleOne(gm, *gm.rng, pos);
-        node->gm->entropy_unigram[pos] = gm.entropy[pos];
-      }
-      insertFeature(feat, "01-unigram-ent", node->gm->entropy_unigram[pos] < 1e-8);
-    }
-  }
-
-  if (featoptFind("logistic-unigram-ent")) {
-    if (model_unigram) {
-      if (std::isnan(node->gm->entropy_unigram[pos])) {
-        ptr<GraphicalModel> gm_ptr = model->copySample(*node->gm);
-        auto& gm = *gm_ptr;
-        model_unigram->sampleOne(gm, *gm.rng, pos);
-        node->gm->entropy_unigram[pos] = gm.entropy[pos];
-      }
-      insertFeature(feat, "logistic-unigram-ent", logisticFunc(node->gm->entropy_unigram[pos]));
-    }
-  }
-
-  if (featoptFind(NER_DISAGREE) || featoptFind("all")) {
-    if (model->scoring == Model::SCORING_NER) { // tag inconsistency, such as B-PER I-LOC
-      auto& tag = *cast<Tag>(node->gm);
-      ptr<Corpus> corpus = model->corpus;
-      string tg = corpus->invtags[tag.tag[pos]];
-      if (pos >= 1) {
-        string prev_tg = corpus->invtags[tag.tag[pos - 1]];
-        if ((prev_tg[0] == 'B' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))
-            or (prev_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != prev_tg.substr(1))) {
-          insertFeature(feat, NER_DISAGREE_L);
-        }
-      }
-      if (pos < node->gm->size() - 1) {
-        string next_tg = corpus->invtags[tag.tag[pos + 1]];
-        if ((next_tg[0] == 'I' and tg[0] == 'B' and tg.substr(1) != next_tg.substr(1))
-            or (next_tg[0] == 'I' and tg[0] == 'I' and tg.substr(1) != next_tg.substr(1))) {
-          insertFeature(feat, NER_DISAGREE_R);
-        }
-      }
-    }
-  }
-
-  if (featoptFind("ising-disagree")) {
-    auto image = (const ImageIsing*)(node->gm->seq); // WARNING: Hack, no dynamic check.
-    auto& tag = *cast<Tag>(node->gm);
-    if (image == NULL)
-      throw "cannot use feature 'ising-disagree' on non-ising dataset.";
-    size_t disagree = 0;
-    ImageIsing::Pt pt = image->posToPt(pos);
-    vec2d<int> steer = {{1, 0}, { -1, 0}, {0, 1}, {0, -1}};
-    for (auto steer_it : steer) {
-      ImageIsing::Pt this_pt = pt;
-      this_pt.h += steer_it[0];
-      this_pt.w += steer_it[1];
-      if (this_pt.h >= 0 and this_pt.h < image->H
-          and this_pt.w >= 0 and this_pt.w < image->W) {
-        size_t pos2 = image->ptToPos(this_pt);
-        if (tag.tag[pos2] != tag.tag[pos]) {
-          disagree++;
-        }
-      }
-    }
-    insertFeature(feat, "ising-disagree", disagree);
-  }
-
-  /* features based on neighbors. */
-  if (featoptFind(NB_VARY)) {
-    insertFeature(feat, NB_VARY, 0); // to be modified dynamically.
-  }
-
-  if (featoptFind(NB_ENT) || featoptFind(NB_ENT__COND)) {
-    double nb_sure = 0;
-    int count = 0;
-    for (auto id : model->markovBlanket(*node->gm, pos)) {
-      nb_sure += node->gm->entropy[id];
-      count++;
-    }
-    nb_sure /= (double)count;
-    insertFeature(feat, NB_ENT, nb_sure);
-  }
-
-  if (featoptFind(NB_ENT__COND)) {
-    insertFeature(feat, NB_ENT__COND, getFeature(feat, NB_ENT) * node->gm->entropy[pos]);
-  }
-
-  /* oracle features, that require sampling */
-  if (featoptFind(ORACLE) || featoptFind(ORACLEv)) {
-    insertFeature(feat, ORACLE, 0);     // computed in updateResp.
-  }
-
-  if (featoptFind(ORACLE_ENT) || featoptFind(ORACLE_ENTv)) {
-    insertFeature(feat, ORACLE_ENT, 0);  // computed in updateResp.
-  }
-
-  if (featoptFind(ORACLE_STALENESS) || featoptFind(ORACLE_STALENESSv)) {
-    insertFeature(feat, ORACLE_STALENESS, 0); // computed in updateResp.
-  }
-
-  /* features to avoid over-exploration */
-  if (featoptFind("exp-sp")) {
-    insertFeature(feat, "exp-sp", exp(node->gm->mask[pos]));
-  }
-  if (featoptFind("log-sp")) {
-    insertFeature(feat, "log-sp", log(1 + node->gm->mask[pos]));
-  }
-  if (featoptFind("sp")) {
-    insertFeature(feat, "sp", node->gm->mask[pos]);
-  }
   
-  if (featoptFind("sp-cond-ent")) {
-    insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos]) + "-cond-ent", node->gm->entropy[pos]);
-  }
-  if (featoptFind("sp-unigram-ent")) {
-    insertFeature(feat, boost::lexical_cast<string>(node->gm->mask[pos]) + "-unigram-ent", node->gm->entropy_unigram[pos]);
-  }
+  for(MetaFeature f : this->feat) {
 
+    string name = feat_name[f];
+    auto add_feat = [&] (double value) {
+      insertFeature(feat, name, value);
+    };
+
+    auto unigram_ent = [&] () {
+      if (model_unigram) {
+        if (std::isnan(node->gm->entropy_unigram[pos])) {
+          ptr<GraphicalModel> gm_ptr = model->copySample(*node->gm);
+          auto& gm = *gm_ptr;
+          model_unigram->sampleOne(gm, *gm.rng, pos);
+          node->gm->entropy_unigram[pos] = gm.entropy[pos];
+          return node->gm->entropy_unigram[pos];
+        }
+      }
+      return 0.0;
+    };
+
+    double nb_sure;
+    int count;
+    int label;
+
+    switch(f) {
+      case FEAT_BIAS:
+        add_feat(1.0);
+        break;
+      case FEAT_COND_ENT:
+        add_feat(node->gm->entropy[pos]);
+        break;
+      case FEAT_LOG_COND_ENT:
+        add_feat(log(1e-40 + node->gm->entropy[pos]));
+        break;
+      case FEAT_01_COND_ENT:
+        add_feat(node->gm->entropy[pos] < 1e-10 ? 1.0 : 0.0);
+        break;
+      case FEAT_COND_LHOOD:
+        label = node->gm->getLabel(pos);
+        add_feat(node->gm->this_sc[pos][label]);
+        break;
+      case FEAT_UNIGRAM_ENT:
+        add_feat(unigram_ent());
+        break;
+      case FEAT_INV_UNIGRAM_ENT:
+        add_feat(1 / (1e-4 + unigram_ent()));
+        break;
+      case FEAT_01_UNIGRAM_ENT:
+        add_feat(double(unigram_ent() < 1e-8));
+        break;
+      case FEAT_LOGISTIC_UNIGRAM_ENT:
+        add_feat(logisticFunc(unigram_ent()));
+        break;
+      case FEAT_NB_ENT:
+        nb_sure = 0;
+        count = 0;
+        for (auto id : model->markovBlanket(*node->gm, pos)) {
+          nb_sure += node->gm->entropy[id];
+          count++;
+        }
+        nb_sure /= (double)count;
+        add_feat(nb_sure);
+        break;
+      case FEAT_SP:
+        add_feat(node->gm->mask[pos]);
+        break;
+      case FEAT_EXP_SP:
+        add_feat(exp(node->gm->mask[pos]));
+        break;
+      case FEAT_LOG_SP:
+        add_feat(log(1 + node->gm->mask[pos]));
+        break;
+      case FEAT_SP_COND_ENT:
+        insertFeature(feat, 
+                      boost::lexical_cast<string>(node->gm->mask[pos]) + "-cond-ent", 
+                      node->gm->entropy[pos]);
+        break;
+      case FEAT_SP_UNIGRAM_ENT:
+        insertFeature(feat, 
+                      boost::lexical_cast<string>(node->gm->mask[pos]) + "-unigram-ent", 
+                      node->gm->entropy_unigram[pos]);
+        break;
+      case FEAT_NB_VARY:
+      case FEAT_ORACLE:
+      case FEAT_ORACLE_ENT:
+      case FEAT_ORACLE_STALENESS:
+        // to be added dynamically.
+        add_feat(0);
+        break;
+      default:
+        throw "unrecognized meta-feature";
+    }
+  }
   return feat;
 }
 
@@ -636,6 +536,8 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
   node->gm->resp[pos] = HeteroSampler::score(this->param, feat);
   int val = node->gm->getLabel(pos), oldval = node->gm->oldlabels[pos];
 
+  set<int> visited;
+
   auto updateRespByHandle = [&] (int id) {
     if (heap == nullptr) return;
     Value& val = *node->gm->handle[id];
@@ -644,122 +546,97 @@ void Policy::updateResp(MarkovTreeNodePtr node, objcokus& rng, int pos, Heap* he
   };
   updateRespByHandle(pos);
 
+  auto computeOracle = [&] (int id) {
+    auto feat = findFeature(node->gm->feat[id], feat_name[FEAT_ORACLE]);
+    *feat = sampleDelayedReward(node, id, this->mode_oracle, this->rewardK);
+    node->gm->resp[id] = HeteroSampler::score(this->param, node->gm->feat[id]);
+    updateRespByHandle(id);
+  };
+
+  auto computeOracleEnt = [&] (double * feat, int id) {
+    int oldval = node->gm->getLabel(id);
+    model->sampleOne(*node->gm, rng, id, false);
+    *feat = logEntropy(&node->gm->sc[0], node->gm->numLabels(id));
+    node->gm->setLabel(id, oldval);
+    node->gm->resp[id] = HeteroSampler::score(this->param, node->gm->feat[id]);
+    updateRespByHandle(id);
+  };
+
+  auto computeStaleness = [&] (double * feat, int id) {
+    int oldval = node->gm->getLabel(id);
+    model->sampleOne(*node->gm, rng, id, false);
+    *feat = node->gm->this_sc[id][oldval] - node->gm->sc[oldval];
+    node->gm->setLabel(id, oldval);
+    node->gm->resp[id] = HeteroSampler::score(this->param, node->gm->feat[id]);
+    updateRespByHandle(id);
+  };
+
   /* update my friends' response */
-  if (featoptFind(NB_VARY)) {
-    /* update the nodes in inv Markov blanket */
-    for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
-      if (node->gm->blanket[id].size() > 0) {
-        assert(node->gm->blanket[id].contains(pos));
-        double* feat_nb_vary = findFeature(node->gm->feat[id], NB_VARY);
-        if (node->gm->blanket[id][pos] != val and node->gm->changed[id][pos] == false) {
-          node->gm->changed[id][pos] = true;
-          (*feat_nb_vary)++;
-          node->gm->resp[id] += (*param)[NB_VARY];
-          updateRespByHandle(id);
+  for(MetaFeature f : this->feat) {
+    string name = this->feat_name[f];
+    switch(f) {
+      case FEAT_NB_VARY:
+        /* update the nodes in inv Markov blanket */
+        for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
+          if (node->gm->blanket[id].size() > 0) {
+            assert(node->gm->blanket[id].contains(pos));
+            double* feat_nb_vary = findFeature(node->gm->feat[id], name);
+            if (node->gm->blanket[id][pos] != val and node->gm->changed[id][pos] == false) {
+              node->gm->changed[id][pos] = true;
+              (*feat_nb_vary)++;
+              node->gm->resp[id] += (*param)[name];
+              updateRespByHandle(id);
+            }
+            if (node->gm->blanket[id][pos] == val and node->gm->changed[id][pos] == true) {
+              node->gm->changed[id][pos] = false;
+              (*feat_nb_vary)--;
+              node->gm->resp[id] -= (*param)[name];
+              updateRespByHandle(id);
+            }
+          }
         }
-        if (node->gm->blanket[id][pos] == val and node->gm->changed[id][pos] == true) {
-          node->gm->changed[id][pos] = false;
-          (*feat_nb_vary)--;
-          node->gm->resp[id] -= (*param)[NB_VARY];
-          updateRespByHandle(id);
+        break;
+      case FEAT_NB_ENT:
+        for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
+          if (node->gm->blanket[id].size() > 0) {
+            double* feat_nb_ent = findFeature(node->gm->feat[id], name);
+            double ent_diff = (node->gm->entropy[pos] - node->gm->prev_entropy[pos])
+                              / (double)node->gm->blanket[id].size();;
+            (*feat_nb_ent) += ent_diff;
+            node->gm->resp[id] += (*param)[name] * ent_diff;
+          }
         }
-      }
-    }
-  }
-
-  if (featoptFind(NB_ENT) || featoptFind(NB_ENT__COND)) {
-    for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
-      if (node->gm->blanket[id].size() > 0) {
-        double* feat_nb_ent = findFeature(node->gm->feat[id], NB_ENT);
-        double ent_diff = (node->gm->entropy[pos] - node->gm->prev_entropy[pos])
-                          / (double)node->gm->blanket[id].size();;
-        (*feat_nb_ent) += ent_diff;
-        node->gm->resp[id] += (*param)[NB_ENT] * ent_diff;
-        if (featoptFind(NB_ENT__COND)) {
-          double* feat_nb_ent__cond = findFeature(node->gm->feat[id], NB_ENT__COND);
-          double ent = getFeature(node->gm->feat[id], COND);
-          (*feat_nb_ent__cond) += ent_diff * ent;
-          node->gm->resp[id] += (*param)[NB_ENT__COND] * ent_diff * ent;
+        break;
+      case FEAT_ORACLE:
+        computeOracle(pos);
+        visited.insert(pos);
+        for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
+          if (node->gm->blanket[id].size() > 0 and visited.count(id) == 0) { // has already been initialized.
+            computeOracle(id);
+            visited.insert(id);
+          }
+        }    
+        break;
+      case FEAT_ORACLE_ENT:
+        computeOracleEnt(findFeature(feat, name), pos);
+        for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
+          if (node->gm->blanket[id].size() > 0) { // has already been initialized.
+            computeOracleEnt(findFeature(node->gm->feat[id], name), id);
+          }
         }
-      }
+        break;
+      case FEAT_ORACLE_STALENESS:
+        computeStaleness(findFeature(feat, name), pos);
+        for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
+          if (node->gm->blanket[id].size() > 0) { // has already been initialized.
+            computeStaleness(findFeature(node->gm->feat[id], name), id);
+          }
+        }
+        break;
+      default:
+        throw "unrecognized meta-feature";
     }
   }
-
-  if (featoptFind(NER_DISAGREE)) {
-    if (getFeature(feat, NER_DISAGREE_L) and node->gm->blanket[pos - 1].size() > 0
-        and getFeature(node->gm->feat[pos - 1], NER_DISAGREE_R) == 0) {
-      insertFeature(node->gm->feat[pos - 1], NER_DISAGREE_R);
-      node->gm->resp[pos - 1] = (*param)[NER_DISAGREE_R];
-      updateRespByHandle(pos - 1);
-    }
-    if (getFeature(feat, NER_DISAGREE_R) and node->gm->blanket[pos + 1].size() > 0
-        and getFeature(node->gm->feat[pos + 1], NER_DISAGREE_L) == 0) {
-      insertFeature(node->gm->feat[pos + 1], NER_DISAGREE_L);
-      node->gm->resp[pos + 1] = (*param)[NER_DISAGREE_L];
-      updateRespByHandle(pos + 1);
-    }
-  }
-
-  if (featoptFind(ORACLE) || featoptFind(ORACLEv)) {  // oracle feature is just *reward*.
-    auto computeOracle = [&] (int id) {
-      auto feat = findFeature(node->gm->feat[id], ORACLE);
-
-      *feat = sampleDelayedReward(node, id, this->mode_oracle, this->rewardK);
-
-      if (featoptFind(ORACLE)) {
-        node->gm->resp[id] = HeteroSampler::score(this->param, node->gm->feat[id]);
-        updateRespByHandle(id);
-      }
-    };
-    computeOracle(pos);
-    set<int> visited;
-    visited.insert(pos);
-    for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
-      if (node->gm->blanket[id].size() > 0 and visited.count(id) == 0) { // has already been initialized.
-        computeOracle(id);
-        visited.insert(id);
-      }
-    }
-  }
-
-  if (featoptFind(ORACLE_ENT) || featoptFind(ORACLE_ENTv)) {
-    auto computeOracle = [&] (double * feat, int id) {
-      int oldval = node->gm->getLabel(id);
-      model->sampleOne(*node->gm, rng, id, false);
-      *feat = logEntropy(&node->gm->sc[0], node->gm->numLabels(id));
-      node->gm->setLabel(id, oldval);
-      if (featoptFind(ORACLE_ENT)) {
-        node->gm->resp[id] = HeteroSampler::score(this->param, node->gm->feat[id]);
-        updateRespByHandle(id);
-      }
-    };
-    computeOracle(findFeature(feat, ORACLE_ENT), pos);
-    for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
-      if (node->gm->blanket[id].size() > 0) { // has already been initialized.
-        computeOracle(findFeature(node->gm->feat[id], ORACLE_ENT), id);
-      }
-    }
-  }
-
-  if (featoptFind(ORACLE_STALENESS) || featoptFind(ORACLE_STALENESSv)) {
-    auto computeOracle = [&] (double * feat, int id) {
-      int oldval = node->gm->getLabel(id);
-      model->sampleOne(*node->gm, rng, id, false);
-      *feat = node->gm->this_sc[id][oldval] - node->gm->sc[oldval];
-      node->gm->setLabel(id, oldval);
-      if (featoptFind(ORACLE_STALENESS)) {
-        node->gm->resp[id] = HeteroSampler::score(this->param, node->gm->feat[id]);
-        updateRespByHandle(id);
-      }
-    };
-    computeOracle(findFeature(feat, ORACLE_STALENESS), pos);
-    for (auto id : model->invMarkovBlanket(*node->gm, pos)) {
-      if (node->gm->blanket[id].size() > 0) { // has already been initialized.
-        computeOracle(findFeature(node->gm->feat[id], ORACLE_STALENESS), id);
-      }
-    }
-  }
-
 
   /* update Markov blanket */
   node->gm->blanket[pos] = node->gm->getLabels(model->markovBlanket(*node->gm, pos));
@@ -840,7 +717,7 @@ Location GibbsPolicy::policy(MarkovTreeNodePtr node) {
   if (node->depth == 0) node->time_stamp = 0;
   if (node->depth < T * node->gm->size()) {
     node->time_stamp++;
-    
+
     return Location(node->depth % node->gm->size());
   }
   return Location(); // stop.
@@ -848,7 +725,7 @@ Location GibbsPolicy::policy(MarkovTreeNodePtr node) {
 
 /////////////////////////// Block Policy ///////////////////////////////
 BlockPolicy::BlockPolicy(ModelPtr model, const variables_map& vm)
-  : Policy(model, vm){
+  : Policy(model, vm) {
 
 }
 
@@ -858,7 +735,7 @@ BlockPolicy::~BlockPolicy() {
 }
 
 
-BlockPolicy::Result::Result(ptr<Corpus> corpus) 
+BlockPolicy::Result::Result(ptr<Corpus> corpus)
   : Policy::Result::Result(corpus) {
 
 }
@@ -997,9 +874,9 @@ void BlockPolicy::test_policy(Policy::ResultPtr result) {
 }
 
 
-MarkovTreeNodePtr BlockPolicy::sampleOne(ptr<BlockPolicy::Result> result, 
-                                         objcokus& rng, 
-                                         const Location& loc) {
+MarkovTreeNodePtr BlockPolicy::sampleOne(ptr<BlockPolicy::Result> result,
+    objcokus& rng,
+    const Location& loc) {
   clock_t clock_start = clock(), clock_end;
   int index = loc.index, pos = loc.pos;
   MarkovTreeNodePtr node = result->getNode(index);

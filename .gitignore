@@ -16,13 +16,23 @@
 *.a
 *.lib
 
+# backups
+*.bu
+
+# research
+*.ipynb
+
 # Executables
 *.exe
 *.out
 *.app
+*.pyc
 
-# CMake
+# Compile
 CMakeCache*
 cmake_install*
 CMakeFiles
 Makefile
+*.xcodeproj
+CMakeScripts
+*.tags

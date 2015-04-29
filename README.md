@@ -161,10 +161,11 @@ python bin/plot.py ner overhead
 
 The figures are generated in ```result/eng_ner/budget.pdf``` and ```result/eng_ner/overhead.pdf```.
 
--> <img src="result/eng_ner/budget.pdf" height="300px"> <-
+<div style="text-align:center">
+ <img src="result/eng_ner/budget.png" height="300px"> 
 
--> <img src="result/eng_ner/overhead.pdf" height="300px"> <-
-
+ <img src="result/eng_ner/overhead.png" height="300px">
+</div>
 
 
 

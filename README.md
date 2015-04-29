@@ -129,6 +129,42 @@ Run Adaptive Policy on the Pre-Trained Model
 --------------------------------------------
 Adaptive policy uses Gibbs policy as exploration strategy during training. It learns a block policy that selects which example and which part to sample at run time. 
 
+The command line interface of adaptive policy is the same. 
+
+```
+./bin/policy --type tagging --policy adaptive --output result/eng_ner/adaptive  --model  model/eng_ner/gibbs.model --train  data/eng_ner/train --test data/eng_ner/test --eta 1 --T 6  --feat 'sp cond-ent bias nb-vary nb-discord' --reward 0  --log log/eng_ner/adaptive
+```
+
+except ```--policy adaptive``` and the ```--feat``` option. The ```--feat``` option takes a list of strings, seperated by space, each of which representing a meta-feature used.
+
+| Meta-Feature  | Meaning |
+|-------------------|---------|
+| bias | always equal to 1.0 |
+| cond-ent | stale entropy value of the position conditional on its Markov blanket |
+| unigram-ent | the entropy of the position based on a unigram model (required option --unigram_model to specify the model path)|
+| sp | how many times this position has been sampled |
+| nb-discord | discord with neighboring positions in the Markov blanket |
+| nb-vary    | how many neighbors have changed since last sampling the position |
+
+
+Make Plots
+----------
+To make the budget and overhead figures as in our paper, run the python script in ```bin/```:
+
+```
+python bin/plot.py ner budget
+```
+
+```
+python bin/plot.py ner overhead
+```
+
+The figures are generated in ```result/eng_ner/budget.pdf``` and ```result/eng_ner/overhead.pdf```.
+
+![](result/eng_ner/budget.pdf =400x "budget.pdf")
+
+![](result/eng_ner/overhead.pdf =400x "overhead.pdf")
+
 
 
 

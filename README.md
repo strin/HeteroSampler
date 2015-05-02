@@ -43,10 +43,7 @@ sudo apt-get install cmake
 Install boost-program-options
 
 ```
-sudo add-apt-repository -y ppa:boost-latest/ppa
-sudo apt-get update -qq
 sudo apt-get install libboost-all-dev
-sudo apt-get install libboost1.55-all-dev
 ```
 
 Install Hierarchical Data Format (HDF 5):

@@ -95,23 +95,40 @@ if __name__ == "__main__":
     typefig = "budget"
     if len(sys.argv) > 2:
         typefig = sys.argv[2]
+    if len(sys.argv) > 3:
+        path_gibbs = sys.argv[3] + '/'
+    else:
+        path_gibbs = './'
+    if len(sys.argv) > 4:
+        path_policy = sys.argv[4] + '/'
+    else:
+        path_policy = './'
+    if len(sys.argv) > 5:
+        path_output = sys.argv[5] + '/'
+    else:
+        path_output = './'
+
+    print 'path_gibbs = ', path_gibbs
+    print 'path_policy = ', path_policy
+    print 'path_output = ', path_output
 
     if task == 'ner':
+        os.system('mkdir -p ' + path_output + 'result/eng_ner/')
         if typefig == 'budget':
-            h = plotPerformanceWithBudgets(paths=['result/eng_ner/adaptive/b*.xml',
-                                          'result/eng_ner/gibbs/T*.xml'],
-                                   output='result/eng_ner/budget.pdf',
+            h = plotPerformanceWithBudgets(paths=[path_policy+'result/eng_ner/adaptive/b*.xml',
+                                          path_gibbs+'result/eng_ner/gibbs/T*.xml'],
+                                   output=path_output+'result/eng_ner/budget.png',
                                    _title='Performance vs. Budget on NER',
                                    _xlabel='Average Number of  Transations',
                                    _ylabel='F1 score')
-            sysopen('result/eng_ner/budget.pdf')
+            sysopen(path_output+'result/eng_ner/budget.png')
         elif typefig == 'overhead':
-            plotPolicyOverhead(path='result/eng_ner/adaptive/b*.xml',
-                               output='result/eng_ner/overhead.pdf',
+            plotPolicyOverhead(path=path_policy+'result/eng_ner/adaptive/b*.xml',
+                               output=path_output+'result/eng_ner/overhead.png',
                                    _title='', 
                                    _xlabel='Average Number of Transitions', 
                                    _ylabel='Wall-clock Seconds')
-            sysopen('result/eng_ner/overhead.pdf')
+            sysopen(path_output+'result/eng_ner/overhead.png')
 
 
 
